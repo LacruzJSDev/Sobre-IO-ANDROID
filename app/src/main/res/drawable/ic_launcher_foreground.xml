@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand mark centred in the 66 dp safe zone of the 108 dp adaptive icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:translateX="24"
+        android:translateY="24">
+        <group android:name="letters">
+            <clip-path android:pathData="M0,0H120V50.34L60,84.26L0,50.34Z" />
+            <path android:pathData="M20,80V15.95H27.78Q29.7,15.95 31.62,15.95Q33.54,15.95 35.56,15.95V80Z" android:fillColor="@color/icon_ink" />
+            <path android:pathData="M72.73,80.92Q64.13,80.92 58.05,76.98Q51.96,73.05 48.76,65.68Q45.56,58.31 45.56,47.97Q45.56,37.63 48.76,30.27Q51.96,22.9 58.05,18.97Q64.13,15.03 72.73,15.03Q81.33,15.03 87.46,18.97Q93.59,22.9 96.8,30.27Q100,37.63 100,47.97Q100,58.31 96.8,65.68Q93.59,73.05 87.46,76.98Q81.33,80.92 72.73,80.92ZM72.73,67.74Q78.68,67.74 81.93,62.61Q85.18,57.49 85.18,47.97Q85.18,38.18 81.93,32.92Q78.68,27.66 72.73,27.66Q66.78,27.66 63.54,32.92Q60.29,38.18 60.29,47.97Q60.29,57.49 63.54,62.61Q66.78,67.74 72.73,67.74ZM72.73,55.75Q68.98,55.75 66.92,53.65Q64.86,51.54 64.86,47.61Q64.86,43.95 67.06,41.66Q69.25,39.37 72.73,39.37Q76.48,39.37 78.59,41.52Q80.69,43.67 80.69,47.61Q80.69,51.18 78.5,53.46Q76.3,55.75 72.73,55.75Z" android:fillColor="@color/icon_ink" />
+        </group>
+        <path android:pathData="M14,64L60,90L106,64L106,100Q106,108 98,108L22,108Q14,108 14,100Z" android:fillColor="@color/icon_ink" />
+    </group>
+</vector>

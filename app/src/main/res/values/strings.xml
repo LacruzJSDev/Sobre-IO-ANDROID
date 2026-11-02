@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Sobre-IO</string>
+    <string name="welcome_tagline">Cada euro, en su cuenta y en su sobre.</string>
+
+    <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in data/remote/ErrorMapper.kt -->
+    <string name="error_unknown">Algo ha fallado. Inténtalo de nuevo.</string>
+    <string name="error_network">No se puede conectar con el servidor. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="error_fz001_group_read_only">Este grupo está archivado o ya no existe.</string>
+    <string name="error_fz002_archived">La cuenta o el sobre están archivados.</string>
+    <string name="error_fz003_future_date">La fecha no puede ser futura.</string>
+    <string name="error_fz005_voided">Este movimiento está anulado y ya no se puede cambiar.</string>
+    <string name="error_fz006_no_delete">Esto no se puede borrar. Los movimientos se anulan.</string>
+    <string name="error_fz007_unassigned_rule">Esa operación no está permitida con el sobre «Sin asignar».</string>
+    <string name="error_fz008_archive_not_empty">Para archivar, el saldo tiene que ser cero y no puede haber compromisos activos.</string>
+    <string name="error_fz009_last_owner">El grupo no puede quedarse sin propietario.</string>
+    <string name="error_fz011_invalid_invitation">La invitación no es válida: ha caducado o ya se ha usado.</string>
+    <string name="error_fz012_occurrence">Ese vencimiento del compromiso no es coherente.</string>
+    <string name="error_fz013_automatic_movement">El movimiento automático no es válido.</string>
+    <string name="error_fz014_immutable">Ese dato no se puede cambiar.</string>
+    <string name="error_fz015_group_transfer">La transferencia entre grupos no es coherente.</string>
+    <string name="error_fz016_permission">No tienes permiso para hacer esto en este grupo.</string>
+    <string name="error_fz017_account_scope">El cambio de ámbito de la cuenta no es coherente.</string>
+    <string name="error_fz018_linked_commitment">El compromiso vinculado no es coherente.</string>
+    <string name="error_fz019_cover">Un sobre elegido para cubrir el gasto no tiene ese importe.</string>
+    <string name="error_fz020_purge">El borrado del grupo ya está pedido, o no hay ninguno que cancelar.</string>
+</resources>
