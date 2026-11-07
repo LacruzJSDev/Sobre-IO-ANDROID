@@ -14,6 +14,8 @@ val localProperties = Properties().apply {
 }
 val supabaseUrl: String = localProperties.getProperty("SUPABASE_URL") ?: "http://10.0.2.2:54321"
 val supabasePublishableKey: String = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY") ?: ""
+// Google sign-in is hidden while this is blank. It is the Google *web* client id (Supabase validates tokens against it)
+val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
 
 android {
     namespace = "dev.lacruzjs.sobreio"
@@ -32,6 +34,7 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildTypes {
@@ -75,6 +78,10 @@ dependencies {
 
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.google.googleid)
 
     implementation(libs.kotlinx.serialization.json)
 
