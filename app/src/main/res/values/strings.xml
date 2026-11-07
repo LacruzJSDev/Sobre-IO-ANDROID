@@ -2,7 +2,7 @@
     <string name="app_name">Sobre-IO</string>
     <string name="welcome_tagline">Cada euro, en su cuenta y en su sobre.</string>
 
-    <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in data/remote/ErrorMapper.kt -->
+    <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in ui/error/ErrorMessages.kt -->
     <string name="error_unknown">Algo ha fallado. Inténtalo de nuevo.</string>
     <string name="error_network">No se puede conectar con el servidor. Revisa la conexión e inténtalo de nuevo.</string>
     <string name="error_fz001_group_read_only">Este grupo está archivado o ya no existe.</string>

@@ -9,8 +9,8 @@ inglés; los textos que ve el usuario, en español y en `res/values/strings.xml`
 ## Estado
 
 Base técnica lista, sin funciones todavía: Koin, cliente de Supabase (Auth y PostgREST), navegación con
-Navigation 3, tema de la marca, icono adaptativo, traducción de los códigos de error `FZ0xx` a mensajes en español
-y formato de importes. Al abrirla se ve una pantalla de bienvenida provisional, que sustituirá el inicio de sesión.
+Navigation 3, tema de la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en
+español (incluidos los códigos `FZ0xx`) y formato de importes. Al abrirla se ve una pantalla de bienvenida provisional, que sustituirá el inicio de sesión.
 
 Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 

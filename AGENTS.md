@@ -24,9 +24,10 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 
 - Package and application id: `dev.lacruzjs.sobreio`.
 - Infrastructure only, no features yet:
-  - `SobreioApplication` starts Koin with `di/appModules` (today only `dataModule`, which provides the `SupabaseClient`).
-  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps `FZ0xx` codes,
-    network failures and anything else to string resources.
+  - `SobreioApplication` starts Koin with `di/appModules` (`dataModule` provides the `SupabaseClient`; `uiModule` is empty until the first ViewModel).
+  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps any `Throwable` to a
+    `domain/error/AppError` and `safeCall` wraps repository calls with it.
+  - `ui/error/ErrorMessages.kt` maps `AppError` to Spanish string resources (`FZ0xx` codes, network, unknown).
   - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` → `1.298,15 €`.
   - `navigation/NavigationWrapper.kt` + `Routes.kt`: one `NavDisplay` with a temporary `Welcome` key and screen
     (`ui/welcome/WelcomeScreen.kt`). Sign-in replaces it.
@@ -40,23 +41,42 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 
 ```
 dev.lacruzjs.sobreio/
-  SobreioApplication.kt
-  MainActivity.kt
-  di/          Koin modules (one per layer)
-  navigation/  Routes (NavKey), NavigationWrapper (NavDisplay), adaptive scaffold
-  ui/
-    theme/     Colors, typography (Lexend, Inter with tabular figures), shapes
-    format/    Money and date formatting (Spanish locale)
-    components/ Reusable composables (amount text, avatar, bottom sheet keypad)
-    <feature>/ <Feature>Screen.kt, <Feature>ViewModel.kt, <Feature>UiState.kt, <Feature>Event.kt
+  SobreioApplication.kt, MainActivity.kt
+  di/            AppModules.kt, DataModule.kt (client, repositories), UiModule.kt (ViewModels)
+  navigation/    Routes.kt (NavKey), NavigationWrapper.kt (NavDisplay), adaptive scaffold
+  domain/
+    model/       Xxx.kt: plain data classes (amounts as Long cents)
+    error/       AppError.kt
   data/
-    remote/    supabase-kt client setup, @Serializable DTOs, RPC wrappers
-    repository/ <Thing>Repository (interface) + Supabase<Thing>Repository (implementation)
-  domain/      Plain data classes (amounts as Long cents) and pure functions
+    remote/      SupabaseClient.kt, ErrorMapper.kt, SafeCall.kt
+      dto/       XxxDto.kt: @Serializable, @SerialName("snake_case")
+      mapper/    XxxMapper.kt: DTO -> domain
+    repository/  XxxRepository.kt (interface) + SupabaseXxxRepository.kt
+  ui/
+    theme/       Colors, typography (Lexend, Inter with tabular figures), shapes
+    format/      Money and date formatting (Spanish locale)
+    error/       ErrorMessages.kt: AppError -> string resource
+    components/  Reusable composables (amount text, avatar, bottom sheet keypad)
+    <feature>/<screen>/
+      XxxScreen.kt     stateless XxxScreen(state, onEvent, modifier) with @Preview, plus a thin XxxRoute
+                       (here or in XxxRoute.kt) that gets the ViewModel with koinViewModel and collects
+                       the state with collectAsStateWithLifecycle
+      XxxViewModel.kt, XxxUiState.kt, XxxEvent.kt
 ```
 
 Features follow the product navigation: `auth`, `groups`, `group` (summary), `accounts`, `envelopes`, `movements`,
-plus the `newmovement` bottom sheet.
+plus the `newmovement` bottom sheet. Tests mirror the main packages; fake repositories live in `test/.../fake/`.
+
+| Layer | Does | Never |
+| --- | --- | --- |
+| ui | Draws state, emits events | Calls repositories, Supabase or the back stack |
+| ViewModel | Handles events, calls repository interfaces, exposes `StateFlow<UiState>` | Imports Compose or Supabase |
+| data | Talks to Supabase, maps DTOs to domain and exceptions to `AppError` through `safeCall` | Knows screens or user text |
+| domain | Plain Kotlin models and `AppError` | Imports Android or Supabase |
+
+- `data` and `domain` are organized by entity (shared across screens); `ui` by screen.
+- Root navigation is driven by the session (signed in -> app, signed out -> auth), so screens never navigate on success.
+- There is no use-case layer: the rules live in the database. Single Gradle module.
 
 ## Rules
 
@@ -64,7 +84,9 @@ plus the `newmovement` bottom sheet.
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Map database error codes `FZ001`–`FZ020` to Spanish string resources in one place (`data/remote/ErrorMapper.kt`).
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
+  `BusinessRule`); ui maps `AppError` to Spanish strings in `ui/error/ErrorMessages.kt`. Each happens in one place.
+  Repository implementations wrap calls with `safeCall`.
 - Amounts are `Long` cents everywhere; format with the Spanish locale only in the UI.
 - Every user-visible string is a Spanish resource in `res/values/strings.xml`. Code, comments and test names are English.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.

@@ -1,37 +1,40 @@
 package dev.lacruzjs.sobreio.data.remote
 
-import dev.lacruzjs.sobreio.R
+import dev.lacruzjs.sobreio.domain.error.AppError
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 import java.io.IOException
 
 class ErrorMapperTest {
 
-    private val raisedCodes = (1..20).map { "FZ%03d".format(it) } - setOf("FZ004", "FZ010")
-
     @Test
-    fun everyRaisedCodeHasItsOwnMessage() {
-        val messages = raisedCodes.map { ErrorMapper.messageForCode(it) }
+    fun appErrorPassesThroughUnchanged() {
+        val error = AppError.BusinessRule("FZ003")
 
-        messages.forEach { assertNotEquals(R.string.error_unknown, it) }
-        assertEquals(raisedCodes.size, messages.toSet().size)
+        assertSame(error, ErrorMapper.toAppError(error))
     }
 
     @Test
-    fun reservedUnknownOrMissingCodesFallBackToGenericMessage() {
-        listOf("FZ004", "FZ010", "FZ099", "23505", null).forEach {
-            assertEquals(R.string.error_unknown, ErrorMapper.messageForCode(it))
-        }
+    fun ioFailureMapsToNetwork() {
+        assertEquals(AppError.Network, ErrorMapper.toAppError(IOException("timeout")))
     }
 
     @Test
-    fun ioFailureMapsToNetworkMessage() {
-        assertEquals(R.string.error_network, ErrorMapper.messageFor(IOException("timeout")))
+    fun unexpectedExceptionMapsToUnknownKeepingCause() {
+        val cause = IllegalStateException()
+
+        assertEquals(AppError.Unknown(cause), ErrorMapper.toAppError(cause))
     }
 
     @Test
-    fun unexpectedExceptionMapsToGenericMessage() {
-        assertEquals(R.string.error_unknown, ErrorMapper.messageFor(IllegalStateException()))
+    fun fzCodeMapsToBusinessRule() {
+        assertEquals(AppError.BusinessRule("FZ016"), ErrorMapper.fromPostgrestCode("FZ016"))
+    }
+
+    @Test
+    fun nonFzOrMissingCodeIsNotABusinessRule() {
+        listOf("23505", "PGRST116", null).forEach { assertNull(ErrorMapper.fromPostgrestCode(it)) }
     }
 }
