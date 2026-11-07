@@ -77,26 +77,25 @@ class SupabaseAuthRepository(client: SupabaseClient) : AuthRepository {
         auth.resetPasswordForEmail(email)
     }
 
-    override suspend fun resetPassword(email: String, code: String, newPassword: String): Result<Unit> {
-        holdSession.value = true
-        return try {
-            safeCall {
-                auth.verifyEmailOtp(OtpType.Email.RECOVERY, email, code)
-                // Not cancellable: if the screen is left right after verifying, the password must still be set
-                // (or the session dropped) before the session is released.
-                withContext(NonCancellable) {
+    // The recovery code opens a session before the new password is set. Both steps run as one non-cancellable unit
+    // with the session held back, so leaving the screen half-way can never end with the user signed in on the old
+    // password: either the new password is set, or the session is dropped.
+    override suspend fun resetPassword(email: String, code: String, newPassword: String): Result<Unit> =
+        withContext(NonCancellable) {
+            holdSession.value = true
+            try {
+                safeCall {
+                    auth.verifyEmailOtp(OtpType.Email.RECOVERY, email, code)
                     safeCall { auth.updateUser { password = newPassword } }.onFailure {
-                        // Verifying already started a session; do not leave the user signed in without the new password.
                         safeCall { auth.signOut() }
                         throw it
                     }
+                    Unit
                 }
-                Unit
+            } finally {
+                holdSession.value = false
             }
-        } finally {
-            holdSession.value = false
         }
-    }
 
     override suspend fun signInWithGoogle(idToken: String, rawNonce: String): Result<Unit> = safeCall {
         auth.signInWith(IDToken) {
