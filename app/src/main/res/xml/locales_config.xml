@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Languages of the app, offered by the per-app language setting of Android 13+. Keep in sync with
+     shared/src/commonMain/composeResources/values-*/ and CFBundleLocalizations in iosApp. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="es-ES" />
+</locale-config>

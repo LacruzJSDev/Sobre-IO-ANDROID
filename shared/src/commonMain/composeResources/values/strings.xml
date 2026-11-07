@@ -1,0 +1,73 @@
+<resources>
+    <!-- Default language is English; every key also exists in values-es-rES/strings.xml (Spanish). -->
+
+    <!-- Auth screens -->
+    <string name="sign_in_title">Sign in</string>
+    <string name="sign_up_title">Create account</string>
+    <string name="confirm_title">Confirm your email</string>
+    <string name="recovery_title">Recover password</string>
+
+    <string name="field_name">Name</string>
+    <string name="field_email">Email</string>
+    <string name="field_password">Password</string>
+    <string name="field_new_password">New password</string>
+    <string name="field_repeat_password">Repeat password</string>
+    <string name="field_code">6-digit code</string>
+
+    <string name="validation_required">This field is required.</string>
+    <string name="validation_email_invalid">Enter a valid email.</string>
+    <string name="validation_password_short">Use at least 6 characters.</string>
+    <string name="validation_passwords_mismatch">The passwords don\'t match.</string>
+    <string name="validation_code_invalid">Enter the 6-digit code.</string>
+
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_create_account">Create account</string>
+    <string name="action_have_account">I already have an account</string>
+    <string name="action_forgot_password">Forgot your password?</string>
+    <string name="action_continue_with_google">Continue with Google</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_resend_code">Resend code</string>
+    <string name="action_resend_code_in">Resend code in %1$d s</string>
+    <string name="action_back_to_sign_in">Back to sign in</string>
+    <string name="action_send_code">Send code</string>
+    <string name="action_change_password">Change password</string>
+    <string name="action_use_another_email">Use another email</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="action_show_password">Show password</string>
+    <string name="action_hide_password">Hide password</string>
+
+    <string name="sign_in_confirm_email">Confirm my email</string>
+    <string name="confirm_body">We sent a 6-digit code to %1$s. Enter it to finish creating your account.</string>
+    <string name="confirm_code_resent">We sent you a new code.</string>
+    <string name="recovery_email_body">Enter your email and we\'ll send you a code to choose a new password.</string>
+    <string name="recovery_reset_body">Enter the code we sent to %1$s and choose a new password.</string>
+    <string name="home_signed_in_as">Signed in as %1$s</string>
+
+    <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in ui/error/ErrorMessages.kt -->
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_network">Can\'t reach the server. Check your connection and try again.</string>
+    <string name="error_invalid_credentials">Incorrect email or password.</string>
+    <string name="error_email_not_confirmed">Your email isn\'t confirmed yet.</string>
+    <string name="error_email_already_registered">There is already an account with this email.</string>
+    <string name="error_weak_password">That password is too weak. Use at least 6 characters.</string>
+    <string name="error_invalid_code">The code is wrong or has expired.</string>
+    <string name="error_too_many_requests">Too many attempts. Wait a moment and try again.</string>
+    <string name="error_fz001_group_read_only">This group is archived or no longer exists.</string>
+    <string name="error_fz002_archived">The account or envelope is archived.</string>
+    <string name="error_fz003_future_date">The date can\'t be in the future.</string>
+    <string name="error_fz005_voided">This movement is voided and can no longer be changed.</string>
+    <string name="error_fz006_no_delete">This can\'t be deleted. Movements are voided instead.</string>
+    <string name="error_fz007_unassigned_rule">That isn\'t allowed with the \"Unassigned\" envelope.</string>
+    <string name="error_fz008_archive_not_empty">To archive it, the balance must be zero and there can be no active commitments.</string>
+    <string name="error_fz009_last_owner">The group can\'t be left without an owner.</string>
+    <string name="error_fz011_invalid_invitation">The invitation isn\'t valid: it has expired or was already used.</string>
+    <string name="error_fz012_occurrence">That commitment occurrence isn\'t consistent.</string>
+    <string name="error_fz013_automatic_movement">The automatic movement isn\'t valid.</string>
+    <string name="error_fz014_immutable">That value can\'t be changed.</string>
+    <string name="error_fz015_group_transfer">The transfer between groups isn\'t consistent.</string>
+    <string name="error_fz016_permission">You don\'t have permission to do this in this group.</string>
+    <string name="error_fz017_account_scope">The change of account scope isn\'t consistent.</string>
+    <string name="error_fz018_linked_commitment">The linked commitment isn\'t consistent.</string>
+    <string name="error_fz019_cover">An envelope chosen to cover the expense doesn\'t have that amount.</string>
+    <string name="error_fz020_purge">Deleting the group was already requested, or there is nothing to cancel.</string>
+</resources>
