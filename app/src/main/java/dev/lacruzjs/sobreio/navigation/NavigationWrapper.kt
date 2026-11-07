@@ -1,30 +1,51 @@
 package dev.lacruzjs.sobreio.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
-import dev.lacruzjs.sobreio.ui.welcome.WelcomeScreen
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.lacruzjs.sobreio.R
+import dev.lacruzjs.sobreio.domain.model.AuthState
+import dev.lacruzjs.sobreio.ui.session.SessionViewModel
+import org.koin.androidx.compose.koinViewModel
 
-/** Top-level navigation. Screens only emit events; this layer owns the back stack. */
+/**
+ * Top-level navigation: the session decides which tree is shown. Screens only emit events; each tree owns its back
+ * stack. A branch has its own composition group, so when the session flips the other tree starts fresh (sign-out
+ * lands on sign-in, sign-in lands on Home) and nothing of the old one is restored.
+ */
 @Composable
-fun NavigationWrapper(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Welcome)
+fun NavigationWrapper(
+    modifier: Modifier = Modifier,
+    sessionViewModel: SessionViewModel = koinViewModel(),
+) {
+    val authState by sessionViewModel.state.collectAsStateWithLifecycle()
 
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = { backStack.removeLastOrNull() },
-        // Each entry keeps its own saved state and ViewModels, cleared when it leaves the back stack
-        entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-        ),
-        entryProvider = entryProvider {
-            entry<Welcome> { WelcomeScreen() }
-        },
-    )
+    when (authState) {
+        AuthState.Loading -> SessionLoading(modifier)
+        AuthState.SignedOut -> AuthNavigation(modifier)
+        is AuthState.SignedIn -> AppNavigation(modifier)
+    }
+}
+
+/** Shown while the stored session is read, so the sign-in form never flashes for someone who is signed in. */
+@Composable
+private fun SessionLoading(modifier: Modifier = Modifier) {
+    Surface(modifier = modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(R.drawable.ic_sobreio_mark),
+                contentDescription = null,
+                modifier = Modifier.size(96.dp),
+            )
+        }
+    }
 }

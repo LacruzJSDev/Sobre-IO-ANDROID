@@ -4,11 +4,17 @@ import androidx.annotation.StringRes
 import dev.lacruzjs.sobreio.R
 import dev.lacruzjs.sobreio.domain.error.AppError
 
-/** The only place that turns an [AppError] into Spanish text. */
+/** The only place that turns an [AppError] into text for the user. */
 @StringRes
 fun AppError.messageRes(): Int = when (this) {
     AppError.Network -> R.string.error_network
     is AppError.BusinessRule -> businessRuleMessageRes(code)
+    AppError.InvalidCredentials -> R.string.error_invalid_credentials
+    AppError.EmailNotConfirmed -> R.string.error_email_not_confirmed
+    AppError.EmailAlreadyRegistered -> R.string.error_email_already_registered
+    AppError.WeakPassword -> R.string.error_weak_password
+    AppError.InvalidCode -> R.string.error_invalid_code
+    AppError.TooManyRequests -> R.string.error_too_many_requests
     is AppError.Unknown -> R.string.error_unknown
 }
 

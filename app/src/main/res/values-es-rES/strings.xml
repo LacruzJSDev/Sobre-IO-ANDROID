@@ -1,9 +1,56 @@
 <resources>
-    <string name="welcome_tagline">Cada euro, en su cuenta y en su sobre.</string>
+
+    <!-- Auth screens, same keys as values/strings.xml -->
+    <string name="sign_in_title">Iniciar sesión</string>
+    <string name="sign_up_title">Crear cuenta</string>
+    <string name="confirm_title">Confirma tu correo</string>
+    <string name="recovery_title">Recuperar contraseña</string>
+
+    <string name="field_name">Nombre</string>
+    <string name="field_email">Correo electrónico</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_new_password">Nueva contraseña</string>
+    <string name="field_repeat_password">Repite la contraseña</string>
+    <string name="field_code">Código de 6 dígitos</string>
+
+    <string name="validation_required">Este campo es obligatorio.</string>
+    <string name="validation_email_invalid">Introduce un correo válido.</string>
+    <string name="validation_password_short">Usa al menos 6 caracteres.</string>
+    <string name="validation_passwords_mismatch">Las contraseñas no coinciden.</string>
+    <string name="validation_code_invalid">Introduce el código de 6 dígitos.</string>
+
+    <string name="action_sign_in">Iniciar sesión</string>
+    <string name="action_create_account">Crear cuenta</string>
+    <string name="action_have_account">Ya tengo una cuenta</string>
+    <string name="action_forgot_password">¿Has olvidado la contraseña?</string>
+    <string name="action_continue_with_google">Continuar con Google</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="action_resend_code">Reenviar código</string>
+    <string name="action_resend_code_in">Reenviar código en %1$d s</string>
+    <string name="action_back_to_sign_in">Volver a iniciar sesión</string>
+    <string name="action_send_code">Enviar código</string>
+    <string name="action_change_password">Cambiar contraseña</string>
+    <string name="action_use_another_email">Usar otro correo</string>
+    <string name="action_sign_out">Cerrar sesión</string>
+    <string name="action_show_password">Mostrar contraseña</string>
+    <string name="action_hide_password">Ocultar contraseña</string>
+
+    <string name="sign_in_confirm_email">Confirmar mi correo</string>
+    <string name="confirm_body">Hemos enviado un código de 6 dígitos a %1$s. Introdúcelo para terminar de crear tu cuenta.</string>
+    <string name="confirm_code_resent">Te hemos enviado un código nuevo.</string>
+    <string name="recovery_email_body">Introduce tu correo y te enviaremos un código para elegir una contraseña nueva.</string>
+    <string name="recovery_reset_body">Introduce el código que hemos enviado a %1$s y elige una contraseña nueva.</string>
+    <string name="home_signed_in_as">Sesión iniciada como %1$s</string>
 
     <!-- Errors, same keys as values/strings.xml -->
     <string name="error_unknown">Algo ha fallado. Inténtalo de nuevo.</string>
     <string name="error_network">No se puede conectar con el servidor. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="error_invalid_credentials">El correo o la contraseña no son correctos.</string>
+    <string name="error_email_not_confirmed">Tu correo todavía no está confirmado.</string>
+    <string name="error_email_already_registered">Ya existe una cuenta con este correo.</string>
+    <string name="error_weak_password">Esa contraseña es demasiado débil. Usa al menos 6 caracteres.</string>
+    <string name="error_invalid_code">El código es incorrecto o ha caducado.</string>
+    <string name="error_too_many_requests">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
     <string name="error_fz001_group_read_only">Este grupo está archivado o ya no existe.</string>
     <string name="error_fz002_archived">La cuenta o el sobre están archivados.</string>
     <string name="error_fz003_future_date">La fecha no puede ser futura.</string>

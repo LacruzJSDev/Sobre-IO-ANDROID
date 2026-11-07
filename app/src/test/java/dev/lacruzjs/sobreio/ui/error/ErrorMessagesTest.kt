@@ -30,4 +30,19 @@ class ErrorMessagesTest {
         assertEquals(R.string.error_network, AppError.Network.messageRes())
         assertEquals(R.string.error_unknown, AppError.Unknown().messageRes())
     }
+
+    @Test
+    fun everyAuthErrorHasItsOwnMessage() {
+        val messages = listOf(
+            AppError.InvalidCredentials,
+            AppError.EmailNotConfirmed,
+            AppError.EmailAlreadyRegistered,
+            AppError.WeakPassword,
+            AppError.InvalidCode,
+            AppError.TooManyRequests,
+        ).map { it.messageRes() }
+
+        messages.forEach { assertNotEquals(R.string.error_unknown, it) }
+        assertEquals(messages.size, messages.toSet().size)
+    }
 }
