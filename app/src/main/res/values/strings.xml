@@ -1,5 +1,5 @@
 <resources>
-    <!-- Default language is English; every key also exists in values-es/strings.xml (Spanish). -->
+    <!-- Default language is English; every key also exists in values-es-rES/strings.xml (Spanish). -->
     <string name="app_name" translatable="false">Sobre-IO</string>
     <string name="welcome_tagline">Every euro, in its account and in its envelope.</string>
 

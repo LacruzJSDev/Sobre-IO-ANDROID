@@ -31,7 +31,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` → `1.298,15 €`.
   - `navigation/NavigationWrapper.kt` + `Routes.kt`: one `NavDisplay` with a temporary `Welcome` key and screen
     (`ui/welcome/WelcomeScreen.kt`). Sign-in replaces it.
-  - Strings in English (`values/`, default) and Spanish (`values-es/`); `res/resources.properties` declares English as the
+  - Strings in English (`values/`, default) and Spanish (`values-es-rES/`); `res/resources.properties` declares English as the
     unqualified locale for the generated locale config.
   - Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures).
   - `res/drawable/ic_sobreio_mark.xml`: the brand mark as a vector; the adaptive launcher icon uses it and follows dark mode.
@@ -92,7 +92,8 @@ plus the `newmovement` bottom sheet. Tests mirror the main packages; fake reposi
 - Amounts are `Long` cents everywhere; format them only in the UI with `formatMoney(…, locale)`, passing the locale of
   the current configuration (`1.298,15 €` in Spanish, `€1,298.15` in English).
 - The app is bilingual. Every user-visible string is a resource with the same key in `res/values/strings.xml` (English,
-  the default for any other device language) and `res/values-es/strings.xml` (Spanish). No literal user text in
+  the default for any other device language) and `res/values-es-rES/strings.xml` (Spanish from Spain: the region makes the per-app language setting say
+  "Español (España)", and devices in other Spanish locales fall back to it). No literal user text in
   composables, ViewModels or anywhere in Kotlin, not even a `contentDescription`.
   Add both translations in the same change; lint `MissingTranslation` fails otherwise. `generateLocaleConfig` gives
   Android 13+ a per-app language setting. Code, comments and test names are English.

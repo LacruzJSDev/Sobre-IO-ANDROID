@@ -5,7 +5,7 @@ dinero están en la base de datos de Supabase (repositorio `Sobre-IO-DB`); la ap
 
 Normas para agentes de IA (en inglés): [AGENTS.md](AGENTS.md). El código, los comentarios y los commits van en
 inglés. La app está en inglés y en español: cada texto que ve el usuario es un recurso con la misma clave en
-`res/values/strings.xml` (inglés, el idioma por defecto) y en `res/values-es/strings.xml` (español). En Android 13 o
+`res/values/strings.xml` (inglés, el idioma por defecto) y en `res/values-es-rES/strings.xml` (español). En Android 13 o
 superior se puede elegir el idioma de la app en los ajustes del sistema.
 
 ## Estado
