@@ -1,9 +1,16 @@
 <resources>
+
     <string name="welcome_tagline">Cada euro, en su cuenta y en su sobre.</string>
 
     <!-- Errors, same keys as values/strings.xml -->
     <string name="error_unknown">Algo ha fallado. Inténtalo de nuevo.</string>
     <string name="error_network">No se puede conectar con el servidor. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="error_invalid_credentials">El correo o la contraseña no son correctos.</string>
+    <string name="error_email_not_confirmed">Tu correo todavía no está confirmado.</string>
+    <string name="error_email_already_registered">Ya existe una cuenta con este correo.</string>
+    <string name="error_weak_password">Esa contraseña es demasiado débil. Usa al menos 6 caracteres.</string>
+    <string name="error_invalid_code">El código es incorrecto o ha caducado.</string>
+    <string name="error_too_many_requests">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
     <string name="error_fz001_group_read_only">Este grupo está archivado o ya no existe.</string>
     <string name="error_fz002_archived">La cuenta o el sobre están archivados.</string>
     <string name="error_fz003_future_date">La fecha no puede ser futura.</string>

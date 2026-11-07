@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.data.remote
 
 import dev.lacruzjs.sobreio.domain.error.AppError
+import io.github.jan.supabase.auth.exception.AuthErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -36,5 +37,27 @@ class ErrorMapperTest {
     @Test
     fun nonFzOrMissingCodeIsNotABusinessRule() {
         listOf("23505", "PGRST116", null).forEach { assertNull(ErrorMapper.fromPostgrestCode(it)) }
+    }
+
+    @Test
+    fun authErrorCodesMapToTheirAppErrors() {
+        val expected = mapOf(
+            AuthErrorCode.InvalidCredentials to AppError.InvalidCredentials,
+            AuthErrorCode.EmailNotConfirmed to AppError.EmailNotConfirmed,
+            AuthErrorCode.UserAlreadyExists to AppError.EmailAlreadyRegistered,
+            AuthErrorCode.EmailExists to AppError.EmailAlreadyRegistered,
+            AuthErrorCode.WeakPassword to AppError.WeakPassword,
+            AuthErrorCode.OtpExpired to AppError.InvalidCode,
+            AuthErrorCode.OverRequestRateLimit to AppError.TooManyRequests,
+            AuthErrorCode.OverEmailSendRateLimit to AppError.TooManyRequests,
+        )
+
+        expected.forEach { (code, error) -> assertEquals(error, ErrorMapper.fromAuthErrorCode(code)) }
+    }
+
+    @Test
+    fun otherOrMissingAuthCodesAreNotMapped() {
+        assertNull(ErrorMapper.fromAuthErrorCode(AuthErrorCode.EmailAddressInvalid))
+        assertNull(ErrorMapper.fromAuthErrorCode(null))
     }
 }
