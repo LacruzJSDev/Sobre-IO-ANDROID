@@ -98,7 +98,7 @@ plus the `newmovement` bottom sheet.
   the default for any other device language) and `composeResources/values-es-rES/strings.xml` (Spanish from Spain: the region makes the per-app language setting say
   "Español (España)", and devices in other Spanish locales fall back to it). No literal user text in
   composables, ViewModels or anywhere in Kotlin, not even a `contentDescription`.
-  Add both translations in the same change. Android 13+ shows the per-app language setting from
+  Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
