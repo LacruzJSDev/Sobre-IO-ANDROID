@@ -59,6 +59,13 @@ La app lee la conexión de `local.properties`, que no se sube a git. Después de
   hablar con Supabase.
 - Las versiones de depuración pueden usar HTTP sin cifrar solo con `10.0.2.2`, `localhost` y `127.0.0.1`; la versión
   de publicación solo usa HTTPS.
+- Si la app dice «No se puede conectar con el servidor» y Supabase está en marcha, en algunos emuladores las apps no
+  llegan al Mac por `10.0.2.2` (el shell del emulador sí). La alternativa es pasar el puerto por adb, que funciona
+  también con un móvil conectado por USB. Hay que repetir el `adb reverse` cada vez que arranca el emulador:
+
+      adb reverse tcp:54321 tcp:54321
+
+  y en `local.properties`, `SUPABASE_URL=http://127.0.0.1:54321` (después, volver a compilar).
 
 ## Probar el registro en local
 
@@ -75,3 +82,11 @@ El botón «Continuar con Google» solo aparece si `local.properties` tiene el i
 (el mismo que se configura en el proveedor Google de Supabase). Después de añadirlo hay que volver a compilar:
 
     GOOGLE_WEB_CLIENT_ID=<id de cliente web>.apps.googleusercontent.com
+
+Además, en el mismo proyecto de Google Cloud tiene que existir un cliente OAuth de tipo **Android** con el paquete
+`dev.lacruzjs.sobreio` y la huella SHA-1 de la clave que firma la APK. La de depuración se obtiene con:
+
+    keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+
+Para la APK de publicación hace falta otro cliente Android con la huella de su clave. El emulador necesita una cuenta de
+Google iniciada.
