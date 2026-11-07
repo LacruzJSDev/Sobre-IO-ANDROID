@@ -10,9 +10,12 @@ superior se puede elegir el idioma de la app en los ajustes del sistema.
 
 ## Estado
 
-Base técnica lista, sin funciones todavía: Koin, cliente de Supabase (Auth y PostgREST), navegación con
-Navigation 3, tema de la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en
-inglés y español (incluidos los códigos `FZ0xx`) y formato de importes según el idioma. Al abrirla se ve una pantalla de bienvenida provisional, que sustituirá el inicio de sesión.
+Base técnica y autenticación listas: registro con confirmación del correo mediante un código de 6 dígitos, inicio de
+sesión, recuperación de la contraseña con otro código y pantalla provisional de sesión iniciada con cierre de sesión
+(la sustituirá la lista de grupos). El inicio de sesión con Google está programado, pero no se puede probar hasta tener
+las credenciales de Google. Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de
+la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en inglés y español y formato
+de importes según el idioma.
 
 Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 
@@ -56,3 +59,19 @@ La app lee la conexión de `local.properties`, que no se sube a git. Después de
   hablar con Supabase.
 - Las versiones de depuración pueden usar HTTP sin cifrar solo con `10.0.2.2`, `localhost` y `127.0.0.1`; la versión
   de publicación solo usa HTTPS.
+
+## Probar el registro en local
+
+Con la pila local de Supabase en marcha, todos los correos (códigos de confirmación y de recuperación) llegan a
+Mailpit, sin salir del Mac: interfaz en <http://127.0.0.1:54324>.
+
+1. Crear una cuenta con un correo inventado (por ejemplo `prueba@sobre-io.test`) y una contraseña de al menos 6 caracteres.
+2. Abrir Mailpit, copiar el código de 6 dígitos del correo y escribirlo en la app: entra directamente.
+3. Para la recuperación: «¿Has olvidado la contraseña?», pedir el código, copiarlo de Mailpit y elegir la contraseña nueva.
+
+## Inicio de sesión con Google
+
+El botón «Continuar con Google» solo aparece si `local.properties` tiene el identificador de cliente **web** de Google
+(el mismo que se configura en el proveedor Google de Supabase). Después de añadirlo hay que volver a compilar:
+
+    GOOGLE_WEB_CLIENT_ID=<id de cliente web>.apps.googleusercontent.com

@@ -15,6 +15,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Navigation | Navigation 3 (`androidx.navigation3` 1.2), keys are `@Serializable` `NavKey`s; ViewModels scoped per entry with `lifecycle-viewmodel-navigation3` |
 | DI | Koin 4.2 (`koin-android`, `koin-androidx-compose`), started in `SobreioApplication` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor OkHttp + `kotlinx.serialization` JSON |
+| Google sign-in | `androidx.credentials` 1.6 (`credentials`, `credentials-play-services-auth`) + `googleid` 1.2: Credential Manager returns a Google ID token that is handed to Supabase |
 | Tests | JUnit 4, `kotlinx-coroutines-test` (`testing/MainDispatcherRule`) |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4, minSdk 24, targetSdk 37, Java 11 |
 
@@ -23,20 +24,25 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 ## Current state (keep this section true)
 
 - Package and application id: `dev.lacruzjs.sobreio`.
-- Infrastructure only, no features yet:
-  - `SobreioApplication` starts Koin with `di/appModules` (`dataModule` provides the `SupabaseClient`; `uiModule` is empty until the first ViewModel).
-  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps any `Throwable` to a
-    `domain/error/AppError` and `safeCall` wraps repository calls with it.
-  - `ui/error/ErrorMessages.kt` maps `AppError` to string resources (`FZ0xx` codes, network, unknown).
-  - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` → `1.298,15 €`.
-  - `navigation/NavigationWrapper.kt` + `Routes.kt`: one `NavDisplay` with a temporary `Welcome` key and screen
-    (`ui/welcome/WelcomeScreen.kt`). Sign-in replaces it.
-  - Strings in English (`values/`, default) and Spanish (`values-es-rES/`); `res/resources.properties` declares English as the
-    unqualified locale for the generated locale config.
+- Authentication is implemented (RF1, D-43); there are no other features yet:
+  - Screens in `ui/auth/<screen>/`: `signin`, `signup`, `confirm` (6-digit email code with a 60 s resend cooldown),
+    `recovery` (email step, then code + new password step); shared pieces in `ui/components/`
+    (`AuthScaffold`, `LoadingButton`, `FormTextField`, `PasswordField`, `ErrorText`). Field validation is UI-level only (`ui/auth/AuthValidation.kt`).
+  - `ui/session/SessionViewModel` exposes the `AuthState` (Loading / SignedOut / SignedIn); `navigation/NavigationWrapper`
+    shows `AuthNavigation` (starts at `SignIn`) or `AppNavigation` (starts at `Home`) from it, each with its own back stack.
+    Screens never navigate on sign-in success: the session changes and the root swaps the tree.
+  - `ui/home/HomeScreen` is a **temporary** signed-in screen ("Signed in as ..." + sign out); the Groups screen replaces it.
+  - `data/repository/AuthRepository` + `SupabaseAuthRepository`; `data/remote/ErrorMapper` also maps GoTrue error codes to the auth `AppError`s;
+    `data/remote/mapper/UserMapper` builds the domain `User` (name from user metadata `name` or `full_name`).
+    `resetPassword` verifies the recovery code and sets the password in one call; the session stays hidden until the password is set.
+  - Google: `ui/auth/google/GoogleSignInRequester` (Credential Manager, nonce pair) is called by the sign-in Route.
+    The button shows only when `GOOGLE_WEB_CLIENT_ID` is set in `local.properties`. Not testable end to end until the Google credentials exist.
+  - `SobreioApplication` starts Koin with `di/appModules` (`dataModule`, `uiModule`).
+  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps `FZ0xx` codes,
+    auth codes, network failures and anything else to string resources through `ui/error/ErrorMessages.kt`.
+  - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` -> `1.298,15 €`.
   - Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures).
   - `res/drawable/ic_sobreio_mark.xml`: the brand mark as a vector; the adaptive launcher icon uses it and follows dark mode.
-- CI: `.github/workflows/ci.yml` runs `assembleDebug testDebugUnitTest lintDebug` on every PR and push to `main`;
-  `main` only accepts squash-merged PRs with that check green (see the workspace `docs/agents/contributing.md`).
 - Debug builds allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1` (`src/debug/res/xml/network_security_config.xml`);
   release builds are HTTPS only.
 - The `ic_*` drawables in `res/drawable` are icons prepared for the coming screens.
@@ -100,12 +106,22 @@ plus the `newmovement` bottom sheet. Tests mirror the main packages; fake reposi
   Add both translations in the same change; lint `MissingTranslation` fails otherwise. `generateLocaleConfig` gives
   Android 13+ a per-app language setting. Code, comments and test names are English.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
-- Supabase connection settings come from `local.properties` (git-ignored) through `BuildConfig`:
-  `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Only the publishable (anon) key ever ships in the app;
+- Connection settings come from `local.properties` (git-ignored) through `BuildConfig`:
+  `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;
   the secret / service_role key never appears in this repository.
 - From the emulator, the local Supabase stack is at `http://10.0.2.2:54321`; it is also the default when
   `SUPABASE_URL` is missing. The key has no default: the client is created lazily by Koin and fails on first use
   without one. Changing `local.properties` needs a rebuild.
+
+## Navigation pattern (user actions and results)
+
+- A click that only navigates (link, back) is intercepted by the screen's `XxxRoute`, which calls its navigation lambda;
+  the ViewModel ignores it. The Route is the only place that holds the back stack lambdas, Context or platform APIs.
+- A result that leads to another screen (sign-up created -> code screen) is state: the ViewModel sets a field such as
+  `navigateToConfirm: String?`; the Route reacts in a `LaunchedEffect`, calls the lambda and sends `NavigationHandled`
+  to clear it, so rotation does not navigate twice.
+- A change of session is never handled by a screen: the root swaps `AuthNavigation` / `AppNavigation`.
+- Route arguments reach ViewModels as Koin parameters (`koinViewModel { parametersOf(...) }`), because Navigation 3 keys are not in a `SavedStateHandle`.
 
 ## Commands
 
