@@ -1,19 +1,26 @@
-# Sobre-IO · app Android
+# Sobre-IO · app Android e iOS
 
-Cliente Android de Sobre-IO para móvil, tablet y plegable, hecho con Kotlin y Jetpack Compose. Todas las reglas del
-dinero están en la base de datos de Supabase (repositorio `Sobre-IO-DB`); la app muestra los datos y llama a su API.
+Cliente de Sobre-IO para Android (móvil, tablet y plegable) y para iOS, hecho con Kotlin Multiplatform y Compose
+Multiplatform: la interfaz, los ViewModels, los repositorios y los modelos se escriben una sola vez en el módulo
+`shared`. Todas las reglas del dinero están en la base de datos de Supabase (repositorio `Sobre-IO-DB`); la app muestra
+los datos y llama a su API.
+
+Estructura: `shared/` (todo el código compartido y los recursos), `app/` (la aplicación Android, solo el cascarón) e
+`iosApp/` (el proyecto de Xcode, solo el cascarón).
 
 Normas para agentes de IA (en inglés): [AGENTS.md](AGENTS.md). El código, los comentarios y los commits van en
 inglés. La app está en inglés y en español: cada texto que ve el usuario es un recurso con la misma clave en
-`res/values/strings.xml` (inglés, el idioma por defecto) y en `res/values-es-rES/strings.xml` (español). En Android 13 o
-superior se puede elegir el idioma de la app en los ajustes del sistema.
+`shared/src/commonMain/composeResources/values/strings.xml` (inglés, el idioma por defecto) y en `values-es-rES/strings.xml`
+(español). En Android 13 o superior se puede elegir el idioma de la app en los ajustes del sistema (la lista de idiomas
+está a mano en `app/src/main/res/xml/locales_config.xml`); en iOS se usa el idioma del sistema.
 
 ## Estado
 
 Base técnica y autenticación listas: registro con confirmación del correo mediante un código de 6 dígitos, inicio de
 sesión, recuperación de la contraseña con otro código y pantalla provisional de sesión iniciada con cierre de sesión
 (la sustituirá la lista de grupos). El inicio de sesión con Google está programado, pero no se puede probar hasta tener
-las credenciales de Google. Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de
+las credenciales de Google; en iOS el botón de Google no aparece todavía (falta integrar el SDK de Google para iOS).
+Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de
 la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en inglés y español y formato
 de importes según el idioma.
 
@@ -24,6 +31,8 @@ Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 - Android Studio (versión reciente, con el Android Gradle Plugin 9).
 - Un emulador o un móvil con Android 7.0 (API 24) o superior. Para probar tablet y plegable se usan los emuladores
   de Android Studio.
+- Para iOS: un Mac con **Xcode** instalado (la app y el simulador no se pueden compilar sin él) y, solo si se cambia
+  `iosApp/project.yml`, XcodeGen (`brew install xcodegen`).
 - Para trabajar contra la base de datos local: la pila de Supabase en marcha (ver `Sobre-IO-DB/README.md`).
 
 ## Abrir y ejecutar
@@ -33,21 +42,49 @@ Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 
 Desde la terminal:
 
-    ./gradlew assembleDebug    # genera la APK de depuración en app/build/outputs/apk/debug/
-    ./gradlew installDebug     # la instala en el dispositivo conectado
-    ./gradlew test             # pruebas unitarias
+    ./gradlew :app:assembleDebug           # genera la APK de depuración en app/build/outputs/apk/debug/
+    ./gradlew :app:installDebug            # la instala en el dispositivo conectado
+    ./gradlew :shared:testAndroidHostTest  # pruebas unitarias
+    ./gradlew :app:lintDebug               # lint de Android
 
-En GitHub, cada pull request compila la app, pasa las pruebas y el lint de forma automática; `main` no acepta cambios
+En GitHub, cada pull request compila la app Android, pasa las pruebas y el lint de forma automática (iOS no se
+compila en la integración continua: necesita un runner de macOS con Xcode); `main` no acepta cambios
 si esa comprobación falla. Las versiones entregadas se publican como *releases* con la APK adjunta.
 
 Para instalarla en el móvil de pruebas sin Android Studio basta con copiar la APK y abrirla (hay que permitir
 instalar aplicaciones de origen desconocido).
+
+## Abrir y ejecutar en iOS
+
+1. Con Xcode instalado, abrir `iosApp/iosApp.xcodeproj`.
+2. En *Signing & Capabilities* del target `iosApp`, elegir tu propio equipo (*Personal Team*, con un Apple ID gratuito).
+   El repositorio no guarda ningún equipo de firma.
+3. Elegir un simulador y pulsar *Run*. La primera vez Xcode ejecuta Gradle para compilar el framework `Shared`
+   (tarda unos minutos).
+
+Desde la terminal, sin firmar y con un simulador instalado (`xcrun simctl list devices available`):
+
+    xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator \
+      -destination 'id=<UDID del simulador>' build
+
+**En tu iPhone con un Apple ID gratuito**: activar el *Modo de desarrollador* (Ajustes → Privacidad y seguridad),
+conectar el móvil, elegirlo en Xcode y pulsar *Run*; la primera vez hay que confiar en el perfil en Ajustes → General →
+VPN y gestión de dispositivos. Los perfiles gratuitos **caducan a los 7 días**: hay que volver a ejecutar la app desde
+Xcode para renovarla.
+
+**Supabase desde iOS.** El simulador comparte la red del Mac, así que llega a la pila local en
+`http://127.0.0.1:54321`: es la dirección que usa por defecto (la de `SUPABASE_URL` cambiando `10.0.2.2` por
+`127.0.0.1`) y se puede fijar con `SUPABASE_URL_IOS` en `local.properties`. La app permite HTTP sin cifrar solo en red
+local (`NSAllowsLocalNetworking` en el `Info.plist`). Un iPhone físico no ve el `127.0.0.1` del Mac: hay que poner en
+`SUPABASE_URL_IOS` la IP del Mac en la red local (por ejemplo `http://192.168.1.20:54321`; la pila de Supabase tiene que
+aceptar conexiones de la red) o usar el proyecto alojado con HTTPS.
 
 ## Conectar con Supabase
 
 La app lee la conexión de `local.properties`, que no se sube a git. Después de cambiarlo hay que volver a compilar:
 
     SUPABASE_URL=http://10.0.2.2:54321
+    SUPABASE_URL_IOS=http://127.0.0.1:54321    # opcional
     SUPABASE_PUBLISHABLE_KEY=<clave publicable>
 
 - **En local**, la URL es `http://10.0.2.2:54321` desde el emulador (es el Mac visto desde el emulador) y la clave
