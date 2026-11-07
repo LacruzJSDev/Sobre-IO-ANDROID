@@ -27,10 +27,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   - `SobreioApplication` starts Koin with `di/appModules` (`dataModule` provides the `SupabaseClient`; `uiModule` is empty until the first ViewModel).
   - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps any `Throwable` to a
     `domain/error/AppError` and `safeCall` wraps repository calls with it.
-  - `ui/error/ErrorMessages.kt` maps `AppError` to Spanish string resources (`FZ0xx` codes, network, unknown).
+  - `ui/error/ErrorMessages.kt` maps `AppError` to string resources (`FZ0xx` codes, network, unknown).
   - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` → `1.298,15 €`.
   - `navigation/NavigationWrapper.kt` + `Routes.kt`: one `NavDisplay` with a temporary `Welcome` key and screen
     (`ui/welcome/WelcomeScreen.kt`). Sign-in replaces it.
+  - Strings in English (`values/`, default) and Spanish (`values-es/`); `res/resources.properties` declares English as the
+    unqualified locale for the generated locale config.
   - Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures).
   - `res/drawable/ic_sobreio_mark.xml`: the brand mark as a vector; the adaptive launcher icon uses it and follows dark mode.
 - Debug builds allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1` (`src/debug/res/xml/network_security_config.xml`);
@@ -54,7 +56,7 @@ dev.lacruzjs.sobreio/
     repository/  XxxRepository.kt (interface) + SupabaseXxxRepository.kt
   ui/
     theme/       Colors, typography (Lexend, Inter with tabular figures), shapes
-    format/      Money and date formatting (Spanish locale)
+    format/      Money and date formatting in the app language
     error/       ErrorMessages.kt: AppError -> string resource
     components/  Reusable composables (amount text, avatar, bottom sheet keypad)
     <feature>/<screen>/
@@ -85,10 +87,15 @@ plus the `newmovement` bottom sheet. Tests mirror the main packages; fake reposi
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
 - Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
-  `BusinessRule`); ui maps `AppError` to Spanish strings in `ui/error/ErrorMessages.kt`. Each happens in one place.
+  `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
-- Amounts are `Long` cents everywhere; format with the Spanish locale only in the UI.
-- Every user-visible string is a Spanish resource in `res/values/strings.xml`. Code, comments and test names are English.
+- Amounts are `Long` cents everywhere; format them only in the UI with `formatMoney(…, locale)`, passing the locale of
+  the current configuration (`1.298,15 €` in Spanish, `€1,298.15` in English).
+- The app is bilingual. Every user-visible string is a resource with the same key in `res/values/strings.xml` (English,
+  the default for any other device language) and `res/values-es/strings.xml` (Spanish). No literal user text in
+  composables, ViewModels or anywhere in Kotlin, not even a `contentDescription`.
+  Add both translations in the same change; lint `MissingTranslation` fails otherwise. `generateLocaleConfig` gives
+  Android 13+ a per-app language setting. Code, comments and test names are English.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
 - Supabase connection settings come from `local.properties` (git-ignored) through `BuildConfig`:
   `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Only the publishable (anon) key ever ships in the app;
