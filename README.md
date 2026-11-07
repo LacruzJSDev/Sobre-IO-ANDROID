@@ -4,13 +4,15 @@ Cliente Android de Sobre-IO para móvil, tablet y plegable, hecho con Kotlin y J
 dinero están en la base de datos de Supabase (repositorio `Sobre-IO-DB`); la app muestra los datos y llama a su API.
 
 Normas para agentes de IA (en inglés): [AGENTS.md](AGENTS.md). El código, los comentarios y los commits van en
-inglés; los textos que ve el usuario, en español y en `res/values/strings.xml`.
+inglés. La app está en inglés y en español: cada texto que ve el usuario es un recurso con la misma clave en
+`res/values/strings.xml` (inglés, el idioma por defecto) y en `res/values-es/strings.xml` (español). En Android 13 o
+superior se puede elegir el idioma de la app en los ajustes del sistema.
 
 ## Estado
 
 Base técnica lista, sin funciones todavía: Koin, cliente de Supabase (Auth y PostgREST), navegación con
-Navigation 3, tema de la marca, icono adaptativo, traducción de los códigos de error `FZ0xx` a mensajes en español
-y formato de importes. Al abrirla se ve una pantalla de bienvenida provisional, que sustituirá el inicio de sesión.
+Navigation 3, tema de la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en
+inglés y español (incluidos los códigos `FZ0xx`) y formato de importes según el idioma. Al abrirla se ve una pantalla de bienvenida provisional, que sustituirá el inicio de sesión.
 
 Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 

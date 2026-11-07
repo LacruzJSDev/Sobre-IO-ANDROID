@@ -24,12 +24,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 
 - Package and application id: `dev.lacruzjs.sobreio`.
 - Infrastructure only, no features yet:
-  - `SobreioApplication` starts Koin with `di/appModules` (today only `dataModule`, which provides the `SupabaseClient`).
-  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps `FZ0xx` codes,
-    network failures and anything else to string resources.
+  - `SobreioApplication` starts Koin with `di/appModules` (`dataModule` provides the `SupabaseClient`; `uiModule` is empty until the first ViewModel).
+  - `data/remote/SupabaseClient.kt` builds the client from `BuildConfig`; `ErrorMapper.kt` maps any `Throwable` to a
+    `domain/error/AppError` and `safeCall` wraps repository calls with it.
+  - `ui/error/ErrorMessages.kt` maps `AppError` to string resources (`FZ0xx` codes, network, unknown).
   - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode)` → `1.298,15 €`.
   - `navigation/NavigationWrapper.kt` + `Routes.kt`: one `NavDisplay` with a temporary `Welcome` key and screen
     (`ui/welcome/WelcomeScreen.kt`). Sign-in replaces it.
+  - Strings in English (`values/`, default) and Spanish (`values-es/`); `res/resources.properties` declares English as the
+    unqualified locale for the generated locale config.
   - Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures).
   - `res/drawable/ic_sobreio_mark.xml`: the brand mark as a vector; the adaptive launcher icon uses it and follows dark mode.
 - Debug builds allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1` (`src/debug/res/xml/network_security_config.xml`);
@@ -40,23 +43,42 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 
 ```
 dev.lacruzjs.sobreio/
-  SobreioApplication.kt
-  MainActivity.kt
-  di/          Koin modules (one per layer)
-  navigation/  Routes (NavKey), NavigationWrapper (NavDisplay), adaptive scaffold
-  ui/
-    theme/     Colors, typography (Lexend, Inter with tabular figures), shapes
-    format/    Money and date formatting (Spanish locale)
-    components/ Reusable composables (amount text, avatar, bottom sheet keypad)
-    <feature>/ <Feature>Screen.kt, <Feature>ViewModel.kt, <Feature>UiState.kt, <Feature>Event.kt
+  SobreioApplication.kt, MainActivity.kt
+  di/            AppModules.kt, DataModule.kt (client, repositories), UiModule.kt (ViewModels)
+  navigation/    Routes.kt (NavKey), NavigationWrapper.kt (NavDisplay), adaptive scaffold
+  domain/
+    model/       Xxx.kt: plain data classes (amounts as Long cents)
+    error/       AppError.kt
   data/
-    remote/    supabase-kt client setup, @Serializable DTOs, RPC wrappers
-    repository/ <Thing>Repository (interface) + Supabase<Thing>Repository (implementation)
-  domain/      Plain data classes (amounts as Long cents) and pure functions
+    remote/      SupabaseClient.kt, ErrorMapper.kt, SafeCall.kt
+      dto/       XxxDto.kt: @Serializable, @SerialName("snake_case")
+      mapper/    XxxMapper.kt: DTO -> domain
+    repository/  XxxRepository.kt (interface) + SupabaseXxxRepository.kt
+  ui/
+    theme/       Colors, typography (Lexend, Inter with tabular figures), shapes
+    format/      Money and date formatting in the app language
+    error/       ErrorMessages.kt: AppError -> string resource
+    components/  Reusable composables (amount text, avatar, bottom sheet keypad)
+    <feature>/<screen>/
+      XxxScreen.kt     stateless XxxScreen(state, onEvent, modifier) with @Preview, plus a thin XxxRoute
+                       (here or in XxxRoute.kt) that gets the ViewModel with koinViewModel and collects
+                       the state with collectAsStateWithLifecycle
+      XxxViewModel.kt, XxxUiState.kt, XxxEvent.kt
 ```
 
 Features follow the product navigation: `auth`, `groups`, `group` (summary), `accounts`, `envelopes`, `movements`,
-plus the `newmovement` bottom sheet.
+plus the `newmovement` bottom sheet. Tests mirror the main packages; fake repositories live in `test/.../fake/`.
+
+| Layer | Does | Never |
+| --- | --- | --- |
+| ui | Draws state, emits events | Calls repositories, Supabase or the back stack |
+| ViewModel | Handles events, calls repository interfaces, exposes `StateFlow<UiState>` | Imports Compose or Supabase |
+| data | Talks to Supabase, maps DTOs to domain and exceptions to `AppError` through `safeCall` | Knows screens or user text |
+| domain | Plain Kotlin models and `AppError` | Imports Android or Supabase |
+
+- `data` and `domain` are organized by entity (shared across screens); `ui` by screen.
+- Root navigation is driven by the session (signed in -> app, signed out -> auth), so screens never navigate on success.
+- There is no use-case layer: the rules live in the database. Single Gradle module.
 
 ## Rules
 
@@ -64,9 +86,16 @@ plus the `newmovement` bottom sheet.
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Map database error codes `FZ001`–`FZ020` to Spanish string resources in one place (`data/remote/ErrorMapper.kt`).
-- Amounts are `Long` cents everywhere; format with the Spanish locale only in the UI.
-- Every user-visible string is a Spanish resource in `res/values/strings.xml`. Code, comments and test names are English.
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
+  `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
+  Repository implementations wrap calls with `safeCall`.
+- Amounts are `Long` cents everywhere; format them only in the UI with `formatMoney(…, locale)`, passing the locale of
+  the current configuration (`1.298,15 €` in Spanish, `€1,298.15` in English).
+- The app is bilingual. Every user-visible string is a resource with the same key in `res/values/strings.xml` (English,
+  the default for any other device language) and `res/values-es/strings.xml` (Spanish). No literal user text in
+  composables, ViewModels or anywhere in Kotlin, not even a `contentDescription`.
+  Add both translations in the same change; lint `MissingTranslation` fails otherwise. `generateLocaleConfig` gives
+  Android 13+ a per-app language setting. Code, comments and test names are English.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
 - Supabase connection settings come from `local.properties` (git-ignored) through `BuildConfig`:
   `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Only the publishable (anon) key ever ships in the app;
