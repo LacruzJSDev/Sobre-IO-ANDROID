@@ -35,6 +35,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
     unqualified locale for the generated locale config.
   - Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures).
   - `res/drawable/ic_sobreio_mark.xml`: the brand mark as a vector; the adaptive launcher icon uses it and follows dark mode.
+- CI: `.github/workflows/ci.yml` runs `assembleDebug testDebugUnitTest lintDebug` on every PR and push to `main`;
+  `main` only accepts squash-merged PRs with that check green (see the workspace `docs/agents/contributing.md`).
 - Debug builds allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1` (`src/debug/res/xml/network_security_config.xml`);
   release builds are HTTPS only.
 - The `ic_*` drawables in `res/drawable` are icons prepared for the coming screens.

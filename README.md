@@ -34,6 +34,9 @@ Desde la terminal:
     ./gradlew installDebug     # la instala en el dispositivo conectado
     ./gradlew test             # pruebas unitarias
 
+En GitHub, cada pull request compila la app, pasa las pruebas y el lint de forma automática; `main` no acepta cambios
+si esa comprobación falla. Las versiones entregadas se publican como *releases* con la APK adjunta.
+
 Para instalarla en el móvil de pruebas sin Android Studio basta con copiar la APK y abrirla (hay que permitir
 instalar aplicaciones de origen desconocido).
 
