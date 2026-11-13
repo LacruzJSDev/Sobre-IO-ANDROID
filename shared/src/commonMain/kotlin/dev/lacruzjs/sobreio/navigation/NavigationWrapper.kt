@@ -21,7 +21,7 @@ import org.koin.compose.viewmodel.koinViewModel
 /**
  * Top-level navigation: the session decides which tree is shown. Screens only emit events; each tree owns its back
  * stack. A branch has its own composition group, so when the session flips the other tree starts fresh (sign-out
- * lands on sign-in, sign-in lands on Home) and nothing of the old one is restored.
+ * lands on sign-in, sign-in lands on Groups) and nothing of the old one is restored.
  */
 @Composable
 fun NavigationWrapper(
@@ -30,10 +30,10 @@ fun NavigationWrapper(
 ) {
     val authState by sessionViewModel.state.collectAsStateWithLifecycle()
 
-    when (authState) {
+    when (val state = authState) {
         AuthState.Loading -> SessionLoading(modifier)
         AuthState.SignedOut -> AuthNavigation(modifier)
-        is AuthState.SignedIn -> AppNavigation(modifier)
+        is AuthState.SignedIn -> AppNavigation(userId = state.user.id, modifier = modifier)
     }
 }
 

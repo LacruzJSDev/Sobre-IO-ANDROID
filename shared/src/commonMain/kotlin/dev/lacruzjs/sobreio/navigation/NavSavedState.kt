@@ -17,7 +17,9 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(SignUp::class)
             subclass(ConfirmEmail::class)
             subclass(PasswordRecovery::class)
-            subclass(Home::class)
+            subclass(Groups::class)
+            subclass(Group::class)
+            subclass(Profile::class)
         }
     }
 }

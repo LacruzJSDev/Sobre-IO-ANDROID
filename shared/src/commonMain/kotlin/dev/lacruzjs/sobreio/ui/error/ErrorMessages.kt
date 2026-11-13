@@ -25,6 +25,7 @@ import dev.lacruzjs.sobreio.generated.resources.error_fz020_purge
 import dev.lacruzjs.sobreio.generated.resources.error_invalid_code
 import dev.lacruzjs.sobreio.generated.resources.error_invalid_credentials
 import dev.lacruzjs.sobreio.generated.resources.error_network
+import dev.lacruzjs.sobreio.generated.resources.error_not_found
 import dev.lacruzjs.sobreio.generated.resources.error_too_many_requests
 import dev.lacruzjs.sobreio.generated.resources.error_unknown
 import dev.lacruzjs.sobreio.generated.resources.error_weak_password
@@ -40,6 +41,7 @@ fun AppError.messageRes(): StringResource = when (this) {
     AppError.WeakPassword -> Res.string.error_weak_password
     AppError.InvalidCode -> Res.string.error_invalid_code
     AppError.TooManyRequests -> Res.string.error_too_many_requests
+    AppError.NotFound -> Res.string.error_not_found
     is AppError.Unknown -> Res.string.error_unknown
 }
 

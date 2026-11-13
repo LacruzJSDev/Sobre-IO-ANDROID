@@ -15,6 +15,8 @@ supabaseBom = "3.8.0"
 # Must match the Ktor version supabase-kt is built against
 ktor = "3.5.1"
 koinBom = "4.2.2"
+multiplatformSettings = "1.3.0"
+kotlinxDatetime = "0.8.0"
 credentials = "1.6.0"
 googleid = "1.2.1"
 
@@ -43,6 +45,7 @@ navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runt
 navigation3-ui = { group = "org.jetbrains.androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
@@ -60,6 +63,8 @@ koin-core = { group = "io.insert-koin", name = "koin-core" }
 koin-compose = { group = "io.insert-koin", name = "koin-compose" }
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
 koin-android = { group = "io.insert-koin", name = "koin-android" }
+
+multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

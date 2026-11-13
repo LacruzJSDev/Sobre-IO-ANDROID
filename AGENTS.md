@@ -18,6 +18,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user); `kotlinx-datetime` 0.8 (device time zone) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen |
 
@@ -28,8 +29,16 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Package and application id: `dev.lacruzjs.sobreio` (shared module namespace `dev.lacruzjs.sobreio.shared`).
 - Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
-  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x), and a temporary
-  Home screen with sign-out. Root navigation follows the session (`SessionViewModel`).
+  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
+  in a bottom sheet with name and currency, join with an invitation code), the Profile screen (name, email, sign-out)
+  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs, still empty
+  states). Root navigation follows the session (`SessionViewModel`).
+- Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
+  (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
+  stores the group as last once it loads, and clears it (then goes back to Groups) when it does not load because it is
+  gone or the user is no longer a member (`AppError.NotFound`). The store is `SettingsLastGroupStore` on
+  `multiplatform-settings-no-arg` 1.3.0, one key per user id. `kotlinx-datetime` 0.8.0 gives the device time zone that
+  `SupabaseGroupRepository.createGroup` sends to `create_group`.
 - Google sign-in on iOS: the SDK is Swift only (Swift Package Manager in `iosApp/project.yml`, Kotlin does not link it).
   `iosApp/GoogleSignInProvider.swift` implements the Kotlin interface `IosGoogleSignInProvider` and `iOSApp.swift` passes
   it to `setUpKoin(googleSignIn:)`; `GoogleSignInLauncher.ios.kt` generates the nonce and calls it. The iOS OAuth client
@@ -80,6 +89,7 @@ plus the `newmovement` bottom sheet.
 
 ## Rules
 
+- Screen structure follows the workspace `docs/agents/navigation.md`; read it before adding or changing a screen.
 - Common first: write code in `shared/src/commonMain`. Platform code goes only in `androidMain` / `iosMain`, behind an
   `expect`/`actual` declaration or an interface that common code owns (for example `rememberGoogleSignInLauncher`,
   `supabaseUrl`). `:app` and `iosApp` stay thin shells: no screens, no business logic.

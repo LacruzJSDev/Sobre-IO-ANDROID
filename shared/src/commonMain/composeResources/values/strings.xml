@@ -41,7 +41,6 @@
     <string name="confirm_code_resent">We sent you a new code.</string>
     <string name="recovery_email_body">Enter your email and we\'ll send you a code to choose a new password.</string>
     <string name="recovery_reset_body">Enter the code we sent to %1$s and choose a new password.</string>
-    <string name="home_signed_in_as">Signed in as %1$s</string>
 
     <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in ui/error/ErrorMessages.kt -->
     <string name="error_unknown">Something went wrong. Please try again.</string>
@@ -60,7 +59,7 @@
     <string name="error_fz007_unassigned_rule">That isn\'t allowed with the \"Unassigned\" envelope.</string>
     <string name="error_fz008_archive_not_empty">To archive it, the balance must be zero and there can be no active commitments.</string>
     <string name="error_fz009_last_owner">The group can\'t be left without an owner.</string>
-    <string name="error_fz011_invalid_invitation">The invitation isn\'t valid: it has expired or was already used.</string>
+    <string name="error_fz011_invalid_invitation">This invitation code is not valid or has expired.</string>
     <string name="error_fz012_occurrence">That commitment occurrence isn\'t consistent.</string>
     <string name="error_fz013_automatic_movement">The automatic movement isn\'t valid.</string>
     <string name="error_fz014_immutable">That value can\'t be changed.</string>
@@ -70,4 +69,32 @@
     <string name="error_fz018_linked_commitment">The linked commitment isn\'t consistent.</string>
     <string name="error_fz019_cover">An envelope chosen to cover the expense doesn\'t have that amount.</string>
     <string name="error_fz020_purge">Deleting the group was already requested, or there is nothing to cancel.</string>
+
+    <!-- Groups, profile and group shell -->
+    <string name="groups_title">Groups</string>
+    <string name="action_profile_and_settings">Profile and settings</string>
+    <string name="action_back">Back</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_new_group">New group</string>
+    <string name="action_join_with_code">Join with a code</string>
+    <string name="action_create">Create</string>
+    <string name="action_join">Join</string>
+    <string name="groups_empty_title">No groups yet</string>
+    <string name="groups_empty_body">Create a group for your household or join one with an invitation code.</string>
+    <string name="field_group_name">Group name</string>
+    <string name="field_currency">Currency</string>
+    <string name="field_invitation_code">Invitation code</string>
+    <string name="new_group_currency_note">The currency can\'t be changed later.</string>
+    <string name="join_group_title">Join a group</string>
+    <string name="join_group_body">Enter the code a member of the group gave you.</string>
+    <string name="validation_name_too_long">Use at most 100 characters.</string>
+    <string name="tab_group">Group</string>
+    <string name="tab_accounts">Accounts</string>
+    <string name="tab_envelopes">Envelopes</string>
+    <string name="tab_movements">Movements</string>
+    <string name="tab_group_empty">The group summary will appear here.</string>
+    <string name="tab_accounts_empty">Accounts will appear here.</string>
+    <string name="tab_envelopes_empty">Envelopes will appear here.</string>
+    <string name="tab_movements_empty">Movements will appear here.</string>
+    <string name="error_not_found">This doesn\'t exist or you no longer have access to it.</string>
 </resources>

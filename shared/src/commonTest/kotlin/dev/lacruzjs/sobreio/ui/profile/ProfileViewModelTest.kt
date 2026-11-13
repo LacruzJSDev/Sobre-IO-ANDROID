@@ -1,4 +1,4 @@
-package dev.lacruzjs.sobreio.ui.home
+package dev.lacruzjs.sobreio.ui.profile
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
@@ -9,12 +9,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-class HomeViewModelTest : MainDispatcherTest() {
+class ProfileViewModelTest : MainDispatcherTest() {
 
     private val user = User("1", "ana@example.com", "Ana")
     private val auth = FakeAuthRepository(AuthState.SignedIn(user))
     // Lazy: init launches a coroutine, which needs Main replaced first
-    private val viewModel by lazy { HomeViewModel(auth) }
+    private val viewModel by lazy { ProfileViewModel(auth) }
 
     @Test
     fun showsTheSignedInUser() {
@@ -23,7 +23,7 @@ class HomeViewModelTest : MainDispatcherTest() {
 
     @Test
     fun signOutCallsTheRepository() {
-        viewModel.onEvent(HomeEvent.SignOutClicked)
+        viewModel.onEvent(ProfileEvent.SignOutClicked)
 
         assertEquals(listOf("signOut()"), auth.calls)
         assertFalse(viewModel.state.value.isSigningOut)
@@ -32,7 +32,7 @@ class HomeViewModelTest : MainDispatcherTest() {
     @Test
     fun failedSignOutShowsTheError() {
         auth.result = Result.failure(AppError.Network)
-        viewModel.onEvent(HomeEvent.SignOutClicked)
+        viewModel.onEvent(ProfileEvent.SignOutClicked)
 
         assertEquals(AppError.Network, viewModel.state.value.error)
     }

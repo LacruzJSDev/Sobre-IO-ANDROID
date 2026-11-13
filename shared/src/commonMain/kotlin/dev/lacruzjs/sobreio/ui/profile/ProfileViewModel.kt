@@ -1,4 +1,4 @@
-package dev.lacruzjs.sobreio.ui.home
+package dev.lacruzjs.sobreio.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val auth: AuthRepository) : ViewModel() {
+class ProfileViewModel(private val auth: AuthRepository) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeUiState())
-    val state: StateFlow<HomeUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ProfileUiState())
+    val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -24,9 +24,10 @@ class HomeViewModel(private val auth: AuthRepository) : ViewModel() {
         }
     }
 
-    fun onEvent(event: HomeEvent) {
+    fun onEvent(event: ProfileEvent) {
         when (event) {
-            HomeEvent.SignOutClicked -> signOut()
+            ProfileEvent.SignOutClicked -> signOut()
+            ProfileEvent.BackClicked -> Unit
         }
     }
 
