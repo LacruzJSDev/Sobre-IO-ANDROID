@@ -23,10 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.User
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_profile_and_settings
-import dev.lacruzjs.sobreio.generated.resources.action_sign_out
-import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.LoadingButton
+import dev.lacruzjs.sobreio.generated.resources.action_profile
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -44,7 +41,6 @@ fun ProfileRoute(
         onEvent = { event ->
             when (event) {
                 ProfileEvent.BackClicked -> onBack()
-                else -> viewModel.onEvent(event)
             }
         },
         modifier = modifier,
@@ -60,7 +56,7 @@ fun ProfileScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column {
             ScreenHeader(
-                title = stringResource(Res.string.action_profile_and_settings),
+                title = stringResource(Res.string.action_profile),
                 onBack = { onEvent(ProfileEvent.BackClicked) },
             )
             Column(
@@ -80,12 +76,6 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                ErrorText(state.error, modifier = Modifier.fillMaxWidth())
-                LoadingButton(
-                    text = stringResource(Res.string.action_sign_out),
-                    onClick = { onEvent(ProfileEvent.SignOutClicked) },
-                    isLoading = state.isSigningOut,
-                )
             }
         }
     }

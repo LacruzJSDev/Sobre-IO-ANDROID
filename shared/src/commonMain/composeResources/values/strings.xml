@@ -72,7 +72,7 @@
 
     <!-- Groups, profile and group shell -->
     <string name="groups_title">Groups</string>
-    <string name="action_profile_and_settings">Profile and settings</string>
+    <string name="action_profile">Profile</string>
     <string name="action_back">Back</string>
     <string name="action_retry">Try again</string>
     <string name="action_new_group">New group</string>
@@ -80,7 +80,7 @@
     <string name="action_create">Create</string>
     <string name="action_join">Join</string>
     <string name="groups_empty_title">No groups yet</string>
-    <string name="groups_empty_body">Create a group for your household or join one with an invitation code.</string>
+    <string name="groups_empty_body">Create a group for your household with the + button, or join one with an invitation code.</string>
     <string name="field_group_name">Group name</string>
     <string name="field_currency">Currency</string>
     <string name="field_invitation_code">Invitation code</string>

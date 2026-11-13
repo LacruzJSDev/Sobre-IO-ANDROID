@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.groups
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -14,7 +15,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
-class GroupsViewModel(private val groups: GroupRepository) : ViewModel() {
+class GroupsViewModel(
+    private val groups: GroupRepository,
+    private val auth: AuthRepository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupsUiState())
     val state: StateFlow<GroupsUiState> = _state.asStateFlow()
@@ -23,6 +27,7 @@ class GroupsViewModel(private val groups: GroupRepository) : ViewModel() {
         when (event) {
             GroupsEvent.Refresh -> load()
             GroupsEvent.NewGroupClicked -> _state.update { it.openSheet(GroupsSheet.Create) }
+            GroupsEvent.SignOutClicked -> signOut()
             GroupsEvent.JoinClicked -> _state.update { it.openSheet(GroupsSheet.Join) }
             GroupsEvent.SheetDismissed -> _state.update { if (it.isSubmitting) it else it.copy(sheet = GroupsSheet.None) }
             is GroupsEvent.GroupNameChanged ->
@@ -42,6 +47,17 @@ class GroupsViewModel(private val groups: GroupRepository) : ViewModel() {
             groups.getGroups()
                 .onSuccess { list -> _state.update { it.copy(groups = list, isLoading = false, error = null) } }
                 .onFailure { e -> _state.update { it.copy(isLoading = false, error = e.asAppError()) } }
+        }
+    }
+
+    private fun signOut() {
+        if (_state.value.isSigningOut) return
+        _state.update { it.copy(isSigningOut = true, signOutError = null) }
+        viewModelScope.launch {
+            // On success the session ends and root navigation shows sign-in
+            auth.signOut()
+                .onSuccess { _state.update { it.copy(isSigningOut = false) } }
+                .onFailure { e -> _state.update { it.copy(isSigningOut = false, signOutError = e.asAppError()) } }
         }
     }
 

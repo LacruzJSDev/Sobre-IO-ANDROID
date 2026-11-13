@@ -49,7 +49,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   maps `AppError` to string resources.
 - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode, languageTag)` gives `1.298,15 €` for `es`,
   `€1,298.15` otherwise; only the euro has a symbol, other currencies show their ISO code (`USD 1,298.15`).
-- Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
+- Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and a fixed
+  bottom section (divider, then "Join with a code", "Profile", "Sign out" as `ListRow`s; sign-out lives in
+  `GroupsViewModel`). Profile shows name and email only; no Settings row until the app has settings.
+- Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
+  `LightSoft`/`DarkSoft` for higher containers, chips and the selected tab; `*Line` for dividers; colours as in the
+  prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local

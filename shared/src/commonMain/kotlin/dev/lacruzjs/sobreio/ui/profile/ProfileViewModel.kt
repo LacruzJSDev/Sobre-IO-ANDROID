@@ -3,7 +3,6 @@ package dev.lacruzjs.sobreio.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
-import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,19 +25,8 @@ class ProfileViewModel(private val auth: AuthRepository) : ViewModel() {
 
     fun onEvent(event: ProfileEvent) {
         when (event) {
-            ProfileEvent.SignOutClicked -> signOut()
+            // Handled by the Route, which owns the back stack
             ProfileEvent.BackClicked -> Unit
-        }
-    }
-
-    private fun signOut() {
-        if (_state.value.isSigningOut) return
-        _state.update { it.copy(isSigningOut = true, error = null) }
-        viewModelScope.launch {
-            // On success the session ends and root navigation shows sign-in
-            auth.signOut()
-                .onSuccess { _state.update { it.copy(isSigningOut = false) } }
-                .onFailure { e -> _state.update { it.copy(isSigningOut = false, error = e.asAppError()) } }
         }
     }
 }

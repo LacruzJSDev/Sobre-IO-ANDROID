@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.groups
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Group
+import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
@@ -16,7 +17,8 @@ import kotlin.test.assertTrue
 class GroupsViewModelTest : MainDispatcherTest() {
 
     private val repository = FakeGroupRepository(listOf(Group("1", "Casa", "EUR")))
-    private val viewModel by lazy { GroupsViewModel(repository) }
+    private val auth = FakeAuthRepository()
+    private val viewModel by lazy { GroupsViewModel(repository, auth) }
 
     @Test
     fun refreshLoadsTheGroups() {
@@ -120,5 +122,23 @@ class GroupsViewModelTest : MainDispatcherTest() {
 
         assertEquals(Res.string.validation_required, viewModel.state.value.codeError)
         assertTrue(repository.calls.isEmpty())
+    }
+
+    @Test
+    fun signOutCallsTheRepository() {
+        viewModel.onEvent(GroupsEvent.SignOutClicked)
+
+        assertEquals(listOf("signOut()"), auth.calls)
+        assertFalse(viewModel.state.value.isSigningOut)
+        assertNull(viewModel.state.value.signOutError)
+    }
+
+    @Test
+    fun failedSignOutShowsTheError() {
+        auth.result = Result.failure(AppError.Network)
+        viewModel.onEvent(GroupsEvent.SignOutClicked)
+
+        assertEquals(AppError.Network, viewModel.state.value.signOutError)
+        assertFalse(viewModel.state.value.isSigningOut)
     }
 }

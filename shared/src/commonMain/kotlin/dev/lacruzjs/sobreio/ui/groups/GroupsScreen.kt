@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -18,13 +20,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -45,8 +47,9 @@ import dev.lacruzjs.sobreio.generated.resources.action_create
 import dev.lacruzjs.sobreio.generated.resources.action_join
 import dev.lacruzjs.sobreio.generated.resources.action_join_with_code
 import dev.lacruzjs.sobreio.generated.resources.action_new_group
-import dev.lacruzjs.sobreio.generated.resources.action_profile_and_settings
+import dev.lacruzjs.sobreio.generated.resources.action_profile
 import dev.lacruzjs.sobreio.generated.resources.action_retry
+import dev.lacruzjs.sobreio.generated.resources.action_sign_out
 import dev.lacruzjs.sobreio.generated.resources.field_currency
 import dev.lacruzjs.sobreio.generated.resources.field_group_name
 import dev.lacruzjs.sobreio.generated.resources.field_invitation_code
@@ -54,7 +57,6 @@ import dev.lacruzjs.sobreio.generated.resources.groups_empty_body
 import dev.lacruzjs.sobreio.generated.resources.groups_empty_title
 import dev.lacruzjs.sobreio.generated.resources.groups_title
 import dev.lacruzjs.sobreio.generated.resources.ic_add
-import dev.lacruzjs.sobreio.generated.resources.ic_settings
 import dev.lacruzjs.sobreio.generated.resources.join_group_body
 import dev.lacruzjs.sobreio.generated.resources.join_group_title
 import dev.lacruzjs.sobreio.generated.resources.new_group_currency_note
@@ -62,6 +64,7 @@ import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.GroupAvatar
+import dev.lacruzjs.sobreio.ui.components.ListRow
 import dev.lacruzjs.sobreio.ui.components.LoadingButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -108,52 +111,41 @@ fun GroupsScreen(
     onEvent: (GroupsEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
+    Surface(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
                 title = stringResource(Res.string.groups_title),
                 actions = {
-                    IconButton(onClick = { onEvent(GroupsEvent.ProfileClicked) }) {
+                    IconButton(onClick = { onEvent(GroupsEvent.NewGroupClicked) }) {
                         Icon(
-                            painter = painterResource(Res.drawable.ic_settings),
-                            contentDescription = stringResource(Res.string.action_profile_and_settings),
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = stringResource(Res.string.action_new_group),
                         )
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { onEvent(GroupsEvent.NewGroupClicked) },
-                icon = { Icon(painter = painterResource(Res.drawable.ic_add), contentDescription = null) },
-                text = { Text(stringResource(Res.string.action_new_group)) },
-            )
-        },
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                .fillMaxSize(),
-        ) {
-            when {
-                state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                state.groups.isEmpty() && state.error != null -> EmptyState(
-                    message = stringResource(state.error.messageRes()),
-                ) {
-                    TextButton(onClick = { onEvent(GroupsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
-                }
-                state.groups.isEmpty() -> EmptyState(
-                    title = stringResource(Res.string.groups_empty_title),
-                    message = stringResource(Res.string.groups_empty_body),
-                ) {
-                    TextButton(onClick = { onEvent(GroupsEvent.JoinClicked) }) {
-                        Text(stringResource(Res.string.action_join_with_code))
+            // The list is the only part that scrolls
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+            ) {
+                when {
+                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.groups.isEmpty() && state.error != null -> EmptyState(
+                        message = stringResource(state.error.messageRes()),
+                    ) {
+                        TextButton(onClick = { onEvent(GroupsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                     }
+                    state.groups.isEmpty() -> EmptyState(
+                        title = stringResource(Res.string.groups_empty_title),
+                        message = stringResource(Res.string.groups_empty_body),
+                    )
+                    else -> GroupList(state.groups, onEvent)
                 }
-                else -> GroupList(state.groups, onEvent)
             }
+            BottomActions(state, onEvent)
         }
     }
 
@@ -168,8 +160,7 @@ fun GroupsScreen(
 private fun GroupList(groups: List<Group>, onEvent: (GroupsEvent) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        // Room under the last row so the floating button never covers it
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items(groups, key = { it.id }) { group ->
@@ -196,10 +187,41 @@ private fun GroupList(groups: List<Group>, onEvent: (GroupsEvent) -> Unit) {
                 }
             }
         }
-        item {
-            TextButton(onClick = { onEvent(GroupsEvent.JoinClicked) }) {
-                Text(stringResource(Res.string.action_join_with_code))
+    }
+}
+
+/** Fixed section under the list. New rows (for example Settings) go inside the Column. */
+@Composable
+private fun BottomActions(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+    ) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        state.signOutError?.let {
+            ErrorText(it, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp))
+        }
+        ListRow(
+            text = stringResource(Res.string.action_join_with_code),
+            onClick = { onEvent(GroupsEvent.JoinClicked) },
+            showChevron = true,
+        )
+        ListRow(
+            text = stringResource(Res.string.action_profile),
+            onClick = { onEvent(GroupsEvent.ProfileClicked) },
+            showChevron = true,
+        )
+        if (state.isSigningOut) {
+            Box(modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
             }
+        } else {
+            ListRow(
+                text = stringResource(Res.string.action_sign_out),
+                onClick = { onEvent(GroupsEvent.SignOutClicked) },
+            )
         }
     }
 }

@@ -24,6 +24,9 @@ data class GroupsUiState(
     val isSubmitting: Boolean = false,
     /** Failure of creating or joining, shown inside the open sheet. */
     val submitError: AppError? = null,
+    val isSigningOut: Boolean = false,
+    /** Failure of signing out, shown above the bottom section. */
+    val signOutError: AppError? = null,
     /** Id of the group to open after creating or joining one. The Route consumes it. */
     val navigateToGroup: String? = null,
 )

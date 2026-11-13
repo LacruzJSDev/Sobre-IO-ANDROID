@@ -4,11 +4,12 @@ sealed interface GroupsEvent {
     /** Load the list; sent each time the screen is shown. */
     data object Refresh : GroupsEvent
 
-    /** The next three are handled by the Route, which owns the back stack. */
+    /** ProfileClicked and GroupClicked are handled by the Route, which owns the back stack. */
     data object ProfileClicked : GroupsEvent
     data class GroupClicked(val groupId: String) : GroupsEvent
 
     data object NewGroupClicked : GroupsEvent
+    data object SignOutClicked : GroupsEvent
     data object JoinClicked : GroupsEvent
     data object SheetDismissed : GroupsEvent
 

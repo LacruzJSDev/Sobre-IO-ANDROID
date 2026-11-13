@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand inks, same values as ui/theme/Color.kt -->
-    <color name="page">#FFF1F1F0</color>
+    <color name="page">#FFFFFFFF</color>
     <color name="icon_background">#FFFFFFFF</color>
     <color name="icon_ink">#FF0C0C0C</color>
 </resources>

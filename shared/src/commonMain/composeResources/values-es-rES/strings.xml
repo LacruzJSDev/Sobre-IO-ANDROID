@@ -71,7 +71,7 @@
 
     <!-- Groups, profile and group shell -->
     <string name="groups_title">Grupos</string>
-    <string name="action_profile_and_settings">Perfil y ajustes</string>
+    <string name="action_profile">Perfil</string>
     <string name="action_back">Atrás</string>
     <string name="action_retry">Reintentar</string>
     <string name="action_new_group">Nuevo grupo</string>
@@ -79,7 +79,7 @@
     <string name="action_create">Crear</string>
     <string name="action_join">Unirme</string>
     <string name="groups_empty_title">Todavía no tienes grupos</string>
-    <string name="groups_empty_body">Crea un grupo para tu hogar o únete a uno con un código de invitación.</string>
+    <string name="groups_empty_body">Crea un grupo para tu hogar con el botón +, o únete a uno con un código de invitación.</string>
     <string name="field_group_name">Nombre del grupo</string>
     <string name="field_currency">Moneda</string>
     <string name="field_invitation_code">Código de invitación</string>
