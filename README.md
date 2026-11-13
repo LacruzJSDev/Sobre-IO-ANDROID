@@ -19,7 +19,7 @@ está a mano en `app/src/main/res/xml/locales_config.xml`); en iOS se usa el idi
 Base técnica y autenticación listas: registro con confirmación del correo mediante un código de 6 dígitos, inicio de
 sesión, recuperación de la contraseña con otro código y pantalla provisional de sesión iniciada con cierre de sesión
 (la sustituirá la lista de grupos). El inicio de sesión con Google está programado, pero no se puede probar hasta tener
-las credenciales de Google; en iOS el botón de Google no aparece todavía (falta integrar el SDK de Google para iOS).
+las credenciales de Google.
 Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de
 la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en inglés y español y formato
 de importes según el idioma.
@@ -127,3 +127,7 @@ Además, en el mismo proyecto de Google Cloud tiene que existir un cliente OAuth
 
 Para la APK de publicación hace falta otro cliente Android con la huella de su clave. El emulador necesita una cuenta de
 Google iniciada.
+
+En iOS se usa el SDK GoogleSignIn (Swift Package Manager). Hace falta un cliente OAuth de tipo **iOS** con el bundle id
+`dev.lacruzjs.sobreio`; su identificador y el esquema de URL invertido están en `iosApp/project.yml` (`GIDClientID` y
+`CFBundleURLTypes`). El botón también depende de `GOOGLE_WEB_CLIENT_ID` en `local.properties`.

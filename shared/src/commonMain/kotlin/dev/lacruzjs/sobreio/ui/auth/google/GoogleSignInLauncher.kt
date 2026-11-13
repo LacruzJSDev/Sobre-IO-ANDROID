@@ -13,9 +13,9 @@ fun interface GoogleSignInLauncher {
 }
 
 /**
- * The launcher of this platform, or null when Google sign-in is not available: no [webClientId] configured, or a
- * platform without an implementation yet (iOS). [webClientId] is the Google *web* client id: Supabase checks the
- * token against it, not the Android client.
+ * The launcher of this platform, or null when Google sign-in is not available: no [webClientId] configured (the Google
+ * *web* client id: Supabase checks the token against it, not the Android client), or no iOS provider registered. On iOS
+ * [webClientId] is only the "configured" switch; the iOS client id lives in `iosApp/project.yml`.
  */
 @Composable
 expect fun rememberGoogleSignInLauncher(webClientId: String): GoogleSignInLauncher?
