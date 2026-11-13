@@ -46,7 +46,7 @@ fun SignInRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    // Null where Google sign-in is not available (iOS for now, or no web client id configured): the button is hidden
+    // Null where Google sign-in is not available (no web client id configured, or no iOS provider registered): the button is hidden
     val googleSignIn = rememberGoogleSignInLauncher(AppConfig.GOOGLE_WEB_CLIENT_ID)
 
     state.navigateToConfirm?.let { email ->

@@ -13,6 +13,10 @@ settings:
     CODE_SIGN_STYLE: Automatic
     # The Gradle build phase writes outside the sandbox
     ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 9.0.0
 targets:
   iosApp:
     type: application
@@ -42,6 +46,13 @@ targets:
         # The local Supabase stack answers over plain HTTP; hosted projects use HTTPS
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # Client ID of the Google OAuth client of type iOS, and its reversed form as URL scheme for the sign-in redirect.
+        # Client IDs are public (they ship in every app), not secrets. GIDServerClientID is not set: the ID token is
+        # issued for this iOS client and Supabase accepts it as an audience.
+        GIDClientID: 456090813163-4nt87pbvlqh86vaecgdsg973td859ai0.apps.googleusercontent.com
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - com.googleusercontent.apps.456090813163-4nt87pbvlqh86vaecgdsg973td859ai0
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.lacruzjs.sobreio
@@ -51,6 +62,9 @@ targets:
         FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
         OTHER_LDFLAGS: [$(inherited), -framework, Shared]
         TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - package: GoogleSignIn
+        product: GoogleSignIn
     preBuildScripts:
       - name: Build the shared Kotlin framework
         basedOnDependencyAnalysis: false
