@@ -1,4 +1,4 @@
-# Every pull request and every push to main must build, pass the unit tests and pass lint.
+# Every pull request and every push to main must build the Android app, pass the shared unit tests and pass lint.
 # The job name "build" is the required status check that protects main.
 name: CI
 
@@ -31,10 +31,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # No local.properties in CI: BuildConfig falls back to the emulator URL and an empty key,
-      # which is enough to build and run unit tests (they never reach Supabase)
+      # No local.properties in CI: AppConfig falls back to the emulator URL and an empty key,
+      # which is enough to build and run unit tests (they never reach Supabase).
+      # The iOS app is not built here: it needs a macOS runner and Xcode. Run the shared tests and the iOS build locally.
       - name: Build, unit tests and lint
-        run: ./gradlew assembleDebug testDebugUnitTest lintDebug --console=plain
+        run: ./gradlew :app:assembleDebug :shared:testAndroidHostTest :app:lintDebug --console=plain
 
       - name: Upload test and lint reports
         if: failure()
@@ -43,4 +44,5 @@ jobs:
           name: reports
           path: |
             app/build/reports/
-            app/build/test-results/
+            shared/build/reports/
+            shared/build/test-results/

@@ -23,4 +23,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "sobre-io"
+include(":shared")
 include(":app")
