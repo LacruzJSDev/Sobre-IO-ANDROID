@@ -50,11 +50,27 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode, languageTag)` gives `1.298,15 €` for `es`,
   `€1,298.15` otherwise; only the euro has a symbol, other currencies show their ISO code (`USD 1,298.15`).
 - Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and a fixed
-  bottom section (divider, then "Join with a code", "Profile", "Sign out" as `ListRow`s; sign-out lives in
-  `GroupsViewModel`). Profile shows name and email only; no Settings row until the app has settings.
+  bottom section with no divider (spacing only): "Join with a code" and "Profile" as `PrimaryButton`s and "Sign out" as a
+  `DestructiveButton`. Each row swipes left (`SwipeActionsRow`): Edit (owner and admin; bottom sheet with the name, the
+  currency is read-only) and Delete (owner) or Leave (admin, member). Delete and Leave are never confirmed: the row
+  disappears at once and an "Undo" snackbar follows (`UndoController`, see Rules). Owner delete calls
+  `request_group_purge` immediately and Undo calls `cancel_group_purge`; groups with `purge_requested_at` are not listed.
+  Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is updated only when the snackbar
+  ends without Undo. `SupabaseGroupRepository` loads groups with the user's role through PostgREST embedding
+  (`account_group_members!inner(role)`, filtered to the user and `left_at is null`). Profile shows name and email only.
+- Group shell: the header's right side holds "Invite" (owner and admin, Group tab: creates an `invitations` row and shows
+  its code with a copy button) and, on Accounts, Envelopes and Movements, a "+" that opens a "Coming soon" sheet until
+  those features exist.
+- Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
+  elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
+  selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
+  Leave swipe action). No dividers and no settings-style rows with chevrons: separate with spacing. Corners come from
+  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
+  There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
+  `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
 - Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
-  `LightSoft`/`DarkSoft` for higher containers, chips and the selected tab; `*Line` for dividers; colours as in the
-  prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
+  `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
+  in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local
@@ -121,6 +137,11 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Lists: rows swipe left for Edit/Delete with `SwipeActionsRow`; creation is the "+" in the header; there are no
+  per-item settings screens. Destructive actions are never confirmed with a dialog: the item is hidden at once (soft
+  delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,
+  restore))`; `commit` runs when the snackbar ends, another destructive action starts, the screen is shown again or the
+  ViewModel is cleared; failures restore the row and show the error. The screen shows `UndoMessage` with `UndoSnackbarHost`.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;

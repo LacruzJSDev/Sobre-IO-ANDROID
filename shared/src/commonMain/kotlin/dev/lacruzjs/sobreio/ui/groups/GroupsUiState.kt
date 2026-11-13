@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.groups
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Group
+import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 import org.jetbrains.compose.resources.StringResource
 
 /** Currencies a group can be created in. The choice is final, so the list stays short and fixed. */
@@ -16,6 +17,8 @@ data class GroupsUiState(
     /** Failure of loading the list. */
     val error: AppError? = null,
     val sheet: GroupsSheet = GroupsSheet.None,
+    /** Group being edited while the Edit sheet is open; its currency is shown read-only. */
+    val editingGroup: Group? = null,
     val name: String = "",
     val nameError: StringResource? = null,
     val currency: String = GroupCurrencies.first(),
@@ -27,6 +30,10 @@ data class GroupsUiState(
     val isSigningOut: Boolean = false,
     /** Failure of signing out, shown above the bottom section. */
     val signOutError: AppError? = null,
+    /** Failure of deleting, leaving or undoing, shown above the bottom section. */
+    val actionError: AppError? = null,
+    /** Snackbar with "Undo" for the last delete or leave. */
+    val undoMessage: UndoMessage? = null,
     /** Id of the group to open after creating or joining one. The Route consumes it. */
     val navigateToGroup: String? = null,
 )

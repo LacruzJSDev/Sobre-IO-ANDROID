@@ -9,6 +9,15 @@ sealed interface GroupsEvent {
     data class GroupClicked(val groupId: String) : GroupsEvent
 
     data object NewGroupClicked : GroupsEvent
+
+    /** Swipe actions of a row. Delete means "request deletion" for an owner and "leave" for anyone else; no confirmation. */
+    data class EditClicked(val groupId: String) : GroupsEvent
+    data class DeleteClicked(val groupId: String) : GroupsEvent
+    data object EditConfirmed : GroupsEvent
+
+    /** The undo snackbar: "Undo" was tapped, or it timed out. */
+    data object UndoClicked : GroupsEvent
+    data object UndoExpired : GroupsEvent
     data object SignOutClicked : GroupsEvent
     data object JoinClicked : GroupsEvent
     data object SheetDismissed : GroupsEvent

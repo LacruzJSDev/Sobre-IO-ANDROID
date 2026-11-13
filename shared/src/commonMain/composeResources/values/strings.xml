@@ -58,7 +58,7 @@
     <string name="error_fz006_no_delete">This can\'t be deleted. Movements are voided instead.</string>
     <string name="error_fz007_unassigned_rule">That isn\'t allowed with the \"Unassigned\" envelope.</string>
     <string name="error_fz008_archive_not_empty">To archive it, the balance must be zero and there can be no active commitments.</string>
-    <string name="error_fz009_last_owner">The group can\'t be left without an owner.</string>
+    <string name="error_fz009_last_owner">You are the only owner; transfer ownership before leaving.</string>
     <string name="error_fz011_invalid_invitation">This invitation code is not valid or has expired.</string>
     <string name="error_fz012_occurrence">That commitment occurrence isn\'t consistent.</string>
     <string name="error_fz013_automatic_movement">The automatic movement isn\'t valid.</string>
@@ -97,4 +97,24 @@
     <string name="tab_envelopes_empty">Envelopes will appear here.</string>
     <string name="tab_movements_empty">Movements will appear here.</string>
     <string name="error_not_found">This doesn\'t exist or you no longer have access to it.</string>
+
+    <!-- Edit, delete and leave a group; creation sheets of the group tabs -->
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_leave">Leave</string>
+    <string name="action_save">Save</string>
+    <string name="action_undo">Undo</string>
+    <string name="group_deleted">%1$s deleted</string>
+    <string name="group_left">Left %1$s</string>
+    <string name="action_invite_to_group">Invite to the group</string>
+    <string name="invite_title">Invite to the group</string>
+    <string name="invite_body">Share this code. Whoever enters it joins the group.</string>
+    <string name="invite_valid_until">Valid until %1$s</string>
+    <string name="action_copy_code">Copy code</string>
+    <string name="code_copied">Code copied</string>
+    <string name="edit_group_title">Edit group</string>
+    <string name="action_new_account">New account</string>
+    <string name="action_new_envelope">New envelope</string>
+    <string name="action_new_movement">New movement</string>
+    <string name="coming_soon">Coming soon</string>
 </resources>

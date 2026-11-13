@@ -57,7 +57,7 @@
     <string name="error_fz006_no_delete">Esto no se puede borrar. Los movimientos se anulan.</string>
     <string name="error_fz007_unassigned_rule">Esa operación no está permitida con el sobre «Sin asignar».</string>
     <string name="error_fz008_archive_not_empty">Para archivar, el saldo tiene que ser cero y no puede haber compromisos activos.</string>
-    <string name="error_fz009_last_owner">El grupo no puede quedarse sin propietario.</string>
+    <string name="error_fz009_last_owner">Eres el único propietario; transfiere la propiedad antes de salir.</string>
     <string name="error_fz011_invalid_invitation">Este código de invitación no es válido o ha caducado.</string>
     <string name="error_fz012_occurrence">Ese vencimiento del compromiso no es coherente.</string>
     <string name="error_fz013_automatic_movement">El movimiento automático no es válido.</string>
@@ -96,4 +96,24 @@
     <string name="tab_envelopes_empty">Aquí aparecerán los sobres.</string>
     <string name="tab_movements_empty">Aquí aparecerán los movimientos.</string>
     <string name="error_not_found">Esto no existe o ya no tienes acceso.</string>
+
+    <!-- Editar, eliminar y salir de un grupo; hojas de creación de las pestañas del grupo -->
+    <string name="action_edit">Editar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_leave">Salir</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_undo">Deshacer</string>
+    <string name="group_deleted">%1$s eliminado</string>
+    <string name="group_left">Has salido de %1$s</string>
+    <string name="action_invite_to_group">Invitar al grupo</string>
+    <string name="invite_title">Invitar al grupo</string>
+    <string name="invite_body">Comparte este código. Quien lo introduzca entrará en el grupo.</string>
+    <string name="invite_valid_until">Válido hasta el %1$s</string>
+    <string name="action_copy_code">Copiar código</string>
+    <string name="code_copied">Código copiado</string>
+    <string name="edit_group_title">Editar grupo</string>
+    <string name="action_new_account">Nueva cuenta</string>
+    <string name="action_new_envelope">Nuevo sobre</string>
+    <string name="action_new_movement">Nuevo movimiento</string>
+    <string name="coming_soon">Próximamente</string>
 </resources>

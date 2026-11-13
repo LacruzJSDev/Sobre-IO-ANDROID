@@ -30,6 +30,12 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerHighest = DarkSoft,
     outline = DarkMuted,
     outlineVariant = DarkLine,
+    error = DarkRed,
+    onError = DarkPaper,
+    errorContainer = DarkRedSoft,
+    onErrorContainer = DarkRedInk,
+    // Flat: Material tints raised surfaces with this colour; the paper colour makes the tint invisible
+    surfaceTint = DarkPaper,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -56,6 +62,11 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = LightSoft,
     outline = LightMuted,
     outlineVariant = LightLine,
+    error = LightRed,
+    onError = LightPaper,
+    errorContainer = LightRedSoft,
+    onErrorContainer = LightRedInk,
+    surfaceTint = LightPaper,
 )
 
 @Composable
@@ -66,6 +77,7 @@ fun SobreioTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = sobreioTypography(),
+        shapes = SobreioShapes,
         content = content
     )
 }

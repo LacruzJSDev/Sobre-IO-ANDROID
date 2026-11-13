@@ -38,8 +38,22 @@ class GroupViewModel(
         when (event) {
             GroupEvent.Retry -> load()
             GroupEvent.NavigationHandled -> _state.update { it.copy(navigateBack = false) }
+            GroupEvent.NewItemClicked -> _state.update { it.copy(newItemSheetOpen = true) }
+            GroupEvent.NewItemDismissed -> _state.update { it.copy(newItemSheetOpen = false) }
+            GroupEvent.InviteClicked -> invite()
+            GroupEvent.InviteDismissed -> _state.update { it.copy(inviteSheetOpen = false) }
             // Handled by the Route
             GroupEvent.BackClicked, is GroupEvent.TabSelected -> Unit
+        }
+    }
+
+    private fun invite() {
+        if (_state.value.group?.canEdit != true || _state.value.isInviting) return
+        _state.update { it.copy(inviteSheetOpen = true, isInviting = true, invitation = null, inviteError = null) }
+        viewModelScope.launch {
+            groups.createInvitation(groupId)
+                .onSuccess { invitation -> _state.update { it.copy(isInviting = false, invitation = invitation) } }
+                .onFailure { e -> _state.update { it.copy(isInviting = false, inviteError = e.asAppError()) } }
         }
     }
 

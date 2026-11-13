@@ -25,7 +25,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_code
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.components.LoadingButton
+import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -84,7 +84,7 @@ fun ConfirmEmailScreen(
             )
         }
         ErrorText(state.error, modifier = Modifier.fillMaxWidth())
-        LoadingButton(
+        PrimaryButton(
             text = stringResource(Res.string.action_confirm),
             onClick = { onEvent(ConfirmEmailEvent.ConfirmClicked) },
             isLoading = state.isLoading,
