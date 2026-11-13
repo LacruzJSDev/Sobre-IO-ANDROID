@@ -25,6 +25,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -82,7 +83,10 @@ fun SwipeActionsRow(
     val shape = MaterialTheme.shapes.medium
     Box(modifier = modifier.fillMaxWidth().clip(shape)) {
         Row(
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier
+                .matchParentSize()
+                // Antialiased rounded corners would peek out at the row's edge while it is closed
+                .drawWithContent { if (state.offset.takeIf { !it.isNaN() }?.let { it < 0f } == true) drawContent() },
             horizontalArrangement = Arrangement.End,
         ) {
             actions.forEach { action ->
