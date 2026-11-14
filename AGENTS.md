@@ -93,8 +93,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   month" when the target is above 0 and the holder ("Common" or the member) when the group has several members, balance.
   `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe Reopen (snackbar
   with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with Undo, FZ008
-  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips ("Unassigned" by
-  default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
+  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as an `EntitySelect` ("Unassigned" by
+  default, each envelope with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
   nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
@@ -119,7 +119,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   group pops the form and opens the new group.
   Account form (`AccountFormViewModel`, loads members too): the avatar (colour + account icon) next to the name; "Appearance"
   (`ColorFormTile`, `IconFormTile` from `ui/components/AppearanceTiles.kt`, shared by the three forms); "Account": Kind
-  (expandable, `FormChip`s), Holder (expandable with `HolderPicker`, "Joint" or a member; hidden when the group has one active
+  (expandable, `FormChip`s), Holder (`EntitySelect` with "Joint" and the members, initial avatar and role label; hidden when the group has one active
   member), "Shares its money into envelopes" (a `Switch` tile with a note; on edit the note adds "From today; if it has a
   balance it moves between Unassigned and the money outside the envelopes") and, only when creating, the opening balance.
   Create sends every field to `create_account` (`p_in_envelopes`, `p_owner_user_id`, `p_color`, `p_icon`). Edit: when the switch
@@ -179,14 +179,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `CommitmentDetailViewModel` with Koin params by position): `ScreenHeader` with the kind-icon avatar, the name and the account of the
   version shown as subtitle; a pencil (`Group.canEdit`, live commitment, editable kind, a contribution also needs its link) opens
   `CommitmentForm`; the screen reloads each time it is shown. Content: a line with the signed amount, the frequency and "Archived";
-  "History" (`CommitmentRepository.getOccurrences`, `commitment_occurrences` with `transactions(...)` / `account_transfers(...)`
-  embedded, latest 24, newest first: due date, the registered amount signed for the account and the movement's date when it differs,
-  or "Skipped"); "Changes" (the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
+  "History" (a `CollapsibleListSection`, open by default, count in the header; `CommitmentRepository.getOccurrences(id, offset, limit = 20)`
+  returns an `OccurrencePage` with the exact total (`count(Count.EXACT)` + `range`) from `commitment_occurrences` with `transactions(...)` / `account_transfers(...)`
+  embedded, newest first; the ViewModel appends the next page on `LoadMoreOccurrences` (ignored while loading or when all is loaded; a failure keeps the rows and shows a retry in the section); rows: due date, the registered amount signed for the account and the movement's date when it differs,
+  or "Skipped"); "Changes" (a `CollapsibleListSection`, folded unless there is a single version; the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
   frequency, the account when it differs from the previous version, the envelope of an expense). It has no pending, confirm or skip
   actions: pending occurrences are reviewed only in the Group tab.
 - Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
-  avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (fixed
-  account, destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
+  avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (every choice of an account, envelope or group is an `EntitySelect`: account (locked when creating),
+  destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
   database uses "Outside envelopes"; a contribution: destination group (other live groups with the same currency where the user is
   owner/admin), account, optional source and destination envelope), "Calendar" (`DateFormTile`, repeats switch, every N stepper 1-99,
   unit chips, optional end date), "Registration" (auto register, default off and on for contributions; "funded" only when the DB allows it:
@@ -228,8 +229,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   variant); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 20, Account 20, Envelope 32;
   keys are snake_case English, stored in the DB `icon` column, never rename them; `iconFor` is null for unknown keys).
   Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker` (used directly in the
-  forms, no sheet) and `HolderPicker` (Joint plus one
-  chip per member; hide it with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
+  forms, no sheet) and `EntitySelect` (see Rules; the holder is "Joint"/"Common" plus one option per member, hidden with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
   with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
   (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
@@ -312,6 +312,11 @@ plus the `newmovement` bottom sheet.
   right, never a large button.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
+- Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
+  inline list under the tile with its own scroll, a search box over 8 options, `EntityOption` with optional special first options such as
+  "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
+- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, bounded height with
+  their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
   Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
   grey, Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,

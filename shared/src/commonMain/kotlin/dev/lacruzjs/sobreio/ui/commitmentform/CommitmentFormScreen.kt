@@ -86,6 +86,8 @@ import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.EntityOption
+import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
@@ -95,6 +97,9 @@ import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
 import dev.lacruzjs.sobreio.ui.components.expandedStateText
+import dev.lacruzjs.sobreio.ui.components.toEntityOption
+import dev.lacruzjs.sobreio.ui.components.unassignedOption
+import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -164,6 +169,8 @@ fun CommitmentFormScreen(
                 val languageTag = Locale.current.toLanguageTag()
                 val enabled = !state.isSubmitting
                 val unassigned = stringResource(Res.string.envelopes_unassigned)
+                val accountOptions = state.accounts.map { it.toEntityOption(formatMoney(it.balanceCents, state.currencyCode, languageTag)) }
+                val envelopeOptions = state.envelopes.map { it.toEntityOption(formatMoney(it.balanceCents, state.currencyCode, languageTag)) }
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     EntityAvatar(name = state.name, icon = state.kind.icon(), color = null, size = 64.dp)
@@ -213,22 +220,16 @@ fun CommitmentFormScreen(
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_money)) {
-                    ChoiceTile(
+                    EntitySelect(
                         label = stringResource(Res.string.field_account),
-                        tile = OpenTile.Account,
-                        open = open,
-                        onToggle = ::toggle,
-                        preview = state.accountName,
+                        options = accountOptions,
+                        selectedId = state.accountId,
+                        onSelect = { onEvent(CommitmentFormEvent.AccountSelected(it.orEmpty())) },
+                        expanded = open == OpenTile.Account,
+                        onToggle = { toggle(OpenTile.Account) },
                         // Creating keeps the account of the detail; a contribution's account belongs to both groups
-                        locked = !state.canChangeAccount,
-                        error = null,
-                    ) {
-                        state.accounts.forEach { a ->
-                            FormChip(a.name, state.accountId == a.id, enabled) {
-                                onEvent(CommitmentFormEvent.AccountSelected(a.id))
-                            }
-                        }
-                    }
+                        enabled = enabled && state.canChangeAccount,
+                    )
                     if (state.isLinkedEdit) {
                         FormNote(stringResource(Res.string.commitment_account_linked_note))
                     } else if (state.accountMoved) {
@@ -243,45 +244,35 @@ fun CommitmentFormScreen(
                         )
                     }
                     if (state.kind == CommitmentKind.Transfer) {
-                        ChoiceTile(
+                        EntitySelect(
                             label = stringResource(Res.string.field_to_account),
-                            tile = OpenTile.ToAccount,
-                            open = open,
-                            onToggle = ::toggle,
-                            preview = state.accounts.firstOrNull { it.id == state.toAccountId }?.name.orEmpty(),
-                            locked = state.fieldsLocked,
+                            options = accountOptions.filter { it.id != state.accountId },
+                            selectedId = state.toAccountId,
+                            onSelect = { it?.let { id -> onEvent(CommitmentFormEvent.ToAccountSelected(id)) } },
+                            expanded = open == OpenTile.ToAccount,
+                            onToggle = { toggle(OpenTile.ToAccount) },
+                            enabled = enabled && !state.fieldsLocked,
                             error = state.toAccountError,
-                        ) {
-                            state.destinationAccounts.forEach { a ->
-                                FormChip(a.name, state.toAccountId == a.id, enabled) {
-                                    onEvent(CommitmentFormEvent.ToAccountSelected(a.id))
-                                }
-                            }
-                        }
+                        )
                     }
                     if (state.kind == CommitmentKind.Expense) {
                         if (state.showsExpenseEnvelope) {
-                            ChoiceTile(
+                            EntitySelect(
                                 label = stringResource(Res.string.field_envelope),
-                                tile = OpenTile.Envelope,
-                                open = open,
-                                onToggle = ::toggle,
-                                preview = state.envelopes.firstOrNull { it.id == state.envelopeId }?.name.orEmpty(),
-                                locked = state.fieldsLocked,
+                                options = envelopeOptions,
+                                selectedId = state.envelopeId,
+                                onSelect = { it?.let { id -> onEvent(CommitmentFormEvent.EnvelopeSelected(id)) } },
+                                expanded = open == OpenTile.Envelope,
+                                onToggle = { toggle(OpenTile.Envelope) },
+                                enabled = enabled && !state.fieldsLocked,
                                 error = state.envelopeError,
-                            ) {
-                                state.envelopes.forEach { e ->
-                                    FormChip(e.name, state.envelopeId == e.id, enabled) {
-                                        onEvent(CommitmentFormEvent.EnvelopeSelected(e.id))
-                                    }
-                                }
-                            }
+                            )
                         } else {
                             FormNote(stringResource(Res.string.commitment_outside_note))
                         }
                     }
                     if (state.isContribution) {
-                        ContributionTiles(state, open, ::toggle, onEvent, unassigned)
+                        ContributionTiles(state, open, ::toggle, onEvent, unassigned, accountOptions, envelopeOptions, languageTag)
                     }
                 }
 
@@ -402,42 +393,6 @@ private val CreatableKinds = listOf(
     CommitmentKind.GroupTransferOut,
 )
 
-/** An expandable tile of chips that becomes a plain read-only tile when [locked]; [error] shows under it. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ChoiceTile(
-    label: String,
-    tile: OpenTile,
-    open: OpenTile,
-    onToggle: (OpenTile) -> Unit,
-    preview: String,
-    locked: Boolean,
-    error: org.jetbrains.compose.resources.StringResource?,
-    chips: @Composable () -> Unit,
-) {
-    if (locked) {
-        FormTile(label = label) { FormTileValue(preview) }
-    } else {
-        ExpandableFormTile(
-            label = label,
-            expanded = open == tile,
-            onToggle = { onToggle(tile) },
-            expandedDescription = expandedStateText(open == tile),
-            preview = { FormTileValue(preview) },
-        ) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { chips() }
-        }
-    }
-    error?.let {
-        Text(
-            text = stringResource(it),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
-    }
-}
-
 /** Destination group, its account, and the optional envelopes on both sides of a contribution. */
 @Composable
 private fun ContributionTiles(
@@ -446,68 +401,60 @@ private fun ContributionTiles(
     onToggle: (OpenTile) -> Unit,
     onEvent: (CommitmentFormEvent) -> Unit,
     unassigned: String,
+    accountOptions: List<EntityOption>,
+    envelopeOptions: List<EntityOption>,
+    languageTag: String,
 ) {
-    val enabled = !state.isSubmitting
     val creating = !state.isEditing
+    // Editing only shows what was chosen: the lists of the other group are not loaded then, so the stored choice is added
+    fun List<EntityOption>.withSelected(id: String?, name: String?): List<EntityOption> =
+        if (id == null || name == null || any { it.id == id }) this else listOf(EntityOption(id, name)) + this
+    val money = { cents: Long -> formatMoney(cents, state.currencyCode, languageTag) }
+
     if (creating && state.groups.isEmpty()) FormNote(stringResource(Res.string.commitment_no_groups_note))
-    ChoiceTile(
+    EntitySelect(
         label = stringResource(Res.string.field_dest_group),
-        tile = OpenTile.DestGroup,
-        open = open,
-        onToggle = onToggle,
-        preview = state.destGroupName.orEmpty(),
-        locked = !creating,
+        options = state.groups.map { it.toEntityOption() }.withSelected(state.destGroupId, state.destGroupName),
+        selectedId = state.destGroupId,
+        onSelect = { it?.let { id -> onEvent(CommitmentFormEvent.DestGroupSelected(id)) } },
+        expanded = open == OpenTile.DestGroup,
+        onToggle = { onToggle(OpenTile.DestGroup) },
+        enabled = creating && !state.isSubmitting,
         error = state.destGroupError,
-    ) {
-        state.groups.forEach { g ->
-            FormChip(g.name, state.destGroupId == g.id, enabled) { onEvent(CommitmentFormEvent.DestGroupSelected(g.id)) }
-        }
-    }
+    )
     if (state.destGroupId != null) {
-        ChoiceTile(
+        val destAccountOptions = state.destAccounts.map { it.toEntityOption(money(it.balanceCents)) }
+        EntitySelect(
             label = stringResource(Res.string.field_dest_account),
-            tile = OpenTile.DestAccount,
-            open = open,
-            onToggle = onToggle,
-            preview = state.destAccounts.firstOrNull { it.id == state.destAccountId }?.name.orEmpty(),
-            locked = !creating,
+            options = destAccountOptions,
+            selectedId = state.destAccountId,
+            onSelect = { it?.let { id -> onEvent(CommitmentFormEvent.DestAccountSelected(id)) } },
+            expanded = open == OpenTile.DestAccount,
+            onToggle = { onToggle(OpenTile.DestAccount) },
+            enabled = creating && !state.isSubmitting,
             error = state.destAccountError,
-        ) {
-            if (state.isLoadingDestination) CircularProgressIndicator(modifier = Modifier.padding(4.dp))
-            state.destAccounts.forEach { a ->
-                FormChip(a.name, state.destAccountId == a.id, enabled) { onEvent(CommitmentFormEvent.DestAccountSelected(a.id)) }
-            }
-        }
+        )
+        if (state.isLoadingDestination) CircularProgressIndicator(modifier = Modifier.padding(4.dp))
     }
-    ChoiceTile(
+    EntitySelect(
         label = stringResource(Res.string.field_source_envelope),
-        tile = OpenTile.Envelope,
-        open = open,
-        onToggle = onToggle,
-        preview = state.envelopes.firstOrNull { it.id == state.envelopeId }?.name ?: unassigned,
-        locked = !creating,
-        error = null,
-    ) {
-        FormChip(unassigned, state.envelopeId == null, enabled) { onEvent(CommitmentFormEvent.EnvelopeSelected(null)) }
-        state.envelopes.forEach { e ->
-            FormChip(e.name, state.envelopeId == e.id, enabled) { onEvent(CommitmentFormEvent.EnvelopeSelected(e.id)) }
-        }
-    }
+        options = listOf(unassignedOption(unassigned)) + envelopeOptions,
+        selectedId = state.envelopeId,
+        onSelect = { onEvent(CommitmentFormEvent.EnvelopeSelected(it)) },
+        expanded = open == OpenTile.Envelope,
+        onToggle = { onToggle(OpenTile.Envelope) },
+        enabled = creating && !state.isSubmitting,
+    )
     if (state.destGroupId != null) {
-        ChoiceTile(
+        EntitySelect(
             label = stringResource(Res.string.field_dest_envelope),
-            tile = OpenTile.DestEnvelope,
-            open = open,
-            onToggle = onToggle,
-            preview = state.destEnvelopes.firstOrNull { it.id == state.destEnvelopeId }?.name ?: unassigned,
-            locked = !creating,
-            error = null,
-        ) {
-            FormChip(unassigned, state.destEnvelopeId == null, enabled) { onEvent(CommitmentFormEvent.DestEnvelopeSelected(null)) }
-            state.destEnvelopes.forEach { e ->
-                FormChip(e.name, state.destEnvelopeId == e.id, enabled) { onEvent(CommitmentFormEvent.DestEnvelopeSelected(e.id)) }
-            }
-        }
+            options = listOf(unassignedOption(unassigned)) + state.destEnvelopes.map { it.toEntityOption(money(it.balanceCents)) },
+            selectedId = state.destEnvelopeId,
+            onSelect = { onEvent(CommitmentFormEvent.DestEnvelopeSelected(it)) },
+            expanded = open == OpenTile.DestEnvelope,
+            onToggle = { onToggle(OpenTile.DestEnvelope) },
+            enabled = creating && !state.isSubmitting,
+        )
     }
 }
 

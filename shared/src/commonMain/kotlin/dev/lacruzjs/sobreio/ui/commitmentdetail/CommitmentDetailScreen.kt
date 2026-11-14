@@ -54,9 +54,9 @@ import dev.lacruzjs.sobreio.generated.resources.group_archived_label
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.commitments.frequencyText
 import dev.lacruzjs.sobreio.ui.commitments.icon
+import dev.lacruzjs.sobreio.ui.components.CollapsibleListSection
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
-import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -139,7 +139,7 @@ fun CommitmentDetailScreen(
                             Text(stringResource(Res.string.action_retry))
                         }
                     }
-                    else -> DetailContent(state, version)
+                    else -> DetailContent(state, version, onEvent)
                 }
             }
         }
@@ -147,7 +147,11 @@ fun CommitmentDetailScreen(
 }
 
 @Composable
-private fun DetailContent(state: CommitmentDetailUiState, version: CommitmentVersion) {
+private fun DetailContent(
+    state: CommitmentDetailUiState,
+    version: CommitmentVersion,
+    onEvent: (CommitmentDetailEvent) -> Unit,
+) {
     val languageTag = Locale.current.toLanguageTag()
     Column(
         modifier = Modifier
@@ -168,21 +172,30 @@ private fun DetailContent(state: CommitmentDetailUiState, version: CommitmentVer
             modifier = Modifier.padding(horizontal = 4.dp),
         )
 
-        FormSection(title = stringResource(Res.string.commitment_detail_history_title)) {
-            if (state.occurrences.isEmpty()) {
-                Text(
-                    text = stringResource(Res.string.commitment_detail_history_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                )
-            }
-            state.occurrences.forEach { OccurrenceItem(it, state.currencyCode, languageTag) }
-        }
+        CollapsibleListSection(
+            title = stringResource(Res.string.commitment_detail_history_title),
+            count = state.occurrencesTotal,
+            items = state.occurrences,
+            initiallyExpanded = true,
+            emptyText = stringResource(Res.string.commitment_detail_history_empty),
+            itemKey = { it.dueDate.toString() },
+            isLoadingMore = state.isLoadingMore,
+            loadMoreFailed = state.loadMoreFailed,
+            onLoadMore = if (state.hasMoreOccurrences) {
+                { onEvent(CommitmentDetailEvent.LoadMoreOccurrences) }
+            } else {
+                null
+            },
+        ) { OccurrenceItem(it, state.currencyCode, languageTag) }
 
-        FormSection(title = stringResource(Res.string.commitment_detail_changes_title)) {
-            state.versions.forEach { VersionItem(it, state.currencyCode, languageTag) }
-        }
+        CollapsibleListSection(
+            title = stringResource(Res.string.commitment_detail_changes_title),
+            count = state.versions.size,
+            items = state.versions,
+            // One version is nothing to hide; a long story starts folded
+            initiallyExpanded = state.versions.size == 1,
+            itemKey = { it.version.id },
+        ) { VersionItem(it, state.currencyCode, languageTag) }
     }
 }
 
@@ -277,6 +290,7 @@ private fun CommitmentDetailPreview() {
                 version = previewVersion,
                 signedCents = -69_815,
                 canEdit = true,
+                occurrencesTotal = 2,
                 occurrences = listOf(
                     OccurrenceRow(LocalDate(2026, 11, 5), skipped = false, signedCents = -69_815, date = LocalDate(2026, 11, 7)),
                     OccurrenceRow(LocalDate(2026, 10, 5), skipped = true, signedCents = null, date = null),

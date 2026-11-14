@@ -12,12 +12,13 @@ import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
-import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
+import dev.lacruzjs.sobreio.domain.model.OccurrencePage
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestUpdate
 import kotlinx.datetime.LocalDate
@@ -63,15 +64,16 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
             ?: throw AppError.NotFound
     }
 
-    override suspend fun getOccurrences(commitmentId: String, limit: Int): Result<List<CommitmentOccurrence>> = safeCall {
-        postgrest.from(OCCURRENCES_TABLE)
+    override suspend fun getOccurrences(commitmentId: String, offset: Int, limit: Int): Result<OccurrencePage> = safeCall {
+        val result = postgrest.from(OCCURRENCES_TABLE)
             .select(Columns.raw(OCCURRENCE_COLUMNS)) {
+                count(Count.EXACT)
                 filter { eq("commitment_id", commitmentId) }
                 order("due_date", Order.DESCENDING)
-                limit(limit.toLong())
+                range(offset.toLong(), offset.toLong() + limit - 1)
             }
-            .decodeList<CommitmentOccurrenceDto>()
-            .map { it.toDomain() }
+        val items = result.decodeList<CommitmentOccurrenceDto>().map { it.toDomain() }
+        OccurrencePage(items, (result.countOrNull() ?: (offset + items.size).toLong()).toInt())
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> = safeCall {

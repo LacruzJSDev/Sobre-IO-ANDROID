@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -53,12 +55,14 @@ import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
-import dev.lacruzjs.sobreio.ui.components.HolderPicker
+import dev.lacruzjs.sobreio.ui.components.EntityOption
+import dev.lacruzjs.sobreio.ui.components.EntitySelect
+import dev.lacruzjs.sobreio.ui.groupsettings.labelRes
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.IconFormTile
 import dev.lacruzjs.sobreio.ui.components.expandedStateText
 import dev.lacruzjs.sobreio.ui.components.iconFor
-import dev.lacruzjs.sobreio.ui.components.toOption
+import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -181,23 +185,21 @@ fun AccountFormScreen(
                         }
                     }
                     if (state.hasSeveralMembers) {
-                        val jointLabel = stringResource(Res.string.holder_joint)
-                        val holderName = state.members.firstOrNull { it.userId == state.ownerUserId }?.displayName
-                        ExpandableFormTile(
+                        val noneOption = EntityOption(
+                            id = null,
+                            name = stringResource(Res.string.holder_joint),
+                            icon = Icons.Filled.Group,
+                        )
+                        val memberOptions = state.members.map { it.toEntityOption(stringResource(it.role.labelRes())) }
+                        EntitySelect(
                             label = stringResource(Res.string.field_holder),
+                            options = listOf(noneOption) + memberOptions,
+                            selectedId = state.ownerUserId,
+                            onSelect = { onEvent(AccountFormEvent.HolderSelected(it)) },
                             expanded = open == OpenTile.Holder,
                             onToggle = { toggle(OpenTile.Holder) },
-                            expandedDescription = expandedStateText(open == OpenTile.Holder),
-                            preview = { FormTileValue(holderName ?: jointLabel) },
-                        ) {
-                            HolderPicker(
-                                members = state.members.map { it.toOption() },
-                                selectedUserId = state.ownerUserId,
-                                onSelect = { onEvent(AccountFormEvent.HolderSelected(it)) },
-                                enabled = !state.isSubmitting,
-                                chipColor = MaterialTheme.colorScheme.background,
-                            )
-                        }
+                            enabled = !state.isSubmitting,
+                        )
                     }
                     val scopeNote = stringResource(Res.string.account_in_envelopes_note) +
                         if (isEditing) " " + stringResource(Res.string.account_scope_edit_note) else ""

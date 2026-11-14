@@ -98,6 +98,9 @@ data class CommitmentOccurrence(
     val fromAccountId: String? = null,
 )
 
+/** One page of resolved due items, newest first, and the exact number of them the commitment has in all. */
+data class OccurrencePage(val items: List<CommitmentOccurrence>, val total: Int)
+
 /** What the user chooses when creating a commitment; [kind] is never [CommitmentKind.GroupTransferIn]. */
 data class CommitmentDraft(
     val name: String,

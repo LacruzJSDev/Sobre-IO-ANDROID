@@ -8,6 +8,8 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
+import dev.lacruzjs.sobreio.domain.model.OccurrencePage
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.datetime.LocalDate
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
@@ -16,7 +18,12 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     val calls = mutableListOf<String>()
     var links: List<CommitmentLink> = emptyList()
     var occurrences: List<CommitmentOccurrence> = emptyList()
-    var occurrencesResult: Result<List<CommitmentOccurrence>>? = null
+    /** Scripted result for every page; when set, pages are not cut from [occurrences]. */
+    var occurrencesResult: Result<OccurrencePage>? = null
+    /** Results for the next calls with an offset above 0, taken in order (the first call is never scripted). */
+    /** While set, a page with an offset above 0 waits for it, to keep a load in flight. */
+    var loadMoreGate: CompletableDeferred<Unit>? = null
+    val loadMoreResults = ArrayDeque<Result<OccurrencePage>>()
 
     var createdDraft: CommitmentDraft? = null
     var createdLinkedDraft: LinkedCommitmentDraft? = null
@@ -42,9 +49,11 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
         return commitments.firstOrNull { it.id == id }?.let { Result.success(it) } ?: Result.failure(AppError.NotFound)
     }
 
-    override suspend fun getOccurrences(commitmentId: String, limit: Int): Result<List<CommitmentOccurrence>> {
-        calls += "getOccurrences($commitmentId)"
-        return occurrencesResult ?: Result.success(occurrences.take(limit))
+    override suspend fun getOccurrences(commitmentId: String, offset: Int, limit: Int): Result<OccurrencePage> {
+        calls += "getOccurrences($commitmentId, $offset, $limit)"
+        if (offset > 0) loadMoreGate?.await()
+        if (offset > 0 && loadMoreResults.isNotEmpty()) return loadMoreResults.removeFirst()
+        return occurrencesResult ?: Result.success(OccurrencePage(occurrences.drop(offset).take(limit), occurrences.size))
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> =

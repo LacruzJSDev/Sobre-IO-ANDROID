@@ -44,12 +44,14 @@ class CommitmentDetailViewModel(
     val state: StateFlow<CommitmentDetailUiState> = _state.asStateFlow()
 
     private var loadJob: Job? = null
+    private var loadMoreJob: Job? = null
     private var hasLoaded = false
 
     fun onEvent(event: CommitmentDetailEvent) {
         when (event) {
             CommitmentDetailEvent.Refresh -> load(showSpinner = !hasLoaded)
             CommitmentDetailEvent.Retry -> load(showSpinner = true)
+            CommitmentDetailEvent.LoadMoreOccurrences -> loadMoreOccurrences()
             // Handled by the Route
             CommitmentDetailEvent.BackClicked, CommitmentDetailEvent.EditClicked -> Unit
         }
@@ -57,12 +59,13 @@ class CommitmentDetailViewModel(
 
     private fun load(showSpinner: Boolean) {
         loadJob?.cancel()
+        loadMoreJob?.cancel()
         if (showSpinner) _state.update { it.copy(isLoading = true, error = null) }
         loadJob = viewModelScope.launch {
             val groupResult = groups.getGroup(groupId)
             val todayResult = detail.getToday(groupId)
             val commitmentResult = commitments.getCommitment(commitmentId)
-            val occurrencesResult = commitments.getOccurrences(commitmentId)
+            val occurrencesResult = commitments.getOccurrences(commitmentId, offset = 0, limit = PAGE_SIZE)
             val failure = groupResult.exceptionOrNull() ?: todayResult.exceptionOrNull()
                 ?: commitmentResult.exceptionOrNull() ?: occurrencesResult.exceptionOrNull()
             if (failure != null) {
@@ -113,15 +116,45 @@ class CommitmentDetailViewModel(
                     isArchived = commitment.isArchived,
                     currencyCode = group.currencyCode,
                     canEdit = group.canEdit && !commitment.isArchived && editableKind,
-                    occurrences = occurrencesResult.getOrThrow()
+                    occurrences = occurrencesResult.getOrThrow().items
                         .sortedByDescending { o -> o.dueDate }
                         .map { o -> o.toRow() },
+                    occurrencesTotal = occurrencesResult.getOrThrow().total,
+                    isLoadingMore = false,
+                    loadMoreFailed = false,
                     versions = versionRows,
                     isLoading = false,
                     error = null,
                 )
             }
             hasLoaded = true
+        }
+    }
+
+    /** Appends the next page of the history. Ignored while one is loading or when everything is already loaded. */
+    private fun loadMoreOccurrences() {
+        val current = _state.value
+        if (current.isLoading || current.isLoadingMore || !current.hasMoreOccurrences) return
+        _state.update { it.copy(isLoadingMore = true, loadMoreFailed = false) }
+        loadMoreJob = viewModelScope.launch {
+            val result = commitments.getOccurrences(commitmentId, offset = current.occurrences.size, limit = PAGE_SIZE)
+            result.fold(
+                onSuccess = { page ->
+                    _state.update { state ->
+                        // A due item resolved meanwhile can shift the pages: never show one twice
+                        val known = state.occurrences.map { row -> row.dueDate }.toSet()
+                        val added = page.items.filter { o -> o.dueDate !in known }.map { o -> o.toRow() }
+                        state.copy(
+                            occurrences = (state.occurrences + added).sortedByDescending { row -> row.dueDate },
+                            occurrencesTotal = page.total,
+                            isLoadingMore = false,
+                            // An empty page with items still missing would loop: stop and offer the retry instead
+                            loadMoreFailed = page.items.isEmpty() && state.occurrences.size < page.total,
+                        )
+                    }
+                },
+                onFailure = { _state.update { state -> state.copy(isLoadingMore = false, loadMoreFailed = true) } },
+            )
         }
     }
 
@@ -136,5 +169,9 @@ class CommitmentDetailViewModel(
             signedCents = if (status == OccurrenceStatus.Skipped) null else signed,
             date = date?.takeIf { it != dueDate },
         )
+    }
+
+    private companion object {
+        const val PAGE_SIZE = 20
     }
 }

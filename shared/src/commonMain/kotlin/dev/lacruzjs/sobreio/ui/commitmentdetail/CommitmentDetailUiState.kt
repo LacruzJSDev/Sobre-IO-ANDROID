@@ -40,10 +40,17 @@ data class CommitmentDetailUiState(
     val currencyCode: String = "EUR",
     /** The pencil: owner or admin, live group, live commitment and a kind that can be edited from this account. */
     val canEdit: Boolean = false,
-    /** Resolved due items, newest first. */
+    /** The resolved due items loaded so far, newest first (a page at a time). */
     val occurrences: List<OccurrenceRow> = emptyList(),
+    /** How many resolved due items the commitment has in all, loaded or not. */
+    val occurrencesTotal: Int = 0,
+    val isLoadingMore: Boolean = false,
+    /** The last attempt to load another page failed; the section offers a retry. */
+    val loadMoreFailed: Boolean = false,
     /** Versions, newest first. */
     val versions: List<VersionRow> = emptyList(),
     val isLoading: Boolean = true,
     val error: AppError? = null,
-)
+) {
+    val hasMoreOccurrences: Boolean get() = occurrences.size < occurrencesTotal
+}

@@ -1,29 +1,25 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_assign
 import dev.lacruzjs.sobreio.generated.resources.assign_title
-import dev.lacruzjs.sobreio.generated.resources.envelope_chip_label
 import dev.lacruzjs.sobreio.generated.resources.field_amount
 import dev.lacruzjs.sobreio.generated.resources.field_assign_from
+import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.toEntityOption
+import dev.lacruzjs.sobreio.ui.components.unassignedOption
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.AmountField
-import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import org.jetbrains.compose.resources.stringResource
@@ -32,7 +28,6 @@ import org.jetbrains.compose.resources.stringResource
  * Sheet that moves money into [EnvelopesUiState.assignTarget]: an amount and the envelope it comes from, "Unassigned"
  * by default. Each source shows its balance; taking more than it has is allowed by the database, so it is not blocked.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> Unit) {
     val target = state.assignTarget ?: return
@@ -48,43 +43,25 @@ internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> U
             errorRes = state.amountError,
             enabled = !state.isSubmitting,
         )
-        Text(text = stringResource(Res.string.field_assign_from), style = MaterialTheme.typography.labelLarge)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            state.assignSources.forEach { source ->
-                val name = if (source.kind == EnvelopeKind.System) {
-                    stringResource(source.kind.labelRes())
+        var open by rememberSaveable { mutableStateOf(false) }
+        EntitySelect(
+            label = stringResource(Res.string.field_assign_from),
+            options = state.assignSources.map { source ->
+                val name = if (source.kind == EnvelopeKind.System) stringResource(source.kind.labelRes()) else source.name
+                val balance = formatMoney(source.balanceCents, state.currencyCode, languageTag)
+                if (source.kind == EnvelopeKind.System) {
+                    unassignedOption(name, balance).copy(id = source.id)
                 } else {
-                    source.name
+                    source.toEntityOption(balance)
                 }
-                FilterChip(
-                    selected = state.sourceId == source.id,
-                    onClick = { onEvent(EnvelopesEvent.SourceSelected(source.id)) },
-                    enabled = !state.isSubmitting,
-                    label = {
-                        Text(
-                            stringResource(
-                                Res.string.envelope_chip_label,
-                                name,
-                                formatMoney(source.balanceCents, state.currencyCode, languageTag),
-                            ),
-                        )
-                    },
-                    shape = MaterialTheme.shapes.medium,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                    border = null,
-                )
-            }
-        }
-        state.sourceError?.let {
-            Text(
-                text = stringResource(it),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
+            },
+            selectedId = state.sourceId,
+            onSelect = { id -> id?.let { onEvent(EnvelopesEvent.SourceSelected(it)) } },
+            expanded = open,
+            onToggle = { open = !open },
+            enabled = !state.isSubmitting,
+            error = state.sourceError,
+        )
         ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
         PrimaryButton(
             text = stringResource(Res.string.action_assign),

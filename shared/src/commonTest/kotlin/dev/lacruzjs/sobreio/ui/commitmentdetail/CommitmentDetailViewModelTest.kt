@@ -13,6 +13,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
+import dev.lacruzjs.sobreio.domain.model.OccurrencePage
 import dev.lacruzjs.sobreio.domain.model.OccurrenceStatus
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
@@ -20,7 +21,10 @@ import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -213,7 +217,92 @@ class CommitmentDetailViewModelTest : MainDispatcherTest() {
 
     @Test
     fun aFailedOccurrencesReadIsAnError() {
-        repository.occurrencesResult = Result.failure(AppError.Network)
+        repository.occurrencesResult = Result.failure<OccurrencePage>(AppError.Network)
         assertEquals(AppError.Network, viewModel().state.value.error)
+    }
+
+    private fun manyOccurrences(count: Int) = (1..count).map { n ->
+        CommitmentOccurrence(LocalDate(2020, 1, 1).plus(n, DateTimeUnit.DAY), OccurrenceStatus.Skipped)
+    }
+
+    @Test
+    fun theFirstPageComesWithTheExactTotal() {
+        repository.occurrences = manyOccurrences(45)
+        val state = viewModel().state.value
+
+        assertEquals(20, state.occurrences.size)
+        assertEquals(45, state.occurrencesTotal)
+        assertTrue(state.hasMoreOccurrences)
+        assertFalse(state.isLoadingMore)
+        assertTrue("getOccurrences(c1, 0, 20)" in repository.calls)
+    }
+
+    @Test
+    fun loadingMoreAppendsTheNextPageNewestFirst() {
+        repository.occurrences = manyOccurrences(45).sortedByDescending { it.dueDate }
+        val vm = viewModel()
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        val state = vm.state.value
+
+        assertEquals(45, state.occurrences.size)
+        assertEquals(45, state.occurrences.map { it.dueDate }.toSet().size)
+        assertEquals(state.occurrences.map { it.dueDate }.sortedDescending(), state.occurrences.map { it.dueDate })
+        assertFalse(state.hasMoreOccurrences)
+        assertTrue("getOccurrences(c1, 20, 20)" in repository.calls)
+        assertTrue("getOccurrences(c1, 40, 20)" in repository.calls)
+    }
+
+    @Test
+    fun noPageIsRequestedOnceEverythingIsLoaded() {
+        repository.occurrences = manyOccurrences(5)
+        val vm = viewModel()
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+
+        assertEquals(1, repository.calls.count { it.startsWith("getOccurrences") })
+    }
+
+    @Test
+    fun aSecondLoadMoreWhileOneRunsIsIgnored() {
+        repository.occurrences = manyOccurrences(45).sortedByDescending { it.dueDate }
+        val vm = viewModel()
+        val gate = CompletableDeferred<Unit>()
+        repository.loadMoreGate = gate
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        assertTrue(vm.state.value.isLoadingMore)
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        gate.complete(Unit)
+
+        assertEquals(1, repository.calls.count { it.startsWith("getOccurrences(c1, 20") })
+        assertEquals(40, vm.state.value.occurrences.size)
+        assertFalse(vm.state.value.isLoadingMore)
+    }
+
+    @Test
+    fun aFailedLoadMoreKeepsTheRowsAndAnotherAttemptRecovers() {
+        repository.occurrences = manyOccurrences(45).sortedByDescending { it.dueDate }
+        val vm = viewModel()
+        repository.loadMoreResults.addLast(Result.failure(AppError.Network))
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+
+        assertTrue(vm.state.value.loadMoreFailed)
+        assertFalse(vm.state.value.isLoadingMore)
+        assertEquals(20, vm.state.value.occurrences.size)
+
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        assertFalse(vm.state.value.loadMoreFailed)
+        assertEquals(40, vm.state.value.occurrences.size)
+    }
+
+    @Test
+    fun refreshingStartsAgainFromTheFirstPage() {
+        repository.occurrences = manyOccurrences(45).sortedByDescending { it.dueDate }
+        val vm = viewModel()
+        vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
+        vm.onEvent(CommitmentDetailEvent.Refresh)
+
+        assertEquals(20, vm.state.value.occurrences.size)
+        assertFalse(vm.state.value.loadMoreFailed)
     }
 }

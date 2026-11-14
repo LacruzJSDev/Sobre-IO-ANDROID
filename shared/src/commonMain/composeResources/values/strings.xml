@@ -155,7 +155,6 @@
     <string name="assign_title">Assign to %1$s</string>
     <string name="field_amount">Amount</string>
     <string name="field_assign_from">Take it from</string>
-    <string name="envelope_chip_label">%1$s · %2$s</string>
 
     <!-- Appearance: icons, sections, colours -->
     <string name="icon_home">Home</string>
@@ -469,4 +468,7 @@
         <item quantity="one">Every year, %2$s</item>
         <item quantity="other">Every %1$d years, %2$s</item>
     </plurals>
+    <string name="entity_select_placeholder">Choose</string>
+    <string name="entity_select_search">Search</string>
+    <string name="list_load_more_failed">Could not load more.</string>
 </resources>
