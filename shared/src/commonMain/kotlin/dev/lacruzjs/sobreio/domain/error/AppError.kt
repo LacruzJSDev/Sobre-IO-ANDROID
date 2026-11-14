@@ -30,6 +30,9 @@ sealed class AppError : Exception() {
     /** The item does not exist, or the user has no access to it (row level security hides it). */
     data object NotFound : AppError()
 
+    /** The name is taken by another live item of the same group (case-insensitive unique violation). */
+    data object DuplicateName : AppError()
+
     data class Unknown(override val cause: Throwable? = null) : AppError()
 }
 

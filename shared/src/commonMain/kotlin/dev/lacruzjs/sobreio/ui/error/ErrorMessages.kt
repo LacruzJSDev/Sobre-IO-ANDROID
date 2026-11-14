@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.error
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
 import dev.lacruzjs.sobreio.generated.resources.error_email_already_registered
 import dev.lacruzjs.sobreio.generated.resources.error_email_not_confirmed
 import dev.lacruzjs.sobreio.generated.resources.error_fz001_group_read_only
@@ -42,6 +43,7 @@ fun AppError.messageRes(): StringResource = when (this) {
     AppError.InvalidCode -> Res.string.error_invalid_code
     AppError.TooManyRequests -> Res.string.error_too_many_requests
     AppError.NotFound -> Res.string.error_not_found
+    AppError.DuplicateName -> Res.string.error_duplicate_name
     is AppError.Unknown -> Res.string.error_unknown
 }
 

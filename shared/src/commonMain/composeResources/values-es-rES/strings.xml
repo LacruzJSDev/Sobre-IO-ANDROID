@@ -92,7 +92,7 @@
     <string name="tab_envelopes">Sobres</string>
     <string name="tab_movements">Movimientos</string>
     <string name="tab_group_empty">Aquí aparecerá el resumen del grupo.</string>
-    <string name="tab_accounts_empty">Aquí aparecerán las cuentas.</string>
+    <string name="tab_accounts_empty">Todavía no hay cuentas.</string>
     <string name="tab_envelopes_empty">Aquí aparecerán los sobres.</string>
     <string name="tab_movements_empty">Aquí aparecerán los movimientos.</string>
     <string name="error_not_found">Esto no existe o ya no tienes acceso.</string>
@@ -116,4 +116,21 @@
     <string name="action_new_envelope">Nuevo sobre</string>
     <string name="action_new_movement">Nuevo movimiento</string>
     <string name="coming_soon">Próximamente</string>
+
+    <!-- Accounts tab -->
+    <string name="accounts_total">Total</string>
+    <string name="accounts_empty_editor">Todavía no hay cuentas. Crea la primera con el botón +.</string>
+    <string name="account_deleted">%1$s eliminada</string>
+    <string name="edit_account_title">Editar cuenta</string>
+    <string name="field_account_name">Nombre de la cuenta</string>
+    <string name="field_account_kind">Tipo</string>
+    <string name="field_opening_balance">Saldo inicial</string>
+    <string name="opening_balance_hint">Déjalo vacío para cero. Usa un signo menos para una deuda, por ejemplo -250,50.</string>
+    <string name="validation_amount_invalid">Introduce un importe válido con hasta 2 decimales, por ejemplo 1250,50.</string>
+    <string name="account_kind_cash">Efectivo</string>
+    <string name="account_kind_bank">Banco</string>
+    <string name="account_kind_credit_card">Tarjeta de crédito</string>
+    <string name="account_kind_savings">Ahorro</string>
+    <string name="account_kind_investment">Inversión</string>
+    <string name="error_duplicate_name">Ya existe una cuenta con ese nombre.</string>
 </resources>

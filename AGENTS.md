@@ -31,7 +31,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
   in a bottom sheet with name and currency, join with an invitation code), the Profile screen (name, email, sign-out)
-  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs, still empty
+  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs; Accounts works, the others are still empty
   states). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
@@ -58,9 +58,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is updated only when the snackbar
   ends without Undo. `SupabaseGroupRepository` loads groups with the user's role through PostgREST embedding
   (`account_group_members!inner(role)`, filtered to the user and `left_at is null`). Profile shows name and email only.
+- Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter): the total (`group_overview.accounts_total`,
+  never summed in the app) and the accounts from the `account_balances` view (`AccountsPane`, `AccountList`: square ink icon,
+  name, kind label, balance; negatives in the normal text colour). Owner and admin see the header "+" (create sheet: name,
+  kind chips, opening balance parsed by `parseMoneyInput`, `create_account` RPC) and swipe rows for Edit (name and kind) and
+  Delete. Delete archives (`archived_at`) at once, so FZ008 returns immediately and the row comes back; Undo unarchives.
+  Members only read. Name clashes (SQLSTATE 23505) map to `AppError.DuplicateName`. `GroupScreen` stays stateless: it takes
+  `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
+  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row does nothing yet (account detail comes later).
 - Group shell: the header's right side holds "Invite" (owner and admin, Group tab: creates an `invitations` row and shows
-  its code with a copy button) and, on Accounts, Envelopes and Movements, a "+" that opens a "Coming soon" sheet until
-  those features exist.
+  its code with a copy button) and, on Envelopes and Movements, a "+" that opens a "Coming soon" sheet until
+  those features exist (Accounts has its own, see above).
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and

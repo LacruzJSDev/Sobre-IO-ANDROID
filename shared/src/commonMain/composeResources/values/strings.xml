@@ -93,7 +93,7 @@
     <string name="tab_envelopes">Envelopes</string>
     <string name="tab_movements">Movements</string>
     <string name="tab_group_empty">The group summary will appear here.</string>
-    <string name="tab_accounts_empty">Accounts will appear here.</string>
+    <string name="tab_accounts_empty">There are no accounts yet.</string>
     <string name="tab_envelopes_empty">Envelopes will appear here.</string>
     <string name="tab_movements_empty">Movements will appear here.</string>
     <string name="error_not_found">This doesn\'t exist or you no longer have access to it.</string>
@@ -117,4 +117,21 @@
     <string name="action_new_envelope">New envelope</string>
     <string name="action_new_movement">New movement</string>
     <string name="coming_soon">Coming soon</string>
+
+    <!-- Accounts tab -->
+    <string name="accounts_total">Total</string>
+    <string name="accounts_empty_editor">No accounts yet. Create the first one with the + button.</string>
+    <string name="account_deleted">%1$s deleted</string>
+    <string name="edit_account_title">Edit account</string>
+    <string name="field_account_name">Account name</string>
+    <string name="field_account_kind">Type</string>
+    <string name="field_opening_balance">Opening balance</string>
+    <string name="opening_balance_hint">Leave it empty for zero. Use a minus sign for debt, for example -250.50.</string>
+    <string name="validation_amount_invalid">Enter a valid amount with up to 2 decimals, like 1250.50.</string>
+    <string name="account_kind_cash">Cash</string>
+    <string name="account_kind_bank">Bank</string>
+    <string name="account_kind_credit_card">Credit card</string>
+    <string name="account_kind_savings">Savings</string>
+    <string name="account_kind_investment">Investment</string>
+    <string name="error_duplicate_name">An account with that name already exists.</string>
 </resources>
