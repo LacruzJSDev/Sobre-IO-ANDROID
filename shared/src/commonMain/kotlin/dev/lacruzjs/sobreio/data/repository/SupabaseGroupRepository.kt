@@ -134,12 +134,12 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
             .toDomain()
     }
 
-    override suspend fun getPendingInvitations(groupId: String): Result<List<Invitation>> = safeCall {
+    override suspend fun getInvitations(groupId: String): Result<List<Invitation>> = safeCall {
         postgrest.from(INVITATIONS_TABLE)
             .select(INVITATION_COLUMNS) {
                 filter {
                     eq("group_id", groupId)
-                    eq("status", "pending")
+                    isIn("status", listOf("pending", "accepted"))
                 }
                 order("created_at", Order.DESCENDING)
             }
@@ -197,6 +197,6 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
             "id,name,currency,timezone,period_start_day,color,icon,archived_at,purge_requested_at," +
                 "$MEMBERS_TABLE!inner(role)",
         )
-        val INVITATION_COLUMNS = Columns.list("id", "code", "role", "expires_at")
+        val INVITATION_COLUMNS = Columns.list("id", "code", "role", "status", "accepted_by", "accepted_at", "expires_at")
     }
 }

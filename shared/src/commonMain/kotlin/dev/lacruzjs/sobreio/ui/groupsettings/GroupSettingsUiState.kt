@@ -16,8 +16,10 @@ data class GroupSettingsUiState(
     val group: Group? = null,
     val currentUserId: String? = null,
     val members: List<Member> = emptyList(),
-    /** Pending invitations (expired ones included); only loaded for owners and admins. */
-    val invitations: List<Invitation> = emptyList(),
+    /** Pending invitations that have not expired; only loaded for owners and admins. */
+    val pendingInvitations: List<Invitation> = emptyList(),
+    /** Accepted invitations: who joined and when. Read only; only loaded for owners and admins. */
+    val acceptedInvitations: List<Invitation> = emptyList(),
     val isLoading: Boolean = true,
     /** Failure of loading the group. */
     val error: AppError? = null,
@@ -33,9 +35,7 @@ data class GroupSettingsUiState(
     val createdInvitation: Invitation? = null,
     /** The member whose role the Role sheet changes. */
     val roleMember: Member? = null,
-    /** Archive, reopen, delete or leave is running or waiting for its snackbar: the bottom buttons are disabled. */
-    val isWorking: Boolean = false,
-    /** Failure of an action outside the sheets (remove, revoke, archive, delete, leave, undo). */
+    /** Failure of an action outside the sheets (remove, revoke, undo). */
     val actionError: AppError? = null,
     val undoMessage: UndoMessage? = null,
     /** The group is gone or the user left it: the Route pops back to Groups and consumes this. */
@@ -47,8 +47,6 @@ data class GroupSettingsUiState(
 
     /** Owner of a live group: change roles and remove members. */
     val canManageMembers: Boolean get() = group?.let { it.isOwner && it.canEdit } == true
-    val canArchive: Boolean get() = group?.let { it.isOwner && !it.isArchived && !it.isPendingDeletion } == true
-    val canReopen: Boolean get() = group?.let { it.isOwner && it.isArchived && !it.isPendingDeletion } == true
 
     /** More than one active member: accounts and envelopes then ask who holds them. */
     val hasSeveralMembers: Boolean get() = members.hasSeveralMembers()

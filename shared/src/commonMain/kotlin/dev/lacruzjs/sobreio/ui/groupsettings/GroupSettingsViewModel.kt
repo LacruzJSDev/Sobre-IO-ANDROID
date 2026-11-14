@@ -2,7 +2,6 @@ package dev.lacruzjs.sobreio.ui.groupsettings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
@@ -11,11 +10,9 @@ import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
+import dev.lacruzjs.sobreio.domain.model.InvitationStatus
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.group_archived_message
-import dev.lacruzjs.sobreio.generated.resources.group_deleted
-import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
 import dev.lacruzjs.sobreio.ui.groups.GroupFormState
@@ -28,18 +25,19 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 /**
- * Details, members and invitations of one group, and its bottom actions (archive, reopen, delete, leave). Owners and
- * admins edit the details and invite; only owners change roles, remove members, archive and delete. A member leaves.
- * The database enforces every rule too; this only hides what would be refused.
+ * Details, members and invitations of one group. Owners and admins edit the details and invite; only owners change
+ * roles (their own included) and remove other members. Archiving, deleting and leaving live in the Groups list. The
+ * database enforces every rule too; this only hides what would be refused. [clock] hides invitations that expired.
  */
 class GroupSettingsViewModel(
     private val groupId: String,
     private val groups: GroupRepository,
     private val members: MemberRepository,
     private val auth: AuthRepository,
-    private val lastGroup: LastGroupStore,
+    private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupSettingsUiState())
@@ -72,10 +70,6 @@ class GroupSettingsViewModel(
                 if (event.role != GroupRole.Owner) _state.update { it.copy(inviteRole = event.role, submitError = null) }
             GroupSettingsEvent.InviteConfirmed -> invite()
             is GroupSettingsEvent.RevokeInvitationClicked -> revokeInvitation(event.invitationId)
-            GroupSettingsEvent.ArchiveClicked -> archive()
-            GroupSettingsEvent.ReopenClicked -> reopen()
-            GroupSettingsEvent.DeleteClicked -> delete()
-            GroupSettingsEvent.LeaveClicked -> leave()
             GroupSettingsEvent.UndoClicked -> undo.undo()
             GroupSettingsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which owns the back stack
@@ -99,11 +93,21 @@ class GroupSettingsViewModel(
                         .onSuccess { list -> _state.update { it.copy(members = list) } }
                         .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
                     if (group.canEdit) {
-                        groups.getPendingInvitations(groupId)
-                            .onSuccess { list -> _state.update { it.copy(invitations = list) } }
+                        groups.getInvitations(groupId)
+                            .onSuccess { list ->
+                                val now = clock.now()
+                                _state.update {
+                                    it.copy(
+                                        pendingInvitations = list.filter { i ->
+                                            i.status == InvitationStatus.Pending && !i.isExpired(now)
+                                        },
+                                        acceptedInvitations = list.filter { i -> i.status == InvitationStatus.Accepted },
+                                    )
+                                }
+                            }
                             .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
                     } else {
-                        _state.update { it.copy(invitations = emptyList()) }
+                        _state.update { it.copy(pendingInvitations = emptyList(), acceptedInvitations = emptyList()) }
                     }
                 }
                 .onFailure { e ->
@@ -119,11 +123,6 @@ class GroupSettingsViewModel(
 
     private suspend fun currentUserId(): String =
         auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
-
-    private suspend fun forgetAsLastGroup() {
-        val userId = currentUserId()
-        if (lastGroup.get(userId) == groupId) lastGroup.clear(userId)
-    }
 
     // Details
 
@@ -252,7 +251,7 @@ class GroupSettingsViewModel(
                         it.copy(
                             isSubmitting = false,
                             createdInvitation = invitation,
-                            invitations = listOf(invitation) + it.invitations,
+                            pendingInvitations = listOf(invitation) + it.pendingInvitations,
                         )
                     }
                 }
@@ -264,10 +263,10 @@ class GroupSettingsViewModel(
     private fun revokeInvitation(invitationId: String) {
         val current = _state.value
         if (!current.canInvite) return
-        val invitation = current.invitations.firstOrNull { it.id == invitationId } ?: return
+        val invitation = current.pendingInvitations.firstOrNull { it.id == invitationId } ?: return
         undo.commit()
-        val index = current.invitations.indexOf(invitation)
-        _state.update { it.copy(invitations = it.invitations - invitation, actionError = null) }
+        val index = current.pendingInvitations.indexOf(invitation)
+        _state.update { it.copy(pendingInvitations = it.pendingInvitations - invitation, actionError = null) }
         undo.show(
             UndoableAction(
                 message = Res.string.invitation_revoked,
@@ -275,109 +274,10 @@ class GroupSettingsViewModel(
                 commit = { groups.revokeInvitation(invitation.id) },
                 undo = { Result.success(Unit) },
                 restore = {
-                    _state.update { it.copy(invitations = it.invitations.withInserted(index, invitation)) }
+                    _state.update { it.copy(pendingInvitations = it.pendingInvitations.withInserted(index, invitation)) }
                 },
             ),
         )
-    }
-
-    // Bottom actions
-
-    /** Archived at once; "Undo" reopens it. */
-    private fun archive() {
-        val current = _state.value
-        val group = current.group
-        if (!current.canArchive || group == null || current.isWorking) return
-        undo.commit()
-        _state.update { it.copy(isWorking = true, actionError = null) }
-        viewModelScope.launch {
-            groups.archiveGroup(group.id)
-                .onSuccess {
-                    refreshGroup()
-                    undo.show(
-                        UndoableAction(
-                            message = Res.string.group_archived_message,
-                            argument = group.name,
-                            commit = { Result.success(Unit) },
-                            undo = { groups.reopenGroup(group.id) },
-                            restore = { load() },
-                        ),
-                    )
-                }
-                .onFailure { e -> _state.update { it.copy(isWorking = false, actionError = e.asAppError()) } }
-        }
-    }
-
-    private fun reopen() {
-        val current = _state.value
-        val group = current.group
-        if (!current.canReopen || group == null || current.isWorking) return
-        _state.update { it.copy(isWorking = true, actionError = null) }
-        viewModelScope.launch {
-            groups.reopenGroup(group.id)
-                .onSuccess {
-                    _state.update { it.copy(isWorking = false) }
-                    load()
-                }
-                .onFailure { e -> _state.update { it.copy(isWorking = false, actionError = e.asAppError()) } }
-        }
-    }
-
-    /** The deletion is requested right away; "Undo" cancels it, and the screen goes back to Groups when it is final. */
-    private fun delete() {
-        val current = _state.value
-        val group = current.group
-        if (group == null || !group.isOwner || group.isPendingDeletion || current.isWorking) return
-        undo.commit()
-        _state.update { it.copy(isWorking = true, actionError = null) }
-        viewModelScope.launch {
-            groups.requestGroupDeletion(group.id)
-                .onSuccess {
-                    undo.show(
-                        UndoableAction(
-                            message = Res.string.group_deleted,
-                            argument = group.name,
-                            commit = { exit() },
-                            undo = { groups.cancelGroupDeletion(group.id) },
-                            restore = { _state.update { it.copy(isWorking = false) } },
-                        ),
-                    )
-                }
-                .onFailure { e -> _state.update { it.copy(isWorking = false, actionError = e.asAppError()) } }
-        }
-    }
-
-    /** Leaving cannot be undone in the database, so it is only sent when the snackbar ends without "Undo". */
-    private fun leave() {
-        val current = _state.value
-        val group = current.group
-        if (group == null || current.isWorking) return
-        undo.commit()
-        _state.update { it.copy(isWorking = true, actionError = null) }
-        undo.show(
-            UndoableAction(
-                message = Res.string.group_left,
-                argument = group.name,
-                commit = { groups.leaveGroup(group.id).onSuccess { exit() } },
-                undo = { Result.success(Unit) },
-                restore = { _state.update { it.copy(isWorking = false) } },
-            ),
-        )
-    }
-
-    /** The group is final: forget it as the last one and ask the Route to go back to Groups. */
-    private suspend fun exit(): Result<Unit> {
-        forgetAsLastGroup()
-        _state.update { it.copy(navigateToGroups = true) }
-        return Result.success(Unit)
-    }
-
-    private suspend fun refreshGroup() {
-        groups.getGroup(groupId)
-            .onSuccess { group ->
-                _state.update { it.copy(group = group, isWorking = false, invitations = if (group.canEdit) it.invitations else emptyList()) }
-            }
-            .onFailure { e -> _state.update { it.copy(isWorking = false, actionError = e.asAppError()) } }
     }
 
     private fun <T> List<T>.withInserted(index: Int, item: T): List<T> =

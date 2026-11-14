@@ -9,6 +9,7 @@ import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.group_archived_message
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
 import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
@@ -45,9 +46,9 @@ class GroupsViewModel(
                 load()
             }
             GroupsEvent.NewGroupClicked -> _state.update { it.openSheet(GroupsSheet.Create) }
-            is GroupsEvent.EditClicked -> edit(event.groupId)
-            GroupsEvent.EditConfirmed -> saveEdit()
-            is GroupsEvent.DeleteClicked -> deleteOrLeave(event.groupId)
+            is GroupsEvent.ArchiveClicked -> archive(event.groupId)
+            is GroupsEvent.DeleteClicked -> delete(event.groupId)
+            is GroupsEvent.LeaveClicked -> leave(event.groupId)
             GroupsEvent.UndoClicked -> undo.undo()
             GroupsEvent.UndoExpired -> undo.commit()
             GroupsEvent.SignOutClicked -> signOut()
@@ -89,44 +90,6 @@ class GroupsViewModel(
         }
     }
 
-    private fun edit(groupId: String) {
-        val group = _state.value.groups.firstOrNull { it.id == groupId && it.canEdit } ?: return
-        _state.update { it.openSheet(GroupsSheet.Edit).copy(form = GroupFormState.forEdit(group)) }
-    }
-
-    private fun saveEdit() {
-        val current = _state.value
-        val group = current.form.editing ?: return
-        if (current.isSubmitting) return
-        val form = current.form.validated()
-        if (form.nameError != null) {
-            _state.update { it.copy(form = form) }
-            return
-        }
-        val name = form.name.trim()
-        _state.update { it.copy(isSubmitting = true, submitError = null) }
-        viewModelScope.launch {
-            groups.updateGroup(group.id, name, form.timezone, form.periodStartDay, form.color, form.icon)
-                .onSuccess {
-                    _state.update { s ->
-                        val updated = group.copy(
-                            name = name,
-                            color = form.color,
-                            icon = form.icon,
-                            timezone = form.timezone,
-                            periodStartDay = form.periodStartDay,
-                        )
-                        s.copy(
-                            isSubmitting = false,
-                            sheet = GroupsSheet.None,
-                            groups = s.groups.map { if (it.id == group.id) updated else it }.sortedByName(),
-                        )
-                    }
-                }
-                .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
-        }
-    }
-
     /** Owner of an archived group: it becomes live again and moves to the main list. */
     private fun reopen(groupId: String) {
         val group = _state.value.archivedGroups.firstOrNull { it.id == groupId && it.isArchived && it.isOwner } ?: return
@@ -149,48 +112,76 @@ class GroupsViewModel(
         }
     }
 
-    /**
-     * No confirmation: the group disappears at once and a snackbar offers "Undo". An owner's deletion is requested
-     * right away (the database keeps the group for 7 days and "Undo" cancels it). Leaving cannot be undone in the
-     * database, so it waits: it is sent when the snackbar ends without "Undo".
-     */
-    private fun deleteOrLeave(groupId: String) {
-        val group = _state.value.groups.firstOrNull { it.id == groupId } ?: return
+    /** No confirmation: the group moves to the "Archived" section at once and "Undo" reopens it. Owner only. */
+    private fun archive(groupId: String) {
+        val group = _state.value.groups.firstOrNull { it.id == groupId && it.isOwner } ?: return
         // Only one destructive action at a time: the previous one becomes final
+        undo.commit()
+        _state.update { it.copy(actionError = null) }
+        viewModelScope.launch {
+            groups.archiveGroup(group.id)
+                .onSuccess {
+                    load()
+                    undo.show(
+                        UndoableAction(
+                            message = Res.string.group_archived_message,
+                            argument = group.name,
+                            commit = { Result.success(Unit) },
+                            undo = { groups.reopenGroup(group.id) },
+                            restore = { load() },
+                        ),
+                    )
+                }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
+        }
+    }
+
+    /**
+     * No confirmation: the group disappears at once and a snackbar offers "Undo". The deletion is requested right away
+     * (the database keeps the group for 7 days and "Undo" cancels it). Owner only.
+     */
+    private fun delete(groupId: String) {
+        val group = _state.value.groups.firstOrNull { it.id == groupId && it.isOwner } ?: return
         undo.commit()
         _state.update { it.copy(groups = it.groups - group, actionError = null) }
         val restore = { _state.update { it.copy(groups = (it.groups + group).sortedByName()) } }
-
-        if (group.isOwner) {
-            viewModelScope.launch {
-                groups.requestGroupDeletion(group.id)
-                    .onSuccess {
-                        undo.show(
-                            UndoableAction(
-                                message = Res.string.group_deleted,
-                                argument = group.name,
-                                commit = { forgetAsLastGroup(group.id); Result.success(Unit) },
-                                undo = { groups.cancelGroupDeletion(group.id) },
-                                restore = { restore() },
-                            ),
-                        )
-                    }
-                    .onFailure { e ->
-                        restore()
-                        _state.update { it.copy(actionError = e.asAppError()) }
-                    }
-            }
-        } else {
-            undo.show(
-                UndoableAction(
-                    message = Res.string.group_left,
-                    argument = group.name,
-                    commit = { groups.leaveGroup(group.id).onSuccess { forgetAsLastGroup(group.id) } },
-                    undo = { Result.success(Unit) },
-                    restore = { restore() },
-                ),
-            )
+        viewModelScope.launch {
+            groups.requestGroupDeletion(group.id)
+                .onSuccess {
+                    undo.show(
+                        UndoableAction(
+                            message = Res.string.group_deleted,
+                            argument = group.name,
+                            commit = { forgetAsLastGroup(group.id); Result.success(Unit) },
+                            undo = { groups.cancelGroupDeletion(group.id) },
+                            restore = { restore() },
+                        ),
+                    )
+                }
+                .onFailure { e ->
+                    restore()
+                    _state.update { it.copy(actionError = e.asAppError()) }
+                }
         }
+    }
+
+    /**
+     * Leaving cannot be undone in the database, so it waits: it is sent when the snackbar ends without "Undo". The last
+     * owner is refused (FZ009) and the row comes back with the error.
+     */
+    private fun leave(groupId: String) {
+        val group = _state.value.groups.firstOrNull { it.id == groupId } ?: return
+        undo.commit()
+        _state.update { it.copy(groups = it.groups - group, actionError = null) }
+        undo.show(
+            UndoableAction(
+                message = Res.string.group_left,
+                argument = group.name,
+                commit = { groups.leaveGroup(group.id).onSuccess { forgetAsLastGroup(group.id) } },
+                undo = { Result.success(Unit) },
+                restore = { _state.update { it.copy(groups = (it.groups + group).sortedByName()) } },
+            ),
+        )
     }
 
     private suspend fun forgetAsLastGroup(groupId: String) {

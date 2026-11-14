@@ -26,12 +26,6 @@ sealed interface GroupSettingsEvent {
     data object InviteConfirmed : GroupSettingsEvent
     data class RevokeInvitationClicked(val invitationId: String) : GroupSettingsEvent
 
-    /** Bottom actions. None is confirmed: each is undone from the snackbar instead. */
-    data object ArchiveClicked : GroupSettingsEvent
-    data object ReopenClicked : GroupSettingsEvent
-    data object DeleteClicked : GroupSettingsEvent
-    data object LeaveClicked : GroupSettingsEvent
-
     /** The undo snackbar: "Undo" was tapped, or it timed out. */
     data object UndoClicked : GroupSettingsEvent
     data object UndoExpired : GroupSettingsEvent

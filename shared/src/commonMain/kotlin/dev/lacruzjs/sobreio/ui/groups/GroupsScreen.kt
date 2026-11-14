@@ -119,10 +119,10 @@ fun GroupsScreen(
 
     when (state.sheet) {
         GroupsSheet.None -> Unit
-        GroupsSheet.Create, GroupsSheet.Edit -> GroupFormSheet(
+        GroupsSheet.Create -> GroupFormSheet(
             form = state.form,
             onChange = { onEvent(GroupsEvent.FormChanged(it)) },
-            onConfirm = { onEvent(if (state.sheet == GroupsSheet.Edit) GroupsEvent.EditConfirmed else GroupsEvent.CreateConfirmed) },
+            onConfirm = { onEvent(GroupsEvent.CreateConfirmed) },
             onDismiss = { onEvent(GroupsEvent.SheetDismissed) },
             isSubmitting = state.isSubmitting,
             submitError = state.submitError,

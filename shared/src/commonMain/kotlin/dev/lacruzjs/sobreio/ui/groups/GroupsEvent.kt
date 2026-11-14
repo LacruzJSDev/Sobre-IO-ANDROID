@@ -10,10 +10,13 @@ sealed interface GroupsEvent {
 
     data object NewGroupClicked : GroupsEvent
 
-    /** Swipe actions of a row. Delete means "request deletion" for an owner and "leave" for anyone else; no confirmation. */
-    data class EditClicked(val groupId: String) : GroupsEvent
+    /**
+     * Swipe actions of a row, none confirmed: Archive and Delete (owner only) and Leave (everyone, owners included).
+     * Delete requests the purge at once; Leave is deferred until the snackbar ends.
+     */
+    data class ArchiveClicked(val groupId: String) : GroupsEvent
     data class DeleteClicked(val groupId: String) : GroupsEvent
-    data object EditConfirmed : GroupsEvent
+    data class LeaveClicked(val groupId: String) : GroupsEvent
 
     /** Swipe actions of the "Archived" section (owner only): bring an archived group back, or cancel a requested deletion. */
     data class ReopenClicked(val groupId: String) : GroupsEvent
@@ -26,7 +29,7 @@ sealed interface GroupsEvent {
     data object JoinClicked : GroupsEvent
     data object SheetDismissed : GroupsEvent
 
-    /** Any change of the sheet's fields: name, currency, colour, icon, period day or time zone. */
+    /** Any change of the create sheet's fields: name, currency, colour, icon, period day or time zone. */
     data class FormChanged(val form: GroupFormState) : GroupsEvent
     data object CreateConfirmed : GroupsEvent
 

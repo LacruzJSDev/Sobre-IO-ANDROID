@@ -51,7 +51,10 @@ import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.ComingSoonSheet
 import dev.lacruzjs.sobreio.ui.components.EmptyState
-import dev.lacruzjs.sobreio.ui.components.GroupAvatar
+import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.IconCategory
+import dev.lacruzjs.sobreio.ui.components.iconFor
+import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
@@ -203,7 +206,14 @@ fun GroupScreen(
                 ScreenHeader(
                     title = state.group?.name.orEmpty(),
                     onBack = { onEvent(GroupEvent.BackClicked) },
-                    leading = { GroupAvatar(name = state.group?.name.orEmpty(), size = 36.dp) },
+                    leading = {
+                        EntityAvatar(
+                            name = state.group?.name.orEmpty(),
+                            icon = iconFor(IconCategory.Group, state.group?.icon),
+                            color = EntityColor.fromHex(state.group?.color),
+                            size = 36.dp,
+                        )
+                    },
                     actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction) },
                 )
                 when {

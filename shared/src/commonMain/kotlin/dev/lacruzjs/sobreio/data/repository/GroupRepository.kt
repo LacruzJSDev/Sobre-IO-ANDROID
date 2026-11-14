@@ -60,8 +60,11 @@ interface GroupRepository {
     /** Owner or admin only. Creates an invitation with [role] (member or admin); the database picks the code and a 7-day expiry. */
     suspend fun createInvitation(groupId: String, role: GroupRole): Result<Invitation>
 
-    /** Owner or admin only. Invitations still pending, newest first; expired ones are included (see [Invitation.isExpired]). */
-    suspend fun getPendingInvitations(groupId: String): Result<List<Invitation>>
+    /**
+     * Owner or admin only. Pending and accepted invitations, newest first (revoked ones are not loaded). Pending ones
+     * that already expired are included: the caller filters them with [Invitation.isExpired].
+     */
+    suspend fun getInvitations(groupId: String): Result<List<Invitation>>
 
     /** Owner or admin only. Revokes a pending invitation for good. */
     suspend fun revokeInvitation(id: String): Result<Unit>

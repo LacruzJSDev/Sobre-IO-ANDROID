@@ -266,7 +266,6 @@
     <string name="period_day_next">Día siguiente</string>
     <string name="period_start_day_note">Cambiarlo solo afecta a los periodos que aún no se han creado.</string>
     <string name="field_time_zone">Zona horaria</string>
-    <string name="time_zone_search">Buscar zona horaria</string>
     <string name="time_zone_no_results">No se han encontrado zonas horarias.</string>
     <string name="groups_archived_title">Archivados (%1$d)</string>
     <string name="group_archived_label">Archivado</string>
@@ -275,10 +274,6 @@
     <string name="action_cancel_deletion">Cancelar eliminación</string>
     <string name="group_archived_banner">Este grupo está archivado y es de solo lectura.</string>
     <string name="group_archived_message">%1$s archivado</string>
-    <string name="action_archive_group">Archivar grupo</string>
-    <string name="action_reopen_group">Reabrir grupo</string>
-    <string name="action_delete_group">Eliminar grupo</string>
-    <string name="action_leave_group">Salir del grupo</string>
     <string name="role_owner">Propietario</string>
     <string name="role_admin">Administrador</string>
     <string name="role_member">Miembro</string>
@@ -291,7 +286,6 @@
     <string name="invite_role_label">Rol de la persona invitada</string>
     <string name="action_create_invitation">Crear invitación</string>
     <string name="invitation_expires_on">Caduca el %1$s</string>
-    <string name="invitation_expired">Caducada</string>
     <string name="invitation_summary">%1$s · %2$s</string>
     <string name="invitations_empty">No hay invitaciones pendientes.</string>
     <string name="action_revoke">Revocar</string>
@@ -300,4 +294,9 @@
     <!-- Profile -->
     <string name="field_display_name">Nombre</string>
     <string name="profile_name_saved">Nombre guardado.</string>
+    <string name="action_archive">Archivar</string>
+    <string name="settings_section_pending">Pendientes</string>
+    <string name="settings_section_accepted">Aceptadas</string>
+    <string name="member_former">Antiguo miembro</string>
+    <string name="invitation_accepted_on">Aceptada el %1$s</string>
 </resources>

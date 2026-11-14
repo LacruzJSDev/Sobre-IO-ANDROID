@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -29,7 +30,7 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_cancel_deletion
 import dev.lacruzjs.sobreio.generated.resources.action_delete
-import dev.lacruzjs.sobreio.generated.resources.action_edit
+import dev.lacruzjs.sobreio.generated.resources.action_archive
 import dev.lacruzjs.sobreio.generated.resources.action_leave
 import dev.lacruzjs.sobreio.generated.resources.action_reopen
 import dev.lacruzjs.sobreio.generated.resources.group_archived_label
@@ -45,20 +46,21 @@ import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The groups, one row each. Swiping a row left reveals Edit (owner and admin) and Delete or Leave; one row is open at a
+ * The groups, one row each. Swiping a row left reveals Archive and Delete (owner) and Leave (everyone); one row is open at a
  * time. At the end, a collapsed "Archived" section lists archived groups (owners swipe Reopen) and the ones whose
  * deletion was requested (owners swipe Cancel deletion).
  */
 @Composable
 internal fun GroupList(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
-    var openGroupId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Not saved: a row is always drawn closed when its screen is composed again
+    var openGroupId by remember { mutableStateOf<String?>(null) }
     var archivedExpanded by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     // Scrolling the list closes the open row
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openGroupId = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val editLabel = stringResource(Res.string.action_edit)
+    val archiveLabel = stringResource(Res.string.action_archive)
     val deleteLabel = stringResource(Res.string.action_delete)
     val leaveLabel = stringResource(Res.string.action_leave)
     val reopenLabel = stringResource(Res.string.action_reopen)
@@ -72,22 +74,30 @@ internal fun GroupList(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
     ) {
         items(state.groups, key = { it.id }) { group ->
             val actions = buildList {
-                if (group.canEdit) {
+                if (group.isOwner) {
                     add(
                         SwipeAction(
-                            label = editLabel,
+                            label = archiveLabel,
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
-                            onClick = { onEvent(GroupsEvent.EditClicked(group.id)) },
+                            onClick = { onEvent(GroupsEvent.ArchiveClicked(group.id)) },
+                        ),
+                    )
+                    add(
+                        SwipeAction(
+                            label = deleteLabel,
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            onClick = { onEvent(GroupsEvent.DeleteClicked(group.id)) },
                         ),
                     )
                 }
                 add(
                     SwipeAction(
-                        label = if (group.isOwner) deleteLabel else leaveLabel,
+                        label = leaveLabel,
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError,
-                        onClick = { onEvent(GroupsEvent.DeleteClicked(group.id)) },
+                        onClick = { onEvent(GroupsEvent.LeaveClicked(group.id)) },
                     ),
                 )
             }

@@ -267,7 +267,6 @@
     <string name="period_day_next">Next day</string>
     <string name="period_start_day_note">Changing it only affects periods that haven\'t been created yet.</string>
     <string name="field_time_zone">Time zone</string>
-    <string name="time_zone_search">Search time zone</string>
     <string name="time_zone_no_results">No time zones found.</string>
     <string name="groups_archived_title">Archived (%1$d)</string>
     <string name="group_archived_label">Archived</string>
@@ -276,10 +275,6 @@
     <string name="action_cancel_deletion">Cancel deletion</string>
     <string name="group_archived_banner">This group is archived and read only.</string>
     <string name="group_archived_message">%1$s archived</string>
-    <string name="action_archive_group">Archive group</string>
-    <string name="action_reopen_group">Reopen group</string>
-    <string name="action_delete_group">Delete group</string>
-    <string name="action_leave_group">Leave group</string>
     <string name="role_owner">Owner</string>
     <string name="role_admin">Admin</string>
     <string name="role_member">Member</string>
@@ -292,7 +287,6 @@
     <string name="invite_role_label">Role of the invited person</string>
     <string name="action_create_invitation">Create invitation</string>
     <string name="invitation_expires_on">Expires on %1$s</string>
-    <string name="invitation_expired">Expired</string>
     <string name="invitation_summary">%1$s · %2$s</string>
     <string name="invitations_empty">No pending invitations.</string>
     <string name="action_revoke">Revoke</string>
@@ -301,4 +295,9 @@
     <!-- Profile -->
     <string name="field_display_name">Name</string>
     <string name="profile_name_saved">Name saved.</string>
+    <string name="action_archive">Archive</string>
+    <string name="settings_section_pending">Pending</string>
+    <string name="settings_section_accepted">Accepted</string>
+    <string name="member_former">Former member</string>
+    <string name="invitation_accepted_on">Accepted on %1$s</string>
 </resources>

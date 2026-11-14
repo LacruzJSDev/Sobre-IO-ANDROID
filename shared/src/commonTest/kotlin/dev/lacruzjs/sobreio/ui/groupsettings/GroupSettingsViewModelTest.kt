@@ -5,16 +5,13 @@ import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
+import dev.lacruzjs.sobreio.domain.model.InvitationStatus
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.User
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
-import dev.lacruzjs.sobreio.fake.FakeLastGroupStore
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.group_archived_message
-import dev.lacruzjs.sobreio.generated.resources.group_deleted
-import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
 import dev.lacruzjs.sobreio.generated.resources.validation_required
@@ -25,6 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 class GroupSettingsViewModelTest : MainDispatcherTest() {
@@ -34,16 +32,22 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     private val luis = Member("u3", "Luis", GroupRole.Member)
     private val invitation = Invitation("i1", "AAAA11112222", GroupRole.Member, Instant.parse("2026-11-20T10:00:00Z"))
     private val expired = Invitation("i2", "BBBB33334444", GroupRole.Admin, Instant.parse("2026-11-01T10:00:00Z"))
+    private val accepted = Invitation(
+        "i3", "CCCC55556666", GroupRole.Member, Instant.parse("2026-11-19T10:00:00Z"),
+        status = InvitationStatus.Accepted, acceptedBy = "u3", acceptedAt = Instant.parse("2026-11-12T10:00:00Z"),
+    )
+    private val clock = object : Clock {
+        override fun now(): Instant = Instant.parse("2026-11-14T10:00:00Z")
+    }
 
     private val groupRepository = FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner)))
     private val memberRepository = FakeMemberRepository(listOf(ana, marta, luis))
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
-    private val lastGroup = FakeLastGroupStore()
 
     private fun viewModel(role: GroupRole = GroupRole.Owner): GroupSettingsViewModel {
         groupRepository.groups = groupRepository.groups.map { it.copy(role = role) }
         groupRepository.invitations = listOf(invitation, expired)
-        return GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, lastGroup)
+        return GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock)
     }
 
     private fun GroupSettingsViewModel.change(change: GroupFormState.() -> GroupFormState) =
@@ -58,9 +62,9 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         assertEquals("Casa", state.group?.name)
         assertEquals("u1", state.currentUserId)
         assertEquals(listOf(ana, marta, luis), state.members)
-        assertEquals(listOf(invitation, expired), state.invitations)
+        assertEquals(listOf(invitation), state.pendingInvitations)
         assertTrue(state.hasSeveralMembers)
-        assertTrue(state.canEditDetails && state.canInvite && state.canManageMembers && state.canArchive)
+        assertTrue(state.canEditDetails && state.canInvite && state.canManageMembers)
         assertFalse(state.isLoading)
     }
 
@@ -78,16 +82,13 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
 
         assertTrue(state.canEditDetails && state.canInvite)
         assertFalse(state.canManageMembers)
-        assertFalse(state.canArchive)
 
         viewModel.onEvent(GroupSettingsEvent.RoleClicked("u3"))
         viewModel.onEvent(GroupSettingsEvent.RemoveMemberClicked("u3"))
-        viewModel.onEvent(GroupSettingsEvent.ArchiveClicked)
-        viewModel.onEvent(GroupSettingsEvent.DeleteClicked)
 
         assertEquals(GroupSettingsSheet.None, viewModel.state.value.sheet)
         assertEquals(3, viewModel.state.value.members.size)
-        assertTrue(groupRepository.calls.none { it.startsWith("archiveGroup") || it.startsWith("requestGroupDeletion") })
+        assertTrue(memberRepository.calls.isEmpty())
     }
 
     @Test
@@ -96,8 +97,8 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         val state = viewModel.state.value
 
         assertFalse(state.canEditDetails || state.canInvite || state.canManageMembers)
-        assertTrue(state.invitations.isEmpty())
-        assertTrue(groupRepository.calls.none { it.startsWith("getPendingInvitations") })
+        assertTrue(state.pendingInvitations.isEmpty())
+        assertTrue(groupRepository.calls.none { it.startsWith("getInvitations") })
 
         viewModel.onEvent(GroupSettingsEvent.EditClicked)
         viewModel.onEvent(GroupSettingsEvent.InviteClicked)
@@ -107,7 +108,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     @Test
     fun aGroupThatIsGoneAsksToGoBackToGroups() {
         groupRepository.groups = emptyList()
-        val viewModel = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, lastGroup)
+        val viewModel = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock)
 
         assertTrue(viewModel.state.value.navigateToGroups)
         viewModel.onEvent(GroupSettingsEvent.NavigationHandled)
@@ -120,7 +121,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         val failing = object : dev.lacruzjs.sobreio.data.repository.GroupRepository by groupRepository {
             override suspend fun getGroup(id: String): Result<Group> = Result.failure(AppError.Network)
         }
-        val viewModel = GroupSettingsViewModel("g1", failing, memberRepository, auth, lastGroup)
+        val viewModel = GroupSettingsViewModel("g1", failing, memberRepository, auth, clock)
 
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.navigateToGroups)
@@ -285,8 +286,8 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         val created = viewModel.state.value.createdInvitation
         assertEquals("ABC123DEF456", created?.code)
         assertEquals(GroupRole.Admin, created?.role)
-        assertEquals(created, viewModel.state.value.invitations.first())
-        assertEquals(3, viewModel.state.value.invitations.size)
+        assertEquals(created, viewModel.state.value.pendingInvitations.first())
+        assertEquals(2, viewModel.state.value.pendingInvitations.size)
         assertFalse(viewModel.state.value.isSubmitting)
     }
 
@@ -321,7 +322,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         val viewModel = viewModel()
         viewModel.onEvent(GroupSettingsEvent.RevokeInvitationClicked("i1"))
 
-        assertEquals(listOf(expired), viewModel.state.value.invitations)
+        assertTrue(viewModel.state.value.pendingInvitations.isEmpty())
         assertEquals(Res.string.invitation_revoked, viewModel.state.value.undoMessage?.message)
         assertEquals("AAAA11112222", viewModel.state.value.undoMessage?.argument)
         assertTrue(groupRepository.calls.none { it.startsWith("revokeInvitation") })
@@ -337,7 +338,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupSettingsEvent.RevokeInvitationClicked("i1"))
         viewModel.onEvent(GroupSettingsEvent.UndoClicked)
 
-        assertEquals(listOf(invitation, expired), viewModel.state.value.invitations)
+        assertEquals(listOf(invitation), viewModel.state.value.pendingInvitations)
         assertTrue(groupRepository.calls.none { it.startsWith("revokeInvitation") })
     }
 
@@ -348,143 +349,43 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupSettingsEvent.RevokeInvitationClicked("i1"))
         viewModel.onEvent(GroupSettingsEvent.UndoExpired)
 
-        assertEquals(listOf(invitation, expired), viewModel.state.value.invitations)
+        assertEquals(listOf(invitation), viewModel.state.value.pendingInvitations)
         assertEquals(AppError.BusinessRule("FZ011"), viewModel.state.value.actionError)
     }
 
-    // Archive, reopen, delete, leave
-
     @Test
-    fun archivingMakesTheGroupReadOnlyAndOffersUndo() {
+    fun groupLevelActionsAreNotOnTheSettingsScreenAnyMore() {
         val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.ArchiveClicked)
-
-        assertTrue("archiveGroup(g1)" in groupRepository.calls)
-        val state = viewModel.state.value
-        assertTrue(state.group?.isArchived == true)
-        assertFalse(state.canEditDetails)
-        assertTrue(state.canReopen)
-        assertEquals(Res.string.group_archived_message, state.undoMessage?.message)
-        assertTrue(state.invitations.isEmpty())
-
-        viewModel.onEvent(GroupSettingsEvent.UndoClicked)
-
-        assertTrue("reopenGroup(g1)" in groupRepository.calls)
-        assertTrue(viewModel.state.value.canArchive)
-        assertEquals(listOf(invitation, expired), viewModel.state.value.invitations)
-    }
-
-    @Test
-    fun reopeningAnArchivedGroupMakesItEditableAgain() {
-        groupRepository.groups = groupRepository.groups.map { it.copy(archivedAt = Instant.parse("2026-11-01T10:00:00Z")) }
-        val viewModel = viewModel()
-        assertTrue(viewModel.state.value.canReopen)
-
-        viewModel.onEvent(GroupSettingsEvent.ReopenClicked)
-
-        assertTrue("reopenGroup(g1)" in groupRepository.calls)
-        assertTrue(viewModel.state.value.canEditDetails)
-        assertFalse(viewModel.state.value.group?.isArchived == true)
-    }
-
-    @Test
-    fun aFailedArchiveShowsTheError() {
-        groupRepository.archiveResult = Result.failure(AppError.BusinessRule("FZ016"))
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.ArchiveClicked)
-
-        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
-        assertFalse(viewModel.state.value.isWorking)
-        assertNull(viewModel.state.value.undoMessage)
-    }
-
-    @Test
-    fun deletingRequestsThePurgeAtOnceAndGoesBackWhenTheSnackbarEnds() {
-        lastGroup.set("u1", "g1")
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.DeleteClicked)
-
-        assertTrue("requestGroupDeletion(g1)" in groupRepository.calls)
-        assertEquals(Res.string.group_deleted, viewModel.state.value.undoMessage?.message)
-        assertTrue(viewModel.state.value.isWorking)
-        assertFalse(viewModel.state.value.navigateToGroups)
-
-        viewModel.onEvent(GroupSettingsEvent.UndoExpired)
-
-        assertTrue(viewModel.state.value.navigateToGroups)
-        assertNull(lastGroup.get("u1"))
-    }
-
-    @Test
-    fun undoingADeletionCancelsItAndStaysOnTheScreen() {
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.DeleteClicked)
-        viewModel.onEvent(GroupSettingsEvent.UndoClicked)
-
-        assertTrue("cancelGroupDeletion(g1)" in groupRepository.calls)
-        assertFalse(viewModel.state.value.isWorking)
+        assertTrue(groupRepository.calls.none { it.startsWith("archiveGroup") || it.startsWith("leaveGroup") })
         assertFalse(viewModel.state.value.navigateToGroups)
     }
 
     @Test
-    fun aNonOwnerLeavesOnlyWhenTheSnackbarEnds() {
-        lastGroup.set("u1", "g1")
-        val viewModel = viewModel(GroupRole.Member)
-        viewModel.onEvent(GroupSettingsEvent.LeaveClicked)
+    fun invitationsAreSplitIntoPendingAndAcceptedAndExpiredOnesAreDropped() {
+        groupRepository.invitations = listOf(invitation, expired, accepted)
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
 
-        assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
-        assertTrue(groupRepository.calls.none { it.startsWith("leaveGroup") })
-        assertFalse(viewModel.state.value.navigateToGroups)
-
-        viewModel.onEvent(GroupSettingsEvent.UndoExpired)
-
-        assertTrue("leaveGroup(g1)" in groupRepository.calls)
-        assertTrue(viewModel.state.value.navigateToGroups)
-        assertNull(lastGroup.get("u1"))
+        assertEquals(listOf(invitation), state.pendingInvitations)
+        assertEquals(listOf(accepted), state.acceptedInvitations)
     }
 
     @Test
-    fun undoingALeaveSendsNothing() {
-        val viewModel = viewModel(GroupRole.Admin)
-        viewModel.onEvent(GroupSettingsEvent.LeaveClicked)
-        viewModel.onEvent(GroupSettingsEvent.UndoClicked)
+    fun anAcceptedInvitationKeepsWhoAcceptedAndWhen() {
+        groupRepository.invitations = listOf(accepted)
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
 
-        assertTrue(groupRepository.calls.none { it.startsWith("leaveGroup") })
-        assertFalse(viewModel.state.value.isWorking)
+        assertEquals("u3", state.acceptedInvitations.single().acceptedBy)
+        assertEquals(Instant.parse("2026-11-12T10:00:00Z"), state.acceptedInvitations.single().acceptedAt)
+        assertEquals(luis, state.members.first { it.userId == "u3" })
     }
 
     @Test
-    fun aFailedLeaveStaysOnTheScreenWithTheError() {
-        groupRepository.leaveResult = Result.failure(AppError.BusinessRule("FZ009"))
-        val viewModel = viewModel(GroupRole.Admin)
-        viewModel.onEvent(GroupSettingsEvent.LeaveClicked)
-        viewModel.onEvent(GroupSettingsEvent.UndoExpired)
+    fun anAdminAlsoSeesBothInvitationLists() {
+        groupRepository.invitations = listOf(invitation, accepted)
+        groupRepository.groups = groupRepository.groups.map { it.copy(role = GroupRole.Admin) }
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
 
-        assertEquals(AppError.BusinessRule("FZ009"), viewModel.state.value.actionError)
-        assertFalse(viewModel.state.value.isWorking)
-        assertFalse(viewModel.state.value.navigateToGroups)
-    }
-
-    @Test
-    fun anOwnerLeavesWhenTheSnackbarEndsAndTheLastOwnerErrorRestoresTheScreen() {
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.LeaveClicked)
-        assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
-        assertTrue(viewModel.state.value.isWorking)
-
-        groupRepository.leaveResult = Result.failure(AppError.BusinessRule("FZ009"))
-        viewModel.onEvent(GroupSettingsEvent.UndoExpired)
-
-        assertTrue("leaveGroup(g1)" in groupRepository.calls)
-        assertEquals(AppError.BusinessRule("FZ009"), viewModel.state.value.actionError)
-        assertFalse(viewModel.state.value.isWorking)
-        assertFalse(viewModel.state.value.navigateToGroups)
-    }
-
-    @Test
-    fun aNonOwnerCannotDelete() {
-        val member = viewModel(GroupRole.Member)
-        member.onEvent(GroupSettingsEvent.DeleteClicked)
-        assertTrue(groupRepository.calls.none { it.startsWith("requestGroupDeletion") })
+        assertEquals(1, state.pendingInvitations.size)
+        assertEquals(1, state.acceptedInvitations.size)
     }
 }

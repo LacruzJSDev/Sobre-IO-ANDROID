@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -42,22 +46,21 @@ import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_archive_group
-import dev.lacruzjs.sobreio.generated.resources.action_delete_group
 import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.action_invite
-import dev.lacruzjs.sobreio.generated.resources.action_leave_group
 import dev.lacruzjs.sobreio.generated.resources.action_remove
-import dev.lacruzjs.sobreio.generated.resources.action_reopen_group
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.action_revoke
 import dev.lacruzjs.sobreio.generated.resources.action_role
 import dev.lacruzjs.sobreio.generated.resources.group_archived_banner
 import dev.lacruzjs.sobreio.generated.resources.group_settings_title
-import dev.lacruzjs.sobreio.generated.resources.invitation_expired
 import dev.lacruzjs.sobreio.generated.resources.invitation_expires_on
 import dev.lacruzjs.sobreio.generated.resources.invitation_summary
+import dev.lacruzjs.sobreio.generated.resources.invitation_accepted_on
 import dev.lacruzjs.sobreio.generated.resources.invitations_empty
+import dev.lacruzjs.sobreio.generated.resources.member_former
+import dev.lacruzjs.sobreio.generated.resources.settings_section_accepted
+import dev.lacruzjs.sobreio.generated.resources.settings_section_pending
 import dev.lacruzjs.sobreio.generated.resources.member_name_you
 import dev.lacruzjs.sobreio.generated.resources.settings_period_summary
 import dev.lacruzjs.sobreio.generated.resources.settings_section_details
@@ -65,7 +68,6 @@ import dev.lacruzjs.sobreio.generated.resources.settings_section_invitations
 import dev.lacruzjs.sobreio.generated.resources.settings_section_members
 import dev.lacruzjs.sobreio.generated.resources.settings_time_zone_summary
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
-import dev.lacruzjs.sobreio.ui.components.DestructiveButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -84,7 +86,6 @@ import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 @Composable
@@ -170,13 +171,13 @@ fun GroupSettingsScreen(
 
 @Composable
 private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: (GroupSettingsEvent) -> Unit) {
-    var openKey by rememberSaveable { mutableStateOf<String?>(null) }
+    // Not saved: a row is always drawn closed when its screen is composed again
+    var openKey by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     // Scrolling the list closes the open row
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openKey = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val now = remember { Clock.System.now() }
     val roleLabel = stringResource(Res.string.action_role)
     val removeLabel = stringResource(Res.string.action_remove)
     val revokeLabel = stringResource(Res.string.action_revoke)
@@ -188,6 +189,12 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item(key = "details") { DetailsSection(group, state.canEditDetails, onEvent) }
+
+        if (state.actionError != null) {
+            item(key = "error") {
+                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp))
+            }
+        }
 
         item(key = "members-title") { SectionTitle(stringResource(Res.string.settings_section_members)) }
         items(state.members, key = { "member-${it.userId}" }) { member ->
@@ -239,7 +246,7 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
                     )
                 }
             }
-            if (state.invitations.isEmpty()) {
+            if (state.pendingInvitations.isEmpty() && state.acceptedInvitations.isEmpty()) {
                 item(key = "invitations-empty") {
                     Text(
                         text = stringResource(Res.string.invitations_empty),
@@ -249,7 +256,10 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
                     )
                 }
             }
-            items(state.invitations, key = { "invitation-${it.id}" }) { invitation ->
+            if (state.pendingInvitations.isNotEmpty()) {
+                item(key = "pending-title") { SectionTitle(stringResource(Res.string.settings_section_pending)) }
+            }
+            items(state.pendingInvitations, key = { "invitation-${it.id}" }) { invitation ->
                 SwipeActionsRow(
                     actions = listOf(
                         SwipeAction(
@@ -266,12 +276,21 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
                     },
                     onClick = {},
                 ) {
-                    InvitationRow(invitation, now, languageTag)
+                    PendingInvitationRow(invitation, languageTag)
                 }
             }
+            if (state.acceptedInvitations.isNotEmpty()) {
+                item(key = "accepted-title") { SectionTitle(stringResource(Res.string.settings_section_accepted)) }
+            }
+            items(state.acceptedInvitations, key = { "accepted-${it.id}" }) { invitation ->
+                AcceptedInvitationRow(
+                    invitation = invitation,
+                    name = state.members.firstOrNull { it.userId == invitation.acceptedBy }?.displayName
+                        ?: stringResource(Res.string.member_former),
+                    languageTag = languageTag,
+                )
+            }
         }
-
-        item(key = "actions") { BottomActions(group, state, onEvent) }
     }
 }
 
@@ -368,23 +387,24 @@ private fun MemberRow(member: Member, isYou: Boolean) {
 }
 
 @Composable
-private fun InvitationRow(invitation: Invitation, now: Instant, languageTag: String) {
-    val expired = invitation.isExpired(now)
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp)) {
+private fun PendingInvitationRow(invitation: Invitation, languageTag: String) {
+    val clipboard = LocalClipboardManager.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            // Tapping the row copies the code
+            .clickable(role = Role.Button) { clipboard.setText(AnnotatedString(invitation.code)) }
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+    ) {
         Text(
             text = invitation.code,
             style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "ss01, zero, tnum", letterSpacing = 1.sp),
-            color = if (expired) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = stringResource(
                 Res.string.invitation_summary,
                 stringResource(invitation.role.labelRes()),
-                if (expired) {
-                    stringResource(Res.string.invitation_expired)
-                } else {
-                    stringResource(Res.string.invitation_expires_on, formatDate(invitation.expiresAt, languageTag))
-                },
+                stringResource(Res.string.invitation_expires_on, formatDate(invitation.expiresAt, languageTag)),
             ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -392,38 +412,19 @@ private fun InvitationRow(invitation: Invitation, now: Instant, languageTag: Str
     }
 }
 
-/** Owners archive (or reopen) and delete; everyone leaves. Nothing is confirmed: each one is undone from the snackbar. */
 @Composable
-private fun BottomActions(group: Group, state: GroupSettingsUiState, onEvent: (GroupSettingsEvent) -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).padding(top = 24.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
-        if (group.isOwner) {
-            if (state.canReopen) {
-                SecondaryButton(
-                    text = stringResource(Res.string.action_reopen_group),
-                    onClick = { onEvent(GroupSettingsEvent.ReopenClicked) },
-                    enabled = !state.isWorking,
-                )
-            } else if (state.canArchive) {
-                SecondaryButton(
-                    text = stringResource(Res.string.action_archive_group),
-                    onClick = { onEvent(GroupSettingsEvent.ArchiveClicked) },
-                    enabled = !state.isWorking,
-                )
-            }
-            DestructiveButton(
-                text = stringResource(Res.string.action_delete_group),
-                onClick = { onEvent(GroupSettingsEvent.DeleteClicked) },
-                enabled = !state.isWorking,
-            )
-        }
-        DestructiveButton(
-            text = stringResource(Res.string.action_leave_group),
-            onClick = { onEvent(GroupSettingsEvent.LeaveClicked) },
-            enabled = !state.isWorking,
+private fun AcceptedInvitationRow(invitation: Invitation, name: String, languageTag: String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp)) {
+        Text(text = name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            text = stringResource(
+                Res.string.invitation_summary,
+                stringResource(invitation.role.labelRes()),
+                invitation.acceptedAt?.let { stringResource(Res.string.invitation_accepted_on, formatDate(it, languageTag)) }
+                    .orEmpty(),
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -443,7 +444,7 @@ private fun GroupSettingsScreenPreview() {
                     Member("u2", "Marta", GroupRole.Admin),
                     Member("u3", "Luis", GroupRole.Member),
                 ),
-                invitations = listOf(Invitation("i1", "A1B2C3D4E5F6", GroupRole.Member, Instant.parse("2026-12-01T10:00:00Z"))),
+                pendingInvitations = listOf(Invitation("i1", "A1B2C3D4E5F6", GroupRole.Member, Instant.parse("2026-12-01T10:00:00Z"))),
                 isLoading = false,
             ),
             onEvent = {},

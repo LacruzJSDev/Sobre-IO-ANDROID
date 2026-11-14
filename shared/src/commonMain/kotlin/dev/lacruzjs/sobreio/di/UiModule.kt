@@ -34,7 +34,6 @@ val uiModule = module {
             groups = get(),
             members = get(),
             auth = get(),
-            lastGroup = get(),
         )
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get()) }

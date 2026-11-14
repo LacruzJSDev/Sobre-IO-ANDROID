@@ -5,6 +5,7 @@ import dev.lacruzjs.sobreio.data.remote.dto.InvitationDto
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
+import dev.lacruzjs.sobreio.domain.model.InvitationStatus
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -72,5 +73,19 @@ class GroupMapperTest {
     @Test
     fun rolesRoundTripToTheirDatabaseValues() {
         GroupRole.entries.forEach { assertEquals(it, it.toDbValue().toGroupRole()) }
+    }
+
+    @Test
+    fun mapsAnAcceptedInvitation() {
+        val dto = json.decodeFromString<InvitationDto>(
+            """{"id":"i1","code":"AAAA11112222","role":"member","status":"accepted","accepted_by":"u3",
+               "accepted_at":"2026-11-12T10:00:00+00:00","expires_at":"2026-11-20T10:00:00+00:00"}""",
+        )
+
+        val invitation = dto.toDomain()
+
+        assertEquals(InvitationStatus.Accepted, invitation.status)
+        assertEquals("u3", invitation.acceptedBy)
+        assertEquals(Instant.parse("2026-11-12T10:00:00Z"), invitation.acceptedAt)
     }
 }

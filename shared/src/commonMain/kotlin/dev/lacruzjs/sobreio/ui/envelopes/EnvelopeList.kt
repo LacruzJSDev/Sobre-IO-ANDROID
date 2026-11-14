@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,7 +59,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> Unit) {
-    var openEnvelopeId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Not saved: a row is always drawn closed when its screen is composed again
+    var openEnvelopeId by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     // Scrolling the list closes the open row
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openEnvelopeId = null }

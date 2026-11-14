@@ -100,8 +100,8 @@ class FakeGroupRepository(var groups: List<Group> = emptyList()) : GroupReposito
         return invitationResult.map { it.copy(role = role) }
     }
 
-    override suspend fun getPendingInvitations(groupId: String): Result<List<Invitation>> {
-        calls += "getPendingInvitations($groupId)"
+    override suspend fun getInvitations(groupId: String): Result<List<Invitation>> {
+        calls += "getInvitations($groupId)"
         return Result.success(invitations)
     }
 
