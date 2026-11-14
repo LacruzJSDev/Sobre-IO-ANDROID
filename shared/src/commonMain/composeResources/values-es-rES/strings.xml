@@ -64,8 +64,8 @@
     <string name="error_fz014_immutable">Ese dato no se puede cambiar.</string>
     <string name="error_fz015_group_transfer">La transferencia entre grupos no es coherente.</string>
     <string name="error_fz016_permission">No tienes permiso para hacer esto en este grupo.</string>
-    <string name="error_fz017_account_scope">El cambio de ámbito de la cuenta no es coherente.</string>
-    <string name="error_fz018_linked_commitment">El compromiso vinculado no es coherente.</string>
+    <string name="error_fz017_account_scope">Eso no encaja con que la cuenta reparta o no su dinero en sobres.</string>
+    <string name="error_fz018_linked_commitment">Esas fechas o reglas no sirven para este compromiso. Elige una fecha posterior en «Aplicar desde» o revisa la aportación vinculada.</string>
     <string name="error_fz019_cover">Un sobre elegido para cubrir el gasto no tiene ese importe.</string>
     <string name="error_fz020_purge">El borrado del grupo ya está pedido, o no hay ninguno que cancelar.</string>
 
@@ -371,4 +371,89 @@
     <string name="compare_matches">Coincide</string>
     <string name="action_adjust_balance">Ajustar a este saldo</string>
     <string name="adjustment_recorded">Ajuste de %1$s registrado</string>
+
+    <!-- Compromisos -->
+    <string name="action_new_commitment">Nuevo compromiso</string>
+    <string name="edit_commitment_title">Editar compromiso</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_clear_date">Quitar fecha</string>
+    <string name="commitment_deleted">%1$s eliminado</string>
+    <string name="commitment_reopened">%1$s reabierto</string>
+    <string name="commitments_empty">Esta cuenta no tiene compromisos.</string>
+    <string name="commitments_empty_editor">Esta cuenta aún no tiene compromisos. Añade el primero con el botón +.</string>
+    <string name="commitment_section_expenses">Gastos</string>
+    <string name="commitment_section_incomes">Ingresos</string>
+    <string name="commitment_section_transfers">Transferencias</string>
+    <string name="commitment_section_incoming_transfers">Transferencias entrantes</string>
+    <string name="commitment_section_contributions">Aportaciones a otros grupos</string>
+    <string name="commitment_section_received_contributions">Aportaciones recibidas</string>
+    <string name="commitment_kind_expense">Gasto</string>
+    <string name="commitment_kind_income">Ingreso</string>
+    <string name="commitment_kind_transfer">Transferencia</string>
+    <string name="commitment_kind_contribution">Aportación a otro grupo</string>
+    <string name="frequency_once">Una vez</string>
+    <string name="commitment_next">Próximo %1$s</string>
+    <string name="commitment_automatic">Automático</string>
+    <string name="field_commitment_name">Nombre del compromiso</string>
+    <string name="field_commitment_kind">Tipo</string>
+    <string name="field_account">Cuenta</string>
+    <string name="field_to_account">Cuenta de destino</string>
+    <string name="field_envelope">Sobre</string>
+    <string name="field_dest_group">Grupo de destino</string>
+    <string name="field_dest_account">Cuenta en ese grupo</string>
+    <string name="field_source_envelope">Sobre de origen</string>
+    <string name="field_dest_envelope">Sobre de destino</string>
+    <string name="form_section_commitment">Compromiso</string>
+    <string name="form_section_money">Dinero</string>
+    <string name="form_section_calendar">Calendario</string>
+    <string name="form_section_registration">Registro</string>
+    <string name="form_section_notes">Notas</string>
+    <string name="form_section_effective">Cambios</string>
+    <string name="form_section_history">Historial</string>
+    <string name="field_first_due">Primer vencimiento</string>
+    <string name="field_repeats">Se repite</string>
+    <string name="field_every">Cada</string>
+    <string name="field_unit">Unidad</string>
+    <string name="field_end_date">Termina el</string>
+    <string name="end_date_never">Nunca</string>
+    <string name="unit_days">Días</string>
+    <string name="unit_weeks">Semanas</string>
+    <string name="unit_months">Meses</string>
+    <string name="unit_years">Años</string>
+    <string name="every_previous">Disminuir</string>
+    <string name="every_next">Aumentar</string>
+    <string name="every_value">%1$d</string>
+    <string name="field_auto_register">Registrar automáticamente</string>
+    <string name="commitment_register_note">Activado: se registra solo el día del vencimiento, como una orden periódica del banco. Desactivado: espera en la pestaña Grupo a que lo confirmes con el importe real o lo saltes.</string>
+    <string name="field_funded">Reservar cada periodo</string>
+    <string name="commitment_funded_note">Cada periodo el dinero pasa de Sin asignar al sobre por adelantado, para que esté ahí el día del vencimiento.</string>
+    <string name="field_notes">Notas</string>
+    <string name="field_effective_from">Aplicar desde</string>
+    <string name="commitment_effective_note">Los vencimientos anteriores a este día conservan los valores antiguos.</string>
+    <string name="commitment_history_range">Del %1$s al %2$s</string>
+    <string name="commitment_history_open">Desde el %1$s</string>
+    <string name="commitment_linked_note">En una aportación solo se pueden cambiar el nombre y el importe; el resto se comparte con el otro grupo.</string>
+    <string name="commitment_outside_note">Esta cuenta está fuera de los sobres, así que el gasto va a «Fuera de sobres».</string>
+    <string name="commitment_no_groups_note">Necesitas otro grupo activo con la misma moneda en el que seas propietario o administrador.</string>
+    <string name="validation_destination_account">Elige la cuenta de destino.</string>
+    <string name="validation_destination_group">Elige el grupo de destino.</string>
+    <string name="validation_envelope_required">Elige un sobre.</string>
+    <string name="validation_end_date_before_start">La fecha de fin no puede ser anterior al primer vencimiento.</string>
+
+    <plurals name="frequency_days">
+        <item quantity="one">Cada día</item>
+        <item quantity="other">Cada %1$d días</item>
+    </plurals>
+    <plurals name="frequency_weeks">
+        <item quantity="one">Cada semana</item>
+        <item quantity="other">Cada %1$d semanas</item>
+    </plurals>
+    <plurals name="frequency_months">
+        <item quantity="one">Cada mes, día %2$d</item>
+        <item quantity="other">Cada %1$d meses, día %2$d</item>
+    </plurals>
+    <plurals name="frequency_years">
+        <item quantity="one">Cada año, %2$s</item>
+        <item quantity="other">Cada %1$d años, %2$s</item>
+    </plurals>
 </resources>

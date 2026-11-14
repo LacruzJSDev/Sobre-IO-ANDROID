@@ -150,7 +150,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Account detail (`ui/accountdetail`, route `AccountDetail(groupId, accountId)`, level 2): opened by tapping an account row
   (swipe actions stay). Header with the account avatar and name, the group as a subtitle (`ScreenHeader(subtitle)`) and a
   pencil (owner and admin, `Group.canEdit`) that opens `AccountForm`; the screen reloads each time it is shown. Flat top
-  tabs (`PrimaryTabRow`, ink indicator, no divider): Summary and Commitments (placeholder "Coming soon" until that task).
+  tabs (`PrimaryTabRow`, ink indicator, no divider): Summary and Commitments (see below).
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
@@ -161,6 +161,30 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `account_period_flows`, `upcoming_occurrences` (filtered to the account and signed in `UpcomingDto.toUpcomingFor`, the
   only thing done in the app), the `movements` view, `compare_with_bank` and the two writes; nothing is summed in the app.
   The adjustment's amount in the snackbar is formatted by the screen: `UndoableAction`/`UndoMessage` carry `amountCents`.
+- Commitments tab of the account detail (`ui/commitments`, `AccountCommitmentsViewModel(groupId, accountId)`, `CommitmentRepository` +
+  `SupabaseCommitmentRepository`, models in `domain/model/Commitment.kt`, DTOs and mappers `Commitment*`): `AccountDetailScreen` stays
+  stateless and takes `commitmentsAction` (the header "+", only on this tab, owner/admin) and `commitmentsContent` slots that
+  `AccountDetailRoute` fills from the second ViewModel; it reloads each time the tab shows. The repository reads
+  `commitments` with `commitment_versions` embedded (every version, newest first) for the commitments having a version that touches the account;
+  the ViewModel keeps those whose current version (in force at the group's today, else the newest) touches it. Sections: Expenses,
+  Incomes, Transfers (source), Incoming transfers (read only), Contributions to other groups, Contributions received (read only); empty
+  ones hidden, collapsed "Archived (N)" at the end. Row: `EntityAvatar` in ink with the kind icon, name, frequency (plurals
+  `frequency_*`) + "Next <date>" (from `upcoming_occurrences`, 400 days) + "Automatic", and the amount signed for this account. Editable
+  live rows (owner/admin; a contribution also needs its `commitment_links` row, invisible to members of one group only) swipe
+  Edit and Delete (archive at once, Undo unarchives; a contribution uses `archive_linked_commitment` and a single update of both halves to reopen)
+  and a tap edits; archived rows swipe Reopen.
+- Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
+  avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (fixed
+  account, destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
+  database uses "Outside envelopes"; a contribution: destination group (other live groups with the same currency where the user is
+  owner/admin), account, optional source and destination envelope), "Calendar" (`DateFormTile`, repeats switch, every N stepper 1-99,
+  unit chips, optional end date), "Registration" (auto register, default off and on for contributions; "funded" only when the DB allows it:
+  `CommitmentFormUiState.canFund`), "Notes" (not for contributions, `create_linked_commitment` has none). Editing adds "Apply from" (default
+  the group's today) and the read-only history. Create calls `create_commitment` or `create_linked_commitment`; edit renames
+  (`commitments.name`) when the name changed and then `change_commitment` (only when a rule field changed) or, for a
+  contribution, `change_linked_commitment` with the amount only (the other fields are read only, with a note); a retry skips the steps already done.
+  A taken name shows under the name field; FZ016/FZ017/FZ018 show under the form.
+- `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
 - "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
   `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the
   account in its own saved `movementsFilter` and clears the AppNavigation value. The Movements tab is still an empty

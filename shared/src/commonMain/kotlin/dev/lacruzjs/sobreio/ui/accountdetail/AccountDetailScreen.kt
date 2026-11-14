@@ -44,8 +44,12 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.account_detail_tab_commitments
 import dev.lacruzjs.sobreio.generated.resources.account_detail_tab_summary
 import dev.lacruzjs.sobreio.generated.resources.action_retry
-import dev.lacruzjs.sobreio.generated.resources.coming_soon
+import dev.lacruzjs.sobreio.generated.resources.action_new_commitment
 import dev.lacruzjs.sobreio.generated.resources.edit_account_title
+import dev.lacruzjs.sobreio.ui.commitments.AccountCommitmentsViewModel
+import dev.lacruzjs.sobreio.ui.commitments.CommitmentsEvent
+import dev.lacruzjs.sobreio.ui.commitments.CommitmentsPane
+import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
@@ -73,10 +77,13 @@ fun AccountDetailRoute(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onSeeAllMovements: () -> Unit,
+    onOpenCommitmentForm: (commitmentId: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AccountDetailViewModel = koinViewModel { parametersOf(groupId, accountId) },
+    commitmentsViewModel: AccountCommitmentsViewModel = koinViewModel { parametersOf(groupId, accountId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val commitmentsState by commitmentsViewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position, like the group's tabs
     var tabIndex by rememberSaveable { mutableStateOf(AccountDetailTab.Summary.ordinal) }
 
@@ -96,6 +103,27 @@ fun AccountDetailRoute(
             }
         },
         modifier = modifier,
+        commitmentsAction = {
+            if (commitmentsState.canEdit) {
+                AddIconButton(
+                    contentDescription = stringResource(Res.string.action_new_commitment),
+                    onClick = { onOpenCommitmentForm(null) },
+                )
+            }
+        },
+        commitmentsContent = {
+            // Shown again each time the tab is selected or the form closes, so it reads the list again
+            LaunchedEffect(Unit) { commitmentsViewModel.onEvent(CommitmentsEvent.Refresh) }
+            CommitmentsPane(
+                state = commitmentsState,
+                onEvent = { event ->
+                    when (event) {
+                        is CommitmentsEvent.EditClicked -> onOpenCommitmentForm(event.commitmentId)
+                        else -> commitmentsViewModel.onEvent(event)
+                    }
+                },
+            )
+        },
     )
 }
 
@@ -105,6 +133,9 @@ fun AccountDetailScreen(
     selectedTab: AccountDetailTab,
     onEvent: (AccountDetailEvent) -> Unit,
     modifier: Modifier = Modifier,
+    /** The header "+" of the Commitments tab and the tab's content, filled by the Route from its own ViewModel. */
+    commitmentsAction: @Composable () -> Unit = {},
+    commitmentsContent: @Composable () -> Unit = {},
 ) {
     val languageTag = Locale.current.toLanguageTag()
     val account = state.account
@@ -125,7 +156,10 @@ fun AccountDetailScreen(
                     }
                 },
                 actions = {
-                    if (account != null && state.canEdit) {
+                    if (selectedTab == AccountDetailTab.Commitments) {
+                        // The pencil edits the account and stays on the Summary tab
+                        if (account != null) commitmentsAction()
+                    } else if (account != null && state.canEdit) {
                         IconActionButton(
                             icon = Icons.Filled.Edit,
                             label = stringResource(Res.string.edit_account_title),
@@ -151,7 +185,7 @@ fun AccountDetailScreen(
                         Box(Modifier.weight(1f).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
                             when (selectedTab) {
                                 AccountDetailTab.Summary -> AccountSummaryTab(state, onEvent)
-                                AccountDetailTab.Commitments -> EmptyState(message = stringResource(Res.string.coming_soon))
+                                AccountDetailTab.Commitments -> commitmentsContent()
                             }
                         }
                     }

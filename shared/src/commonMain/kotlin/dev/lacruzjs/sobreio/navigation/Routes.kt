@@ -44,6 +44,13 @@ data class AccountDetail(val groupId: String, val accountId: String) : NavKey
 @Serializable
 data class AccountForm(val groupId: String, val accountId: String?) : NavKey
 
+/**
+ * Create (`commitmentId` null) or edit a commitment of one account, as a full screen (level 3 of the Accounts tab).
+ * Opened from the Commitments tab of the account's detail; back returns to it, which reloads the list.
+ */
+@Serializable
+data class CommitmentForm(val groupId: String, val accountId: String, val commitmentId: String?) : NavKey
+
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable
 data class EnvelopeForm(val groupId: String, val envelopeId: String?) : NavKey

@@ -65,8 +65,8 @@
     <string name="error_fz014_immutable">That value can\'t be changed.</string>
     <string name="error_fz015_group_transfer">The transfer between groups isn\'t consistent.</string>
     <string name="error_fz016_permission">You don\'t have permission to do this in this group.</string>
-    <string name="error_fz017_account_scope">The change of account scope isn\'t consistent.</string>
-    <string name="error_fz018_linked_commitment">The linked commitment isn\'t consistent.</string>
+    <string name="error_fz017_account_scope">That doesn\'t fit with whether the account shares its money into the envelopes.</string>
+    <string name="error_fz018_linked_commitment">Those dates or rules don\'t work for this commitment. Pick a later date in \"Apply from\", or check the linked contribution.</string>
     <string name="error_fz019_cover">An envelope chosen to cover the expense doesn\'t have that amount.</string>
     <string name="error_fz020_purge">Deleting the group was already requested, or there is nothing to cancel.</string>
 
@@ -372,4 +372,89 @@
     <string name="compare_matches">It matches</string>
     <string name="action_adjust_balance">Adjust to this balance</string>
     <string name="adjustment_recorded">Adjustment of %1$s recorded</string>
+
+    <!-- Commitments -->
+    <string name="action_new_commitment">New commitment</string>
+    <string name="edit_commitment_title">Edit commitment</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_clear_date">Clear date</string>
+    <string name="commitment_deleted">%1$s deleted</string>
+    <string name="commitment_reopened">%1$s reopened</string>
+    <string name="commitments_empty">This account has no commitments.</string>
+    <string name="commitments_empty_editor">This account has no commitments yet. Add the first one with the + button.</string>
+    <string name="commitment_section_expenses">Expenses</string>
+    <string name="commitment_section_incomes">Incomes</string>
+    <string name="commitment_section_transfers">Transfers</string>
+    <string name="commitment_section_incoming_transfers">Incoming transfers</string>
+    <string name="commitment_section_contributions">Contributions to other groups</string>
+    <string name="commitment_section_received_contributions">Contributions received</string>
+    <string name="commitment_kind_expense">Expense</string>
+    <string name="commitment_kind_income">Income</string>
+    <string name="commitment_kind_transfer">Transfer</string>
+    <string name="commitment_kind_contribution">Contribution to another group</string>
+    <string name="frequency_once">Once</string>
+    <string name="commitment_next">Next %1$s</string>
+    <string name="commitment_automatic">Automatic</string>
+    <string name="field_commitment_name">Commitment name</string>
+    <string name="field_commitment_kind">Type</string>
+    <string name="field_account">Account</string>
+    <string name="field_to_account">Destination account</string>
+    <string name="field_envelope">Envelope</string>
+    <string name="field_dest_group">Destination group</string>
+    <string name="field_dest_account">Account in that group</string>
+    <string name="field_source_envelope">Envelope it comes from</string>
+    <string name="field_dest_envelope">Envelope it goes to</string>
+    <string name="form_section_commitment">Commitment</string>
+    <string name="form_section_money">Money</string>
+    <string name="form_section_calendar">Calendar</string>
+    <string name="form_section_registration">Registration</string>
+    <string name="form_section_notes">Notes</string>
+    <string name="form_section_effective">Changes</string>
+    <string name="form_section_history">History</string>
+    <string name="field_first_due">First due date</string>
+    <string name="field_repeats">Repeats</string>
+    <string name="field_every">Every</string>
+    <string name="field_unit">Unit</string>
+    <string name="field_end_date">Ends on</string>
+    <string name="end_date_never">Never</string>
+    <string name="unit_days">Days</string>
+    <string name="unit_weeks">Weeks</string>
+    <string name="unit_months">Months</string>
+    <string name="unit_years">Years</string>
+    <string name="every_previous">Decrease</string>
+    <string name="every_next">Increase</string>
+    <string name="every_value">%1$d</string>
+    <string name="field_auto_register">Register automatically</string>
+    <string name="commitment_register_note">On: it is recorded by itself on the due date, like a bank standing order. Off: it waits in the Group tab to be confirmed with the real amount or skipped.</string>
+    <string name="field_funded">Set aside each period</string>
+    <string name="commitment_funded_note">Each period the money moves from Unassigned to the envelope in advance, so it is there on the due date.</string>
+    <string name="field_notes">Notes</string>
+    <string name="field_effective_from">Apply from</string>
+    <string name="commitment_effective_note">Due dates before this day keep the old values.</string>
+    <string name="commitment_history_range">%1$s to %2$s</string>
+    <string name="commitment_history_open">From %1$s</string>
+    <string name="commitment_linked_note">In a contribution only the name and the amount can change; the rest is shared with the other group.</string>
+    <string name="commitment_outside_note">This account is outside the envelopes, so the expense goes to \"Outside envelopes\".</string>
+    <string name="commitment_no_groups_note">You need another live group with the same currency where you are owner or admin.</string>
+    <string name="validation_destination_account">Choose the destination account.</string>
+    <string name="validation_destination_group">Choose the destination group.</string>
+    <string name="validation_envelope_required">Choose an envelope.</string>
+    <string name="validation_end_date_before_start">The end date can\'t be before the first due date.</string>
+
+    <plurals name="frequency_days">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <plurals name="frequency_weeks">
+        <item quantity="one">Every week</item>
+        <item quantity="other">Every %1$d weeks</item>
+    </plurals>
+    <plurals name="frequency_months">
+        <item quantity="one">Every month, day %2$d</item>
+        <item quantity="other">Every %1$d months, day %2$d</item>
+    </plurals>
+    <plurals name="frequency_years">
+        <item quantity="one">Every year, %2$s</item>
+        <item quantity="other">Every %1$d years, %2$s</item>
+    </plurals>
 </resources>

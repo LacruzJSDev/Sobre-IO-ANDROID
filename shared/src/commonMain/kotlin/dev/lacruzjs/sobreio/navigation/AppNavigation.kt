@@ -16,6 +16,7 @@ import androidx.navigation3.ui.NavDisplay
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormRoute
+import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormRoute
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormRoute
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
@@ -78,6 +79,9 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     accountId = key.accountId,
                     onBack = { backStack.popToPrevious() },
                     onEdit = { backStack.add(AccountForm(key.groupId, key.accountId)) },
+                    onOpenCommitmentForm = { commitmentId ->
+                        backStack.add(CommitmentForm(key.groupId, key.accountId, commitmentId))
+                    },
                     onSeeAllMovements = {
                         // Back to the group, which selects its Movements tab filtered to this account
                         movementsAccountFilter = key.accountId
@@ -109,6 +113,14 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             }
             entry<AccountForm> { key ->
                 AccountFormRoute(groupId = key.groupId, accountId = key.accountId, onClose = { backStack.popToPrevious() })
+            }
+            entry<CommitmentForm> { key ->
+                CommitmentFormRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    commitmentId = key.commitmentId,
+                    onClose = { backStack.popToPrevious() },
+                )
             }
             entry<EnvelopeForm> { key ->
                 EnvelopeFormRoute(groupId = key.groupId, envelopeId = key.envelopeId, onClose = { backStack.popToPrevious() })
