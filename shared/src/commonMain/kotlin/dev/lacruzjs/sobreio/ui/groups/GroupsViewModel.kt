@@ -11,7 +11,6 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
 import dev.lacruzjs.sobreio.generated.resources.group_left
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 
 class GroupsViewModel(
     private val groups: GroupRepository,
@@ -48,16 +46,16 @@ class GroupsViewModel(
             }
             GroupsEvent.NewGroupClicked -> _state.update { it.openSheet(GroupsSheet.Create) }
             is GroupsEvent.EditClicked -> edit(event.groupId)
-            GroupsEvent.EditConfirmed -> rename()
+            GroupsEvent.EditConfirmed -> saveEdit()
             is GroupsEvent.DeleteClicked -> deleteOrLeave(event.groupId)
             GroupsEvent.UndoClicked -> undo.undo()
             GroupsEvent.UndoExpired -> undo.commit()
             GroupsEvent.SignOutClicked -> signOut()
             GroupsEvent.JoinClicked -> _state.update { it.openSheet(GroupsSheet.Join) }
             GroupsEvent.SheetDismissed -> _state.update { if (it.isSubmitting) it else it.copy(sheet = GroupsSheet.None) }
-            is GroupsEvent.GroupNameChanged ->
-                _state.update { it.copy(name = event.value, nameError = null, submitError = null) }
-            is GroupsEvent.CurrencySelected -> _state.update { it.copy(currency = event.code) }
+            is GroupsEvent.FormChanged -> _state.update { it.copy(form = event.form, submitError = null) }
+            is GroupsEvent.ReopenClicked -> reopen(event.groupId)
+            is GroupsEvent.CancelDeletionClicked -> cancelDeletion(event.groupId)
             GroupsEvent.CreateConfirmed -> createGroup()
             is GroupsEvent.CodeChanged -> _state.update { it.copy(code = event.value, codeError = null, submitError = null) }
             GroupsEvent.JoinConfirmed -> joinGroup()
@@ -75,7 +73,7 @@ class GroupsViewModel(
     private fun load() {
         viewModelScope.launch {
             groups.getGroups()
-                .onSuccess { list -> _state.update { it.copy(groups = list, isLoading = false, error = null) } }
+                .onSuccess { list -> _state.update { it.withGroups(list) } }
                 .onFailure { e -> _state.update { it.copy(isLoading = false, error = e.asAppError()) } }
         }
     }
@@ -93,33 +91,61 @@ class GroupsViewModel(
 
     private fun edit(groupId: String) {
         val group = _state.value.groups.firstOrNull { it.id == groupId && it.canEdit } ?: return
-        _state.update { it.openSheet(GroupsSheet.Edit).copy(editingGroup = group, name = group.name) }
+        _state.update { it.openSheet(GroupsSheet.Edit).copy(form = GroupFormState.forEdit(group)) }
     }
 
-    private fun rename() {
+    private fun saveEdit() {
         val current = _state.value
-        val group = current.editingGroup ?: return
+        val group = current.form.editing ?: return
         if (current.isSubmitting) return
-        val name = current.name.trim()
-        val nameError = validateGroupName(name)
-        if (nameError != null) {
-            _state.update { it.copy(nameError = nameError) }
+        val form = current.form.validated()
+        if (form.nameError != null) {
+            _state.update { it.copy(form = form) }
             return
         }
+        val name = form.name.trim()
         _state.update { it.copy(isSubmitting = true, submitError = null) }
         viewModelScope.launch {
-            groups.renameGroup(group.id, name)
+            groups.updateGroup(group.id, name, form.timezone, form.periodStartDay, form.color, form.icon)
                 .onSuccess {
                     _state.update { s ->
+                        val updated = group.copy(
+                            name = name,
+                            color = form.color,
+                            icon = form.icon,
+                            timezone = form.timezone,
+                            periodStartDay = form.periodStartDay,
+                        )
                         s.copy(
                             isSubmitting = false,
                             sheet = GroupsSheet.None,
-                            editingGroup = null,
-                            groups = s.groups.map { if (it.id == group.id) it.copy(name = name) else it },
+                            groups = s.groups.map { if (it.id == group.id) updated else it }.sortedByName(),
                         )
                     }
                 }
                 .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
+        }
+    }
+
+    /** Owner of an archived group: it becomes live again and moves to the main list. */
+    private fun reopen(groupId: String) {
+        val group = _state.value.archivedGroups.firstOrNull { it.id == groupId && it.isArchived && it.isOwner } ?: return
+        _state.update { it.copy(actionError = null) }
+        viewModelScope.launch {
+            groups.reopenGroup(group.id)
+                .onSuccess { load() }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
+        }
+    }
+
+    /** Owner of a group pending deletion: the request is cancelled and the group is live (or archived) again. */
+    private fun cancelDeletion(groupId: String) {
+        val group = _state.value.archivedGroups.firstOrNull { it.id == groupId && it.isPendingDeletion && it.isOwner } ?: return
+        _state.update { it.copy(actionError = null) }
+        viewModelScope.launch {
+            groups.cancelGroupDeletion(group.id)
+                .onSuccess { load() }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
 
@@ -133,7 +159,7 @@ class GroupsViewModel(
         // Only one destructive action at a time: the previous one becomes final
         undo.commit()
         _state.update { it.copy(groups = it.groups - group, actionError = null) }
-        val restore = { _state.update { it.copy(groups = (it.groups + group).sortedBy { g -> g.name.lowercase() }) } }
+        val restore = { _state.update { it.copy(groups = (it.groups + group).sortedByName()) } }
 
         if (group.isOwner) {
             viewModelScope.launch {
@@ -175,15 +201,21 @@ class GroupsViewModel(
     private fun createGroup() {
         val current = _state.value
         if (current.isSubmitting) return
-        val name = current.name.trim()
-        val nameError = validateGroupName(name)
-        if (nameError != null) {
-            _state.update { it.copy(nameError = nameError) }
+        val form = current.form.validated()
+        if (form.nameError != null) {
+            _state.update { it.copy(form = form) }
             return
         }
         _state.update { it.copy(isSubmitting = true, submitError = null) }
         viewModelScope.launch {
-            groups.createGroup(name, current.currency)
+            groups.createGroup(
+                name = form.name.trim(),
+                currencyCode = form.currency,
+                timezone = form.timezone,
+                periodStartDay = form.periodStartDay,
+                color = form.color,
+                icon = form.icon,
+            )
                 .onSuccess { id -> _state.update { it.opened(id) } }
                 .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
         }
@@ -206,18 +238,9 @@ class GroupsViewModel(
         }
     }
 
-    private fun validateGroupName(name: String): StringResource? = when {
-        name.isEmpty() -> validateRequired(name)
-        name.length > MAX_GROUP_NAME_LENGTH -> Res.string.validation_name_too_long
-        else -> null
-    }
-
     private fun GroupsUiState.openSheet(sheet: GroupsSheet) = copy(
         sheet = sheet,
-        editingGroup = null,
-        name = "",
-        nameError = null,
-        currency = GroupCurrencies.first(),
+        form = GroupFormState.forNew(),
         code = "",
         codeError = null,
         submitError = null,
@@ -225,4 +248,14 @@ class GroupsViewModel(
 
     private fun GroupsUiState.opened(groupId: String) =
         copy(isSubmitting = false, sheet = GroupsSheet.None, navigateToGroup = groupId)
+
+    /** Live groups in the main list; archived ones and the ones pending deletion in the "Archived" section. */
+    private fun GroupsUiState.withGroups(all: List<Group>): GroupsUiState {
+        val (live, hidden) = all.partition { !it.isArchived && !it.isPendingDeletion }
+        val archived = hidden.filter { !it.isPendingDeletion }.sortedByName()
+        val pending = hidden.filter { it.isPendingDeletion }.sortedByName()
+        return copy(groups = live.sortedByName(), archivedGroups = archived + pending, isLoading = false, error = null)
+    }
+
+    private fun List<Group>.sortedByName() = sortedBy { it.name.lowercase() }
 }

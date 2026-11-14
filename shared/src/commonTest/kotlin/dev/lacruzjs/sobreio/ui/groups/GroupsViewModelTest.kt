@@ -14,6 +14,8 @@ import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -58,14 +60,25 @@ class GroupsViewModelTest : MainDispatcherTest() {
         assertFalse(viewModel.state.value.isLoading)
     }
 
+    private fun changeForm(change: GroupFormState.() -> GroupFormState) =
+        viewModel.onEvent(GroupsEvent.FormChanged(viewModel.state.value.form.change()))
+
     @Test
-    fun createSendsTrimmedNameAndCurrencyThenAsksToOpenTheGroup() {
+    fun createSendsEveryFieldThenAsksToOpenTheGroup() {
         viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("  Casa  "))
-        viewModel.onEvent(GroupsEvent.CurrencySelected("USD"))
+        changeForm {
+            copy(
+                name = "  Casa  ",
+                currency = "USD",
+                color = "#3B6E8F",
+                icon = "home",
+                periodStartDay = 5,
+                timezone = "America/New_York",
+            )
+        }
         viewModel.onEvent(GroupsEvent.CreateConfirmed)
 
-        assertEquals(listOf("createGroup(Casa, USD)"), repository.calls)
+        assertEquals(listOf("createGroup(Casa, USD, America/New_York, 5, #3B6E8F, home)"), repository.calls)
         assertEquals("new-id", viewModel.state.value.navigateToGroup)
         assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
 
@@ -74,22 +87,32 @@ class GroupsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun blankNameIsRejectedWithoutCallingTheRepository() {
+    fun createDefaultsToTheDeviceTimeZoneDayOneAndNoAppearance() {
         viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("   "))
+        changeForm { copy(name = "Casa") }
         viewModel.onEvent(GroupsEvent.CreateConfirmed)
 
-        assertEquals(Res.string.validation_required, viewModel.state.value.nameError)
+        val zone = TimeZone.currentSystemDefault().id
+        assertEquals(listOf("createGroup(Casa, EUR, $zone, 1, null, null)"), repository.calls)
+    }
+
+    @Test
+    fun blankNameIsRejectedWithoutCallingTheRepository() {
+        viewModel.onEvent(GroupsEvent.NewGroupClicked)
+        changeForm { copy(name = "   ") }
+        viewModel.onEvent(GroupsEvent.CreateConfirmed)
+
+        assertEquals(Res.string.validation_required, viewModel.state.value.form.nameError)
         assertTrue(repository.calls.isEmpty())
     }
 
     @Test
     fun tooLongNameIsRejected() {
         viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("a".repeat(MAX_GROUP_NAME_LENGTH + 1)))
+        changeForm { copy(name = "a".repeat(MAX_GROUP_NAME_LENGTH + 1)) }
         viewModel.onEvent(GroupsEvent.CreateConfirmed)
 
-        assertEquals(Res.string.validation_name_too_long, viewModel.state.value.nameError)
+        assertEquals(Res.string.validation_name_too_long, viewModel.state.value.form.nameError)
         assertTrue(repository.calls.isEmpty())
     }
 
@@ -97,7 +120,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     fun failedCreateKeepsTheSheetOpenWithTheError() {
         repository.createResult = Result.failure(AppError.Network)
         viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("Casa"))
+        changeForm { copy(name = "Casa") }
         viewModel.onEvent(GroupsEvent.CreateConfirmed)
 
         assertEquals(GroupsSheet.Create, viewModel.state.value.sheet)
@@ -154,18 +177,32 @@ class GroupsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun editOpensTheSheetWithTheNameAndRenameUpdatesTheList() {
+    fun editOpensTheSheetWithEveryFieldAndSavingUpdatesTheList() {
+        repository.groups = listOf(
+            casa.copy(color = "#3B6E8F", icon = "home", timezone = "Europe/Madrid", periodStartDay = 3),
+            piso,
+        )
         loaded()
         viewModel.onEvent(GroupsEvent.EditClicked("1"))
+        val form = viewModel.state.value.form
         assertEquals(GroupsSheet.Edit, viewModel.state.value.sheet)
-        assertEquals("Casa", viewModel.state.value.name)
+        assertEquals("Casa", form.name)
+        assertEquals("#3B6E8F", form.color)
+        assertEquals("home", form.icon)
+        assertEquals(3, form.periodStartDay)
+        assertEquals("EUR", form.currency)
 
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("  Hogar "))
+        changeForm { copy(name = "  Hogar ", color = null, icon = "key", periodStartDay = 10, timezone = "Europe/London") }
         viewModel.onEvent(GroupsEvent.EditConfirmed)
 
-        assertTrue("renameGroup(1, Hogar)" in repository.calls)
+        assertTrue("updateGroup(1, Hogar, Europe/London, 10, null, key)" in repository.calls)
         assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
-        assertEquals("Hogar", viewModel.state.value.groups.first { it.id == "1" }.name)
+        val updated = viewModel.state.value.groups.first { it.id == "1" }
+        assertEquals("Hogar", updated.name)
+        assertEquals(10, updated.periodStartDay)
+        assertEquals("Europe/London", updated.timezone)
+        assertEquals("key", updated.icon)
+        assertNull(updated.color)
     }
 
     @Test
@@ -177,16 +214,89 @@ class GroupsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun failedRenameKeepsTheSheetOpenWithTheError() {
-        repository.renameResult = Result.failure(AppError.BusinessRule("FZ016"))
+    fun editRejectsABlankName() {
         loaded()
         viewModel.onEvent(GroupsEvent.EditClicked("1"))
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("Hogar"))
+        changeForm { copy(name = " ") }
+        viewModel.onEvent(GroupsEvent.EditConfirmed)
+
+        assertEquals(Res.string.validation_required, viewModel.state.value.form.nameError)
+        assertTrue(repository.calls.none { it.startsWith("updateGroup") })
+    }
+
+    @Test
+    fun failedSaveKeepsTheSheetOpenWithTheError() {
+        repository.updateResult = Result.failure(AppError.BusinessRule("FZ016"))
+        loaded()
+        viewModel.onEvent(GroupsEvent.EditClicked("1"))
+        changeForm { copy(name = "Hogar") }
         viewModel.onEvent(GroupsEvent.EditConfirmed)
 
         assertEquals(GroupsSheet.Edit, viewModel.state.value.sheet)
         assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.submitError)
         assertEquals("Casa", viewModel.state.value.groups.first { it.id == "1" }.name)
+    }
+
+    private val archivedAt = Instant.parse("2026-11-01T10:00:00Z")
+    private val purgeAt = Instant.parse("2026-11-10T10:00:00Z")
+    private val vieja = Group("3", "Vieja", "EUR", GroupRole.Owner, archivedAt = archivedAt)
+    private val borrada = Group("4", "Borrada", "EUR", GroupRole.Owner, purgeRequestedAt = purgeAt)
+
+    @Test
+    fun archivedAndPendingGroupsLeaveTheMainListForTheArchivedSection() {
+        repository.groups = listOf(casa, borrada, vieja, piso)
+        loaded()
+
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+        // Archived first, then the ones pending deletion
+        assertEquals(listOf(vieja, borrada), viewModel.state.value.archivedGroups)
+    }
+
+    @Test
+    fun theDeletionDateIsSevenDaysAfterTheRequest() {
+        assertEquals(Instant.parse("2026-11-17T10:00:00Z"), borrada.deletionDate)
+    }
+
+    @Test
+    fun reopeningAnArchivedGroupBringsItBackToTheMainList() {
+        repository.groups = listOf(casa, vieja)
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertTrue("reopenGroup(3)" in repository.calls)
+        assertEquals(listOf("Casa", "Vieja"), viewModel.state.value.groups.map { it.name })
+        assertTrue(viewModel.state.value.archivedGroups.isEmpty())
+    }
+
+    @Test
+    fun reopeningIsIgnoredForANonOwner() {
+        repository.groups = listOf(vieja.copy(role = GroupRole.Admin))
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertTrue(repository.calls.none { it.startsWith("reopenGroup") })
+    }
+
+    @Test
+    fun cancellingADeletionReloadsTheList() {
+        repository.groups = listOf(casa, borrada)
+        loaded()
+        repository.groups = listOf(casa, borrada.copy(purgeRequestedAt = null))
+        viewModel.onEvent(GroupsEvent.CancelDeletionClicked("4"))
+
+        assertEquals(listOf("Borrada", "Casa"), viewModel.state.value.groups.map { it.name })
+        assertTrue(viewModel.state.value.archivedGroups.isEmpty())
+    }
+
+    @Test
+    fun failedReopenShowsTheError() {
+        repository.groups = listOf(vieja)
+        repository.reopenResult = Result.failure(AppError.BusinessRule("FZ016"))
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
+        assertEquals(listOf(vieja), viewModel.state.value.archivedGroups)
     }
 
     @Test

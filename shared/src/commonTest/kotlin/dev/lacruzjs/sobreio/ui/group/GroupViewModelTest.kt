@@ -60,37 +60,35 @@ class GroupViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun inviteCreatesTheInvitationAndShowsItsCode() {
+    fun refreshReadsTheGroupAgainWithoutTheSpinner() {
         val viewModel = viewModel("g1")
-        viewModel.onEvent(GroupEvent.InviteClicked)
+        repository.groups = listOf(Group("g1", "Hogar", "EUR", GroupRole.Owner, color = "#3B6E8F"))
+        viewModel.onEvent(GroupEvent.Refresh)
 
-        assertTrue("createInvitation(g1)" in repository.calls)
-        assertTrue(viewModel.state.value.inviteSheetOpen)
-        assertFalse(viewModel.state.value.isInviting)
-        assertEquals("ABC123DEF456", viewModel.state.value.invitation?.code)
-
-        viewModel.onEvent(GroupEvent.InviteDismissed)
-        assertFalse(viewModel.state.value.inviteSheetOpen)
+        assertEquals("Hogar", viewModel.state.value.group?.name)
+        assertEquals("#3B6E8F", viewModel.state.value.group?.color)
+        assertFalse(viewModel.state.value.isLoading)
     }
 
     @Test
-    fun failedInviteShowsTheError() {
-        repository.invitationResult = Result.failure(AppError.BusinessRule("FZ016"))
+    fun refreshOfAGroupThatIsGoneAsksToGoBack() {
         val viewModel = viewModel("g1")
-        viewModel.onEvent(GroupEvent.InviteClicked)
+        repository.groups = emptyList()
+        viewModel.onEvent(GroupEvent.Refresh)
 
-        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.inviteError)
-        assertNull(viewModel.state.value.invitation)
+        assertTrue(viewModel.state.value.navigateBack)
+        assertNull(lastGroup.get("u1"))
     }
 
     @Test
-    fun aMemberCannotInvite() {
-        repository.groups = listOf(Group("g1", "Casa", "EUR", GroupRole.Member))
-        val viewModel = viewModel("g1")
-        viewModel.onEvent(GroupEvent.InviteClicked)
+    fun anArchivedGroupLoadsButCannotBeEdited() {
+        repository.groups = listOf(
+            Group("g1", "Casa", "EUR", GroupRole.Owner, archivedAt = kotlin.time.Instant.parse("2026-11-01T10:00:00Z")),
+        )
+        val group = viewModel("g1").state.value.group
 
-        assertFalse(viewModel.state.value.inviteSheetOpen)
-        assertTrue(repository.calls.none { it.startsWith("createInvitation") })
+        assertTrue(group?.isArchived == true)
+        assertFalse(group?.canEdit == true)
     }
 
     @Test

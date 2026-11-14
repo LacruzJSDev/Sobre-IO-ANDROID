@@ -12,6 +12,7 @@ import androidx.navigation3.ui.NavDisplay
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
+import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import org.koin.compose.koinInject
 
@@ -42,13 +43,29 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                 )
             }
             entry<Group> { key ->
-                GroupRoute(groupId = key.groupId, onBack = { backStack.popToPrevious() })
+                GroupRoute(
+                    groupId = key.groupId,
+                    onBack = { backStack.popToPrevious() },
+                    onOpenSettings = { backStack.add(GroupSettings(key.groupId)) },
+                )
+            }
+            entry<GroupSettings> { key ->
+                GroupSettingsRoute(
+                    groupId = key.groupId,
+                    onBack = { backStack.popToPrevious() },
+                    onBackToGroups = { backStack.popToRoot() },
+                )
             }
             entry<Profile> {
                 ProfileRoute(onBack = { backStack.popToPrevious() })
             }
         },
     )
+}
+
+/** Back to the Groups screen, the root, whatever is above it (a group deleted or left from its settings). */
+private fun MutableList<NavKey>.popToRoot() {
+    while (size > 1) removeAt(lastIndex)
 }
 
 /** Groups is the root of the stack and stays; back from it leaves the app. */

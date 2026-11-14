@@ -12,6 +12,12 @@ internal data class GroupDto(
     val id: String,
     val name: String,
     val currency: String,
+    val timezone: String? = null,
+    @SerialName("period_start_day") val periodStartDay: Int = 1,
+    val color: String? = null,
+    val icon: String? = null,
+    @SerialName("archived_at") val archivedAt: String? = null,
+    @SerialName("purge_requested_at") val purgeRequestedAt: String? = null,
     @SerialName("account_group_members") val members: List<MemberRoleDto> = emptyList(),
 )
 

@@ -18,12 +18,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.User
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_profile
+import dev.lacruzjs.sobreio.generated.resources.action_save
+import dev.lacruzjs.sobreio.generated.resources.field_display_name
+import dev.lacruzjs.sobreio.generated.resources.profile_name_saved
+import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -41,6 +48,7 @@ fun ProfileRoute(
         onEvent = { event ->
             when (event) {
                 ProfileEvent.BackClicked -> onBack()
+                else -> viewModel.onEvent(event)
             }
         },
         modifier = modifier,
@@ -68,7 +76,15 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.Start,
             ) {
-                state.user?.displayName?.let { Text(text = it, style = MaterialTheme.typography.titleLarge) }
+                FormTextField(
+                    value = state.name,
+                    onValueChange = { onEvent(ProfileEvent.NameChanged(it)) },
+                    label = stringResource(Res.string.field_display_name),
+                    errorRes = state.nameError,
+                    enabled = !state.isSaving,
+                    imeAction = ImeAction.Done,
+                    onImeAction = { onEvent(ProfileEvent.SaveClicked) },
+                )
                 state.user?.email?.let {
                     Text(
                         text = it,
@@ -76,6 +92,20 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                ErrorText(state.saveError, modifier = Modifier.fillMaxWidth())
+                if (state.saved) {
+                    Text(
+                        text = stringResource(Res.string.profile_name_saved),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                PrimaryButton(
+                    text = stringResource(Res.string.action_save),
+                    onClick = { onEvent(ProfileEvent.SaveClicked) },
+                    isLoading = state.isSaving,
+                    enabled = state.isDirty,
+                )
             }
         }
     }
@@ -86,7 +116,7 @@ fun ProfileScreen(
 private fun ProfileScreenPreview() {
     SobreioTheme {
         ProfileScreen(
-            state = ProfileUiState(user = User("1", "ana@example.com", "Ana")),
+            state = ProfileUiState(user = User("1", "ana@example.com", "Ana"), name = "Ana"),
             onEvent = {},
         )
     }

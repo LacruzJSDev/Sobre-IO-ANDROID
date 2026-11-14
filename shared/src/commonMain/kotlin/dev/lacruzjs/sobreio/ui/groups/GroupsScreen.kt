@@ -96,16 +96,16 @@ fun GroupsScreen(
             ) {
                 when {
                     state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    state.groups.isEmpty() && state.error != null -> EmptyState(
+                    state.groups.isEmpty() && state.archivedGroups.isEmpty() && state.error != null -> EmptyState(
                         message = stringResource(state.error.messageRes()),
                     ) {
                         TextButton(onClick = { onEvent(GroupsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                     }
-                    state.groups.isEmpty() -> EmptyState(
+                    state.groups.isEmpty() && state.archivedGroups.isEmpty() -> EmptyState(
                         title = stringResource(Res.string.groups_empty_title),
                         message = stringResource(Res.string.groups_empty_body),
                     )
-                    else -> GroupList(state.groups, onEvent)
+                    else -> GroupList(state, onEvent)
                 }
             }
             UndoSnackbarHost(
@@ -119,7 +119,14 @@ fun GroupsScreen(
 
     when (state.sheet) {
         GroupsSheet.None -> Unit
-        GroupsSheet.Create, GroupsSheet.Edit -> GroupFormSheet(state, onEvent)
+        GroupsSheet.Create, GroupsSheet.Edit -> GroupFormSheet(
+            form = state.form,
+            onChange = { onEvent(GroupsEvent.FormChanged(it)) },
+            onConfirm = { onEvent(if (state.sheet == GroupsSheet.Edit) GroupsEvent.EditConfirmed else GroupsEvent.CreateConfirmed) },
+            onDismiss = { onEvent(GroupsEvent.SheetDismissed) },
+            isSubmitting = state.isSubmitting,
+            submitError = state.submitError,
+        )
         GroupsSheet.Join -> JoinGroupSheet(state, onEvent)
     }
 }

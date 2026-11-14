@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.safeCall
+import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.OtpType
@@ -10,6 +11,8 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +26,7 @@ import kotlinx.serialization.json.put
 class SupabaseAuthRepository(client: SupabaseClient) : AuthRepository {
 
     private val auth = client.auth
+    private val postgrest = client.postgrest
 
     // True while a password reset is half-way: the recovery code already opened a session, but the app must not
     // be shown until the new password is set.
@@ -106,4 +110,12 @@ class SupabaseAuthRepository(client: SupabaseClient) : AuthRepository {
     }
 
     override suspend fun signOut(): Result<Unit> = safeCall { auth.signOut() }
+
+    override suspend fun updateDisplayName(name: String): Result<Unit> = safeCall {
+        val userId = auth.currentUserOrNull()?.id ?: throw AppError.Unknown(IllegalStateException("No signed-in user"))
+        // The profile is what the other members see; the session's metadata is what this app shows as the user's name
+        postgrest.from("profiles").update({ set("display_name", name) }) { filter { eq("id", userId) } }
+        auth.updateUser { data = buildJsonObject { put("name", name) } }
+        Unit
+    }
 }

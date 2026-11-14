@@ -19,6 +19,7 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(PasswordRecovery::class)
             subclass(Groups::class)
             subclass(Group::class)
+            subclass(GroupSettings::class)
             subclass(Profile::class)
         }
     }

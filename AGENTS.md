@@ -31,9 +31,10 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
-  in a bottom sheet with name and currency, join with an invitation code), the Profile screen (name, email, sign-out)
-  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still
-  empty states). Root navigation follows the session (`SessionViewModel`).
+  in a bottom sheet, join with an invitation code), the Group settings screen (details, members, invitations, archive,
+  delete, leave), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
+  Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still empty
+  states). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
   stores the group as last once it loads, and clears it (then goes back to Groups) when it does not load because it is
@@ -52,13 +53,22 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `€1,298.15` otherwise; only the euro has a symbol, other currencies show their ISO code (`USD 1,298.15`).
 - Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and a fixed
   bottom section with no divider (spacing only): "Join with a code" and "Profile" as `PrimaryButton`s and "Sign out" as a
-  `DestructiveButton`. Each row swipes left (`SwipeActionsRow`): Edit (owner and admin; bottom sheet with the name, the
-  currency is read-only) and Delete (owner) or Leave (admin, member). Delete and Leave are never confirmed: the row
-  disappears at once and an "Undo" snackbar follows (`UndoController`, see Rules). Owner delete calls
-  `request_group_purge` immediately and Undo calls `cancel_group_purge`; groups with `purge_requested_at` are not listed.
-  Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is updated only when the snackbar
-  ends without Undo. `SupabaseGroupRepository` loads groups with the user's role through PostgREST embedding
-  (`account_group_members!inner(role)`, filtered to the user and `left_at is null`). Profile shows name and email only.
+  `DestructiveButton`. Rows show an `EntityAvatar` with the group's colour and icon. Each row swipes left
+  (`SwipeActionsRow`): Edit (owner and admin) and Delete (owner) or Leave (admin, member). The create and edit sheet
+  (`GroupFormSheet`, fields in `GroupFormState`, shared with the group settings) holds the name, the currency (create
+  only, read-only on edit), `AppearanceField` (colour and icon, category Group), the period start day (`PeriodDayField`,
+  a "-" / "Day N" / "+" stepper limited to 1-28, with a note that it only affects periods not created yet, D-29) and the
+  time zone (`TimeZoneField`, default `TimeZone.currentSystemDefault()`, opens a searchable list of
+  `TimeZone.availableZoneIds`). Delete and Leave are never confirmed: the row disappears at once and an "Undo" snackbar
+  follows (`UndoController`, see Rules). Owner delete calls `request_group_purge` immediately and Undo calls
+  `cancel_group_purge`. Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is updated
+  only when the snackbar ends without Undo. `SupabaseGroupRepository.getGroups` returns every group of the user with its
+  role (PostgREST embedding `account_group_members!inner(role)`, filtered to the user and `left_at is null`); the
+  ViewModel splits them: live groups in `groups`, and `archivedGroups` (archived first, then those with
+  `purge_requested_at`) for a collapsed "Archived (N)" section at the end of the list. Archived rows say "Archived" and
+  open read only; pending rows say "Deleted on <purge_requested_at + 7 days>" and cannot be opened. Owners swipe Reopen
+  (`archived_at` to null) or Cancel deletion (`cancel_group_purge`); `getGroup` still hides groups pending deletion.
+  `Group.canEdit` is false for archived and pending groups, so Accounts and Envelopes become read only.
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter): the total (`group_overview.accounts_total`,
   never summed in the app) and the accounts from the `account_balances` view (`AccountsPane`, `AccountList`: square ink icon,
   name, kind label, balance; negatives in the normal text colour). Owner and admin see the header "+" (create sheet: name,
@@ -77,9 +87,26 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   with Undo, FZ008 restores the row). Any member swipes "Assign": a sheet with an amount and the source as chips
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
   Tapping a row does nothing yet (envelope detail comes later).
-- Group shell: the header's right side holds "Invite" (owner and admin, Group tab: creates an `invitations` row and shows
-  its code with a copy button) and, on Movements, a "+" that opens a "Coming soon" sheet until
-  that feature exists (Accounts and Envelopes have their own, see above).
+- Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
+  the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
+  again) and, on Movements, a "+" that opens a "Coming soon" sheet until that feature exists (Accounts and Envelopes
+  have their own, see above).
+- Group settings (`ui/groupsettings`, `GroupSettingsViewModel` with the group id as Koin parameter): sections separated
+  by spacing. Details: avatar, name, currency, period day and time zone, plus an "Edit" button (owner and admin, live
+  group) that opens the same `GroupFormSheet`; an archived group shows a read-only note. Members (`MemberRepository`):
+  initial avatar, name ("You" marker) and role label; an owner swipes another member's row for Role (sheet with
+  owner/admin/member chips, `account_group_members.role` update; FZ009 shows inside the sheet) and Remove (hidden at
+  once with Undo; `left_at` is written only when the snackbar ends without Undo). Invitations (owner and admin, live
+  group): a "+" opens a sheet to choose the role (Member default, Admin; never owner), creates the `invitations` row and
+  shows the code with a copy button; pending invitations list code, role and "Expires on <date>" or "Expired", and swipe
+  Revoke (hidden at once with Undo; `status = 'revoked'` is sent when the snackbar ends without Undo). Bottom actions:
+  owners get "Archive group" (`archived_at`, Undo reopens) or "Reopen group" when archived, and "Delete group"
+  (`request_group_purge` now, Undo cancels, back to Groups when the snackbar ends); everyone, owners included, gets "Leave group" (the last active owner gets FZ009)
+  (deferred like in the list, then back to Groups). Members read Details and Members only. `GroupSettingsUiState.hasSeveralMembers`
+  (and `List<Member>.hasSeveralMembers()`) tell Accounts and Envelopes whether to ask for a holder.
+- Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
+  `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
+  screen shows the saved name at once. The email is read-only.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
@@ -133,7 +160,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (summary), `accounts`, `envelopes`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `accounts`, `envelopes`, `movements`,
 plus the `newmovement` bottom sheet.
 
 ## Rules

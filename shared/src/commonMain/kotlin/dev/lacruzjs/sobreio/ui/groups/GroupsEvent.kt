@@ -15,6 +15,10 @@ sealed interface GroupsEvent {
     data class DeleteClicked(val groupId: String) : GroupsEvent
     data object EditConfirmed : GroupsEvent
 
+    /** Swipe actions of the "Archived" section (owner only): bring an archived group back, or cancel a requested deletion. */
+    data class ReopenClicked(val groupId: String) : GroupsEvent
+    data class CancelDeletionClicked(val groupId: String) : GroupsEvent
+
     /** The undo snackbar: "Undo" was tapped, or it timed out. */
     data object UndoClicked : GroupsEvent
     data object UndoExpired : GroupsEvent
@@ -22,8 +26,8 @@ sealed interface GroupsEvent {
     data object JoinClicked : GroupsEvent
     data object SheetDismissed : GroupsEvent
 
-    data class GroupNameChanged(val value: String) : GroupsEvent
-    data class CurrencySelected(val code: String) : GroupsEvent
+    /** Any change of the sheet's fields: name, currency, colour, icon, period day or time zone. */
+    data class FormChanged(val form: GroupFormState) : GroupsEvent
     data object CreateConfirmed : GroupsEvent
 
     data class CodeChanged(val value: String) : GroupsEvent

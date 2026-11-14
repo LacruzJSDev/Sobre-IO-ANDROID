@@ -2,10 +2,12 @@ package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.dto.GroupDto
 import dev.lacruzjs.sobreio.data.remote.dto.InvitationDto
+import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.safeCall
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Group
+import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -13,21 +15,15 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.PostgrestUpdate
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
-import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
-import kotlin.time.Clock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.time.Clock
 
-/**
- * Row level security returns only the groups where the user is an active member, so no membership filter is needed.
- * [timeZoneId] is the device time zone, the one a new group starts with.
- */
-class SupabaseGroupRepository(
-    client: SupabaseClient,
-    private val timeZoneId: () -> String = { TimeZone.currentSystemDefault().id },
-) : GroupRepository {
+/** Row level security returns only the groups where the user is an active member, so no membership filter is needed. */
+class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
 
     private val postgrest = client.postgrest
     private val auth = client.auth
@@ -35,11 +31,7 @@ class SupabaseGroupRepository(
     override suspend fun getGroups(): Result<List<Group>> = safeCall {
         postgrest.from(TABLE)
             .select(GROUP_COLUMNS) {
-                filter {
-                    exact("archived_at", null)
-                    exact("purge_requested_at", null)
-                    mine()
-                }
+                filter { mine() }
                 order("name", Order.ASCENDING)
             }
             .decodeList<GroupDto>()
@@ -51,7 +43,6 @@ class SupabaseGroupRepository(
             .select(GROUP_COLUMNS) {
                 filter {
                     eq("id", id)
-                    exact("archived_at", null)
                     exact("purge_requested_at", null)
                     mine()
                 }
@@ -61,13 +52,23 @@ class SupabaseGroupRepository(
             ?: throw AppError.NotFound
     }
 
-    override suspend fun createGroup(name: String, currencyCode: String): Result<String> = safeCall {
+    override suspend fun createGroup(
+        name: String,
+        currencyCode: String,
+        timezone: String,
+        periodStartDay: Int,
+        color: String?,
+        icon: String?,
+    ): Result<String> = safeCall {
         postgrest.rpc(
             "create_group",
             buildJsonObject {
                 put("p_name", name)
                 put("p_currency", currencyCode)
-                put("p_timezone", timeZoneId())
+                put("p_timezone", timezone)
+                put("p_period_start_day", periodStartDay)
+                put("p_color", color)
+                put("p_icon", icon)
             },
         ).decodeAs<String>()
     }
@@ -76,15 +77,29 @@ class SupabaseGroupRepository(
         postgrest.rpc("accept_invitation", buildJsonObject { put("p_code", code) }).decodeAs<String>()
     }
 
-    override suspend fun renameGroup(id: String, name: String): Result<Unit> = safeCall {
-        val updated = postgrest.from(TABLE)
-            .update({ set("name", name) }) {
-                select(Columns.list("id"))
-                filter { eq("id", id) }
-            }
-            .decodeList<IdDto>()
-        // Row level security hides the group from an update that is not allowed: no error, no row
-        if (updated.isEmpty()) throw AppError.BusinessRule("FZ016")
+    override suspend fun updateGroup(
+        id: String,
+        name: String,
+        timezone: String,
+        periodStartDay: Int,
+        color: String?,
+        icon: String?,
+    ): Result<Unit> = safeCall {
+        updateGroupRow(id) {
+            set("name", name)
+            set("timezone", timezone)
+            set("period_start_day", periodStartDay)
+            set("color", color)
+            set("icon", icon)
+        }
+    }
+
+    override suspend fun archiveGroup(id: String): Result<Unit> = safeCall {
+        updateGroupRow(id) { set("archived_at", Clock.System.now().toString()) }
+    }
+
+    override suspend fun reopenGroup(id: String): Result<Unit> = safeCall {
+        updateGroupRow(id) { setToNull("archived_at") }
     }
 
     override suspend fun requestGroupDeletion(id: String): Result<Unit> = safeCall {
@@ -107,11 +122,54 @@ class SupabaseGroupRepository(
         Unit
     }
 
-    override suspend fun createInvitation(groupId: String): Result<Invitation> = safeCall {
-        postgrest.from("invitations")
-            .insert(buildJsonObject { put("group_id", groupId) }) { select(Columns.list("code", "expires_at")) }
+    override suspend fun createInvitation(groupId: String, role: GroupRole): Result<Invitation> = safeCall {
+        postgrest.from(INVITATIONS_TABLE)
+            .insert(
+                buildJsonObject {
+                    put("group_id", groupId)
+                    put("role", role.toDbValue())
+                },
+            ) { select(INVITATION_COLUMNS) }
             .decodeSingle<InvitationDto>()
             .toDomain()
+    }
+
+    override suspend fun getPendingInvitations(groupId: String): Result<List<Invitation>> = safeCall {
+        postgrest.from(INVITATIONS_TABLE)
+            .select(INVITATION_COLUMNS) {
+                filter {
+                    eq("group_id", groupId)
+                    eq("status", "pending")
+                }
+                order("created_at", Order.DESCENDING)
+            }
+            .decodeList<InvitationDto>()
+            .map { it.toDomain() }
+    }
+
+    override suspend fun revokeInvitation(id: String): Result<Unit> = safeCall {
+        val updated = postgrest.from(INVITATIONS_TABLE)
+            .update({ set("status", "revoked") }) {
+                select(Columns.list("id"))
+                filter {
+                    eq("id", id)
+                    eq("status", "pending")
+                }
+            }
+            .decodeList<IdDto>()
+        // Row level security hides the invitation from an update that is not allowed: no error, no row
+        if (updated.isEmpty()) throw AppError.BusinessRule("FZ016")
+    }
+
+    /** Updates one `account_groups` row; an update the policy refuses returns no row instead of an error. */
+    private suspend fun updateGroupRow(id: String, change: PostgrestUpdate.() -> Unit) {
+        val updated = postgrest.from(TABLE)
+            .update(change) {
+                select(Columns.list("id"))
+                filter { eq("id", id) }
+            }
+            .decodeList<IdDto>()
+        if (updated.isEmpty()) throw AppError.BusinessRule("FZ016")
     }
 
     private fun groupParam(id: String) = buildJsonObject { put("p_group_id", id) }
@@ -134,6 +192,11 @@ class SupabaseGroupRepository(
     private companion object {
         const val TABLE = "account_groups"
         const val MEMBERS_TABLE = "account_group_members"
-        val GROUP_COLUMNS = Columns.raw("id,name,currency,$MEMBERS_TABLE!inner(role)")
+        const val INVITATIONS_TABLE = "invitations"
+        val GROUP_COLUMNS = Columns.raw(
+            "id,name,currency,timezone,period_start_day,color,icon,archived_at,purge_requested_at," +
+                "$MEMBERS_TABLE!inner(role)",
+        )
+        val INVITATION_COLUMNS = Columns.list("id", "code", "role", "expires_at")
     }
 }

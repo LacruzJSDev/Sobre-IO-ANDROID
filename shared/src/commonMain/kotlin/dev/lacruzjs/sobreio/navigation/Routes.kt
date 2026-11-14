@@ -25,5 +25,9 @@ data object Groups : NavKey
 @Serializable
 data class Group(val groupId: String) : NavKey
 
+/** Details, members and invitations of a group (level 2 of the Group tab). Back goes to [Group]. */
+@Serializable
+data class GroupSettings(val groupId: String) : NavKey
+
 @Serializable
 data object Profile : NavKey
