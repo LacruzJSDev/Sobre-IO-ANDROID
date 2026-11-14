@@ -32,8 +32,8 @@ import dev.lacruzjs.sobreio.generated.resources.ic_account_balance
 import dev.lacruzjs.sobreio.generated.resources.ic_envelope
 import dev.lacruzjs.sobreio.generated.resources.ic_home
 import dev.lacruzjs.sobreio.generated.resources.ic_list
-import dev.lacruzjs.sobreio.generated.resources.ic_person_add
-import dev.lacruzjs.sobreio.generated.resources.action_invite_to_group
+import dev.lacruzjs.sobreio.generated.resources.group_settings_title
+import dev.lacruzjs.sobreio.generated.resources.ic_settings
 import dev.lacruzjs.sobreio.generated.resources.action_new_account
 import dev.lacruzjs.sobreio.generated.resources.action_new_envelope
 import dev.lacruzjs.sobreio.generated.resources.action_new_movement
@@ -51,7 +51,10 @@ import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.ComingSoonSheet
 import dev.lacruzjs.sobreio.ui.components.EmptyState
-import dev.lacruzjs.sobreio.ui.components.GroupAvatar
+import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.IconCategory
+import dev.lacruzjs.sobreio.ui.components.iconFor
+import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
@@ -69,6 +72,9 @@ import org.koin.core.parameter.parametersOf
 fun GroupRoute(
     groupId: String,
     onBack: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenAccountForm: (accountId: String?) -> Unit,
+    onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
@@ -88,6 +94,9 @@ fun GroupRoute(
         }
     }
 
+    // Back from the group settings: the group may have been renamed, archived or left
+    LaunchedEffect(Unit) { viewModel.onEvent(GroupEvent.Refresh) }
+
     if (state.navigateBack) {
         LaunchedEffect(Unit) {
             onBack()
@@ -100,6 +109,7 @@ fun GroupRoute(
         onEvent = { event ->
             when (event) {
                 GroupEvent.BackClicked -> onBack()
+                GroupEvent.SettingsClicked -> onOpenSettings()
                 is GroupEvent.TabSelected -> selectedIndex = event.tab.ordinal
                 else -> viewModel.onEvent(event)
             }
@@ -109,27 +119,43 @@ fun GroupRoute(
             if (accountsState.canEdit) {
                 AddIconButton(
                     contentDescription = stringResource(Res.string.action_new_account),
-                    onClick = { accountsViewModel.onEvent(AccountsEvent.NewAccountClicked) },
+                    onClick = { onOpenAccountForm(null) },
                 )
             }
         },
         accountsContent = {
             // Shown again each time the tab is selected, so it reads the list again
             LaunchedEffect(Unit) { accountsViewModel.onEvent(AccountsEvent.Refresh) }
-            AccountsPane(state = accountsState, onEvent = accountsViewModel::onEvent)
+            AccountsPane(
+                state = accountsState,
+                onEvent = { event ->
+                    when (event) {
+                        is AccountsEvent.EditClicked -> onOpenAccountForm(event.accountId)
+                        else -> accountsViewModel.onEvent(event)
+                    }
+                },
+            )
         },
         envelopesAction = {
             if (envelopesState.canEdit) {
                 AddIconButton(
                     contentDescription = stringResource(Res.string.action_new_envelope),
-                    onClick = { envelopesViewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked) },
+                    onClick = { onOpenEnvelopeForm(null) },
                 )
             }
         },
         envelopesContent = {
             // Shown again each time the tab is selected, so it reads the summary and the list again
             LaunchedEffect(Unit) { envelopesViewModel.onEvent(EnvelopesEvent.Refresh) }
-            EnvelopesPane(state = envelopesState, onEvent = envelopesViewModel::onEvent)
+            EnvelopesPane(
+                state = envelopesState,
+                onEvent = { event ->
+                    when (event) {
+                        is EnvelopesEvent.EditClicked -> onOpenEnvelopeForm(event.envelopeId)
+                        else -> envelopesViewModel.onEvent(event)
+                    }
+                },
+            )
         },
     )
 }
@@ -154,7 +180,6 @@ fun GroupScreen(
             onDismiss = { onEvent(GroupEvent.NewItemDismissed) },
         )
     }
-    if (state.inviteSheetOpen) InviteSheet(state, onEvent)
 
     val selected = MaterialTheme.colorScheme.primary
     val itemColors = NavigationSuiteDefaults.itemColors(
@@ -199,7 +224,14 @@ fun GroupScreen(
                 ScreenHeader(
                     title = state.group?.name.orEmpty(),
                     onBack = { onEvent(GroupEvent.BackClicked) },
-                    leading = { GroupAvatar(name = state.group?.name.orEmpty(), size = 36.dp) },
+                    leading = {
+                        EntityAvatar(
+                            name = state.group?.name.orEmpty(),
+                            icon = iconFor(IconCategory.Group, state.group?.icon),
+                            color = EntityColor.fromHex(state.group?.color),
+                            size = 36.dp,
+                        )
+                    },
                     actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction) },
                 )
                 when {
@@ -218,7 +250,7 @@ fun GroupScreen(
     }
 }
 
-/** Right side of the header: Invite on the Group tab (owner and admin), "+" on the lists. */
+/** Right side of the header: the settings gear on the Group tab (everyone), "+" on the lists. */
 @Composable
 private fun HeaderAction(
     state: GroupUiState,
@@ -227,13 +259,11 @@ private fun HeaderAction(
     envelopesAction: @Composable () -> Unit,
 ) {
     when (state.selectedTab) {
-        GroupTab.Group -> if (state.group?.canEdit == true) {
-            IconButton(onClick = { onEvent(GroupEvent.InviteClicked) }) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_person_add),
-                    contentDescription = stringResource(Res.string.action_invite_to_group),
-                )
-            }
+        GroupTab.Group -> IconButton(onClick = { onEvent(GroupEvent.SettingsClicked) }) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_settings),
+                contentDescription = stringResource(Res.string.group_settings_title),
+            )
         }
         GroupTab.Accounts -> accountsAction()
         GroupTab.Envelopes -> envelopesAction()

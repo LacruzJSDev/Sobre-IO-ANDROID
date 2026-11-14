@@ -11,9 +11,19 @@ internal data class AccountDto(
     val name: String,
     val kind: String,
     @SerialName("in_envelopes") val inEnvelopes: Boolean = false,
+    @SerialName("owner_user_id") val ownerUserId: String? = null,
+    @SerialName("archived_at") val archivedAt: String? = null,
     val balance: Long = 0,
 )
 
-/** The `accounts_total` column of the `group_overview` view. */
+/** The columns of `accounts` that the `account_balances` view does not have. */
 @Serializable
-internal data class AccountsTotalDto(@SerialName("accounts_total") val total: Long? = null)
+internal data class AccountStyleDto(val id: String, val color: String? = null, val icon: String? = null)
+
+/** The account columns of the `group_overview` view. */
+@Serializable
+internal data class AccountsOverviewDto(
+    @SerialName("accounts_total") val total: Long? = null,
+    @SerialName("in_envelopes_total") val inEnvelopesTotal: Long? = null,
+    @SerialName("outside_total") val outsideTotal: Long? = null,
+)

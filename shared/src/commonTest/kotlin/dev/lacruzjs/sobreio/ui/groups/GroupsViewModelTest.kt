@@ -9,11 +9,14 @@ import dev.lacruzjs.sobreio.fake.FakeLastGroupStore
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.group_archived_message
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
+import dev.lacruzjs.sobreio.generated.resources.group_deletion_cancelled
+import dev.lacruzjs.sobreio.generated.resources.group_reopened
 import dev.lacruzjs.sobreio.generated.resources.group_left
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
+import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -56,53 +59,6 @@ class GroupsViewModelTest : MainDispatcherTest() {
 
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.isLoading)
-    }
-
-    @Test
-    fun createSendsTrimmedNameAndCurrencyThenAsksToOpenTheGroup() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("  Casa  "))
-        viewModel.onEvent(GroupsEvent.CurrencySelected("USD"))
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(listOf("createGroup(Casa, USD)"), repository.calls)
-        assertEquals("new-id", viewModel.state.value.navigateToGroup)
-        assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
-
-        viewModel.onEvent(GroupsEvent.NavigationHandled)
-        assertNull(viewModel.state.value.navigateToGroup)
-    }
-
-    @Test
-    fun blankNameIsRejectedWithoutCallingTheRepository() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("   "))
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(Res.string.validation_required, viewModel.state.value.nameError)
-        assertTrue(repository.calls.isEmpty())
-    }
-
-    @Test
-    fun tooLongNameIsRejected() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("a".repeat(MAX_GROUP_NAME_LENGTH + 1)))
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(Res.string.validation_name_too_long, viewModel.state.value.nameError)
-        assertTrue(repository.calls.isEmpty())
-    }
-
-    @Test
-    fun failedCreateKeepsTheSheetOpenWithTheError() {
-        repository.createResult = Result.failure(AppError.Network)
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("Casa"))
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(GroupsSheet.Create, viewModel.state.value.sheet)
-        assertEquals(AppError.Network, viewModel.state.value.submitError)
-        assertNull(viewModel.state.value.navigateToGroup)
     }
 
     @Test
@@ -153,40 +109,66 @@ class GroupsViewModelTest : MainDispatcherTest() {
         assertFalse(viewModel.state.value.isSigningOut)
     }
 
+    private val archivedAt = Instant.parse("2026-11-01T10:00:00Z")
+    private val purgeAt = Instant.parse("2026-11-10T10:00:00Z")
+    private val vieja = Group("3", "Vieja", "EUR", GroupRole.Owner, archivedAt = archivedAt)
+    private val borrada = Group("4", "Borrada", "EUR", GroupRole.Owner, purgeRequestedAt = purgeAt)
+
     @Test
-    fun editOpensTheSheetWithTheNameAndRenameUpdatesTheList() {
+    fun archivedAndPendingGroupsLeaveTheMainListForTheArchivedSection() {
+        repository.groups = listOf(casa, borrada, vieja, piso)
         loaded()
-        viewModel.onEvent(GroupsEvent.EditClicked("1"))
-        assertEquals(GroupsSheet.Edit, viewModel.state.value.sheet)
-        assertEquals("Casa", viewModel.state.value.name)
 
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("  Hogar "))
-        viewModel.onEvent(GroupsEvent.EditConfirmed)
-
-        assertTrue("renameGroup(1, Hogar)" in repository.calls)
-        assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
-        assertEquals("Hogar", viewModel.state.value.groups.first { it.id == "1" }.name)
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+        // Archived first, then the ones pending deletion
+        assertEquals(listOf(vieja, borrada), viewModel.state.value.archivedGroups)
     }
 
     @Test
-    fun aMemberCannotOpenTheEditSheet() {
-        loaded()
-        viewModel.onEvent(GroupsEvent.EditClicked("2"))
-
-        assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
+    fun theDeletionDateIsSevenDaysAfterTheRequest() {
+        assertEquals(Instant.parse("2026-11-17T10:00:00Z"), borrada.deletionDate)
     }
 
     @Test
-    fun failedRenameKeepsTheSheetOpenWithTheError() {
-        repository.renameResult = Result.failure(AppError.BusinessRule("FZ016"))
+    fun reopeningAnArchivedGroupBringsItBackToTheMainList() {
+        repository.groups = listOf(casa, vieja)
         loaded()
-        viewModel.onEvent(GroupsEvent.EditClicked("1"))
-        viewModel.onEvent(GroupsEvent.GroupNameChanged("Hogar"))
-        viewModel.onEvent(GroupsEvent.EditConfirmed)
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
 
-        assertEquals(GroupsSheet.Edit, viewModel.state.value.sheet)
-        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.submitError)
-        assertEquals("Casa", viewModel.state.value.groups.first { it.id == "1" }.name)
+        assertTrue("reopenGroup(3)" in repository.calls)
+        assertEquals(listOf("Casa", "Vieja"), viewModel.state.value.groups.map { it.name })
+        assertTrue(viewModel.state.value.archivedGroups.isEmpty())
+    }
+
+    @Test
+    fun reopeningIsIgnoredForANonOwner() {
+        repository.groups = listOf(vieja.copy(role = GroupRole.Admin))
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertTrue(repository.calls.none { it.startsWith("reopenGroup") })
+    }
+
+    @Test
+    fun cancellingADeletionReloadsTheList() {
+        repository.groups = listOf(casa, borrada)
+        loaded()
+        repository.groups = listOf(casa, borrada.copy(purgeRequestedAt = null))
+        viewModel.onEvent(GroupsEvent.CancelDeletionClicked("4"))
+
+        assertEquals(listOf("Borrada", "Casa"), viewModel.state.value.groups.map { it.name })
+        assertTrue(viewModel.state.value.archivedGroups.isEmpty())
+    }
+
+    @Test
+    fun failedReopenShowsTheError() {
+        repository.groups = listOf(vieja)
+        repository.reopenResult = Result.failure(AppError.BusinessRule("FZ016"))
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
+        assertEquals(listOf(vieja), viewModel.state.value.archivedGroups)
     }
 
     @Test
@@ -238,7 +220,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     @Test
     fun leavingHidesTheGroupButSendsNothingUntilTheSnackbarEnds() {
         loaded()
-        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+        viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
 
         assertEquals(listOf(casa), viewModel.state.value.groups)
         assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
@@ -249,7 +231,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     fun undoingALeaveMakesNoNetworkCall() {
         loaded()
         repository.calls.clear()
-        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+        viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
         viewModel.onEvent(GroupsEvent.UndoClicked)
 
         assertTrue(repository.calls.isEmpty())
@@ -260,7 +242,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     fun leaveIsSentAndTheLastGroupClearedWhenTheSnackbarTimesOut() {
         lastGroup.set("u1", "2")
         loaded()
-        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+        viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
         viewModel.onEvent(GroupsEvent.UndoExpired)
 
         assertTrue("leaveGroup(2)" in repository.calls)
@@ -271,7 +253,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     @Test
     fun startingAnotherDestructiveActionCommitsThePendingLeave() {
         loaded()
-        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+        viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
         viewModel.onEvent(GroupsEvent.DeleteClicked("1"))
 
         assertTrue("leaveGroup(2)" in repository.calls)
@@ -282,7 +264,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
     fun onlyOwnerLastLeaveShowsTheSpecificErrorAndPutsTheGroupBack() {
         repository.leaveResult = Result.failure(AppError.BusinessRule("FZ009"))
         loaded()
-        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+        viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
         viewModel.onEvent(GroupsEvent.UndoExpired)
 
         assertEquals(AppError.BusinessRule("FZ009"), viewModel.state.value.actionError)
@@ -298,5 +280,107 @@ class GroupsViewModelTest : MainDispatcherTest() {
 
         assertEquals(AppError.Network, viewModel.state.value.actionError)
         assertEquals(listOf(piso), viewModel.state.value.groups)
+    }
+
+    @Test
+    fun archivingAnOwnedGroupMovesItToTheArchivedSectionAndOffersUndo() {
+        loaded()
+        repository.groups = listOf(casa, piso)
+        viewModel.onEvent(GroupsEvent.ArchiveClicked("1"))
+
+        assertTrue("archiveGroup(1)" in repository.calls)
+        assertEquals(listOf(piso), viewModel.state.value.groups)
+        assertEquals(listOf("Casa"), viewModel.state.value.archivedGroups.map { it.name })
+        assertEquals(Res.string.group_archived_message, viewModel.state.value.undoMessage?.message)
+
+        viewModel.onEvent(GroupsEvent.UndoClicked)
+
+        assertTrue("reopenGroup(1)" in repository.calls)
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+        assertTrue(viewModel.state.value.archivedGroups.isEmpty())
+    }
+
+    @Test
+    fun onlyAnOwnerCanArchiveOrDelete() {
+        loaded()
+        viewModel.onEvent(GroupsEvent.ArchiveClicked("2"))
+        viewModel.onEvent(GroupsEvent.DeleteClicked("2"))
+
+        assertTrue(repository.calls.none { it.startsWith("archiveGroup") || it.startsWith("requestGroupDeletion") })
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+    }
+
+    @Test
+    fun failedArchiveShowsTheErrorAndKeepsTheGroup() {
+        repository.archiveResult = Result.failure(AppError.BusinessRule("FZ016"))
+        loaded()
+        viewModel.onEvent(GroupsEvent.ArchiveClicked("1"))
+
+        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+    }
+
+    @Test
+    fun anOwnerCanLeaveAndTheLastOwnerErrorBringsTheGroupBack() {
+        repository.leaveResult = Result.failure(AppError.BusinessRule("FZ009"))
+        loaded()
+        viewModel.onEvent(GroupsEvent.LeaveClicked("1"))
+        assertEquals(listOf(piso), viewModel.state.value.groups)
+        assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
+        assertFalse("leaveGroup(1)" in repository.calls)
+
+        viewModel.onEvent(GroupsEvent.UndoExpired)
+
+        assertTrue("leaveGroup(1)" in repository.calls)
+        assertEquals(AppError.BusinessRule("FZ009"), viewModel.state.value.actionError)
+        assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+    }
+
+    @Test
+    fun theOnlyActiveOwnerCannotLeave() {
+        repository.groups = listOf(casa.copy(activeOwnerCount = 1), piso)
+        loaded()
+        viewModel.onEvent(GroupsEvent.LeaveClicked("1"))
+
+        assertEquals(listOf("Casa", "Piso"), viewModel.state.value.groups.map { it.name })
+        assertNull(viewModel.state.value.undoMessage)
+        assertTrue(viewModel.state.value.groups.first { it.id == "1" }.isSoleOwner)
+    }
+
+    @Test
+    fun anOwnerWithAnotherOwnerCanLeave() {
+        repository.groups = listOf(casa.copy(activeOwnerCount = 2), piso)
+        loaded()
+        viewModel.onEvent(GroupsEvent.LeaveClicked("1"))
+
+        assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
+    }
+
+    @Test
+    fun reopeningShowsASnackbarAndUndoArchivesAgain() {
+        repository.groups = listOf(casa, vieja)
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertEquals(Res.string.group_reopened, viewModel.state.value.undoMessage?.message)
+        assertEquals("Vieja", viewModel.state.value.undoMessage?.argument)
+
+        viewModel.onEvent(GroupsEvent.UndoClicked)
+
+        assertTrue("archiveGroup(3)" in repository.calls)
+        assertEquals(listOf("Vieja"), viewModel.state.value.archivedGroups.map { it.name })
+    }
+
+    @Test
+    fun cancellingADeletionShowsASnackbarAndUndoRequestsItAgain() {
+        repository.groups = listOf(casa, borrada)
+        loaded()
+        viewModel.onEvent(GroupsEvent.CancelDeletionClicked("4"))
+
+        assertEquals(Res.string.group_deletion_cancelled, viewModel.state.value.undoMessage?.message)
+
+        viewModel.onEvent(GroupsEvent.UndoClicked)
+
+        assertTrue("requestGroupDeletion(4)" in repository.calls)
     }
 }

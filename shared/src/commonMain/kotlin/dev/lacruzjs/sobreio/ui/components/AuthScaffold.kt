@@ -38,6 +38,7 @@ fun AuthScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .clearFocusOnTap()
                 .safeDrawingPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 32.dp),

@@ -29,7 +29,7 @@ import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Content of the Accounts tab: total, list, undo snackbar and the create/edit sheet. It lives inside the group shell,
+ * Content of the Accounts tab: total, list, undo snackbar. It lives inside the group shell,
  * so the snackbar sits above the navigation bar. The "+" is in the shell's header.
  */
 @Composable
@@ -48,12 +48,12 @@ fun AccountsPane(
         ) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                state.accounts.isEmpty() && state.error != null -> EmptyState(
+                state.accounts.isEmpty() && state.archivedAccounts.isEmpty() && state.error != null -> EmptyState(
                     message = stringResource(state.error.messageRes()),
                 ) {
                     TextButton(onClick = { onEvent(AccountsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                 }
-                state.accounts.isEmpty() -> EmptyState(
+                state.accounts.isEmpty() && state.archivedAccounts.isEmpty() -> EmptyState(
                     message = stringResource(
                         if (state.canEdit) Res.string.accounts_empty_editor else Res.string.tab_accounts_empty,
                     ),
@@ -67,11 +67,6 @@ fun AccountsPane(
             onDismiss = { onEvent(AccountsEvent.UndoExpired) },
         )
     }
-
-    when (state.sheet) {
-        AccountsSheet.None -> Unit
-        AccountsSheet.Create, AccountsSheet.Edit -> AccountFormSheet(state, onEvent)
-    }
 }
 
 private val previewAccounts = listOf(
@@ -84,7 +79,14 @@ private val previewAccounts = listOf(
 private fun AccountsPanePreview() {
     SobreioTheme {
         AccountsPane(
-            state = AccountsUiState(accounts = previewAccounts, totalCents = 104765, isLoading = false, canEdit = true),
+            state = AccountsUiState(
+                accounts = previewAccounts,
+                totalCents = 104765,
+                inEnvelopesCents = 129815,
+                outsideCents = -25050,
+                isLoading = false,
+                canEdit = true,
+            ),
             onEvent = {},
         )
     }

@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
@@ -16,6 +17,17 @@ class EnvelopeMapperTest {
         val dto = EnvelopeDto("e1", "g1", "Food", "spending", monthlyTarget = 20000, balance = -500)
 
         assertEquals(Envelope("e1", "g1", "Food", EnvelopeKind.Spending, 20000, -500), dto.toDomain())
+    }
+
+    @Test
+    fun joinsTheColourIconHolderAndArchiveDateOfTheRow() {
+        val dto = EnvelopeDto("e1", "g1", "Food", "spending", ownerUserId = "u2", archivedAt = "2026-11-01T10:00:00Z")
+        val envelope = dto.toDomain(EnvelopeStyleDto("e1", color = "#4F7A5A", icon = "groceries"))
+
+        assertEquals("#4F7A5A", envelope?.color)
+        assertEquals("groceries", envelope?.icon)
+        assertEquals("u2", envelope?.ownerUserId)
+        assertEquals(true, envelope?.isArchived)
     }
 
     @Test

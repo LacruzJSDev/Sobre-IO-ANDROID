@@ -35,6 +35,8 @@ class FakeAuthRepository(initial: AuthState = AuthState.SignedOut) : AuthReposit
 
     override suspend fun signOut(): Result<Unit> = record("signOut()")
 
+    override suspend fun updateDisplayName(name: String): Result<Unit> = record("updateDisplayName($name)")
+
     private fun record(call: String): Result<Unit> {
         calls += call
         return result

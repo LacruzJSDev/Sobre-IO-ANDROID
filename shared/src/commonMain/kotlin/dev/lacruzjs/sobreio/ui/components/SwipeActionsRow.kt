@@ -13,13 +13,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -29,16 +37,16 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private enum class SwipeValue { Closed, Open }
 
-private val ActionWidth = 88.dp
+private val ActionWidth = 64.dp
 
 /**
  * A list row that swipes left to reveal [actions] on its right (Edit, Delete...), the pattern of every list in the app.
@@ -59,9 +67,11 @@ fun SwipeActionsRow(
 ) {
     val density = LocalDensity.current
     val revealPx = with(density) { (ActionWidth * actions.size).toPx() }
+    // A row always starts closed, and starts again closed when the number of actions changes (new anchors): the caller
+    // hears about it through the report below, so its idea of "open" can never outlive the drawn row
     val state = remember(revealPx) {
         AnchoredDraggableState(
-            initialValue = if (isOpen) SwipeValue.Open else SwipeValue.Closed,
+            initialValue = SwipeValue.Closed,
             anchors = DraggableAnchors {
                 SwipeValue.Closed at 0f
                 SwipeValue.Open at -revealPx
@@ -69,19 +79,45 @@ fun SwipeActionsRow(
         )
     }
     val currentOnOpenChange by rememberUpdatedState(onOpenChange)
+    val currentIsOpen by rememberUpdatedState(isOpen)
+    val scope = rememberCoroutineScope()
 
-    // The caller closes this row (another one opened, the list scrolled, a tap elsewhere) or opens it
+    // The caller closes this row (another one opened, the list scrolled) or opens it
     LaunchedEffect(state, isOpen) {
         val target = if (isOpen) SwipeValue.Open else SwipeValue.Closed
         if (state.targetValue != target) state.animateTo(target)
     }
-    // The user's drag, reported once it settles
+    // What is drawn is reported to the caller whenever it settles and the caller does not know it yet
     LaunchedEffect(state) {
-        snapshotFlow { state.settledValue }.collect { currentOnOpenChange(it == SwipeValue.Open) }
+        snapshotFlow { state.settledValue }.collect { value ->
+            val open = value == SwipeValue.Open
+            if (open != currentIsOpen) currentOnOpenChange(open)
+        }
+    }
+    // Open as far as the user can see: dragged open or still sliding back
+    fun isDrawnOpen(): Boolean = state.targetValue == SwipeValue.Open || state.currentValue == SwipeValue.Open
+
+    // While drawn open, a press anywhere outside this row closes it (app-wide rule, see SwipeRowsHost)
+    val host = LocalSwipeRowsHost.current
+    var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val drawnOpen by remember(state) { derivedStateOf { isDrawnOpen() } }
+    val registrationKey = remember { Any() }
+    DisposableEffect(host, drawnOpen) {
+        if (host != null && drawnOpen) {
+            host.register(
+                key = registrationKey,
+                coordinates = { rowCoordinates },
+                close = {
+                    scope.launch { state.animateTo(SwipeValue.Closed) }
+                    currentOnOpenChange(false)
+                },
+            )
+        }
+        onDispose { host?.unregister(registrationKey) }
     }
 
     val shape = MaterialTheme.shapes.medium
-    Box(modifier = modifier.fillMaxWidth().clip(shape)) {
+    Box(modifier = modifier.fillMaxWidth().clip(shape).onGloballyPositioned { rowCoordinates = it }) {
         Row(
             modifier = Modifier
                 .matchParentSize()
@@ -90,23 +126,25 @@ fun SwipeActionsRow(
             horizontalArrangement = Arrangement.End,
         ) {
             actions.forEach { action ->
-                Box(
-                    modifier = Modifier
-                        .width(ActionWidth)
-                        .fillMaxHeight()
-                        .background(action.containerColor)
-                        .clickable {
-                            action.onClick()
-                            currentOnOpenChange(false)
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = action.label,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = action.contentColor,
-                        textAlign = TextAlign.Center,
-                    )
+                LabelTooltip(label = action.label) {
+                    Box(
+                        modifier = Modifier
+                            .width(ActionWidth)
+                            .fillMaxHeight()
+                            .background(action.containerColor)
+                            .clickable(onClickLabel = action.label) {
+                                action.onClick()
+                                currentOnOpenChange(false)
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = action.icon,
+                            contentDescription = action.label,
+                            tint = action.contentColor,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
         }
@@ -115,7 +153,15 @@ fun SwipeActionsRow(
                 .offset { IntOffset(state.offset.takeIf { !it.isNaN() }?.roundToInt() ?: 0, 0) }
                 .anchoredDraggable(state, Orientation.Horizontal)
                 .background(MaterialTheme.colorScheme.background)
-                .clickable { if (isOpen) currentOnOpenChange(false) else onClick() }
+                .clickable {
+                    // Decided by the drawn state, not by the caller's copy of it, so a tap on an open row always closes it
+                    if (isDrawnOpen()) {
+                        scope.launch { state.animateTo(SwipeValue.Closed) }
+                        currentOnOpenChange(false)
+                    } else {
+                        onClick()
+                    }
+                }
                 .semantics {
                     // Screen readers cannot swipe: they get the same actions as a list
                     customActions = actions.map { action ->

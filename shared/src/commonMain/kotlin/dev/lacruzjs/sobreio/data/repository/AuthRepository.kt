@@ -28,4 +28,7 @@ interface AuthRepository {
     suspend fun signInWithGoogle(idToken: String, rawNonce: String): Result<Unit>
 
     suspend fun signOut(): Result<Unit>
+
+    /** Changes the signed-in user's name, both in their profile (what members see) and in the session. */
+    suspend fun updateDisplayName(name: String): Result<Unit>
 }

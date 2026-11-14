@@ -15,7 +15,9 @@ sealed interface GroupEvent {
     data object NewItemClicked : GroupEvent
     data object NewItemDismissed : GroupEvent
 
-    /** Owner or admin asks for an invitation code; the sheet opens and the code is created. */
-    data object InviteClicked : GroupEvent
-    data object InviteDismissed : GroupEvent
+    /** The header's gear. Handled by the Route, which opens the group settings. */
+    data object SettingsClicked : GroupEvent
+
+    /** Reload the group quietly, for example when coming back from its settings. */
+    data object Refresh : GroupEvent
 }

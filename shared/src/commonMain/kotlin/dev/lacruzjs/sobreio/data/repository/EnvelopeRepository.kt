@@ -1,7 +1,7 @@
 package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.domain.model.Envelope
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 
 /** The envelopes of a group. Failures are [dev.lacruzjs.sobreio.domain.error.AppError]s. */
@@ -11,8 +11,9 @@ interface EnvelopeRepository {
     suspend fun materializeThroughToday(groupId: String): Result<Unit>
 
     /**
-     * Live envelopes of the group, ordered by name, with the balance the database computed. Includes the system
-     * "Unassigned" envelope; the `external` one is never returned.
+     * Every envelope of the group, live and archived (see [Envelope.isArchived]), ordered by name, with the balance the
+     * database computed and the colour and icon read from the `envelopes` table. Includes the system "Unassigned"
+     * envelope; the `external` one is never returned.
      */
     suspend fun getEnvelopes(groupId: String): Result<List<Envelope>>
 
@@ -20,23 +21,18 @@ interface EnvelopeRepository {
     suspend fun getSummary(groupId: String): Result<EnvelopeSummary>
 
     /**
-     * Creates a spending or saving envelope and returns its id. Owner or admin only. Fails with
+     * Creates a spending or saving envelope with every field and returns its id. Owner or admin only. Fails with
      * [dev.lacruzjs.sobreio.domain.error.AppError.DuplicateName] when the name is taken.
      */
-    suspend fun createEnvelope(
-        groupId: String,
-        name: String,
-        kind: EnvelopeKind,
-        monthlyTargetCents: Long,
-    ): Result<String>
+    suspend fun createEnvelope(groupId: String, draft: EnvelopeDraft): Result<String>
 
     /** Owner or admin only; anyone else fails with a business rule error (FZ016). */
-    suspend fun updateEnvelope(id: String, name: String, kind: EnvelopeKind, monthlyTargetCents: Long): Result<Unit>
+    suspend fun updateEnvelope(id: String, draft: EnvelopeDraft): Result<Unit>
 
     /** Archives the envelope. Fails with FZ008 unless the balance is zero and it has no live commitments. */
     suspend fun archiveEnvelope(id: String): Result<Unit>
 
-    /** Brings an archived envelope back. */
+    /** Brings an archived envelope back. Fails with a duplicate name when a live envelope took its name. */
     suspend fun unarchiveEnvelope(id: String): Result<Unit>
 
     /** Moves [amountCents] (> 0) from one envelope to another. Any member may do it. */

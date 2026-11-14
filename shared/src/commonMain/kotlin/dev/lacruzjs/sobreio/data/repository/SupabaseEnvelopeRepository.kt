@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
@@ -8,7 +9,7 @@ import dev.lacruzjs.sobreio.data.remote.mapper.toSummary
 import dev.lacruzjs.sobreio.data.remote.safeCall
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -35,16 +36,18 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
     }
 
     override suspend fun getEnvelopes(groupId: String): Result<List<Envelope>> = safeCall {
-        postgrest.from(BALANCES_VIEW)
-            .select(Columns.raw("envelope_id,group_id,name,kind,monthly_target,balance")) {
-                filter {
-                    eq("group_id", groupId)
-                    exact("archived_at", null)
-                }
+        val balances = postgrest.from(BALANCES_VIEW)
+            .select(Columns.raw("envelope_id,group_id,name,kind,owner_user_id,archived_at,monthly_target,balance")) {
+                filter { eq("group_id", groupId) }
                 order("name", Order.ASCENDING)
             }
             .decodeList<EnvelopeDto>()
-            .mapNotNull { it.toDomain() }
+        // The balances view has no colour or icon: they come from `envelopes`, joined by id
+        val styles = postgrest.from(TABLE)
+            .select(Columns.list("id", "color", "icon")) { filter { eq("group_id", groupId) } }
+            .decodeList<EnvelopeStyleDto>()
+            .associateBy { it.id }
+        balances.mapNotNull { it.toDomain(styles[it.id]) }
     }
 
     override suspend fun getSummary(groupId: String): Result<EnvelopeSummary> = safeCall {
@@ -54,35 +57,31 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
             .toSummary()
     }
 
-    override suspend fun createEnvelope(
-        groupId: String,
-        name: String,
-        kind: EnvelopeKind,
-        monthlyTargetCents: Long,
-    ): Result<String> = safeCall {
+    override suspend fun createEnvelope(groupId: String, draft: EnvelopeDraft): Result<String> = safeCall {
         postgrest.from(TABLE)
             .insert(
                 buildJsonObject {
                     put("group_id", groupId)
-                    put("name", name)
-                    put("kind", kind.toDbValue())
-                    put("monthly_target", monthlyTargetCents)
+                    put("name", draft.name)
+                    put("kind", draft.kind.toDbValue())
+                    put("monthly_target", draft.monthlyTargetCents)
+                    put("owner_user_id", draft.ownerUserId)
+                    put("color", draft.color)
+                    put("icon", draft.icon)
                 },
             ) { select(Columns.list("id")) }
             .decodeSingle<IdDto>()
             .id
     }
 
-    override suspend fun updateEnvelope(
-        id: String,
-        name: String,
-        kind: EnvelopeKind,
-        monthlyTargetCents: Long,
-    ): Result<Unit> = safeCall {
+    override suspend fun updateEnvelope(id: String, draft: EnvelopeDraft): Result<Unit> = safeCall {
         update(id) {
-            set("name", name)
-            set("kind", kind.toDbValue())
-            set("monthly_target", monthlyTargetCents)
+            set("name", draft.name)
+            set("kind", draft.kind.toDbValue())
+            set("monthly_target", draft.monthlyTargetCents)
+            set("owner_user_id", draft.ownerUserId)
+            set("color", draft.color)
+            set("icon", draft.icon)
         }
     }
 

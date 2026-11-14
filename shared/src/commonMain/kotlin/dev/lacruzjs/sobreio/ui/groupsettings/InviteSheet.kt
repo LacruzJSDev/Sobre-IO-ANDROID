@@ -1,27 +1,26 @@
-package dev.lacruzjs.sobreio.ui.group
+package dev.lacruzjs.sobreio.ui.groupsettings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_copy_code
+import dev.lacruzjs.sobreio.generated.resources.action_create_invitation
 import dev.lacruzjs.sobreio.generated.resources.code_copied
 import dev.lacruzjs.sobreio.generated.resources.invite_body
+import dev.lacruzjs.sobreio.generated.resources.invite_role_label
 import dev.lacruzjs.sobreio.generated.resources.invite_title
 import dev.lacruzjs.sobreio.generated.resources.invite_valid_until
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -33,29 +32,41 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
-/** Shows the invitation code of the group, big, with its expiry and a button that copies it. */
+/**
+ * Sheet to invite someone: choose the role (member or admin) and create the invitation, which then shows its code,
+ * big, with its expiry and a button that copies it.
+ */
 @Composable
-internal fun InviteSheet(state: GroupUiState, onEvent: (GroupEvent) -> Unit) {
+internal fun InviteSheet(state: GroupSettingsUiState, onEvent: (GroupSettingsEvent) -> Unit) {
     val clipboard = LocalClipboardManager.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val invitation = state.createdInvitation
 
     FlatBottomSheet(
         title = stringResource(Res.string.invite_title),
-        onDismiss = { onEvent(GroupEvent.InviteDismissed) },
+        onDismiss = { onEvent(GroupSettingsEvent.SheetDismissed) },
     ) {
         Text(
             text = stringResource(Res.string.invite_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        ErrorText(state.inviteError, modifier = Modifier.fillMaxWidth())
-        if (state.isInviting) {
-            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-            }
-        }
-        state.invitation?.let { invitation ->
+        if (invitation == null) {
+            Text(text = stringResource(Res.string.invite_role_label), style = MaterialTheme.typography.labelLarge)
+            RoleChips(
+                roles = listOf(GroupRole.Member, GroupRole.Admin),
+                selected = state.inviteRole,
+                onSelect = { onEvent(GroupSettingsEvent.InviteRoleSelected(it)) },
+                enabled = !state.isSubmitting,
+            )
+            ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
+            PrimaryButton(
+                text = stringResource(Res.string.action_create_invitation),
+                onClick = { onEvent(GroupSettingsEvent.InviteConfirmed) },
+                isLoading = state.isSubmitting,
+            )
+        } else {
             Text(
                 text = invitation.code,
                 style = MaterialTheme.typography.headlineMedium.copy(

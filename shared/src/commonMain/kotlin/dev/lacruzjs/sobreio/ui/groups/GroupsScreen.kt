@@ -42,6 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun GroupsRoute(
     onOpenGroup: (groupId: String) -> Unit,
     onOpenProfile: () -> Unit,
+    onNewGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupsViewModel = koinViewModel(),
 ) {
@@ -62,6 +63,7 @@ fun GroupsRoute(
         onEvent = { event ->
             when (event) {
                 GroupsEvent.ProfileClicked -> onOpenProfile()
+                GroupsEvent.NewGroupClicked -> onNewGroup()
                 is GroupsEvent.GroupClicked -> onOpenGroup(event.groupId)
                 else -> viewModel.onEvent(event)
             }
@@ -96,16 +98,16 @@ fun GroupsScreen(
             ) {
                 when {
                     state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    state.groups.isEmpty() && state.error != null -> EmptyState(
+                    state.groups.isEmpty() && state.archivedGroups.isEmpty() && state.error != null -> EmptyState(
                         message = stringResource(state.error.messageRes()),
                     ) {
                         TextButton(onClick = { onEvent(GroupsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                     }
-                    state.groups.isEmpty() -> EmptyState(
+                    state.groups.isEmpty() && state.archivedGroups.isEmpty() -> EmptyState(
                         title = stringResource(Res.string.groups_empty_title),
                         message = stringResource(Res.string.groups_empty_body),
                     )
-                    else -> GroupList(state.groups, onEvent)
+                    else -> GroupList(state, onEvent)
                 }
             }
             UndoSnackbarHost(
@@ -119,7 +121,6 @@ fun GroupsScreen(
 
     when (state.sheet) {
         GroupsSheet.None -> Unit
-        GroupsSheet.Create, GroupsSheet.Edit -> GroupFormSheet(state, onEvent)
         GroupsSheet.Join -> JoinGroupSheet(state, onEvent)
     }
 }

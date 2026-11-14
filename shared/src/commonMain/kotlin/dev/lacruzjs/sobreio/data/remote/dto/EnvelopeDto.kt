@@ -10,9 +10,15 @@ internal data class EnvelopeDto(
     @SerialName("group_id") val groupId: String,
     val name: String,
     val kind: String,
+    @SerialName("owner_user_id") val ownerUserId: String? = null,
+    @SerialName("archived_at") val archivedAt: String? = null,
     @SerialName("monthly_target") val monthlyTarget: Long = 0,
     val balance: Long = 0,
 )
+
+/** The columns of `envelopes` that the `envelope_balances` view does not have. */
+@Serializable
+internal data class EnvelopeStyleDto(val id: String, val color: String? = null, val icon: String? = null)
 
 /** The envelope columns of the `group_overview` view. */
 @Serializable
