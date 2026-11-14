@@ -25,7 +25,7 @@ class UndoController(
     fun show(action: UndoableAction) {
         commit()
         pending = action
-        onMessage(UndoMessage(++nextKey, action.message, action.argument))
+        onMessage(UndoMessage(++nextKey, action.message, action.argument, amountCents = action.amountCents))
     }
 
     /** A plain notice for something already done that needs no undo (no "Undo" button). Commits a pending action first. */

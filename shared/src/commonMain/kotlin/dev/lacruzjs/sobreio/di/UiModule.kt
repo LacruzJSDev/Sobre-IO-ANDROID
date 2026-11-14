@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.di
 
+import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailViewModel
 import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
 import dev.lacruzjs.sobreio.ui.auth.confirm.ConfirmEmailViewModel
 import dev.lacruzjs.sobreio.ui.auth.recovery.PasswordRecoveryViewModel
@@ -52,6 +53,17 @@ val uiModule = module {
             envelopeId = params.get<String?>(1),
             envelopes = get(),
             members = get(),
+        )
+    }
+    viewModel { params ->
+        AccountDetailViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            groups = get(),
+            accounts = get(),
+            members = get(),
+            envelopes = get(),
+            detail = get(),
         )
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }

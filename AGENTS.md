@@ -83,7 +83,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the balances (`account_balances`, with `owner_user_id` and `archived_at`, archived rows included) and the colour and icon
   from `accounts` (the view has neither) in two queries joined by id in the repository. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
-  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row does nothing yet (account detail comes later).
+  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail (account detail comes later).
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
   `envelope_balances` view (colour and icon from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
@@ -147,6 +147,33 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
   `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
   screen shows the saved name at once. The email is read-only.
+- Account detail (`ui/accountdetail`, route `AccountDetail(groupId, accountId)`, level 2): opened by tapping an account row
+  (swipe actions stay). Header with the account avatar and name, the group as a subtitle (`ScreenHeader(subtitle)`) and a
+  pencil (owner and admin, `Group.canEdit`) that opens `AccountForm`; the screen reloads each time it is shown. Flat top
+  tabs (`PrimaryTabRow`, ink indicator, no divider): Summary and Commitments (placeholder "Coming soon" until that task).
+  Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
+  with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
+  the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
+  due items; latest 5 movements with "See all"; "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
+  `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
+  snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
+  `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
+  `account_period_flows`, `upcoming_occurrences` (filtered to the account and signed in `UpcomingDto.toUpcomingFor`, the
+  only thing done in the app), the `movements` view, `compare_with_bank` and the two writes; nothing is summed in the app.
+  The adjustment's amount in the snackbar is formatted by the screen: `UndoableAction`/`UndoMessage` carry `amountCents`.
+- "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
+  `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the
+  account in its own saved `movementsFilter` and clears the AppNavigation value. The Movements tab is still an empty
+  state: when it exists it must read `movementsFilter` in `GroupRoute` (null means the whole ledger) and show the account
+  filter; from there "back" should return to the detail (re-push `AccountDetail` when a filter is set, not done yet).
+- Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
+  contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
+  and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
+  formatValue, contentDescription)` (columns up to 24 dp, 4 dp rounded free end, 2 dp gap, legend above, tooltip per group).
+  Shared: `ChartTooltip`, `ChartLegend`, `chartTouch`, and the pure maths in `ChartMath.kt` (`niceTicks`, `compactAmount`,
+  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours `colorScheme.chartIn` and `chartOut`
+  (`ui/theme/ChartColors.kt`; blue and orange pairs for light and dark, never the `error` red); the balance line uses
+  `primary`. Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and

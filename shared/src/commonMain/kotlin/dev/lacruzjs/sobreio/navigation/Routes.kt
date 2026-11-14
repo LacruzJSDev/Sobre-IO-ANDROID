@@ -33,6 +33,13 @@ data class GroupSettings(val groupId: String) : NavKey
 @Serializable
 data class GroupForm(val groupId: String?) : NavKey
 
+/**
+ * One account (level 2 of the Accounts tab): top tabs Summary and Commitments. Opened by tapping an account row; back goes
+ * to [Group]. The pencil opens [AccountForm], and "See all" returns to [Group] on its Movements tab filtered to the account.
+ */
+@Serializable
+data class AccountDetail(val groupId: String, val accountId: String) : NavKey
+
 /** Create (`accountId` null) or edit an account, as a full screen. Opened from the Accounts tab. */
 @Serializable
 data class AccountForm(val groupId: String, val accountId: String?) : NavKey

@@ -17,4 +17,6 @@ class UndoableAction(
     val commit: suspend () -> Result<Unit>,
     val undo: suspend () -> Result<Unit>,
     val restore: () -> Unit,
+    /** See [UndoMessage.amountCents]. */
+    val amountCents: Long? = null,
 )
