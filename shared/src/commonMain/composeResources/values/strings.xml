@@ -305,4 +305,12 @@
     <string name="group_reopened">%1$s reopened</string>
     <string name="group_deletion_cancelled">Deletion of %1$s cancelled</string>
     <string name="role_changed">Role of %1$s changed</string>
+    <string name="form_section_appearance">Appearance</string>
+    <string name="form_section_currency_period">Currency and period</string>
+    <string name="field_color">Colour</string>
+    <string name="field_icon">Icon</string>
+    <string name="currency_locked_note">The currency of a group cannot be changed.</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
+    <string name="field_period_start_short">Period starts on</string>
 </resources>

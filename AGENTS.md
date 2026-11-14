@@ -97,9 +97,13 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `AccountForm(groupId, accountId?)` (`ui/accountform`) and `EnvelopeForm(groupId, envelopeId?)` (`ui/envelopeform`),
   each with its own ViewModel (ids as Koin parameters by position, `params.get<String?>(1)`) that loads the item when
   editing, validates, calls the repository and sets a `saved` flag the Route turns into back. The list or settings
-  screen reloads when shown again (`Refresh`). Group form: name, colour and icon inline (`ColorPicker`, `IconPicker`),
-  currency (create only, read-only text when editing), period start day (`PeriodDayField`, a "-" / "Day N" / "+"
-  stepper limited to 1-28, with a note that it only affects periods not created yet, D-29) and the time zone, a row
+  screen reloads when shown again (`Refresh`). Forms are laid out with `ui/components/FormSections.kt`:
+  `FormSection` (small muted title), `FormTile` (soft tile, label left, value or control right, optional note) and
+  `ExpandableFormTile` (header with a preview of the choice and an arrow; content opens under it, one open at a time).
+  Group form: the avatar next to the name field; "Appearance" with Colour and Icon as separate expandable tiles
+  (`ColorPicker`, `IconPicker` with paper cells); "Currency and period" with the currency (expandable chips when
+  creating, read-only tile when editing), the period start day (a "-" / "Day N" / "+" stepper in its tile, 1-28, with
+  a note that it only affects periods not created yet, D-29) and the time zone, a tile
   that opens `TimeZonePicker(current)` (`ui/timezone`: back arrow, autofocused search field, the current zone first and
   highlighted, then every `TimeZone.availableZoneIds` filtered case-insensitively, spaces matching underscores). The
   picked id travels back through a `pickedTimeZone` holder in `AppNavigation` (saved state, above both entries): the
@@ -107,9 +111,10 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   group pops the form and opens the new group. Account and envelope forms keep today's fields only (name, kind,
   opening balance on create / monthly target); holder and the rest of the scope come next.
 - Group settings (`ui/groupsettings`, `GroupSettingsViewModel` with the group id as Koin parameter): compact, sections
-  separated by spacing, no bottom buttons (archive, delete and leave are Groups list swipes). Details: avatar, name,
-  currency, period day and time zone, plus an "Edit" button (owner and admin, live group) that opens the same
-  full-screen group form (`GroupForm(groupId)`); the screen reloads when it is shown again; an archived group shows a read-only note. Members (`MemberRepository`): initial avatar, name ("You"
+  separated by spacing, no bottom buttons (archive, delete and leave are Groups list swipes). The header has a pencil on the
+  right (owner and admin, live group), in the same place as the gear that opened the screen, which opens the full-screen
+  group form (`GroupForm(groupId)`). Details: avatar, name and currency ("Archived" next to it when archived), then the
+  period start day and time zone as `FormTile`s; the screen reloads when it is shown again. Members (`MemberRepository`): initial avatar, name ("You"
   marker) and role label; an owner swipes a member's row for Role (sheet with owner/admin/member chips,
   `account_group_members.role` update; FZ009 shows inside the sheet; also on their own row; a "Role changed" snackbar follows, without Undo) and, on other members' rows,
   Remove (hidden at once with Undo; `left_at` is written only when the snackbar ends without Undo). Invitations (owner

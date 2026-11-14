@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -34,7 +35,8 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * The icons of [category] in titled sections. The first cell is "no icon" (the avatar then shows the initial). The
- * selected cell is filled with [color] (ink when null) and shows a white icon; the others are soft grey. All sections are laid out at full
+ * selected cell is filled with [color] (ink when null) and shows a white icon; the others use [cellColor] (soft grey, or
+ * the paper colour when the picker sits on a soft tile). All sections are laid out at full
  * height, so the page around it scrolls; pass [scrollable] with a bounded height (`heightIn(max = ...)`) to make it scroll
  * on its own instead.
  */
@@ -47,6 +49,7 @@ fun IconPicker(
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
     scrollable: Boolean = false,
+    cellColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
 ) {
     Column(
         modifier = if (scrollable) modifier.verticalScroll(rememberScrollState()) else modifier,
@@ -69,6 +72,7 @@ fun IconPicker(
                             label = stringResource(Res.string.icon_none),
                             isSelected = selected == null,
                             color = color,
+                            cellColor = cellColor,
                         ) { onSelect(null) }
                     }
                     section.icons.forEach { option ->
@@ -77,6 +81,7 @@ fun IconPicker(
                             label = stringResource(option.label),
                             isSelected = selected == option.key,
                             color = color,
+                            cellColor = cellColor,
                         ) { onSelect(option.key) }
                     }
                 }
@@ -86,8 +91,15 @@ fun IconPicker(
 }
 
 @Composable
-private fun IconCell(vector: ImageVector?, label: String, isSelected: Boolean, color: EntityColor?, onClick: () -> Unit) {
-    val background = if (isSelected) color.fill() else MaterialTheme.colorScheme.surfaceContainerHigh
+private fun IconCell(
+    vector: ImageVector?,
+    label: String,
+    isSelected: Boolean,
+    color: EntityColor?,
+    cellColor: Color,
+    onClick: () -> Unit,
+) {
+    val background = if (isSelected) color.fill() else cellColor
     val content = if (isSelected) color.onFill() else MaterialTheme.colorScheme.onSurface
     Box(
         modifier = Modifier

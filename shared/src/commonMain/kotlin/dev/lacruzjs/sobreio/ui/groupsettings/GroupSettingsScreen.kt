@@ -41,12 +41,20 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import dev.lacruzjs.sobreio.generated.resources.edit_group_title
+import dev.lacruzjs.sobreio.generated.resources.field_period_start_short
+import dev.lacruzjs.sobreio.generated.resources.field_time_zone
+import dev.lacruzjs.sobreio.generated.resources.period_day_value
+import dev.lacruzjs.sobreio.ui.components.FormTile
+import dev.lacruzjs.sobreio.ui.components.FormTileValue
+import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.action_invite
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.group_archived_banner
@@ -59,18 +67,14 @@ import dev.lacruzjs.sobreio.generated.resources.member_former
 import dev.lacruzjs.sobreio.generated.resources.settings_section_accepted
 import dev.lacruzjs.sobreio.generated.resources.settings_section_pending
 import dev.lacruzjs.sobreio.generated.resources.member_name_you
-import dev.lacruzjs.sobreio.generated.resources.settings_period_summary
-import dev.lacruzjs.sobreio.generated.resources.settings_section_details
 import dev.lacruzjs.sobreio.generated.resources.settings_section_invitations
 import dev.lacruzjs.sobreio.generated.resources.settings_section_members
-import dev.lacruzjs.sobreio.generated.resources.settings_time_zone_summary
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
-import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.changeRoleAction
 import dev.lacruzjs.sobreio.ui.components.removeMemberAction
@@ -131,6 +135,16 @@ fun GroupSettingsScreen(
             ScreenHeader(
                 title = stringResource(Res.string.group_settings_title),
                 onBack = { onEvent(GroupSettingsEvent.BackClicked) },
+                actions = {
+                    // Same place as the gear that opened this screen: the screen's one action, top right
+                    if (state.group != null && state.canEditDetails) {
+                        IconActionButton(
+                            icon = Icons.Filled.Edit,
+                            label = stringResource(Res.string.edit_group_title),
+                            onClick = { onEvent(GroupSettingsEvent.EditClicked) },
+                        )
+                    }
+                },
             )
             Box(
                 modifier = Modifier
@@ -180,7 +194,7 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        item(key = "details") { DetailsSection(group, state.canEditDetails, onEvent) }
+        item(key = "details") { DetailsSection(group) }
 
         if (state.actionError != null) {
             item(key = "error") {
@@ -274,18 +288,17 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun DetailsSection(group: Group, canEdit: Boolean, onEvent: (GroupSettingsEvent) -> Unit) {
+private fun DetailsSection(group: Group) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SectionTitleInline(stringResource(Res.string.settings_section_details))
         Row(verticalAlignment = Alignment.CenterVertically) {
             EntityAvatar(
                 name = group.name,
                 icon = iconFor(IconCategory.Group, group.icon),
                 color = EntityColor.fromHex(group.color),
-                size = 56.dp,
+                size = 64.dp,
             )
             Column(modifier = Modifier.padding(start = 16.dp)) {
                 Text(
@@ -295,41 +308,23 @@ private fun DetailsSection(group: Group, canEdit: Boolean, onEvent: (GroupSettin
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = group.currencyCode,
+                    text = if (group.isArchived) {
+                        "${group.currencyCode} · ${stringResource(Res.string.group_archived_banner)}"
+                    } else {
+                        group.currencyCode
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = stringResource(Res.string.settings_period_summary, group.periodStartDay),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = stringResource(Res.string.settings_time_zone_summary, group.timezone),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        if (group.isArchived) {
-            Text(
-                text = stringResource(Res.string.group_archived_banner),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (canEdit) {
-            SecondaryButton(
-                text = stringResource(Res.string.action_edit),
-                onClick = { onEvent(GroupSettingsEvent.EditClicked) },
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            FormTile(label = stringResource(Res.string.field_period_start_short)) {
+                FormTileValue(stringResource(Res.string.period_day_value, group.periodStartDay))
+            }
+            FormTile(label = stringResource(Res.string.field_time_zone)) { FormTileValue(group.timezone) }
         }
     }
-}
-
-@Composable
-private fun SectionTitleInline(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable

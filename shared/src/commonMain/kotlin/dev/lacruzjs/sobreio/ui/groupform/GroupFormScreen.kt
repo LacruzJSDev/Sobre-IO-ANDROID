@@ -1,13 +1,11 @@
 package dev.lacruzjs.sobreio.ui.groupform
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -21,15 +19,49 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
+import dev.lacruzjs.sobreio.generated.resources.color_none
+import dev.lacruzjs.sobreio.generated.resources.currency_locked_note
+import dev.lacruzjs.sobreio.generated.resources.field_color
+import dev.lacruzjs.sobreio.generated.resources.field_icon
+import dev.lacruzjs.sobreio.generated.resources.field_period_start_short
+import dev.lacruzjs.sobreio.generated.resources.form_section_appearance
+import dev.lacruzjs.sobreio.generated.resources.form_section_currency_period
+import dev.lacruzjs.sobreio.generated.resources.icon_none
+import dev.lacruzjs.sobreio.generated.resources.period_day_next
+import dev.lacruzjs.sobreio.generated.resources.period_day_previous
+import dev.lacruzjs.sobreio.generated.resources.period_day_value
+import dev.lacruzjs.sobreio.generated.resources.period_start_day_note
+import dev.lacruzjs.sobreio.generated.resources.state_collapsed
+import dev.lacruzjs.sobreio.generated.resources.state_expanded
+import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
+import dev.lacruzjs.sobreio.ui.components.FormNote
+import dev.lacruzjs.sobreio.ui.components.FormSection
+import dev.lacruzjs.sobreio.ui.components.FormTile
+import dev.lacruzjs.sobreio.ui.components.FormTileValue
+import dev.lacruzjs.sobreio.ui.components.IconCatalog
+import dev.lacruzjs.sobreio.ui.components.fill
+import dev.lacruzjs.sobreio.ui.components.labelRes
+import dev.lacruzjs.sobreio.ui.groups.MAX_PERIOD_START_DAY
+import dev.lacruzjs.sobreio.ui.groups.MIN_PERIOD_START_DAY
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_new_group
 import dev.lacruzjs.sobreio.generated.resources.action_retry
-import dev.lacruzjs.sobreio.generated.resources.appearance_field_label
 import dev.lacruzjs.sobreio.generated.resources.edit_group_title
 import dev.lacruzjs.sobreio.generated.resources.field_currency
 import dev.lacruzjs.sobreio.generated.resources.field_group_name
@@ -44,7 +76,6 @@ import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.IconPicker
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.groups.GroupCurrencies
-import dev.lacruzjs.sobreio.ui.groups.PeriodDayField
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -119,88 +150,169 @@ fun GroupFormScreen(
                 TextButton(onClick = { onEvent(GroupFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
             }
             else -> {
-                FormTextField(
-                    value = form.name,
-                    onValueChange = { onEvent(GroupFormEvent.FormChanged(form.copy(name = it, nameError = null))) },
-                    label = stringResource(Res.string.field_group_name),
-                    errorRes = form.nameError,
-                    enabled = !state.isSubmitting,
-                    imeAction = ImeAction.Done,
-                    onImeAction = { onEvent(GroupFormEvent.SaveClicked) },
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(text = stringResource(Res.string.appearance_field_label), style = MaterialTheme.typography.labelLarge)
+                var open by rememberSaveable { mutableStateOf(OpenTile.None) }
+                fun toggle(tile: OpenTile) { open = if (open == tile) OpenTile.None else tile }
+                val color = EntityColor.fromHex(form.color)
+
+                // The avatar shows the colour and icon chosen below, next to the name it represents
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     EntityAvatar(
                         name = form.name,
                         icon = iconFor(IconCategory.Group, form.icon),
-                        color = EntityColor.fromHex(form.color),
-                        size = 56.dp,
+                        color = color,
+                        size = 64.dp,
                     )
-                    ColorPicker(
-                        selected = EntityColor.fromHex(form.color),
-                        onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(color = it?.hex))) },
-                    )
-                    IconPicker(
-                        category = IconCategory.Group,
-                        selected = form.icon,
-                        color = EntityColor.fromHex(form.color),
-                        onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(icon = it))) },
+                    FormTextField(
+                        value = form.name,
+                        onValueChange = { onEvent(GroupFormEvent.FormChanged(form.copy(name = it, nameError = null))) },
+                        label = stringResource(Res.string.field_group_name),
+                        errorRes = form.nameError,
+                        enabled = !state.isSubmitting,
+                        imeAction = ImeAction.Done,
+                        onImeAction = { onEvent(GroupFormEvent.SaveClicked) },
+                        modifier = Modifier.weight(1f),
                     )
                 }
-                if (isEditing) {
-                    FormTextField(
-                        value = form.currency,
-                        onValueChange = {},
-                        label = stringResource(Res.string.field_currency),
-                        enabled = false,
-                    )
-                } else {
-                    Text(text = stringResource(Res.string.field_currency), style = MaterialTheme.typography.labelLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GroupCurrencies.forEach { code ->
-                            FilterChip(
-                                selected = form.currency == code,
-                                onClick = { onEvent(GroupFormEvent.FormChanged(form.copy(currency = code))) },
+
+                FormSection(title = stringResource(Res.string.form_section_appearance)) {
+                    ExpandableFormTile(
+                        label = stringResource(Res.string.field_color),
+                        expanded = open == OpenTile.Color,
+                        onToggle = { toggle(OpenTile.Color) },
+                        expandedDescription = expandedState(open == OpenTile.Color),
+                        preview = {
+                            FormTileValue(stringResource(color?.labelRes() ?: Res.string.color_none))
+                            ColorDot(color)
+                        },
+                    ) {
+                        ColorPicker(
+                            selected = color,
+                            onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(color = it?.hex))) },
+                        )
+                    }
+                    ExpandableFormTile(
+                        label = stringResource(Res.string.field_icon),
+                        expanded = open == OpenTile.Icon,
+                        onToggle = { toggle(OpenTile.Icon) },
+                        expandedDescription = expandedState(open == OpenTile.Icon),
+                        preview = {
+                            val option = IconCatalog.iconFor(IconCategory.Group, form.icon)
+                            if (option == null) {
+                                FormTileValue(stringResource(Res.string.icon_none))
+                            } else {
+                                FormTileValue(stringResource(option.label))
+                                Icon(option.vector, contentDescription = null, modifier = Modifier.size(24.dp))
+                            }
+                        },
+                    ) {
+                        IconPicker(
+                            category = IconCategory.Group,
+                            selected = form.icon,
+                            color = color,
+                            onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(icon = it))) },
+                            cellColor = MaterialTheme.colorScheme.background,
+                        )
+                    }
+                }
+
+                FormSection(title = stringResource(Res.string.form_section_currency_period)) {
+                    if (isEditing) {
+                        FormTile(
+                            label = stringResource(Res.string.field_currency),
+                            note = stringResource(Res.string.currency_locked_note),
+                        ) { FormTileValue(form.currency) }
+                    } else {
+                        ExpandableFormTile(
+                            label = stringResource(Res.string.field_currency),
+                            expanded = open == OpenTile.Currency,
+                            onToggle = { toggle(OpenTile.Currency) },
+                            expandedDescription = expandedState(open == OpenTile.Currency),
+                            preview = { FormTileValue(form.currency) },
+                        ) {
+                            CurrencyChips(
+                                selected = form.currency,
                                 enabled = !state.isSubmitting,
-                                label = { Text(code) },
-                                shape = MaterialTheme.shapes.medium,
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
-                                border = null,
+                                onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(currency = it))) },
                             )
+                            FormNote(stringResource(Res.string.new_group_currency_note), Modifier.padding(horizontal = 0.dp))
                         }
                     }
-                    Text(
-                        text = stringResource(Res.string.new_group_currency_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                PeriodDayField(
-                    day = form.periodStartDay,
-                    onChange = { onEvent(GroupFormEvent.FormChanged(form.copy(periodStartDay = it))) },
-                    enabled = !state.isSubmitting,
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = stringResource(Res.string.field_time_zone), style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        text = form.timezone,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .clickable(enabled = !state.isSubmitting, role = Role.Button) {
-                                onEvent(GroupFormEvent.TimeZoneClicked)
-                            }
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                    )
+                    FormTile(
+                        label = stringResource(Res.string.field_period_start_short),
+                        note = stringResource(Res.string.period_start_day_note),
+                    ) {
+                        DayStepper(
+                            day = form.periodStartDay,
+                            enabled = !state.isSubmitting,
+                            onChange = { onEvent(GroupFormEvent.FormChanged(form.copy(periodStartDay = it))) },
+                        )
+                    }
+                    FormTile(
+                        label = stringResource(Res.string.field_time_zone),
+                        onClick = { onEvent(GroupFormEvent.TimeZoneClicked) },
+                        enabled = !state.isSubmitting,
+                    ) { FormTileValue(form.timezone) }
                 }
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
             }
+        }
+    }
+}
+
+/** Which expandable tile of the form is open; one at a time keeps the form short. */
+private enum class OpenTile { None, Color, Icon, Currency }
+
+@Composable
+private fun expandedState(expanded: Boolean): String =
+    stringResource(if (expanded) Res.string.state_expanded else Res.string.state_collapsed)
+
+/** The chosen colour as a small dot in a tile header; the ink for no colour. */
+@Composable
+private fun ColorDot(color: EntityColor?) {
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(color.fill()),
+    )
+}
+
+@Composable
+private fun CurrencyChips(selected: String, enabled: Boolean, onSelect: (String) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        GroupCurrencies.forEach { code ->
+            FilterChip(
+                selected = selected == code,
+                onClick = { onSelect(code) },
+                enabled = enabled,
+                label = { Text(code) },
+                shape = MaterialTheme.shapes.medium,
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                border = null,
+            )
+        }
+    }
+}
+
+/** "-  Day N  +" inside a tile, stopping at 1 and 28 so an invalid day cannot be chosen (D-29). */
+@Composable
+private fun DayStepper(day: Int, enabled: Boolean, onChange: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = { onChange(day - 1) }, enabled = enabled && day > MIN_PERIOD_START_DAY) {
+            Icon(Icons.Filled.Remove, contentDescription = stringResource(Res.string.period_day_previous))
+        }
+        Text(
+            text = stringResource(Res.string.period_day_value, day),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 64.dp),
+        )
+        IconButton(onClick = { onChange(day + 1) }, enabled = enabled && day < MAX_PERIOD_START_DAY) {
+            Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.period_day_next))
         }
     }
 }
