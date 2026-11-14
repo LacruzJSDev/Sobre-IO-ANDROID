@@ -20,16 +20,19 @@ object ErrorMapper {
         else -> AppError.Unknown(error)
     }
 
-    /** The database reports business-rule violations as SQLSTATE class FZ (D-23); other codes are not ours. */
-    internal fun fromPostgrestCode(code: String?): AppError.BusinessRule? = when {
+    /** The database reports business-rule violations as SQLSTATE class FZ (D-23); a few standard codes are mapped too. */
+    internal fun fromPostgrestCode(code: String?): AppError? = when {
         code == null -> null
         code.startsWith("FZ") -> AppError.BusinessRule(code)
         // A row level security policy rejected the write: the user's role in the group does not allow it
         code == INSUFFICIENT_PRIVILEGE -> AppError.BusinessRule("FZ016")
+        // Unique index on the name among live items of a group
+        code == UNIQUE_VIOLATION -> AppError.DuplicateName
         else -> null
     }
 
     private const val INSUFFICIENT_PRIVILEGE = "42501"
+    private const val UNIQUE_VIOLATION = "23505"
 
     /** Auth failures that need their own message; null means "not one of ours", so the caller falls back to Unknown. */
     internal fun fromAuthErrorCode(code: AuthErrorCode?): AppError? = when (code) {

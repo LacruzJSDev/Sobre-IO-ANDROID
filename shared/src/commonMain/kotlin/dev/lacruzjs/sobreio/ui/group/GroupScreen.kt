@@ -45,6 +45,9 @@ import dev.lacruzjs.sobreio.generated.resources.tab_group
 import dev.lacruzjs.sobreio.generated.resources.tab_group_empty
 import dev.lacruzjs.sobreio.generated.resources.tab_movements
 import dev.lacruzjs.sobreio.generated.resources.tab_movements_empty
+import dev.lacruzjs.sobreio.ui.accounts.AccountsEvent
+import dev.lacruzjs.sobreio.ui.accounts.AccountsPane
+import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.ComingSoonSheet
 import dev.lacruzjs.sobreio.ui.components.EmptyState
@@ -65,10 +68,17 @@ fun GroupRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
+    accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
+
+    val accountsState by accountsViewModel.state.collectAsStateWithLifecycle()
+    // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
+    LaunchedEffect(state.group) {
+        state.group?.let { accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit)) }
+    }
 
     if (state.navigateBack) {
         LaunchedEffect(Unit) {
@@ -87,15 +97,33 @@ fun GroupRoute(
             }
         },
         modifier = modifier,
+        accountsAction = {
+            if (accountsState.canEdit) {
+                AddIconButton(
+                    contentDescription = stringResource(Res.string.action_new_account),
+                    onClick = { accountsViewModel.onEvent(AccountsEvent.NewAccountClicked) },
+                )
+            }
+        },
+        accountsContent = {
+            // Shown again each time the tab is selected, so it reads the list again
+            LaunchedEffect(Unit) { accountsViewModel.onEvent(AccountsEvent.Refresh) }
+            AccountsPane(state = accountsState, onEvent = accountsViewModel::onEvent)
+        },
     )
 }
 
-/** The group's four sections: a bar on phones, a rail on wider windows (what NavigationSuiteScaffold picks). */
+/**
+ * The group's four sections: a bar on phones, a rail on wider windows (what NavigationSuiteScaffold picks). The Accounts
+ * tab has its own state and ViewModel, so the shell takes its header action and its content as slots.
+ */
 @Composable
 fun GroupScreen(
     state: GroupUiState,
     onEvent: (GroupEvent) -> Unit,
     modifier: Modifier = Modifier,
+    accountsAction: @Composable () -> Unit = {},
+    accountsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_accounts_empty)) },
 ) {
     if (state.newItemSheetOpen) {
         ComingSoonSheet(
@@ -149,7 +177,7 @@ fun GroupScreen(
                     title = state.group?.name.orEmpty(),
                     onBack = { onEvent(GroupEvent.BackClicked) },
                     leading = { GroupAvatar(name = state.group?.name.orEmpty(), size = 36.dp) },
-                    actions = { HeaderAction(state, onEvent) },
+                    actions = { HeaderAction(state, onEvent, accountsAction) },
                 )
                 when {
                     state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -158,6 +186,7 @@ fun GroupScreen(
                     state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                         TextButton(onClick = { onEvent(GroupEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
                     }
+                    state.selectedTab == GroupTab.Accounts -> accountsContent()
                     else -> EmptyState(message = stringResource(state.selectedTab.emptyMessage()))
                 }
             }
@@ -167,7 +196,7 @@ fun GroupScreen(
 
 /** Right side of the header: Invite on the Group tab (owner and admin), "+" on the lists. */
 @Composable
-private fun HeaderAction(state: GroupUiState, onEvent: (GroupEvent) -> Unit) {
+private fun HeaderAction(state: GroupUiState, onEvent: (GroupEvent) -> Unit, accountsAction: @Composable () -> Unit) {
     when (state.selectedTab) {
         GroupTab.Group -> if (state.group?.canEdit == true) {
             IconButton(onClick = { onEvent(GroupEvent.InviteClicked) }) {
@@ -177,7 +206,8 @@ private fun HeaderAction(state: GroupUiState, onEvent: (GroupEvent) -> Unit) {
                 )
             }
         }
-        GroupTab.Accounts, GroupTab.Envelopes, GroupTab.Movements -> AddIconButton(
+        GroupTab.Accounts -> accountsAction()
+        GroupTab.Envelopes, GroupTab.Movements -> AddIconButton(
             contentDescription = stringResource(state.selectedTab.newItemLabel()),
             onClick = { onEvent(GroupEvent.NewItemClicked) },
         )

@@ -38,7 +38,12 @@ class ErrorMapperTest {
 
     @Test
     fun nonFzOrMissingCodeIsNotABusinessRule() {
-        listOf("23505", "PGRST116", null).forEach { assertNull(ErrorMapper.fromPostgrestCode(it)) }
+        listOf("PGRST116", null).forEach { assertNull(ErrorMapper.fromPostgrestCode(it)) }
+    }
+
+    @Test
+    fun uniqueViolationMapsToDuplicateName() {
+        assertEquals(AppError.DuplicateName, ErrorMapper.fromPostgrestCode("23505"))
     }
 
     @Test
