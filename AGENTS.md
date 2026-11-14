@@ -18,6 +18,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~70 icons of `IconCatalog` are referenced, so R8 strips the rest) |
 | Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user); `kotlinx-datetime` 0.8 (device time zone) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen |
@@ -90,6 +91,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
   in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
+- Appearance components (built, not yet used by screens): `ui/theme/EntityColor` is the fixed 12-colour palette (the DB
+  `color` column stores the light `#RRGGBB`, `fromHex` is case-insensitive and null for unknown; `dark` is a lighter
+  variant); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 20, Account 20, Envelope 32;
+  keys are snake_case English, stored in the DB `icon` column, never rename them; `iconFor` is null for unknown keys).
+  Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker`, `AppearanceField` /
+  `AppearanceSheet` (avatar preview row that opens the pickers in a bottom sheet) and `HolderPicker` (Joint plus one
+  chip per member; hide it with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
+  with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
+  (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local
   networking (`NSAllowsLocalNetworking`).
