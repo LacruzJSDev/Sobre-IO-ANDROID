@@ -30,7 +30,7 @@ import dev.lacruzjs.sobreio.generated.resources.recovery_title
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.components.LoadingButton
+import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.PasswordField
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -92,7 +92,7 @@ private fun EmailStep(state: PasswordRecoveryUiState, onEvent: (PasswordRecovery
         onImeAction = { onEvent(PasswordRecoveryEvent.SendCodeClicked) },
     )
     ErrorText(state.error, modifier = Modifier.fillMaxWidth())
-    LoadingButton(
+    PrimaryButton(
         text = stringResource(Res.string.action_send_code),
         onClick = { onEvent(PasswordRecoveryEvent.SendCodeClicked) },
         isLoading = state.isLoading,
@@ -140,7 +140,7 @@ private fun ResetStep(state: PasswordRecoveryUiState, onEvent: (PasswordRecovery
         )
     }
     ErrorText(state.error, modifier = Modifier.fillMaxWidth())
-    LoadingButton(
+    PrimaryButton(
         text = stringResource(Res.string.action_change_password),
         onClick = { onEvent(PasswordRecoveryEvent.ResetClicked) },
         isLoading = state.isLoading,

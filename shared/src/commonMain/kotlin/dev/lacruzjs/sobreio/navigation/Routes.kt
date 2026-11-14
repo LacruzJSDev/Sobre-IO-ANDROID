@@ -17,6 +17,13 @@ data class ConfirmEmail(val email: String) : NavKey
 data object PasswordRecovery : NavKey
 
 // Signed-in destinations
-/** Temporary start of the signed-in app; the Groups screen takes its place. */
+/** Root of the signed-in back stack: the user's groups. */
 @Serializable
-data object Home : NavKey
+data object Groups : NavKey
+
+/** One group, with its four tabs. Back goes to [Groups]. */
+@Serializable
+data class Group(val groupId: String) : NavKey
+
+@Serializable
+data object Profile : NavKey

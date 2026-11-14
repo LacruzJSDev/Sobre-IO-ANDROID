@@ -22,7 +22,7 @@ import dev.lacruzjs.sobreio.generated.resources.sign_up_title
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.components.LoadingButton
+import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.PasswordField
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -88,7 +88,7 @@ fun SignUpScreen(
             onImeAction = { onEvent(SignUpEvent.SignUpClicked) },
         )
         ErrorText(state.error, modifier = Modifier.fillMaxWidth())
-        LoadingButton(
+        PrimaryButton(
             text = stringResource(Res.string.action_create_account),
             onClick = { onEvent(SignUpEvent.SignUpClicked) },
             isLoading = state.isLoading,

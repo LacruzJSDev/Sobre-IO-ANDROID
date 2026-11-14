@@ -1,7 +1,6 @@
 package dev.lacruzjs.sobreio.ui.auth.signin
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,7 +28,8 @@ import dev.lacruzjs.sobreio.ui.auth.google.rememberGoogleSignInLauncher
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.components.LoadingButton
+import dev.lacruzjs.sobreio.ui.components.PrimaryButton
+import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.PasswordField
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import kotlinx.coroutines.launch
@@ -107,19 +107,17 @@ fun SignInScreen(
                 Text(stringResource(Res.string.sign_in_confirm_email))
             }
         }
-        LoadingButton(
+        PrimaryButton(
             text = stringResource(Res.string.action_sign_in),
             onClick = { onEvent(SignInEvent.SignInClicked) },
             isLoading = state.isLoading,
         )
         if (state.isGoogleAvailable) {
-            OutlinedButton(
+            SecondaryButton(
+                text = stringResource(Res.string.action_continue_with_google),
                 onClick = { onEvent(SignInEvent.GoogleClicked) },
                 enabled = !state.isLoading,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(Res.string.action_continue_with_google))
-            }
+            )
         }
         TextButton(onClick = { onEvent(SignInEvent.ForgotPasswordClicked) }, enabled = !state.isLoading) {
             Text(stringResource(Res.string.action_forgot_password))

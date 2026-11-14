@@ -18,6 +18,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user); `kotlinx-datetime` 0.8 (device time zone) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen |
 
@@ -28,8 +29,16 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Package and application id: `dev.lacruzjs.sobreio` (shared module namespace `dev.lacruzjs.sobreio.shared`).
 - Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
-  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x), and a temporary
-  Home screen with sign-out. Root navigation follows the session (`SessionViewModel`).
+  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
+  in a bottom sheet with name and currency, join with an invitation code), the Profile screen (name, email, sign-out)
+  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs, still empty
+  states). Root navigation follows the session (`SessionViewModel`).
+- Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
+  (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
+  stores the group as last once it loads, and clears it (then goes back to Groups) when it does not load because it is
+  gone or the user is no longer a member (`AppError.NotFound`). The store is `SettingsLastGroupStore` on
+  `multiplatform-settings-no-arg` 1.3.0, one key per user id. `kotlinx-datetime` 0.8.0 gives the device time zone that
+  `SupabaseGroupRepository.createGroup` sends to `create_group`.
 - Google sign-in on iOS: the SDK is Swift only (Swift Package Manager in `iosApp/project.yml`, Kotlin does not link it).
   `iosApp/GoogleSignInProvider.swift` implements the Kotlin interface `IosGoogleSignInProvider` and `iOSApp.swift` passes
   it to `setUpKoin(googleSignIn:)`; `GoogleSignInLauncher.ios.kt` generates the nonce and calls it. The iOS OAuth client
@@ -40,7 +49,28 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   maps `AppError` to string resources.
 - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode, languageTag)` gives `1.298,15 €` for `es`,
   `€1,298.15` otherwise; only the euro has a symbol, other currencies show their ISO code (`USD 1,298.15`).
-- Theme in `ui/theme` (brand inks, Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
+- Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and a fixed
+  bottom section with no divider (spacing only): "Join with a code" and "Profile" as `PrimaryButton`s and "Sign out" as a
+  `DestructiveButton`. Each row swipes left (`SwipeActionsRow`): Edit (owner and admin; bottom sheet with the name, the
+  currency is read-only) and Delete (owner) or Leave (admin, member). Delete and Leave are never confirmed: the row
+  disappears at once and an "Undo" snackbar follows (`UndoController`, see Rules). Owner delete calls
+  `request_group_purge` immediately and Undo calls `cancel_group_purge`; groups with `purge_requested_at` are not listed.
+  Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is updated only when the snackbar
+  ends without Undo. `SupabaseGroupRepository` loads groups with the user's role through PostgREST embedding
+  (`account_group_members!inner(role)`, filtered to the user and `left_at is null`). Profile shows name and email only.
+- Group shell: the header's right side holds "Invite" (owner and admin, Group tab: creates an `invitations` row and shows
+  its code with a copy button) and, on Accounts, Envelopes and Movements, a "+" that opens a "Coming soon" sheet until
+  those features exist.
+- Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
+  elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
+  selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
+  Leave swipe action). No dividers and no settings-style rows with chevrons: separate with spacing. Corners come from
+  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
+  There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
+  `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
+  `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
+  in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local
@@ -80,6 +110,7 @@ plus the `newmovement` bottom sheet.
 
 ## Rules
 
+- Screen structure follows the workspace `docs/agents/navigation.md`; read it before adding or changing a screen.
 - Common first: write code in `shared/src/commonMain`. Platform code goes only in `androidMain` / `iosMain`, behind an
   `expect`/`actual` declaration or an interface that common code owns (for example `rememberGoogleSignInLauncher`,
   `supabaseUrl`). `:app` and `iosApp` stay thin shells: no screens, no business logic.
@@ -106,6 +137,11 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Lists: rows swipe left for Edit/Delete with `SwipeActionsRow`; creation is the "+" in the header; there are no
+  per-item settings screens. Destructive actions are never confirmed with a dialog: the item is hidden at once (soft
+  delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,
+  restore))`; `commit` runs when the snackbar ends, another destructive action starts, the screen is shown again or the
+  ViewModel is cleared; failures restore the row and show the error. The screen shows `UndoMessage` with `UndoSnackbarHost`.
 - Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;

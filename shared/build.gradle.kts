@@ -105,6 +105,8 @@ kotlin {
                 implementation(libs.navigation3.ui)
 
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.multiplatform.settings)
 
                 implementation(project.dependencies.platform(libs.supabase.bom))
                 implementation(libs.supabase.auth)

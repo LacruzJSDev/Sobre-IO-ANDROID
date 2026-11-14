@@ -27,6 +27,9 @@ sealed class AppError : Exception() {
     /** Too many attempts or emails in a short time. */
     data object TooManyRequests : AppError()
 
+    /** The item does not exist, or the user has no access to it (row level security hides it). */
+    data object NotFound : AppError()
+
     data class Unknown(override val cause: Throwable? = null) : AppError()
 }
 

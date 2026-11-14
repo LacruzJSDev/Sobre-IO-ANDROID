@@ -32,6 +32,8 @@ class ErrorMapperTest {
     @Test
     fun fzCodeMapsToBusinessRule() {
         assertEquals(AppError.BusinessRule("FZ016"), ErrorMapper.fromPostgrestCode("FZ016"))
+        // A row level security rejection means the role does not allow it
+        assertEquals(AppError.BusinessRule("FZ016"), ErrorMapper.fromPostgrestCode("42501"))
     }
 
     @Test
