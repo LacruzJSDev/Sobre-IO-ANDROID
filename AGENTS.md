@@ -232,6 +232,10 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Swipe rows: an open `SwipeActionsRow` closes when anything outside it is pressed, anywhere in the app. This is
+  automatic: every open row registers with the `SwipeRowsHost` that `App` installs once at the root
+  (`SwipeRowsHostProvider`); never re-implement it per screen. The press is not consumed, so the touched control still
+  works. Lists keep at most one row open.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
   has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,

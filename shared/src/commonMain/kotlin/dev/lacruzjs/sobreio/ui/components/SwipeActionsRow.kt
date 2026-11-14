@@ -19,6 +19,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,8 +97,27 @@ fun SwipeActionsRow(
     // Open as far as the user can see: dragged open or still sliding back
     fun isDrawnOpen(): Boolean = state.targetValue == SwipeValue.Open || state.currentValue == SwipeValue.Open
 
+    // While drawn open, a press anywhere outside this row closes it (app-wide rule, see SwipeRowsHost)
+    val host = LocalSwipeRowsHost.current
+    var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val drawnOpen by remember(state) { derivedStateOf { isDrawnOpen() } }
+    val registrationKey = remember { Any() }
+    DisposableEffect(host, drawnOpen) {
+        if (host != null && drawnOpen) {
+            host.register(
+                key = registrationKey,
+                coordinates = { rowCoordinates },
+                close = {
+                    scope.launch { state.animateTo(SwipeValue.Closed) }
+                    currentOnOpenChange(false)
+                },
+            )
+        }
+        onDispose { host?.unregister(registrationKey) }
+    }
+
     val shape = MaterialTheme.shapes.medium
-    Box(modifier = modifier.fillMaxWidth().clip(shape)) {
+    Box(modifier = modifier.fillMaxWidth().clip(shape).onGloballyPositioned { rowCoordinates = it }) {
         Row(
             modifier = Modifier
                 .matchParentSize()
