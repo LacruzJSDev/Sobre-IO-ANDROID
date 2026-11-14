@@ -434,6 +434,11 @@
     <string name="commitment_history_open">Desde el %1$s</string>
     <string name="commitment_linked_note">En una aportación solo se pueden cambiar el nombre y el importe; el resto se comparte con el otro grupo.</string>
     <string name="commitment_outside_note">Esta cuenta está fuera de los sobres, así que el gasto va a «Fuera de sobres».</string>
+    <string name="commitment_account_change_note">Los vencimientos desde el %1$s se cargarán en %2$s; los anteriores siguen en %3$s.</string>
+    <string name="commitment_account_linked_note">Para cambiar la cuenta, archiva esta aportación y crea una nueva.</string>
+    <string name="commitment_moves_to">Pasa a %1$s el %2$s</string>
+    <string name="commitment_starts_on">Desde el %1$s</string>
+    <string name="validation_accounts_differ">El destino debe ser otra cuenta.</string>
     <string name="commitment_no_groups_note">Necesitas otro grupo activo con la misma moneda en el que seas propietario o administrador.</string>
     <string name="validation_destination_account">Elige la cuenta de destino.</string>
     <string name="validation_destination_group">Elige el grupo de destino.</string>

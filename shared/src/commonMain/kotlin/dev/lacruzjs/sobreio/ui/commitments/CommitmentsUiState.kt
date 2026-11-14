@@ -27,7 +27,7 @@ enum class CommitmentSection {
 }
 
 /**
- * One commitment as this account sees it: [version] is the one in force today (or the newest), [signedCents] its amount
+ * One commitment as this account sees it: [version] is the one in force today (or the newest), or the future one that brings it here, [signedCents] its amount
  * with the sign for this account, [nextDue] the next due date (none when archived or finished). A row is [editable] when
  * the user may edit it from here; a contribution also needs its [link], which is invisible to members of only one group.
  */
@@ -39,6 +39,11 @@ data class CommitmentRow(
     val nextDue: LocalDate?,
     val link: CommitmentLink?,
     val editable: Boolean,
+    /** Set when [version] is a future one that moves the commitment into this account: the day it starts here. */
+    val startsOn: LocalDate? = null,
+    /** Set (with [movesOn]) when the next version moves the commitment to another account: that account's name. */
+    val movesToName: String? = null,
+    val movesOn: LocalDate? = null,
 ) {
     val id: String get() = commitment.id
 }

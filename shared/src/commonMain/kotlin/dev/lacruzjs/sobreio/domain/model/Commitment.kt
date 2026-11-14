@@ -58,6 +58,20 @@ data class Commitment(
     /** The version in force on [today], or else the newest one (an archived or finished commitment). Null with no versions. */
     fun currentVersion(today: LocalDate): CommitmentVersion? =
         versions.firstOrNull { it.isInForceOn(today) } ?: versions.maxByOrNull { it.effectiveFrom }
+
+    /** The next version, starting after [today]: what the commitment turns into. Null when nothing is scheduled. */
+    fun nextVersion(today: LocalDate): CommitmentVersion? =
+        versions.filter { it.effectiveFrom > today }.minByOrNull { it.effectiveFrom }
+
+    /**
+     * The version [accountId] looks at: the one in force when it touches the account, else the first future one that does
+     * (a commitment that moves here later). Null when no version in force or ahead touches it.
+     */
+    fun versionFor(accountId: String, today: LocalDate): CommitmentVersion? {
+        val current = currentVersion(today)
+        if (current != null && current.touches(accountId)) return current
+        return versions.filter { it.effectiveFrom > today && it.touches(accountId) }.minByOrNull { it.effectiveFrom }
+    }
 }
 
 /** The link between the two halves of a contribution to another group (`commitment_links`). */

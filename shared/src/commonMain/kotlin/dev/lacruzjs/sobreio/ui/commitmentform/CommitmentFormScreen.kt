@@ -36,6 +36,8 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_retry
+import dev.lacruzjs.sobreio.generated.resources.commitment_account_change_note
+import dev.lacruzjs.sobreio.generated.resources.commitment_account_linked_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_effective_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_funded_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_history_open
@@ -133,7 +135,7 @@ fun CommitmentFormRoute(
 }
 
 /** Which expandable tile of the form is open; one at a time keeps the form short. */
-private enum class OpenTile { None, Kind, ToAccount, Envelope, DestGroup, DestAccount, DestEnvelope, Unit }
+private enum class OpenTile { None, Kind, Account, ToAccount, Envelope, DestGroup, DestAccount, DestEnvelope, Unit }
 
 /**
  * Same layout as the other forms: the kind's icon next to the name, then sections of tiles: Commitment (type, amount),
@@ -216,7 +218,35 @@ fun CommitmentFormScreen(
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_money)) {
-                    FormTile(label = stringResource(Res.string.field_account)) { FormTileValue(state.accountName) }
+                    ChoiceTile(
+                        label = stringResource(Res.string.field_account),
+                        tile = OpenTile.Account,
+                        open = open,
+                        onToggle = ::toggle,
+                        preview = state.accountName,
+                        // Creating keeps the account of the detail; a contribution's account belongs to both groups
+                        locked = !state.canChangeAccount,
+                        error = null,
+                    ) {
+                        state.accounts.forEach { a ->
+                            FormChip(a.name, state.accountId == a.id, enabled) {
+                                onEvent(CommitmentFormEvent.AccountSelected(a.id))
+                            }
+                        }
+                    }
+                    if (state.isLinkedEdit) {
+                        FormNote(stringResource(Res.string.commitment_account_linked_note))
+                    } else if (state.accountMoved) {
+                        val oldName = state.accounts.firstOrNull { it.id == state.storedAccountId }?.name.orEmpty()
+                        FormNote(
+                            stringResource(
+                                Res.string.commitment_account_change_note,
+                                state.effectiveFrom?.let { formatDate(it, languageTag) }.orEmpty(),
+                                state.accountName,
+                                oldName,
+                            ),
+                        )
+                    }
                     if (state.kind == CommitmentKind.Transfer) {
                         ChoiceTile(
                             label = stringResource(Res.string.field_to_account),
@@ -227,7 +257,7 @@ fun CommitmentFormScreen(
                             locked = state.fieldsLocked,
                             error = state.toAccountError,
                         ) {
-                            state.accounts.forEach { a ->
+                            state.destinationAccounts.forEach { a ->
                                 FormChip(a.name, state.toAccountId == a.id, enabled) {
                                     onEvent(CommitmentFormEvent.ToAccountSelected(a.id))
                                 }

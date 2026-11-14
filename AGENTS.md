@@ -166,7 +166,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   stateless and takes `commitmentsAction` (the header "+", only on this tab, owner/admin) and `commitmentsContent` slots that
   `AccountDetailRoute` fills from the second ViewModel; it reloads each time the tab shows. The repository reads
   `commitments` with `commitment_versions` embedded (every version, newest first) for the commitments having a version that touches the account;
-  the ViewModel keeps those whose current version (in force at the group's today, else the newest) touches it. Sections: Expenses,
+  the ViewModel keeps those whose current version (in force at the group's today, else the newest) touches it, or, failing that, whose
+  first future version does (`Commitment.versionFor`; the row shows that version and "From <date>"); a row whose next version goes to
+  another account says "Moves to <account> on <date>" (account names from `AccountRepository`). Sections: Expenses,
   Incomes, Transfers (source), Incoming transfers (read only), Contributions to other groups, Contributions received (read only); empty
   ones hidden, collapsed "Archived (N)" at the end. Row: `EntityAvatar` in ink with the kind icon, name, frequency (plurals
   `frequency_*`) + "Next <date>" (from `upcoming_occurrences`, 400 days) + "Automatic", and the amount signed for this account. Editable
@@ -183,7 +185,10 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the group's today) and the read-only history. Create calls `create_commitment` or `create_linked_commitment`; edit renames
   (`commitments.name`) when the name changed and then `change_commitment` (only when a rule field changed) or, for a
   contribution, `change_linked_commitment` with the amount only (the other fields are read only, with a note); a retry skips the steps already done.
-  A taken name shows under the name field; FZ016/FZ017/FZ018 show under the form.
+  A taken name shows under the name field; FZ016/FZ017/FZ018 show under the form. Editing (not a contribution) lets the account change:
+  "Account" is an expandable tile of the group's live accounts (a transfer's destination excludes the chosen source, same account is a
+  validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
+  and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
 - "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
   `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the

@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.ui.commitments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
+import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
@@ -35,6 +36,7 @@ class AccountCommitmentsViewModel(
     private val commitments: CommitmentRepository,
     private val groups: GroupRepository,
     private val detail: AccountDetailRepository,
+    private val accounts: AccountRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountCommitmentsUiState())
@@ -82,10 +84,11 @@ class AccountCommitmentsViewModel(
             }
             val group = groupResult.getOrThrow()
             val today = todayResult.getOrThrow()
-            // Only what this account's current version touches: an old version of a commitment moved to another account is not listed
-            val mine = listResult.getOrThrow().mapNotNull { c ->
-                c.currentVersion(today)?.takeIf { it.touches(accountId) }?.let { c to it }
-            }
+            // Names of the accounts a commitment moves to; optional, a row without one just omits the "moves to" part
+            val accountNames = accounts.getAccounts(groupId).getOrDefault(emptyList()).associate { it.id to it.name }
+            // What this account sees: the version in force when it touches the account, else the first future one that does
+            // (a commitment moving here). An old version of a commitment that already left is not listed.
+            val mine = listResult.getOrThrow().mapNotNull { c -> c.versionFor(accountId, today)?.let { c to it } }
             // Both are optional: without links contributions are read only, without dates the rows show no "Next"
             val links = commitments.getLinks(mine.filter { (_, v) -> v.kind == CommitmentKind.GroupTransferOut }.map { it.first.id })
                 .getOrDefault(emptyList())
@@ -98,6 +101,9 @@ class AccountCommitmentsViewModel(
             val all = mine.map { (c, v) ->
                 val section = sectionOf(v, accountId)
                 val link = if (section == CommitmentSection.Contributions) links[c.id] else null
+                val arriving = v.effectiveFrom > today
+                // In force here today but the next version goes elsewhere: say where and when
+                val leavesTo = if (arriving) null else c.nextVersion(today)?.takeIf { !it.touches(accountId) }
                 CommitmentRow(
                     commitment = c,
                     version = v,
@@ -105,6 +111,9 @@ class AccountCommitmentsViewModel(
                     signedCents = signedAmount(v, accountId),
                     nextDue = if (c.isArchived) null else nextDue[c.id],
                     link = link,
+                    startsOn = v.effectiveFrom.takeIf { arriving },
+                    movesToName = leavesTo?.let { accountNames[it.accountId] },
+                    movesOn = leavesTo?.effectiveFrom,
                     editable = group.canEdit && when (section) {
                         CommitmentSection.Expenses, CommitmentSection.Incomes, CommitmentSection.Transfers -> true
                         CommitmentSection.Contributions -> link != null

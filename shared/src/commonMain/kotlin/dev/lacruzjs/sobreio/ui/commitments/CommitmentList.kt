@@ -31,16 +31,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.commitment_automatic
+import dev.lacruzjs.sobreio.generated.resources.commitment_moves_to
 import dev.lacruzjs.sobreio.generated.resources.commitment_next
+import dev.lacruzjs.sobreio.generated.resources.commitment_starts_on
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
-import dev.lacruzjs.sobreio.generated.resources.row_subtitle_three
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.deleteAction
 import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.components.reopenAction
+import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
 import org.jetbrains.compose.resources.stringResource
@@ -131,7 +133,13 @@ private fun CommitmentRowContent(row: CommitmentRow, currencyCode: String, langu
     val frequency = frequencyText(row.version, languageTag)
     val next = row.nextDue?.let { stringResource(Res.string.commitment_next, formatDayMonth(it, languageTag)) }
     val automatic = if (row.version.autoRegister) stringResource(Res.string.commitment_automatic) else null
-    val subtitle = joinParts(frequency, next, automatic)
+    val moves = if (row.movesToName != null && row.movesOn != null) {
+        stringResource(Res.string.commitment_moves_to, row.movesToName, formatDate(row.movesOn, languageTag))
+    } else null
+    val starts = row.startsOn?.let { stringResource(Res.string.commitment_starts_on, formatDate(it, languageTag)) }
+    val subtitle = listOfNotNull(frequency, starts, next, automatic, moves).reduce { acc, part ->
+        stringResource(Res.string.row_subtitle, acc, part)
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -160,13 +168,4 @@ private fun CommitmentRowContent(row: CommitmentRow, currencyCode: String, langu
             maxLines = 1,
         )
     }
-}
-
-/** Joins the parts that exist with the "·" separator of the other rows. */
-@Composable
-private fun joinParts(first: String, second: String?, third: String?): String = when {
-    second != null && third != null -> stringResource(Res.string.row_subtitle_three, first, second, third)
-    second != null -> stringResource(Res.string.row_subtitle, first, second)
-    third != null -> stringResource(Res.string.row_subtitle, first, third)
-    else -> first
 }

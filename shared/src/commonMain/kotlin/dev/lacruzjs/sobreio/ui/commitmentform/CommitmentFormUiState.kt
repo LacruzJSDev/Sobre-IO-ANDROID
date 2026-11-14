@@ -24,11 +24,12 @@ data class CommitmentFormUiState(
     val amountError: StringResource? = null,
     val currencyCode: String = "EUR",
 
-    // Money: this account is fixed
-    val accountName: String = "",
-    /** The account shares its money into the envelopes; an expense of one that does not goes to "Outside envelopes" by itself. */
-    val accountInEnvelopes: Boolean = true,
-    /** The group's other live accounts: the destinations of a transfer. */
+    // Money
+    /** The chosen (source) account: the detail's account when creating; while editing it can be moved to another one. */
+    val accountId: String = "",
+    /** The account the commitment had when it was loaded; [accountId] differing from it is a move. */
+    val storedAccountId: String = "",
+    /** The group's live accounts: the choices of the account and, minus the chosen one, of a transfer's destination. */
     val accounts: List<Account> = emptyList(),
     val toAccountId: String? = null,
     val toAccountError: StringResource? = null,
@@ -85,6 +86,20 @@ data class CommitmentFormUiState(
 ) {
     val isContribution: Boolean get() = kind == CommitmentKind.GroupTransferOut
 
+    val accountName: String get() = accounts.firstOrNull { it.id == accountId }?.name.orEmpty()
+
+    /** The account shares its money into the envelopes; an expense of one that does not goes to "Outside envelopes" by itself. */
+    val accountInEnvelopes: Boolean get() = accounts.firstOrNull { it.id == accountId }?.inEnvelopes ?: true
+
+    /** The destinations of a transfer: every live account but the chosen one. */
+    val destinationAccounts: List<Account> get() = accounts.filter { it.id != accountId }
+
+    /** Editing a commitment (not a contribution): the account can be changed. */
+    val canChangeAccount: Boolean get() = isEditing && !isLinkedEdit
+
+    /** The account was moved: the form explains from when the new one is used. */
+    val accountMoved: Boolean get() = canChangeAccount && storedAccountId.isNotEmpty() && accountId != storedAccountId
+
     /** The envelope choice of an expense: an account outside the envelopes has none (the database uses "Outside envelopes"). */
     val showsExpenseEnvelope: Boolean get() = kind == CommitmentKind.Expense && accountInEnvelopes
 
@@ -115,6 +130,7 @@ sealed interface CommitmentFormEvent {
     data class NameChanged(val value: String) : CommitmentFormEvent
     data class KindSelected(val kind: CommitmentKind) : CommitmentFormEvent
     data class AmountChanged(val value: String) : CommitmentFormEvent
+    data class AccountSelected(val id: String) : CommitmentFormEvent
     data class ToAccountSelected(val id: String) : CommitmentFormEvent
     data class EnvelopeSelected(val id: String?) : CommitmentFormEvent
     data class DestGroupSelected(val id: String) : CommitmentFormEvent

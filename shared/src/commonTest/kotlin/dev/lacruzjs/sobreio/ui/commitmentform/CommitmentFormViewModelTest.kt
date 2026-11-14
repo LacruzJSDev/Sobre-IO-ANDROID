@@ -18,6 +18,7 @@ import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.validation_accounts_differ
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
@@ -68,7 +69,8 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
 
         assertFalse(state.isLoading)
         assertEquals(today, state.firstDueDate)
-        assertEquals(listOf("Cash"), state.accounts.map { it.name })
+        assertEquals(listOf("Bank", "Cash"), state.accounts.map { it.name })
+        assertEquals(listOf("Cash"), state.destinationAccounts.map { it.name })
         assertEquals(listOf("Food"), state.envelopes.map { it.name })
         // Only the live group with the same currency where the user can edit
         assertEquals(listOf("g2"), state.groups.map { it.id })
@@ -293,5 +295,106 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
 
         assertTrue(vm.state.value.nameError != null)
         assertFalse(vm.state.value.saved)
+    }
+
+    @Test
+    fun editCanMoveTheCommitmentToAnotherAccountFromTheChosenDate() {
+        commitments.commitments = listOf(stored())
+        val vm = form("c1")
+        assertFalse(vm.state.value.accountMoved)
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+        vm.onEvent(CommitmentFormEvent.EffectiveFromChanged(LocalDate(2026, 12, 1)))
+        assertTrue(vm.state.value.accountMoved)
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals("acc2", commitments.changedWith?.accountId)
+        assertEquals("env", commitments.changedWith?.envelopeId)
+        assertEquals(LocalDate(2026, 12, 1), commitments.changedWith?.effectiveFrom)
+        assertTrue(vm.state.value.saved)
+    }
+
+    @Test
+    fun movingToAnAccountOutsideTheEnvelopesClearsEnvelopeAndFundingAndSkipsItsValidation() {
+        accounts.accounts = listOf(bank, cash.copy(inEnvelopes = false))
+        commitments.commitments = listOf(Commitment("c1", "g1", "Rent", versions = listOf(version(funded = true))))
+        val vm = form("c1")
+        assertTrue(vm.state.value.fundedEffective)
+
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+        assertNull(vm.state.value.envelopeId)
+        assertFalse(vm.state.value.funded)
+        assertFalse(vm.state.value.showsExpenseEnvelope)
+
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+        assertNull(vm.state.value.envelopeError)
+        assertNull(commitments.changedWith?.envelopeId)
+        assertFalse(commitments.changedWith?.funded ?: true)
+        assertEquals("acc2", commitments.changedWith?.accountId)
+    }
+
+    @Test
+    fun movingBackInsideTheEnvelopesNeedsAnEnvelopeAgain() {
+        accounts.accounts = listOf(bank, cash.copy(inEnvelopes = false))
+        commitments.commitments = listOf(stored())
+        val vm = form("c1")
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals(Res.string.validation_envelope_required, vm.state.value.envelopeError)
+        assertTrue(commitments.calls.none { it.startsWith("changeCommitment") })
+    }
+
+    @Test
+    fun aTransferCannotGoToItsOwnSource() {
+        commitments.commitments = listOf(
+            Commitment("c1", "g1", "Saving", versions = listOf(version(CommitmentKind.Transfer).copy(toAccountId = "acc2"))),
+        )
+        val vm = form("c1")
+        assertEquals(listOf("acc2"), vm.state.value.destinationAccounts.map { it.id })
+
+        vm.onEvent(CommitmentFormEvent.ToAccountSelected("acc"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+        assertEquals(Res.string.validation_accounts_differ, vm.state.value.toAccountError)
+        assertTrue(commitments.calls.none { it.startsWith("changeCommitment") })
+
+        // Moving the source onto the destination clears the destination
+        vm.onEvent(CommitmentFormEvent.ToAccountSelected("acc2"))
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+        assertNull(vm.state.value.toAccountId)
+    }
+
+    @Test
+    fun aLinkedContributionKeepsItsAccountReadOnly() {
+        val gift = Commitment("c1", "g1", "Gift", versions = listOf(version(CommitmentKind.GroupTransferOut)))
+        val half = Commitment("c2", "g2", "Gift", versions = listOf(version(CommitmentKind.GroupTransferIn).copy(commitmentId = "c2", accountId = "acc2")))
+        commitments.commitments = listOf(gift, half)
+        commitments.links = listOf(CommitmentLink("l1", "g1", "g2", "c1", "c2"))
+        val vm = form("c1")
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+
+        assertFalse(vm.state.value.canChangeAccount)
+        assertEquals("acc", vm.state.value.accountId)
+        assertFalse(vm.state.value.accountMoved)
+    }
+
+    @Test
+    fun creatingKeepsTheAccountOfTheDetail() {
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.AccountSelected("acc2"))
+
+        assertEquals("acc", vm.state.value.accountId)
+    }
+
+    @Test
+    fun editingAFutureVersionThatMovesHereLoadsThatVersion() {
+        val now = version().copy(accountId = "acc2", effectiveTo = LocalDate(2026, 12, 1))
+        val next = version().copy(id = "v2", effectiveFrom = LocalDate(2026, 12, 1), amountCents = 90_000)
+        commitments.commitments = listOf(Commitment("c1", "g1", "Rent", versions = listOf(next, now)))
+        val state = form("c1").state.value
+
+        assertEquals("acc", state.accountId)
+        assertEquals("900", state.amount)
+        assertEquals(LocalDate(2026, 12, 1), state.effectiveFrom)
     }
 }

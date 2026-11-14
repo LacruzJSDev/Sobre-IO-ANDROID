@@ -75,6 +75,7 @@ val uiModule = module {
             commitments = get(),
             groups = get(),
             detail = get(),
+            accounts = get(),
         )
     }
     viewModel { params ->

@@ -435,6 +435,11 @@
     <string name="commitment_history_open">From %1$s</string>
     <string name="commitment_linked_note">In a contribution only the name and the amount can change; the rest is shared with the other group.</string>
     <string name="commitment_outside_note">This account is outside the envelopes, so the expense goes to \"Outside envelopes\".</string>
+    <string name="commitment_account_change_note">Due dates from %1$s will be charged to %2$s; earlier ones stay in %3$s.</string>
+    <string name="commitment_account_linked_note">To change the account, archive this contribution and create a new one.</string>
+    <string name="commitment_moves_to">Moves to %1$s on %2$s</string>
+    <string name="commitment_starts_on">From %1$s</string>
+    <string name="validation_accounts_differ">The destination must be a different account.</string>
     <string name="commitment_no_groups_note">You need another live group with the same currency where you are owner or admin.</string>
     <string name="validation_destination_account">Choose the destination account.</string>
     <string name="validation_destination_group">Choose the destination group.</string>

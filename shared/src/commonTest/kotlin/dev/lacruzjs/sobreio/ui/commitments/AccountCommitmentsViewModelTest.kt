@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.commitments
 
+import dev.lacruzjs.sobreio.domain.model.Account
+import dev.lacruzjs.sobreio.domain.model.AccountKind
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
@@ -9,6 +11,7 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
+import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -55,7 +58,13 @@ class AccountCommitmentsViewModelTest : MainDispatcherTest() {
         .also { it.links = listOf(link) }
     private val groups = FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner)))
     private val detail = FakeAccountDetailRepository()
-    private val viewModel by lazy { AccountCommitmentsViewModel("g1", "acc", repository, groups, detail) }
+    private val accountRepository = FakeAccountRepository(
+        listOf(
+            Account("acc", "g1", "Bank", AccountKind.Bank, true, 0),
+            Account("other", "g1", "Cash", AccountKind.Cash, true, 0),
+        ),
+    )
+    private val viewModel by lazy { AccountCommitmentsViewModel("g1", "acc", repository, groups, detail, accountRepository) }
 
     private fun loaded(): AccountCommitmentsViewModel = viewModel.also { it.onEvent(CommitmentsEvent.Refresh) }
 
@@ -180,5 +189,45 @@ class AccountCommitmentsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(CommitmentsEvent.UndoClicked)
 
         assertTrue("archiveCommitment(old)" in repository.calls)
+    }
+
+    private fun moving(id: String, name: String, from: String, to: String, on: LocalDate, amountAfter: Long = 9_000): Commitment {
+        val first = version(id, CommitmentKind.Expense, account = from).copy(effectiveTo = on)
+        val second = version(id, CommitmentKind.Expense, account = to, amount = amountAfter)
+            .copy(id = "v2-$id", effectiveFrom = on, effectiveTo = null)
+        return Commitment(id, "g1", name, versions = listOf(second, first))
+    }
+
+    @Test
+    fun aCommitmentThatMovesElsewhereLaterSaysWhereAndWhen() {
+        repository.commitments = listOf(moving("gym", "Gym", "acc", "other", LocalDate(2026, 12, 1)))
+        loaded()
+
+        val row = viewModel.state.value.rows.first { it.id == "gym" }
+        assertEquals("Cash", row.movesToName)
+        assertEquals(LocalDate(2026, 12, 1), row.movesOn)
+        assertNull(row.startsOn)
+        assertEquals(-10_000, row.signedCents)
+    }
+
+    @Test
+    fun aCommitmentThatMovesHereLaterShowsTheFutureVersion() {
+        repository.commitments = listOf(moving("gym", "Gym", "other", "acc", LocalDate(2026, 12, 1)))
+        loaded()
+
+        val row = viewModel.state.value.rows.first { it.id == "gym" }
+        assertEquals(LocalDate(2026, 12, 1), row.startsOn)
+        assertEquals(-9_000, row.signedCents)
+        assertEquals("v2-gym", row.version.id)
+        assertNull(row.movesToName)
+        assertTrue(row.editable)
+    }
+
+    @Test
+    fun aCommitmentThatAlreadyLeftIsNotListed() {
+        repository.commitments = listOf(moving("gym", "Gym", "acc", "other", LocalDate(2026, 10, 1)))
+        loaded()
+
+        assertTrue(viewModel.state.value.rows.none { it.id == "gym" })
     }
 }

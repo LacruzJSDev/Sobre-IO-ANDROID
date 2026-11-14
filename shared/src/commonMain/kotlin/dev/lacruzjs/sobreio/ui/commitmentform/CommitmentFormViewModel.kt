@@ -21,6 +21,7 @@ import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
+import dev.lacruzjs.sobreio.generated.resources.validation_accounts_differ
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
@@ -76,6 +77,7 @@ class CommitmentFormViewModel(
             is CommitmentFormEvent.NameChanged -> edit(touchRules = false) { it.copy(name = event.value, nameError = null) }
             is CommitmentFormEvent.KindSelected -> edit { it.copy(kind = event.kind, autoRegister = event.kind == CommitmentKind.GroupTransferOut, funded = false, envelopeError = null, toAccountError = null) }
             is CommitmentFormEvent.AmountChanged -> edit { it.copy(amount = event.value, amountError = null) }
+            is CommitmentFormEvent.AccountSelected -> selectAccount(event.id)
             is CommitmentFormEvent.ToAccountSelected -> edit { it.copy(toAccountId = event.id, toAccountError = null) }
             is CommitmentFormEvent.EnvelopeSelected -> edit { it.copy(envelopeId = event.id, envelopeError = null) }
             is CommitmentFormEvent.DestGroupSelected -> selectDestGroup(event.id)
@@ -94,6 +96,24 @@ class CommitmentFormViewModel(
             CommitmentFormEvent.Retry -> load()
             CommitmentFormEvent.NavigationHandled -> _state.update { it.copy(saved = false) }
             CommitmentFormEvent.CloseClicked -> Unit
+        }
+    }
+
+    /** Only while editing a commitment that is not a contribution; an account outside the envelopes has no envelope and no funding. */
+    private fun selectAccount(id: String) {
+        val current = _state.value
+        val chosen = current.accounts.firstOrNull { it.id == id }
+        if (!current.canChangeAccount || chosen == null || chosen.id == current.accountId) return
+        edit {
+            it.copy(
+                accountId = id,
+                // A transfer cannot go to its own source
+                toAccountId = it.toAccountId.takeUnless { to -> to == id },
+                envelopeId = if (chosen.inEnvelopes) it.envelopeId else null,
+                funded = it.funded && chosen.inEnvelopes,
+                envelopeError = null,
+                toAccountError = null,
+            )
         }
     }
 
@@ -116,9 +136,8 @@ class CommitmentFormViewModel(
             if (failure != null) return@launch loadFailed(failure.asAppError())
             val group = groupResult.getOrThrow()
             val today = todayResult.getOrThrow()
-            val account = accountsResult.getOrThrow().firstOrNull { it.id == accountId && !it.isArchived }
-                ?: return@launch loadFailed(AppError.NotFound)
-            val others = accountsResult.getOrThrow().filter { it.id != accountId && !it.isArchived }.sortedBy { it.name.lowercase() }
+            if (accountsResult.getOrThrow().none { it.id == accountId && !it.isArchived }) return@launch loadFailed(AppError.NotFound)
+            val liveAccounts = accountsResult.getOrThrow().filter { !it.isArchived }.sortedBy { it.name.lowercase() }
             val live = envelopesResult.getOrThrow().filter { !it.isArchived && it.kind != EnvelopeKind.System }.sortedBy { it.name.lowercase() }
             // Other groups are only a convenience for contributions: without them that kind simply has no destination
             val candidates = groups.getGroups().getOrDefault(emptyList())
@@ -128,9 +147,9 @@ class CommitmentFormViewModel(
             val base = CommitmentFormUiState(
                 isEditing = commitmentId != null,
                 currencyCode = group.currencyCode,
-                accountName = account.name,
-                accountInEnvelopes = account.inEnvelopes,
-                accounts = others,
+                accountId = accountId,
+                storedAccountId = accountId,
+                accounts = liveAccounts,
                 envelopes = live,
                 groups = candidates,
                 today = today,
@@ -142,9 +161,14 @@ class CommitmentFormViewModel(
                 return@launch
             }
             val commitment = commitments.getCommitment(commitmentId).getOrElse { return@launch loadFailed(it.asAppError()) }
-            val version = commitment.currentVersion(today)
+            // The version of this account: the one in force, or a future one that moves the commitment here
+            val version = commitment.versionFor(accountId, today) ?: commitment.currentVersion(today)
             if (version == null || version.kind == CommitmentKind.GroupTransferIn) return@launch loadFailed(AppError.NotFound)
-            var edited = base.fromVersion(commitment, version, live)
+            // The version may belong to another (live) account of the group
+            if (liveAccounts.none { it.id == version.accountId }) return@launch loadFailed(AppError.NotFound)
+            var edited = base.copy(accountId = version.accountId, storedAccountId = version.accountId)
+                .fromVersion(commitment, version, live)
+                .let { if (version.effectiveFrom > today) it.copy(effectiveFrom = version.effectiveFrom) else it }
             if (version.kind == CommitmentKind.GroupTransferOut) {
                 val found = commitments.getLinks(listOf(commitment.id)).getOrElse { return@launch loadFailed(it.asAppError()) }
                     .firstOrNull { it.outCommitmentId == commitment.id }
@@ -252,9 +276,12 @@ class CommitmentFormViewModel(
         }
         val editing = commitmentId != null
         val rules = !current.isLinkedEdit
-        val toAccountError = if (rules && current.kind == CommitmentKind.Transfer && current.toAccountId == null) {
-            Res.string.validation_destination_account
-        } else null
+        val toAccountError = when {
+            !rules || current.kind != CommitmentKind.Transfer -> null
+            current.toAccountId == null -> Res.string.validation_destination_account
+            current.toAccountId == current.accountId -> Res.string.validation_accounts_differ
+            else -> null
+        }
         val envelopeError = if (rules && current.showsExpenseEnvelope && current.envelopeId == null) {
             Res.string.validation_envelope_required
         } else null
@@ -299,7 +326,7 @@ class CommitmentFormViewModel(
             commitments.createLinkedCommitment(
                 LinkedCommitmentDraft(
                     name = name,
-                    outAccountId = accountId,
+                    outAccountId = s.accountId,
                     inAccountId = s.destAccountId.orEmpty(),
                     amountCents = cents,
                     firstDueDate = firstDueDate,
@@ -319,7 +346,7 @@ class CommitmentFormViewModel(
                     name = name,
                     kind = s.kind,
                     amountCents = cents,
-                    accountId = accountId,
+                    accountId = s.accountId,
                     firstDueDate = firstDueDate,
                     toAccountId = s.toAccountId.takeIf { s.kind == CommitmentKind.Transfer },
                     envelopeId = s.envelopeId.takeIf { s.showsExpenseEnvelope },
@@ -355,7 +382,7 @@ class CommitmentFormViewModel(
                 id,
                 CommitmentChange(
                     amountCents = cents,
-                    accountId = accountId,
+                    accountId = s.accountId,
                     firstDueDate = firstDueDate,
                     toAccountId = s.toAccountId.takeIf { s.kind == CommitmentKind.Transfer },
                     envelopeId = s.envelopeId.takeIf { s.showsExpenseEnvelope },
