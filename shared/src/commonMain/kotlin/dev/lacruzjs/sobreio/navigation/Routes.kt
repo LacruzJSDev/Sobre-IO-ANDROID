@@ -45,6 +45,13 @@ data class AccountDetail(val groupId: String, val accountId: String) : NavKey
 data class AccountForm(val groupId: String, val accountId: String?) : NavKey
 
 /**
+ * Read only detail of one commitment as an account sees it (level 3 of the Accounts tab): resolved due items and
+ * versions. Opened by tapping a row of the Commitments tab; the pencil opens [CommitmentForm]; back returns to the detail.
+ */
+@Serializable
+data class CommitmentDetail(val groupId: String, val accountId: String, val commitmentId: String) : NavKey
+
+/**
  * Create (`commitmentId` null) or edit a commitment of one account, as a full screen (level 3 of the Accounts tab).
  * Opened from the Commitments tab of the account's detail; back returns to it, which reloads the list.
  */

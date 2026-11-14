@@ -83,6 +83,21 @@ data class CommitmentLink(
     val inCommitmentId: String,
 )
 
+/** How a due date was resolved (`occurrence_status_enum`): registered as a movement, or skipped. */
+enum class OccurrenceStatus { Materialized, Skipped }
+
+/**
+ * One resolved due item of a commitment. [amountCents] and [date] are those of the movement it registered (null when
+ * skipped): the amount is signed for a transaction and positive for a transfer, whose direction [fromAccountId] gives.
+ */
+data class CommitmentOccurrence(
+    val dueDate: LocalDate,
+    val status: OccurrenceStatus,
+    val amountCents: Long? = null,
+    val date: LocalDate? = null,
+    val fromAccountId: String? = null,
+)
+
 /** What the user chooses when creating a commitment; [kind] is never [CommitmentKind.GroupTransferIn]. */
 data class CommitmentDraft(
     val name: String,

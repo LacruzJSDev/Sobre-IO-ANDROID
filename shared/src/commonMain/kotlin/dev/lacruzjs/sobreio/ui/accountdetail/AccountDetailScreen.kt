@@ -78,6 +78,7 @@ fun AccountDetailRoute(
     onEdit: () -> Unit,
     onSeeAllMovements: () -> Unit,
     onOpenCommitmentForm: (commitmentId: String?) -> Unit,
+    onOpenCommitment: (commitmentId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AccountDetailViewModel = koinViewModel { parametersOf(groupId, accountId) },
     commitmentsViewModel: AccountCommitmentsViewModel = koinViewModel { parametersOf(groupId, accountId) },
@@ -119,6 +120,7 @@ fun AccountDetailRoute(
                 onEvent = { event ->
                     when (event) {
                         is CommitmentsEvent.EditClicked -> onOpenCommitmentForm(event.commitmentId)
+                        is CommitmentsEvent.OpenClicked -> onOpenCommitment(event.commitmentId)
                         else -> commitmentsViewModel.onEvent(event)
                     }
                 },

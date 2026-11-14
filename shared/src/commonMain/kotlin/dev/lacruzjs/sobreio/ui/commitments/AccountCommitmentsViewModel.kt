@@ -61,8 +61,8 @@ class AccountCommitmentsViewModel(
             is CommitmentsEvent.ReopenClicked -> reopen(event.commitmentId)
             CommitmentsEvent.UndoClicked -> undo.undo()
             CommitmentsEvent.UndoExpired -> undo.commit()
-            // Handled by the Route, which opens the form
-            is CommitmentsEvent.EditClicked -> Unit
+            // Handled by the Route, which opens the form or the detail
+            is CommitmentsEvent.EditClicked, is CommitmentsEvent.OpenClicked -> Unit
         }
     }
 

@@ -3,7 +3,6 @@ package dev.lacruzjs.sobreio.ui.commitmentform
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
-import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.Group
@@ -72,8 +71,6 @@ data class CommitmentFormUiState(
     val today: LocalDate? = null,
     /** The day the new rules start applying; earlier due dates keep the old ones. */
     val effectiveFrom: LocalDate? = null,
-    /** Every version, newest first. */
-    val history: List<CommitmentVersion> = emptyList(),
     /** Editing a contribution: only the name, the amount and the date change; the rest belongs to both groups. */
     val isLinkedEdit: Boolean = false,
 

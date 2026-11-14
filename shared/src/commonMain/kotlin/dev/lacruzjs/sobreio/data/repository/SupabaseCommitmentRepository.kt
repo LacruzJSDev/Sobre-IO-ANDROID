@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentIdDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentWithVersionsDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
@@ -11,11 +12,13 @@ import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
+import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestUpdate
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
@@ -58,6 +61,17 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
             .decodeSingleOrNull<CommitmentWithVersionsDto>()
             ?.let { it.header().toDomain(it.versions) }
             ?: throw AppError.NotFound
+    }
+
+    override suspend fun getOccurrences(commitmentId: String, limit: Int): Result<List<CommitmentOccurrence>> = safeCall {
+        postgrest.from(OCCURRENCES_TABLE)
+            .select(Columns.raw(OCCURRENCE_COLUMNS)) {
+                filter { eq("commitment_id", commitmentId) }
+                order("due_date", Order.DESCENDING)
+                limit(limit.toLong())
+            }
+            .decodeList<CommitmentOccurrenceDto>()
+            .map { it.toDomain() }
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> = safeCall {
@@ -193,6 +207,9 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
         const val TABLE = "commitments"
         const val VERSIONS_TABLE = "commitment_versions"
         const val LINKS_TABLE = "commitment_links"
+        const val OCCURRENCES_TABLE = "commitment_occurrences"
+        const val OCCURRENCE_COLUMNS = "due_date,status,transaction_id,transfer_id,resolved_at," +
+            "transactions(amount,date),account_transfers(amount,date,from_account_id)"
         const val COLUMNS_WITH_VERSIONS = "id,group_id,name,notes,archived_at," +
             "commitment_versions(id,commitment_id,effective_from,effective_to,kind,amount,account_id,to_account_id," +
             "envelope_id,first_due_date,is_recurring,every_n,unit,anchor_day,end_date,funded,auto_register,notes)"

@@ -49,8 +49,8 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * The commitments in their sections and, at the end, a collapsed "Archived" section. Owners and admins swipe an editable
- * live row left for Edit and Delete and an archived one for Reopen (one row open at a time) and tapping it edits; rows
- * they cannot edit (incoming transfers, received contributions, members' view) are plain.
+ * live row left for Edit and Delete and an archived one for Reopen (one row open at a time); tapping any row, editable
+ * or not, opens its read only detail.
  */
 @Composable
 internal fun CommitmentList(state: AccountCommitmentsUiState, onEvent: (CommitmentsEvent) -> Unit) {
@@ -79,12 +79,11 @@ internal fun CommitmentList(state: AccountCommitmentsUiState, onEvent: (Commitme
                     isOpen = openId == row.id,
                     // A row reporting "closed" must not close another one that has just opened
                     onOpenChange = { open -> if (open) openId = row.id else if (openId == row.id) openId = null },
-                    // An archived row is read only until reopened
-                    onClick = { if (!archived) onEvent(CommitmentsEvent.EditClicked(row.id)) },
+                    onClick = { onEvent(CommitmentsEvent.OpenClicked(row.id)) },
                     content = content,
                 )
             } else {
-                Box { content() }
+                Box(modifier = Modifier.clickable(role = Role.Button) { onEvent(CommitmentsEvent.OpenClicked(row.id)) }) { content() }
             }
         }
     }

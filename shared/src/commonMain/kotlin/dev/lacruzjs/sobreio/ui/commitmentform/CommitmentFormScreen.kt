@@ -40,8 +40,6 @@ import dev.lacruzjs.sobreio.generated.resources.commitment_account_change_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_account_linked_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_effective_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_funded_note
-import dev.lacruzjs.sobreio.generated.resources.commitment_history_open
-import dev.lacruzjs.sobreio.generated.resources.commitment_history_range
 import dev.lacruzjs.sobreio.generated.resources.commitment_linked_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_no_groups_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_outside_note
@@ -74,7 +72,6 @@ import dev.lacruzjs.sobreio.generated.resources.field_unit
 import dev.lacruzjs.sobreio.generated.resources.form_section_calendar
 import dev.lacruzjs.sobreio.generated.resources.form_section_commitment
 import dev.lacruzjs.sobreio.generated.resources.form_section_effective
-import dev.lacruzjs.sobreio.generated.resources.form_section_history
 import dev.lacruzjs.sobreio.generated.resources.form_section_money
 import dev.lacruzjs.sobreio.generated.resources.form_section_notes
 import dev.lacruzjs.sobreio.generated.resources.form_section_registration
@@ -83,7 +80,6 @@ import dev.lacruzjs.sobreio.generated.resources.unit_days
 import dev.lacruzjs.sobreio.generated.resources.unit_months
 import dev.lacruzjs.sobreio.generated.resources.unit_weeks
 import dev.lacruzjs.sobreio.generated.resources.unit_years
-import dev.lacruzjs.sobreio.ui.commitments.frequencyText
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.commitments.labelRes
 import dev.lacruzjs.sobreio.ui.components.AmountField
@@ -100,7 +96,6 @@ import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
 import dev.lacruzjs.sobreio.ui.components.expandedStateText
 import dev.lacruzjs.sobreio.ui.format.formatDate
-import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -139,7 +134,7 @@ private enum class OpenTile { None, Kind, Account, ToAccount, Envelope, DestGrou
 
 /**
  * Same layout as the other forms: the kind's icon next to the name, then sections of tiles: Commitment (type, amount),
- * Money, Calendar, Registration, Notes and, when editing, "Apply from" and the read-only history.
+ * Money, Calendar, Registration, Notes and, when editing, "Apply from".
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -392,22 +387,6 @@ fun CommitmentFormScreen(
                             note = stringResource(Res.string.commitment_effective_note),
                             enabled = enabled,
                         )
-                    }
-                    FormSection(title = stringResource(Res.string.form_section_history)) {
-                        state.history.forEach { version ->
-                            val range = if (version.effectiveTo == null) {
-                                stringResource(Res.string.commitment_history_open, formatDate(version.effectiveFrom, languageTag))
-                            } else {
-                                stringResource(
-                                    Res.string.commitment_history_range,
-                                    formatDate(version.effectiveFrom, languageTag),
-                                    formatDate(version.effectiveTo, languageTag),
-                                )
-                            }
-                            FormTile(label = range, note = frequencyText(version, languageTag)) {
-                                FormTileValue(formatMoney(version.amountCents, state.currencyCode, languageTag))
-                            }
-                        }
                     }
                 }
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())

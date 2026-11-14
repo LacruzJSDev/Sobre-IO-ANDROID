@@ -62,3 +62,23 @@ internal data class CommitmentWithVersionsDto(
 ) {
     fun header() = CommitmentDto(id, groupId, name, notes, archivedAt)
 }
+
+/** The movement an occurrence registered, embedded as `transactions(...)` or `account_transfers(...)`. */
+@Serializable
+internal data class OccurrenceFactDto(
+    val amount: Long,
+    val date: String,
+    @SerialName("from_account_id") val fromAccountId: String? = null,
+)
+
+/** A row of `commitment_occurrences` with its movement embedded. */
+@Serializable
+internal data class CommitmentOccurrenceDto(
+    @SerialName("due_date") val dueDate: String,
+    val status: String,
+    @SerialName("transaction_id") val transactionId: String? = null,
+    @SerialName("transfer_id") val transferId: String? = null,
+    @SerialName("resolved_at") val resolvedAt: String? = null,
+    val transactions: OccurrenceFactDto? = null,
+    @SerialName("account_transfers") val transfer: OccurrenceFactDto? = null,
+)

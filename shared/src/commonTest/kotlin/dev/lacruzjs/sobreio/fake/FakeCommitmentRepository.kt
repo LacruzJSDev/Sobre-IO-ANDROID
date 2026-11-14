@@ -6,6 +6,7 @@ import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
+import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import kotlinx.datetime.LocalDate
 
@@ -14,6 +15,8 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
 
     val calls = mutableListOf<String>()
     var links: List<CommitmentLink> = emptyList()
+    var occurrences: List<CommitmentOccurrence> = emptyList()
+    var occurrencesResult: Result<List<CommitmentOccurrence>>? = null
 
     var createdDraft: CommitmentDraft? = null
     var createdLinkedDraft: LinkedCommitmentDraft? = null
@@ -37,6 +40,11 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     override suspend fun getCommitment(id: String): Result<Commitment> {
         calls += "getCommitment($id)"
         return commitments.firstOrNull { it.id == id }?.let { Result.success(it) } ?: Result.failure(AppError.NotFound)
+    }
+
+    override suspend fun getOccurrences(commitmentId: String, limit: Int): Result<List<CommitmentOccurrence>> {
+        calls += "getOccurrences($commitmentId)"
+        return occurrencesResult ?: Result.success(occurrences.take(limit))
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> =

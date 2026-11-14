@@ -217,7 +217,6 @@ class CommitmentFormViewModel(
             autoRegister = version.autoRegister,
             funded = version.funded,
             notes = version.notes.orEmpty(),
-            history = commitment.versions,
         )
     }
 

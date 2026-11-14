@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
+import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import kotlinx.datetime.LocalDate
 
@@ -21,6 +22,12 @@ interface CommitmentRepository {
 
     /** One commitment with its versions; fails with [dev.lacruzjs.sobreio.domain.error.AppError.NotFound] when it is not visible. */
     suspend fun getCommitment(id: String): Result<Commitment>
+
+    /**
+     * The resolved due items (registered or skipped) of a commitment, newest due date first, at most [limit], each with the
+     * movement it registered.
+     */
+    suspend fun getOccurrences(commitmentId: String, limit: Int = 24): Result<List<CommitmentOccurrence>>
 
     /**
      * The links of the contributions among [commitmentIds] (either half). A link is only visible to members of both

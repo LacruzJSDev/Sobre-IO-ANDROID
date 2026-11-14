@@ -173,8 +173,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   ones hidden, collapsed "Archived (N)" at the end. Row: `EntityAvatar` in ink with the kind icon, name, frequency (plurals
   `frequency_*`) + "Next <date>" (from `upcoming_occurrences`, 400 days) + "Automatic", and the amount signed for this account. Editable
   live rows (owner/admin; a contribution also needs its `commitment_links` row, invisible to members of one group only) swipe
-  Edit and Delete (archive at once, Undo unarchives; a contribution uses `archive_linked_commitment` and a single update of both halves to reopen)
-  and a tap edits; archived rows swipe Reopen.
+  Edit and Delete (archive at once, Undo unarchives; a contribution uses `archive_linked_commitment` and a single update of both halves to reopen);
+  archived rows swipe Reopen. A tap on any row (live, archived or read only) opens the commitment detail (`CommitmentsEvent.OpenClicked`).
+- Commitment detail (`ui/commitmentdetail`, route `CommitmentDetail(groupId, accountId, commitmentId)`, level 3, read only,
+  `CommitmentDetailViewModel` with Koin params by position): `ScreenHeader` with the kind-icon avatar, the name and the account of the
+  version shown as subtitle; a pencil (`Group.canEdit`, live commitment, editable kind, a contribution also needs its link) opens
+  `CommitmentForm`; the screen reloads each time it is shown. Content: a line with the signed amount, the frequency and "Archived";
+  "History" (`CommitmentRepository.getOccurrences`, `commitment_occurrences` with `transactions(...)` / `account_transfers(...)`
+  embedded, latest 24, newest first: due date, the registered amount signed for the account and the movement's date when it differs,
+  or "Skipped"); "Changes" (the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
+  frequency, the account when it differs from the previous version, the envelope of an expense). It has no pending, confirm or skip
+  actions: pending occurrences are reviewed only in the Group tab.
 - Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
   avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (fixed
   account, destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
@@ -182,7 +191,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   owner/admin), account, optional source and destination envelope), "Calendar" (`DateFormTile`, repeats switch, every N stepper 1-99,
   unit chips, optional end date), "Registration" (auto register, default off and on for contributions; "funded" only when the DB allows it:
   `CommitmentFormUiState.canFund`), "Notes" (not for contributions, `create_linked_commitment` has none). Editing adds "Apply from" (default
-  the group's today) and the read-only history. Create calls `create_commitment` or `create_linked_commitment`; edit renames
+  the group's today); the history of versions lives in the commitment detail. Create calls `create_commitment` or `create_linked_commitment`; edit renames
   (`commitments.name`) when the name changed and then `change_commitment` (only when a rule field changed) or, for a
   contribution, `change_linked_commitment` with the amount only (the other fields are read only, with a note); a retry skips the steps already done.
   A taken name shows under the name field; FZ016/FZ017/FZ018 show under the form. Editing (not a contribution) lets the account change:

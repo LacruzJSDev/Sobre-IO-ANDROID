@@ -1,9 +1,12 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentDto
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
+import dev.lacruzjs.sobreio.data.remote.dto.OccurrenceFactDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentVersionDto
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
+import dev.lacruzjs.sobreio.domain.model.OccurrenceStatus
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -53,5 +56,39 @@ class CommitmentMapperTest {
             assertEquals(it, it.toCommitmentKind().toDbValue())
         }
         listOf("day", "week", "month", "year").forEach { assertEquals(it, it.toFrequencyUnit().toDbValue()) }
+    }
+
+    @Test
+    fun aRegisteredOccurrenceTakesTheAmountAndDateOfItsTransaction() {
+        val o = CommitmentOccurrenceDto(
+            dueDate = "2026-11-05", status = "materialized", transactionId = "t1",
+            transactions = OccurrenceFactDto(amount = -70_050, date = "2026-11-07"),
+        ).toDomain()
+
+        assertEquals(LocalDate(2026, 11, 5), o.dueDate)
+        assertEquals(OccurrenceStatus.Materialized, o.status)
+        assertEquals(-70_050, o.amountCents)
+        assertEquals(LocalDate(2026, 11, 7), o.date)
+        assertNull(o.fromAccountId)
+    }
+
+    @Test
+    fun aTransferOccurrenceKeepsItsSourceAccount() {
+        val o = CommitmentOccurrenceDto(
+            dueDate = "2026-11-05", status = "materialized", transferId = "x1",
+            transfer = OccurrenceFactDto(amount = 5_000, date = "2026-11-05", fromAccountId = "a1"),
+        ).toDomain()
+
+        assertEquals(5_000, o.amountCents)
+        assertEquals("a1", o.fromAccountId)
+    }
+
+    @Test
+    fun aSkippedOccurrenceHasNoMovement() {
+        val o = CommitmentOccurrenceDto(dueDate = "2026-10-05", status = "skipped").toDomain()
+
+        assertEquals(OccurrenceStatus.Skipped, o.status)
+        assertNull(o.amountCents)
+        assertNull(o.date)
     }
 }

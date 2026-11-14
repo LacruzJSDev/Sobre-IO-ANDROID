@@ -2,12 +2,15 @@ package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentVersionDto
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
+import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
+import dev.lacruzjs.sobreio.domain.model.OccurrenceStatus
 import kotlinx.datetime.LocalDate
 
 internal fun CommitmentVersionDto.toDomain() = CommitmentVersion(
@@ -48,6 +51,18 @@ internal fun CommitmentLinkDto.toDomain() = CommitmentLink(
     outCommitmentId = outCommitmentId,
     inCommitmentId = inCommitmentId,
 )
+
+/** A skipped occurrence has no movement; a registered one takes the amount and date of its transaction or transfer. */
+internal fun CommitmentOccurrenceDto.toDomain(): CommitmentOccurrence {
+    val fact = transactions ?: transfer
+    return CommitmentOccurrence(
+        dueDate = LocalDate.parse(dueDate),
+        status = if (status == "skipped") OccurrenceStatus.Skipped else OccurrenceStatus.Materialized,
+        amountCents = fact?.amount,
+        date = fact?.date?.let(LocalDate::parse),
+        fromAccountId = transfer?.fromAccountId,
+    )
+}
 
 /** An unknown value (a kind added by a newer database) is read as an expense rather than failing the list. */
 internal fun String?.toCommitmentKind(): CommitmentKind = when (this) {

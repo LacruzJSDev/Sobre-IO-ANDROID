@@ -206,7 +206,7 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun editLoadsTheVersionInForceAndTheHistory() {
+    fun editLoadsTheVersionInForce() {
         commitments.commitments = listOf(stored())
         val state = form("c1").state.value
 
@@ -214,7 +214,6 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
         assertEquals("700.50", state.amount)
         assertEquals("env", state.envelopeId)
         assertEquals(today, state.effectiveFrom)
-        assertEquals(1, state.history.size)
         assertTrue(state.isEditing)
     }
 
