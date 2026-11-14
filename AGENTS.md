@@ -31,8 +31,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
   in a bottom sheet with name and currency, join with an invitation code), the Profile screen (name, email, sign-out)
-  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs; Accounts works, the others are still empty
-  states). Root navigation follows the session (`SessionViewModel`).
+  and the group shell (`NavigationSuiteScaffold` with the Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still
+  empty states). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
   stores the group as last once it loads, and clears it (then goes back to Groups) when it does not load because it is
@@ -66,9 +66,19 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Members only read. Name clashes (SQLSTATE 23505) map to `AppError.DuplicateName`. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
   `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row does nothing yet (account detail comes later).
+- Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
+  the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
+  `envelope_balances` view and `group_overview` (`in_envelopes_total`, `unassigned_balance`, never summed in the app) are read.
+  Summary block on top: Total and, prominent on a soft block, "Unassigned" (label from resources by kind `System`, never the
+  database name). Below, "Spending" and "Saving" sections ordered by name (empty ones hidden): square ink icon, name,
+  "Target X a month" when the target is above 0, balance. `external` is filtered out in the mapper. Owner and admin see the "+"
+  (create sheet: name, kind chips, optional monthly target; direct insert into `envelopes`) and swipe Edit and Delete (archive
+  with Undo, FZ008 restores the row). Any member swipes "Assign": a sheet with an amount and the source as chips
+  ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
+  Tapping a row does nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds "Invite" (owner and admin, Group tab: creates an `invitations` row and shows
-  its code with a copy button) and, on Envelopes and Movements, a "+" that opens a "Coming soon" sheet until
-  those features exist (Accounts has its own, see above).
+  its code with a copy button) and, on Movements, a "+" that opens a "Coming soon" sheet until
+  that feature exists (Accounts and Envelopes have their own, see above).
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and

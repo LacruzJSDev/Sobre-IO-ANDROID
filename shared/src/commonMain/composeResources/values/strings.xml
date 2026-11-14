@@ -133,5 +133,28 @@
     <string name="account_kind_credit_card">Credit card</string>
     <string name="account_kind_savings">Savings</string>
     <string name="account_kind_investment">Investment</string>
-    <string name="error_duplicate_name">An account with that name already exists.</string>
+    <string name="error_duplicate_name">That name is already in use.</string>
+
+    <!-- Envelopes tab -->
+    <string name="envelopes_total">Total</string>
+    <string name="envelopes_unassigned">Unassigned</string>
+    <string name="envelopes_section_spending">Spending</string>
+    <string name="envelopes_section_saving">Saving</string>
+    <string name="envelope_target_per_month">Target %1$s a month</string>
+    <string name="envelopes_empty_editor">No envelopes yet. Create the first one with the + button.</string>
+    <string name="envelopes_empty_member">There are no envelopes yet.</string>
+    <string name="envelope_deleted">%1$s deleted</string>
+    <string name="edit_envelope_title">Edit envelope</string>
+    <string name="field_envelope_name">Envelope name</string>
+    <string name="field_envelope_kind">Type</string>
+    <string name="field_monthly_target">Monthly target</string>
+    <string name="monthly_target_hint">Leave it empty for no target.</string>
+    <string name="validation_amount_negative">The amount can\'t be negative.</string>
+    <string name="validation_amount_positive">Enter an amount greater than zero.</string>
+    <string name="validation_source_invalid">Choose the envelope the money comes from.</string>
+    <string name="action_assign">Assign</string>
+    <string name="assign_title">Assign to %1$s</string>
+    <string name="field_amount">Amount</string>
+    <string name="field_assign_from">Take it from</string>
+    <string name="envelope_chip_label">%1$s · %2$s</string>
 </resources>

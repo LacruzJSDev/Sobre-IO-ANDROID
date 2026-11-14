@@ -132,5 +132,28 @@
     <string name="account_kind_credit_card">Tarjeta de crédito</string>
     <string name="account_kind_savings">Ahorro</string>
     <string name="account_kind_investment">Inversión</string>
-    <string name="error_duplicate_name">Ya existe una cuenta con ese nombre.</string>
+    <string name="error_duplicate_name">Ese nombre ya está en uso.</string>
+
+    <!-- Envelopes tab -->
+    <string name="envelopes_total">Total</string>
+    <string name="envelopes_unassigned">Sin asignar</string>
+    <string name="envelopes_section_spending">Gasto</string>
+    <string name="envelopes_section_saving">Ahorro</string>
+    <string name="envelope_target_per_month">Objetivo %1$s al mes</string>
+    <string name="envelopes_empty_editor">Todavía no hay sobres. Crea el primero con el botón +.</string>
+    <string name="envelopes_empty_member">Todavía no hay sobres.</string>
+    <string name="envelope_deleted">%1$s eliminado</string>
+    <string name="edit_envelope_title">Editar sobre</string>
+    <string name="field_envelope_name">Nombre del sobre</string>
+    <string name="field_envelope_kind">Tipo</string>
+    <string name="field_monthly_target">Objetivo mensual</string>
+    <string name="monthly_target_hint">Déjalo vacío si no hay objetivo.</string>
+    <string name="validation_amount_negative">El importe no puede ser negativo.</string>
+    <string name="validation_amount_positive">Introduce un importe mayor que cero.</string>
+    <string name="validation_source_invalid">Elige el sobre del que sale el dinero.</string>
+    <string name="action_assign">Asignar</string>
+    <string name="assign_title">Asignar a %1$s</string>
+    <string name="field_amount">Importe</string>
+    <string name="field_assign_from">Tomar de</string>
+    <string name="envelope_chip_label">%1$s · %2$s</string>
 </resources>
