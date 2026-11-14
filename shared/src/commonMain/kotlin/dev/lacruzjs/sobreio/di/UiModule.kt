@@ -1,6 +1,10 @@
 package dev.lacruzjs.sobreio.di
 
+import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailViewModel
 import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
+import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailViewModel
+import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormViewModel
+import dev.lacruzjs.sobreio.ui.commitments.AccountCommitmentsViewModel
 import dev.lacruzjs.sobreio.ui.auth.confirm.ConfirmEmailViewModel
 import dev.lacruzjs.sobreio.ui.auth.recovery.PasswordRecoveryViewModel
 import dev.lacruzjs.sobreio.ui.auth.signin.SignInViewModel
@@ -52,6 +56,51 @@ val uiModule = module {
             envelopeId = params.get<String?>(1),
             envelopes = get(),
             members = get(),
+        )
+    }
+    viewModel { params ->
+        AccountDetailViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            groups = get(),
+            accounts = get(),
+            members = get(),
+            envelopes = get(),
+            detail = get(),
+        )
+    }
+    viewModel { params ->
+        AccountCommitmentsViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            commitments = get(),
+            groups = get(),
+            detail = get(),
+            accounts = get(),
+        )
+    }
+    viewModel { params ->
+        CommitmentDetailViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            commitmentId = params.get<String>(2),
+            commitments = get(),
+            groups = get(),
+            detail = get(),
+            accounts = get(),
+            envelopes = get(),
+        )
+    }
+    viewModel { params ->
+        CommitmentFormViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            commitmentId = params.get<String?>(2),
+            commitments = get(),
+            groups = get(),
+            accounts = get(),
+            envelopes = get(),
+            detail = get(),
         )
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }

@@ -32,3 +32,9 @@ fun formatMoney(amountCents: Long, currencyCode: String, languageTag: String): S
         "$sign$symbol$separator$grouped.$cents"
     }
 }
+
+/** [formatMoney] with an explicit `+` for a positive amount, for a change (an adjustment, a due item): `+€12.00`, `-€12.00`. */
+fun formatSignedMoney(amountCents: Long, currencyCode: String, languageTag: String): String {
+    val text = formatMoney(amountCents, currencyCode, languageTag)
+    return if (amountCents > 0) "+$text" else text
+}

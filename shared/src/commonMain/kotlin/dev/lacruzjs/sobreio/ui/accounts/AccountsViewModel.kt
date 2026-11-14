@@ -47,8 +47,8 @@ class AccountsViewModel(
             is AccountsEvent.ReopenClicked -> reopen(event.accountId)
             AccountsEvent.UndoClicked -> undo.undo()
             AccountsEvent.UndoExpired -> undo.commit()
-            // Handled by the Route, which opens the form
-            is AccountsEvent.EditClicked -> Unit
+            // Handled by the Route, which opens the form or the detail
+            is AccountsEvent.EditClicked, is AccountsEvent.OpenClicked -> Unit
         }
     }
 

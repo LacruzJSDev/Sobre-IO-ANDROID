@@ -25,3 +25,10 @@ val DarkMuted = Color(0xFF9A9A96)
 val DarkRed = Color(0xFFF97066)
 val DarkRedSoft = Color(0xFF3B1A17)
 val DarkRedInk = Color(0xFFFDA29B)
+
+// Chart series colours (validated for colour-blind separation): blue for money in, orange for money out. Never the
+// red of `error`, which is kept for destructive actions.
+val LightChartIn = Color(0xFF2A78D6)
+val LightChartOut = Color(0xFFEB6834)
+val DarkChartIn = Color(0xFF3987E5)
+val DarkChartOut = Color(0xFFD95926)

@@ -9,6 +9,9 @@ sealed interface AccountsEvent {
 
     /** Swipe actions of a row. Edit is handled by the Route (it opens the form); Delete archives the account at once. */
     data class EditClicked(val accountId: String) : AccountsEvent
+
+    /** A tap on a row: the Route opens the account's detail. */
+    data class OpenClicked(val accountId: String) : AccountsEvent
     data class DeleteClicked(val accountId: String) : AccountsEvent
 
     /** Swipe action of an archived row (owner and admin): brings the account back to the list. */

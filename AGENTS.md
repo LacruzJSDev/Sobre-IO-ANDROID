@@ -83,7 +83,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the balances (`account_balances`, with `owner_user_id` and `archived_at`, archived rows included) and the colour and icon
   from `accounts` (the view has neither) in two queries joined by id in the repository. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
-  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row does nothing yet (account detail comes later).
+  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail (account detail comes later).
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
   `envelope_balances` view (colour and icon from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
@@ -93,8 +93,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   month" when the target is above 0 and the holder ("Common" or the member) when the group has several members, balance.
   `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe Reopen (snackbar
   with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with Undo, FZ008
-  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips ("Unassigned" by
-  default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
+  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as an `EntitySelect` ("Unassigned" by
+  default, each envelope with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
   nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
@@ -119,7 +119,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   group pops the form and opens the new group.
   Account form (`AccountFormViewModel`, loads members too): the avatar (colour + account icon) next to the name; "Appearance"
   (`ColorFormTile`, `IconFormTile` from `ui/components/AppearanceTiles.kt`, shared by the three forms); "Account": Kind
-  (expandable, `FormChip`s), Holder (expandable with `HolderPicker`, "Joint" or a member; hidden when the group has one active
+  (expandable, `FormChip`s), Holder (`EntitySelect` with "Joint" and the members, initial avatar and role label; hidden when the group has one active
   member), "Shares its money into envelopes" (a `Switch` tile with a note; on edit the note adds "From today; if it has a
   balance it moves between Unassigned and the money outside the envelopes") and, only when creating, the opening balance.
   Create sends every field to `create_account` (`p_in_envelopes`, `p_owner_user_id`, `p_color`, `p_icon`). Edit: when the switch
@@ -147,6 +147,76 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
   `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
   screen shows the saved name at once. The email is read-only.
+- Account detail (`ui/accountdetail`, route `AccountDetail(groupId, accountId)`, level 2): opened by tapping an account row
+  (swipe actions stay). Header with the account avatar and name, the group as a subtitle (`ScreenHeader(subtitle)`) and a
+  pencil (owner and admin, `Group.canEdit`) that opens `AccountForm`; the screen reloads each time it is shown. Flat top
+  tabs (`PrimaryTabRow`, ink indicator, no divider): Summary and Commitments (see below).
+  Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
+  with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
+  the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
+  due items; latest 5 movements with "See all"; "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
+  `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
+  snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
+  `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
+  `account_period_flows`, `upcoming_occurrences` (filtered to the account and signed in `UpcomingDto.toUpcomingFor`, the
+  only thing done in the app), the `movements` view, `compare_with_bank` and the two writes; nothing is summed in the app.
+  The adjustment's amount in the snackbar is formatted by the screen: `UndoableAction`/`UndoMessage` carry `amountCents`.
+- Commitments tab of the account detail (`ui/commitments`, `AccountCommitmentsViewModel(groupId, accountId)`, `CommitmentRepository` +
+  `SupabaseCommitmentRepository`, models in `domain/model/Commitment.kt`, DTOs and mappers `Commitment*`): `AccountDetailScreen` stays
+  stateless and takes `commitmentsAction` (the header "+", only on this tab, owner/admin) and `commitmentsContent` slots that
+  `AccountDetailRoute` fills from the second ViewModel; it reloads each time the tab shows. The repository reads
+  `commitments` with `commitment_versions` embedded (every version, newest first) for the commitments having a version that touches the account;
+  the ViewModel keeps those whose current version (in force at the group's today, else the newest) touches it, or, failing that, whose
+  first future version does (`Commitment.versionFor`; the row shows that version and "From <date>"); a row whose next version goes to
+  another account says "Moves to <account> on <date>" (account names from `AccountRepository`). Sections: Expenses,
+  Incomes, Transfers (source), Incoming transfers (read only), Contributions to other groups, Contributions received (read only); empty
+  ones hidden, collapsed "Archived (N)" at the end. Row: `EntityAvatar` in ink with the kind icon, name, frequency (plurals
+  `frequency_*`) + "Next <date>" (from `upcoming_occurrences`, 400 days) + "Automatic", and the amount signed for this account. Editable
+  live rows (owner/admin; a contribution also needs its `commitment_links` row, invisible to members of one group only) swipe
+  Edit and Delete (archive at once, Undo unarchives; a contribution uses `archive_linked_commitment` and a single update of both halves to reopen);
+  archived rows swipe Reopen. A tap on any row (live, archived or read only) opens the commitment detail (`CommitmentsEvent.OpenClicked`).
+- Commitment detail (`ui/commitmentdetail`, route `CommitmentDetail(groupId, accountId, commitmentId)`, level 3, read only,
+  `CommitmentDetailViewModel` with Koin params by position): `ScreenHeader` with the kind-icon avatar, the name and the account of the
+  version shown as subtitle; a pencil (`Group.canEdit`, live commitment, editable kind, a contribution also needs its link) opens
+  `CommitmentForm`; the screen reloads each time it is shown. Content: a line with the signed amount, the frequency and "Archived";
+  when the version shown is funded (and the commitment live), a "Reservation" block (`FormInfoTile` in `FormSections.kt`) from
+  `CommitmentRepository.getFundingStatus` (`commitment_funding_status`, `CommitmentFunding`; nothing summed in the app; a failure or
+  an empty answer leaves the block out): "<this period> this period in <envelope>" and a muted line "<reserved> of <cycle amount> reserved
+  for <due date> · N periods left" (plural `commitment_funding_progress`; "due this period" when none are left);
+  "History" (a `CollapsibleListSection`, open by default, count in the header; `CommitmentRepository.getOccurrences(id, offset, limit = 20)`
+  returns an `OccurrencePage` with the exact total (`count(Count.EXACT)` + `range`) from `commitment_occurrences` with `transactions(...)` / `account_transfers(...)`
+  embedded, newest first; the ViewModel appends the next page on `LoadMoreOccurrences` (ignored while loading or when all is loaded; a failure keeps the rows and shows a retry in the section); rows: due date, the registered amount signed for the account and the movement's date when it differs,
+  or "Skipped"); "Changes" (a `CollapsibleListSection`, folded unless there is a single version; the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
+  frequency, the account when it differs from the previous version, the envelope of an expense). It has no pending, confirm or skip
+  actions: pending occurrences are reviewed only in the Group tab.
+- Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
+  avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (every choice of an account, envelope or group is an `EntitySelect`: account (locked when creating),
+  destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
+  database uses "Outside envelopes"; a contribution: destination group (other live groups with the same currency where the user is
+  owner/admin), account, optional source and destination envelope), "Calendar" (`DateFormTile`, repeats switch, every N stepper 1-99,
+  unit chips, optional end date), "Registration" (auto register, default off and on for contributions; "funded" only when the DB allows it:
+  `CommitmentFormUiState.canFund`), "Notes" (not for contributions, `create_linked_commitment` has none). Editing adds "Apply from" (default
+  the group's today); the history of versions lives in the commitment detail. Create calls `create_commitment` or `create_linked_commitment`; edit renames
+  (`commitments.name`) when the name changed and then `change_commitment` (only when a rule field changed) or, for a
+  contribution, `change_linked_commitment` with the amount only (the other fields are read only, with a note); a retry skips the steps already done.
+  A taken name shows under the name field; FZ016/FZ017/FZ018 show under the form. Editing (not a contribution) lets the account change:
+  "Account" is an expandable tile of the group's live accounts (a transfer's destination excludes the chosen source, same account is a
+  validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
+  and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
+- `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
+- "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
+  `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the
+  account in its own saved `movementsFilter` and clears the AppNavigation value. The Movements tab is still an empty
+  state: when it exists it must read `movementsFilter` in `GroupRoute` (null means the whole ledger) and show the account
+  filter; from there "back" should return to the detail (re-push `AccountDetail` when a filter is set, not done yet).
+- Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
+  contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
+  and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
+  formatValue, contentDescription)` (columns up to 24 dp, 4 dp rounded free end, 2 dp gap, legend above, tooltip per group).
+  Shared: `ChartTooltip`, `ChartLegend`, `chartTouch`, and the pure maths in `ChartMath.kt` (`niceTicks`, `compactAmount`,
+  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours `colorScheme.chartIn` and `chartOut`
+  (`ui/theme/ChartColors.kt`; blue and orange pairs for light and dark, never the `error` red); the balance line uses
+  `primary`. Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
@@ -163,8 +233,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   variant); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 20, Account 20, Envelope 32;
   keys are snake_case English, stored in the DB `icon` column, never rename them; `iconFor` is null for unknown keys).
   Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker` (used directly in the
-  forms, no sheet) and `HolderPicker` (Joint plus one
-  chip per member; hide it with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
+  forms, no sheet) and `EntitySelect` (see Rules; the holder is "Joint"/"Common" plus one option per member, hidden with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
   with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
   (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
@@ -247,6 +316,11 @@ plus the `newmovement` bottom sheet.
   right, never a large button.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
+- Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
+  inline list under the tile with its own scroll, a search box over 8 options, `EntityOption` with optional special first options such as
+  "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
+- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, bounded height with
+  their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
   Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
   grey, Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,

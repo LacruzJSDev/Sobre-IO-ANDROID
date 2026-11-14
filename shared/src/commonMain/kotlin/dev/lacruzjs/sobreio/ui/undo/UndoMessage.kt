@@ -12,4 +12,9 @@ data class UndoMessage(
     val argument: String,
     /** False for a plain notice ("Role changed"): the snackbar then has no "Undo". */
     val undoable: Boolean = true,
+    /**
+     * An amount in cents that the message is about (an adjustment): the screen formats it, because the ViewModel knows
+     * neither the language nor how money is written, and fills the placeholder with it instead of [argument].
+     */
+    val amountCents: Long? = null,
 )

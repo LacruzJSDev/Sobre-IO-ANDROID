@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -36,13 +37,14 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /**
  * Header with three zones: navigation on the left ([onBack], hidden when null), context in the centre ([title], cut
  * with an ellipsis so it never reaches the icons) and [actions] on the right. [leading] goes before the title, for
- * example a group avatar.
+ * example a group avatar. [subtitle] is a small muted line under the title (the group's name on an account detail).
  */
 @Composable
 fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    subtitle: String? = null,
     leading: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
 ) {
@@ -62,13 +64,23 @@ fun ScreenHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leading()
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 12.dp),
-            )
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
         actions()
     }

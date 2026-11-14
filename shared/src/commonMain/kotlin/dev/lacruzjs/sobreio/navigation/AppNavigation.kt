@@ -14,7 +14,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
+import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormRoute
+import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailRoute
+import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormRoute
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormRoute
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
@@ -39,6 +42,10 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // entries, because the form's ViewModel stays alive underneath the picker: the form applies it once and clears it.
     var pickedTimeZone by rememberSaveable { mutableStateOf<String?>(null) }
 
+    // "See all" in an account's detail: the account whose movements the group's Movements tab must show. Held here, above
+    // both entries, because the detail leaves the stack before the group reads it (like the time zone above).
+    var movementsAccountFilter by rememberSaveable { mutableStateOf<String?>(null) }
+
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -61,7 +68,29 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onBack = { backStack.popToPrevious() },
                     onOpenSettings = { backStack.add(GroupSettings(key.groupId)) },
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
+                    onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
+                    movementsAccountFilter = movementsAccountFilter,
+                    onMovementsFilterConsumed = { movementsAccountFilter = null },
+                )
+            }
+            entry<AccountDetail> { key ->
+                AccountDetailRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    onBack = { backStack.popToPrevious() },
+                    onEdit = { backStack.add(AccountForm(key.groupId, key.accountId)) },
+                    onOpenCommitmentForm = { commitmentId ->
+                        backStack.add(CommitmentForm(key.groupId, key.accountId, commitmentId))
+                    },
+                    onOpenCommitment = { commitmentId ->
+                        backStack.add(CommitmentDetail(key.groupId, key.accountId, commitmentId))
+                    },
+                    onSeeAllMovements = {
+                        // Back to the group, which selects its Movements tab filtered to this account
+                        movementsAccountFilter = key.accountId
+                        backStack.popToPrevious()
+                    },
                 )
             }
             entry<GroupSettings> { key ->
@@ -88,6 +117,23 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             }
             entry<AccountForm> { key ->
                 AccountFormRoute(groupId = key.groupId, accountId = key.accountId, onClose = { backStack.popToPrevious() })
+            }
+            entry<CommitmentDetail> { key ->
+                CommitmentDetailRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    commitmentId = key.commitmentId,
+                    onBack = { backStack.popToPrevious() },
+                    onEdit = { backStack.add(CommitmentForm(key.groupId, key.accountId, key.commitmentId)) },
+                )
+            }
+            entry<CommitmentForm> { key ->
+                CommitmentFormRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    commitmentId = key.commitmentId,
+                    onClose = { backStack.popToPrevious() },
+                )
             }
             entry<EnvelopeForm> { key ->
                 EnvelopeFormRoute(groupId = key.groupId, envelopeId = key.envelopeId, onClose = { backStack.popToPrevious() })

@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.accounts
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,7 +52,7 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The summary, the accounts in two sections (in the envelopes and outside them) and, at the end, a collapsed
  * "Archived" section. Owners and admins swipe a live row left for Edit and Delete and an archived row for Reopen (one
- * row open at a time); members get plain rows. Tapping a row does nothing yet: the account detail is a later screen.
+ * row open at a time); members get plain rows. Tapping a row opens the account's detail.
  */
 @Composable
 internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Unit) {
@@ -67,6 +68,7 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
 
     val rows: LazyListScope.(List<Account>, Boolean) -> Unit = { list, archived ->
         items(list, key = { (if (archived) "archived-" else "") + it.id }) { account ->
+            val open = { onEvent(AccountsEvent.OpenClicked(account.id)) }
             val row: @Composable () -> Unit = { AccountRow(account, state, languageTag) }
             if (state.canEdit) {
                 SwipeActionsRow(
@@ -83,12 +85,11 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
                     onOpenChange = { open ->
                         if (open) openAccountId = account.id else if (openAccountId == account.id) openAccountId = null
                     },
-                    // The detail screen does not exist yet
-                    onClick = {},
+                    onClick = open,
                     content = row,
                 )
             } else {
-                row()
+                Box(modifier = Modifier.clickable(role = Role.Button, onClick = open)) { row() }
             }
         }
     }

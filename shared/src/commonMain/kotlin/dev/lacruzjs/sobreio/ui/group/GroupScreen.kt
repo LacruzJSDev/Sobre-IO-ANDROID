@@ -74,8 +74,15 @@ fun GroupRoute(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAccountForm: (accountId: String?) -> Unit,
+    onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Set by "See all" in an account's detail: the Movements tab opens filtered to this account. [onMovementsFilterConsumed]
+     * clears it where it is held (AppNavigation), so rotating or coming back does not select the tab again.
+     */
+    movementsAccountFilter: String? = null,
+    onMovementsFilterConsumed: () -> Unit = {},
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
     envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
@@ -83,6 +90,17 @@ fun GroupRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
+
+    // The account the Movements tab is filtered to; the tab itself does not exist yet (it shows its empty state), and when
+    // it does it reads this. Kept here, saved, so it survives rotation until another account or no account replaces it.
+    var movementsFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(movementsAccountFilter) {
+        if (movementsAccountFilter != null) {
+            movementsFilter = movementsAccountFilter
+            selectedIndex = GroupTab.Movements.ordinal
+            onMovementsFilterConsumed()
+        }
+    }
 
     val accountsState by accountsViewModel.state.collectAsStateWithLifecycle()
     // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
@@ -131,6 +149,7 @@ fun GroupRoute(
                 onEvent = { event ->
                     when (event) {
                         is AccountsEvent.EditClicked -> onOpenAccountForm(event.accountId)
+                        is AccountsEvent.OpenClicked -> onOpenAccount(event.accountId)
                         else -> accountsViewModel.onEvent(event)
                     }
                 },
