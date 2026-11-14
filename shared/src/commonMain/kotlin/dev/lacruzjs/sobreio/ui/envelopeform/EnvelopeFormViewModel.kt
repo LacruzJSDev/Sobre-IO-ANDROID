@@ -3,9 +3,13 @@ package dev.lacruzjs.sobreio.ui.envelopeform
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
+import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
+import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.Member
+import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
@@ -25,9 +29,17 @@ data class EnvelopeFormUiState(
     val name: String = "",
     val nameError: StringResource? = null,
     val kind: EnvelopeKind = EnvelopeKind.Spending,
+    /** Hex of the chosen palette colour; null is the brand ink. */
+    val color: String? = null,
+    /** Key of the chosen icon of the envelope catalogue; null is none. */
+    val icon: String? = null,
+    /** Holder: a member's user id, or null for a common envelope. */
+    val ownerUserId: String? = null,
     /** Text of the monthly target field; blank means no target. */
     val monthlyTarget: String = "",
     val monthlyTargetError: StringResource? = null,
+    /** The active members: they are the holders to choose from. */
+    val members: List<Member> = emptyList(),
     /** Editing: the envelope is being read. */
     val isLoading: Boolean = false,
     val loadError: AppError? = null,
@@ -35,30 +47,38 @@ data class EnvelopeFormUiState(
     val submitError: AppError? = null,
     /** The envelope was created or saved: the Route leaves the form and consumes this. */
     val saved: Boolean = false,
-)
+) {
+    /** The holder is only asked for when there is someone to choose between. */
+    val hasSeveralMembers: Boolean get() = members.hasSeveralMembers()
+}
 
 sealed interface EnvelopeFormEvent {
     /** Handled by the Route, which owns the back stack. */
     data object CloseClicked : EnvelopeFormEvent
     data class NameChanged(val value: String) : EnvelopeFormEvent
     data class KindSelected(val kind: EnvelopeKind) : EnvelopeFormEvent
+    data class ColorSelected(val hex: String?) : EnvelopeFormEvent
+    data class IconSelected(val key: String?) : EnvelopeFormEvent
+    data class HolderSelected(val userId: String?) : EnvelopeFormEvent
     data class MonthlyTargetChanged(val value: String) : EnvelopeFormEvent
     data object SaveClicked : EnvelopeFormEvent
     data object Retry : EnvelopeFormEvent
     data object NavigationHandled : EnvelopeFormEvent
 }
 
-/** The create and edit form of an envelope: name, kind and monthly target. [envelopeId] null creates. */
+/** The create and edit form of an envelope: name, kind, holder, colour, icon and monthly target. [envelopeId] null creates. */
 class EnvelopeFormViewModel(
     private val groupId: String,
     private val envelopeId: String?,
     private val envelopes: EnvelopeRepository,
+    private val members: MemberRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopeFormUiState(isLoading = envelopeId != null))
     val state: StateFlow<EnvelopeFormUiState> = _state.asStateFlow()
 
     init {
+        loadMembers()
         if (envelopeId != null) load(envelopeId)
     }
 
@@ -67,12 +87,22 @@ class EnvelopeFormViewModel(
             is EnvelopeFormEvent.NameChanged ->
                 _state.update { it.copy(name = event.value, nameError = null, submitError = null) }
             is EnvelopeFormEvent.KindSelected -> _state.update { it.copy(kind = event.kind) }
+            is EnvelopeFormEvent.ColorSelected -> _state.update { it.copy(color = event.hex) }
+            is EnvelopeFormEvent.IconSelected -> _state.update { it.copy(icon = event.key) }
+            is EnvelopeFormEvent.HolderSelected -> _state.update { it.copy(ownerUserId = event.userId) }
             is EnvelopeFormEvent.MonthlyTargetChanged ->
                 _state.update { it.copy(monthlyTarget = event.value, monthlyTargetError = null, submitError = null) }
             EnvelopeFormEvent.SaveClicked -> save()
             EnvelopeFormEvent.Retry -> envelopeId?.let { load(it) }
             EnvelopeFormEvent.NavigationHandled -> _state.update { it.copy(saved = false) }
             EnvelopeFormEvent.CloseClicked -> Unit
+        }
+    }
+
+    /** A failure only hides the holder choice: the form works without it. */
+    private fun loadMembers() {
+        viewModelScope.launch {
+            members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         }
     }
 
@@ -90,6 +120,9 @@ class EnvelopeFormViewModel(
                                 isLoading = false,
                                 name = envelope.name,
                                 kind = envelope.kind,
+                                color = envelope.color,
+                                icon = envelope.icon,
+                                ownerUserId = envelope.ownerUserId,
                                 monthlyTarget = envelope.monthlyTargetCents.toInputText(),
                             )
                         }
@@ -116,10 +149,18 @@ class EnvelopeFormViewModel(
         }
         _state.update { it.copy(isSubmitting = true, submitError = null) }
         viewModelScope.launch {
+            val draft = EnvelopeDraft(
+                name = name,
+                kind = current.kind,
+                monthlyTargetCents = target,
+                ownerUserId = current.ownerUserId,
+                color = current.color,
+                icon = current.icon,
+            )
             val result = if (envelopeId != null) {
-                envelopes.updateEnvelope(envelopeId, name, current.kind, target)
+                envelopes.updateEnvelope(envelopeId, draft)
             } else {
-                envelopes.createEnvelope(groupId, name, current.kind, target).map { }
+                envelopes.createEnvelope(groupId, draft).map { }
             }
             result
                 .onSuccess { _state.update { it.copy(isSubmitting = false, saved = true) } }

@@ -70,24 +70,32 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   "Deleted on <purge_requested_at + 7 days>" and cannot be opened. Owners swipe Reopen (`archived_at` to null) or Cancel
   deletion (`cancel_group_purge`); `getGroup` still hides groups pending deletion. `Group.canEdit` is false for archived
   and pending groups, so Accounts and Envelopes become read only.
-- Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter): the total (`group_overview.accounts_total`,
-  never summed in the app) and the accounts from the `account_balances` view (`AccountsPane`, `AccountList`: square ink icon,
-  name, kind label, balance; negatives in the normal text colour). Owner and admin see the header "+" (opens the full-screen account
-  form: name, kind chips, opening balance parsed by `parseMoneyInput`, `create_account` RPC) and swipe rows for Edit (name and kind) and
-  Delete. Delete archives (`archived_at`) at once, so FZ008 returns immediately and the row comes back; Undo unarchives.
-  Members only read. Name clashes (SQLSTATE 23505) map to `AppError.DuplicateName`. `GroupScreen` stays stateless: it takes
+- Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter, `MemberRepository` for holder names): on
+  top the total and, when some accounts are outside the envelopes, two small figures "In envelopes" / "Outside envelopes"
+  (`group_overview.accounts_total`, `in_envelopes_total`, `outside_total`, never summed in the app). Then the live accounts in two sections,
+  "In envelopes" and "Outside envelopes" (empty ones hidden; the "In envelopes" title only shows when there is an outside
+  section): `EntityAvatar` (colour + account icon, the initial when there is no icon), name, kind label (+ " · holder", or
+  "Joint", only when the group has several members) and the balance. At the end a collapsed "Archived (N)" section (same
+  query, `Account.archivedAt`). Owner and admin see the header "+" and swipe live rows for Edit and Delete and archived rows
+  for Reopen (`unarchiveAccount`, snackbar with Undo that archives again); members only read. Delete archives
+  (`archived_at`) at once, so FZ008 returns immediately and the row comes back; the row then appears in the Archived section; Undo unarchives. Name
+  clashes (SQLSTATE 23505, also when reopening) map to `AppError.DuplicateName`. `SupabaseAccountRepository.getAccounts` reads
+  the balances (`account_balances`, with `owner_user_id` and `archived_at`, archived rows included) and the colour and icon
+  from `accounts` (the view has neither) in two queries joined by id in the repository. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
   `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row does nothing yet (account detail comes later).
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
-  `envelope_balances` view and `group_overview` (`in_envelopes_total`, `unassigned_balance`, never summed in the app) are read.
-  Summary block on top: Total and, prominent on a soft block, "Unassigned" (label from resources by kind `System`, never the
-  database name). Below, "Spending" and "Saving" sections ordered by name (empty ones hidden): square ink icon, name,
-  "Target X a month" when the target is above 0, balance. `external` is filtered out in the mapper. Owner and admin see the "+"
-  (opens the full-screen envelope form: name, kind chips, optional monthly target; direct insert into `envelopes`) and swipe Edit and Delete (archive
-  with Undo, FZ008 restores the row). Any member swipes "Assign": a sheet with an amount and the source as chips
-  ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
-  Tapping a row does nothing yet (envelope detail comes later).
+  `envelope_balances` view (colour and icon from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
+  `unassigned_balance`, never summed in the app) and the members are read. A compact "Total" line on top; "Unassigned" is the
+  first row (inbox icon, name from resources by kind `System`, never the database name; prominent balance; no swipe); then the
+  "Spending" and "Saving" sections ordered by name (empty ones hidden): `EntityAvatar` (colour + envelope icon), name, "Target X a
+  month" when the target is above 0 and the holder ("Common" or the member) when the group has several members, balance.
+  `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe Reopen (snackbar
+  with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with Undo, FZ008
+  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips ("Unassigned" by
+  default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
+  nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens a "Coming soon" sheet until that feature exists (Accounts and Envelopes
@@ -108,8 +116,19 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   highlighted, then every `TimeZone.availableZoneIds` filtered case-insensitively, spaces matching underscores). The
   picked id travels back through a `pickedTimeZone` holder in `AppNavigation` (saved state, above both entries): the
   picker sets it and pops, the still-alive form ViewModel takes it once (`TimeZonePicked`) and clears it. Creating a
-  group pops the form and opens the new group. Account and envelope forms keep today's fields only (name, kind,
-  opening balance on create / monthly target); holder and the rest of the scope come next.
+  group pops the form and opens the new group.
+  Account form (`AccountFormViewModel`, loads members too): the avatar (colour + account icon) next to the name; "Appearance"
+  (`ColorFormTile`, `IconFormTile` from `ui/components/AppearanceTiles.kt`, shared by the three forms); "Account": Kind
+  (expandable, `FormChip`s), Holder (expandable with `HolderPicker`, "Joint" or a member; hidden when the group has one active
+  member), "Shares its money into envelopes" (a `Switch` tile with a note; on edit the note adds "From today; if it has a
+  balance it moves between Unassigned and the money outside the envelopes") and, only when creating, the opening balance.
+  Create sends every field to `create_account` (`p_in_envelopes`, `p_owner_user_id`, `p_color`, `p_icon`). Edit: when the switch
+  differs from the stored scope, `changeAccountScope` (`change_account_scope`, a dated event from today) runs first and then
+  `updateAccount` writes name, kind, holder, colour and icon (`in_envelopes` can never be updated directly, FZ017); a retry after
+  a failed update does not repeat the scope call. FZ017 from the scope call shows "has movements dated today or later..." under
+  the switch (`AccountFormUiState.scopeError`). Envelope form (`EnvelopeFormViewModel`): avatar + name, "Appearance" (envelope
+  icons), "Envelope": Kind (spending/saving), Holder ("Common" or a member, same visibility rule) and the monthly target field
+  with its note; create inserts and edit updates all fields of `envelopes` (`EnvelopeDraft`).
 - Group settings (`ui/groupsettings`, `GroupSettingsViewModel` with the group id as Koin parameter): compact, sections
   separated by spacing, no bottom buttons (archive, delete and leave are Groups list swipes). The header has a pencil on the
   right (owner and admin, live group), in the same place as the gear that opened the screen, which opens the full-screen
@@ -213,6 +232,11 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
+  avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
+  options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time; long lists open a
+  picker screen with search (`TimeZonePicker`). Settings screens edit with a pencil `IconActionButton` at the top
+  right, never a large button.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,

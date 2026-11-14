@@ -3,10 +3,13 @@ package dev.lacruzjs.sobreio.ui.envelopes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
+import dev.lacruzjs.sobreio.data.repository.MemberRepository
+import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_deleted
+import dev.lacruzjs.sobreio.generated.resources.envelope_reopened
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
@@ -19,11 +22,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 /** The envelopes tab of one group. Currency and role come from the group the Route has already loaded. */
 class EnvelopesViewModel(
     private val groupId: String,
     private val envelopes: EnvelopeRepository,
+    private val members: MemberRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopesUiState())
@@ -48,6 +53,7 @@ class EnvelopesViewModel(
             // Handled by the Route, which opens the form
             is EnvelopesEvent.EditClicked -> Unit
             is EnvelopesEvent.DeleteClicked -> delete(event.envelopeId)
+            is EnvelopesEvent.ReopenClicked -> reopen(event.envelopeId)
             EnvelopesEvent.UndoClicked -> undo.undo()
             EnvelopesEvent.UndoExpired -> undo.commit()
             EnvelopesEvent.SheetDismissed ->
@@ -77,10 +83,12 @@ class EnvelopesViewModel(
             } else {
                 val all = list.getOrThrow()
                 val figures = summary.getOrThrow()
+                val (archived, live) = all.partition { e -> e.isArchived }
                 _state.update {
                     it.copy(
-                        envelopes = all.filter { e -> e.kind != EnvelopeKind.System }.sortedBy { e -> e.name.lowercase() },
-                        unassigned = all.firstOrNull { e -> e.kind == EnvelopeKind.System },
+                        envelopes = live.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
+                        archivedEnvelopes = archived.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
+                        unassigned = live.firstOrNull { e -> e.kind == EnvelopeKind.System },
                         totalCents = figures.totalCents,
                         unassignedCents = figures.unassignedCents,
                         isLoading = false,
@@ -88,8 +96,12 @@ class EnvelopesViewModel(
                     )
                 }
             }
+            // Only needed to name holders; without them the rows simply show no holder
+            members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         }
     }
+
+    private fun List<Envelope>.sortedByName() = sortedBy { it.name.lowercase() }
 
     private fun openAssign(envelopeId: String) {
         val current = _state.value
@@ -140,9 +152,21 @@ class EnvelopesViewModel(
         val envelope = current.envelopes.firstOrNull { it.id == envelopeId } ?: return
         // Only one destructive action at a time: the previous one becomes final
         undo.commit()
-        _state.update { it.copy(envelopes = it.envelopes - envelope, actionError = null) }
+        val archived = envelope.copy(archivedAt = Clock.System.now().toString())
+        _state.update {
+            it.copy(
+                envelopes = it.envelopes - envelope,
+                archivedEnvelopes = (it.archivedEnvelopes + archived).sortedByName(),
+                actionError = null,
+            )
+        }
         val restore = {
-            _state.update { it.copy(envelopes = (it.envelopes + envelope).sortedBy { e -> e.name.lowercase() }) }
+            _state.update {
+                it.copy(
+                    envelopes = (it.envelopes + envelope).sortedByName(),
+                    archivedEnvelopes = it.archivedEnvelopes - archived,
+                )
+            }
             load()
         }
         viewModelScope.launch {
@@ -162,6 +186,37 @@ class EnvelopesViewModel(
                     restore()
                     _state.update { it.copy(actionError = e.asAppError()) }
                 }
+        }
+    }
+
+    /** Owner or admin of an archived envelope: it becomes live again and moves to the main list; "Undo" archives it again. */
+    private fun reopen(envelopeId: String) {
+        val current = _state.value
+        if (!current.canEdit) return
+        val envelope = current.archivedEnvelopes.firstOrNull { it.id == envelopeId } ?: return
+        // Only one destructive action at a time: the previous one becomes final
+        undo.commit()
+        _state.update { it.copy(actionError = null) }
+        viewModelScope.launch {
+            envelopes.unarchiveEnvelope(envelope.id)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            envelopes = (it.envelopes + envelope.copy(archivedAt = null)).sortedByName(),
+                            archivedEnvelopes = it.archivedEnvelopes - envelope,
+                        )
+                    }
+                    undo.show(
+                        UndoableAction(
+                            message = Res.string.envelope_reopened,
+                            argument = envelope.name,
+                            commit = { Result.success(Unit) },
+                            undo = { envelopes.archiveEnvelope(envelope.id) },
+                            restore = { load() },
+                        ),
+                    )
+                }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
 

@@ -146,7 +146,7 @@
     <string name="field_envelope_name">Nombre del sobre</string>
     <string name="field_envelope_kind">Tipo</string>
     <string name="field_monthly_target">Objetivo mensual</string>
-    <string name="monthly_target_hint">Déjalo vacío si no hay objetivo.</string>
+    <string name="monthly_target_hint">Se asigna automáticamente desde «Sin asignar» al empezar cada periodo. Déjalo vacío para no tener objetivo.</string>
     <string name="validation_amount_negative">El importe no puede ser negativo.</string>
     <string name="validation_amount_positive">Introduce un importe mayor que cero.</string>
     <string name="validation_source_invalid">Elige el sobre del que sale el dinero.</string>
@@ -312,4 +312,17 @@
     <string name="state_expanded">Desplegado</string>
     <string name="state_collapsed">Plegado</string>
     <string name="field_period_start_short">Inicio del periodo</string>
+    <string name="accounts_in_envelopes_title">En sobres</string>
+    <string name="accounts_outside_envelopes_title">Fuera de sobres</string>
+    <string name="account_reopened">%1$s reabierta</string>
+    <string name="envelope_reopened">%1$s reabierto</string>
+    <string name="form_section_account">Cuenta</string>
+    <string name="form_section_envelope">Sobre</string>
+    <string name="field_holder">Titular</string>
+    <string name="holder_common">Común</string>
+    <string name="field_in_envelopes">Reparte su dinero en sobres</string>
+    <string name="account_in_envelopes_note">Dentro: su dinero se reparte en sobres y aparece en «Sin asignar». Fuera: dinero de ahorro o inversión que nunca se reparte.</string>
+    <string name="account_scope_edit_note">Desde hoy. Si tiene saldo, se mueve entre «Sin asignar» y el dinero fuera de sobres.</string>
+    <string name="error_account_scope_movements">Esta cuenta tiene movimientos de hoy o posteriores. Cambia su ámbito antes de apuntarlos, o mañana.</string>
+    <string name="row_subtitle">%1$s · %2$s</string>
 </resources>

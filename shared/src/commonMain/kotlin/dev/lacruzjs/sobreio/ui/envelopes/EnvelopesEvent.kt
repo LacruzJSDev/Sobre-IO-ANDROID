@@ -12,6 +12,9 @@ sealed interface EnvelopesEvent {
     data class EditClicked(val envelopeId: String) : EnvelopesEvent
     data class DeleteClicked(val envelopeId: String) : EnvelopesEvent
 
+    /** Swipe action of an archived row (owner and admin): brings the envelope back to the list. */
+    data class ReopenClicked(val envelopeId: String) : EnvelopesEvent
+
     data object UndoClicked : EnvelopesEvent
     data object UndoExpired : EnvelopesEvent
 

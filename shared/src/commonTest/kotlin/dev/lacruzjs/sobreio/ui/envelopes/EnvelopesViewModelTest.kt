@@ -4,9 +4,13 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
+import dev.lacruzjs.sobreio.domain.model.GroupRole
+import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
+import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_deleted
+import dev.lacruzjs.sobreio.generated.resources.envelope_reopened
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
@@ -27,7 +31,9 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     private val trip = Envelope("3", "g1", "Trip", EnvelopeKind.Saving, 0, 80_000)
     private val repository = FakeEnvelopeRepository(listOf(unassigned, trip, rent, food))
         .also { it.summary = EnvelopeSummary(totalCents = 125_000, unassignedCents = 30_000) }
-    private val viewModel by lazy { EnvelopesViewModel("g1", repository) }
+    private val memberRepository = FakeMemberRepository()
+    private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z")
+    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository) }
 
     private fun loaded(canEdit: Boolean = true): EnvelopesViewModel = viewModel.also {
         it.onEvent(EnvelopesEvent.GroupLoaded("USD", canEdit))
@@ -193,4 +199,90 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         assertTrue(repository.calls.none { it.startsWith("archive") || it.startsWith("create") })
     }
 
+    @Test
+    fun unassignedIsKeptApartSoTheListShowsItFirst() {
+        loaded()
+
+        val state = viewModel.state.value
+        assertEquals("0", state.unassigned?.id)
+        assertTrue(state.envelopes.none { it.kind == EnvelopeKind.System })
+        assertEquals(30_000, state.unassignedCents)
+    }
+
+    @Test
+    fun loadKeepsTheColourIconAndHolderOfEachEnvelope() {
+        val styled = food.copy(color = "#4F7A5A", icon = "groceries", ownerUserId = "u2")
+        repository.envelopes = listOf(unassigned, styled)
+        loaded()
+
+        assertEquals(styled, viewModel.state.value.envelopes.single())
+    }
+
+    @Test
+    fun archivedEnvelopesGoToTheArchivedSectionNotTheSections() {
+        repository.envelopes = listOf(unassigned, rent, old)
+        loaded()
+
+        assertEquals(listOf(rent), viewModel.state.value.envelopes)
+        assertEquals(listOf(old), viewModel.state.value.archivedEnvelopes)
+    }
+
+    @Test
+    fun reopenUnarchivesMovesTheRowToItsSectionAndOffersUndo() {
+        repository.envelopes = listOf(unassigned, rent, old)
+        loaded()
+        viewModel.onEvent(EnvelopesEvent.ReopenClicked("4"))
+
+        assertTrue("unarchiveEnvelope(4)" in repository.calls)
+        assertEquals(listOf("Old"), viewModel.state.value.saving.map { it.name })
+        assertTrue(viewModel.state.value.archivedEnvelopes.isEmpty())
+        assertEquals(Res.string.envelope_reopened, viewModel.state.value.undoMessage?.message)
+        assertEquals("Old", viewModel.state.value.undoMessage?.argument)
+    }
+
+    @Test
+    fun undoOfReopenArchivesTheEnvelopeAgain() {
+        repository.envelopes = listOf(unassigned, rent, old)
+        loaded()
+        viewModel.onEvent(EnvelopesEvent.ReopenClicked("4"))
+        repository.envelopes = listOf(unassigned, rent, old)
+        viewModel.onEvent(EnvelopesEvent.UndoClicked)
+
+        assertTrue("archiveEnvelope(4)" in repository.calls)
+        assertEquals(listOf(old), viewModel.state.value.archivedEnvelopes)
+    }
+
+    @Test
+    fun reopenRefusedByTheDatabaseKeepsTheRowArchivedWithTheError() {
+        repository.envelopes = listOf(unassigned, old)
+        repository.unarchiveResult = Result.failure(AppError.DuplicateName)
+        loaded()
+        viewModel.onEvent(EnvelopesEvent.ReopenClicked("4"))
+
+        assertEquals(listOf(old), viewModel.state.value.archivedEnvelopes)
+        assertEquals(AppError.DuplicateName, viewModel.state.value.actionError)
+    }
+
+    @Test
+    fun membersCannotReopen() {
+        repository.envelopes = listOf(unassigned, old)
+        loaded(canEdit = false)
+        viewModel.onEvent(EnvelopesEvent.ReopenClicked("4"))
+
+        assertTrue(repository.calls.none { it.startsWith("unarchive") })
+    }
+
+    @Test
+    fun holderNamesAreOnlyShownWhenTheGroupHasSeveralMembers() {
+        val held = rent.copy(ownerUserId = "u2")
+        repository.envelopes = listOf(unassigned, held)
+        memberRepository.members = listOf(Member("u1", "Juan", GroupRole.Owner))
+        loaded()
+        assertNull(viewModel.state.value.holderName(held))
+
+        memberRepository.members = listOf(Member("u1", "Juan", GroupRole.Owner), Member("u2", "Marta", GroupRole.Member))
+        viewModel.onEvent(EnvelopesEvent.Refresh)
+        assertEquals("Marta", viewModel.state.value.holderName(held))
+        assertNull(viewModel.state.value.holderName(rent))
+    }
 }

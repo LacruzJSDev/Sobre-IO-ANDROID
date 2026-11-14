@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Member
@@ -37,17 +38,21 @@ fun HolderPicker(
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Name of the "nobody in particular" choice: "Joint" for accounts, "Common" for envelopes. */
+    jointLabel: String = stringResource(Res.string.holder_joint),
+    /** Colour of the chips that are not selected; the paper colour when the picker sits on a soft tile. */
+    chipColor: Color = Color.Unspecified,
 ) {
     FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        HolderChip(stringResource(Res.string.holder_joint), selectedUserId == null, enabled) { onSelect(null) }
+        HolderChip(jointLabel, selectedUserId == null, enabled, chipColor) { onSelect(null) }
         members.forEach { member ->
-            HolderChip(member.displayName, selectedUserId == member.userId, enabled) { onSelect(member.userId) }
+            HolderChip(member.displayName, selectedUserId == member.userId, enabled, chipColor) { onSelect(member.userId) }
         }
     }
 }
 
 @Composable
-private fun HolderChip(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+private fun HolderChip(label: String, selected: Boolean, enabled: Boolean, chipColor: Color, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -55,6 +60,7 @@ private fun HolderChip(label: String, selected: Boolean, enabled: Boolean, onCli
         label = { Text(label) },
         shape = MaterialTheme.shapes.medium,
         colors = FilterChipDefaults.filterChipColors(
+            containerColor = chipColor,
             selectedContainerColor = MaterialTheme.colorScheme.primary,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
         ),

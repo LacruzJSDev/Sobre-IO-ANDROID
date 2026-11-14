@@ -48,12 +48,12 @@ fun AccountsPane(
         ) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                state.accounts.isEmpty() && state.error != null -> EmptyState(
+                state.accounts.isEmpty() && state.archivedAccounts.isEmpty() && state.error != null -> EmptyState(
                     message = stringResource(state.error.messageRes()),
                 ) {
                     TextButton(onClick = { onEvent(AccountsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                 }
-                state.accounts.isEmpty() -> EmptyState(
+                state.accounts.isEmpty() && state.archivedAccounts.isEmpty() -> EmptyState(
                     message = stringResource(
                         if (state.canEdit) Res.string.accounts_empty_editor else Res.string.tab_accounts_empty,
                     ),
@@ -79,7 +79,14 @@ private val previewAccounts = listOf(
 private fun AccountsPanePreview() {
     SobreioTheme {
         AccountsPane(
-            state = AccountsUiState(accounts = previewAccounts, totalCents = 104765, isLoading = false, canEdit = true),
+            state = AccountsUiState(
+                accounts = previewAccounts,
+                totalCents = 104765,
+                inEnvelopesCents = 129815,
+                outsideCents = -25050,
+                isLoading = false,
+                canEdit = true,
+            ),
             onEvent = {},
         )
     }

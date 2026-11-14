@@ -2,13 +2,17 @@ package dev.lacruzjs.sobreio.fake
 
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.domain.model.Envelope
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
 class FakeEnvelopeRepository(var envelopes: List<Envelope> = emptyList()) : EnvelopeRepository {
 
     val calls = mutableListOf<String>()
+
+    /** What the last create and update received, with every field. */
+    var createdDraft: EnvelopeDraft? = null
+    var updatedDraft: EnvelopeDraft? = null
 
     var materializeResult: Result<Unit> = Result.success(Unit)
     var envelopesResult: Result<List<Envelope>>? = null
@@ -35,23 +39,15 @@ class FakeEnvelopeRepository(var envelopes: List<Envelope> = emptyList()) : Enve
         return summaryResult ?: Result.success(summary)
     }
 
-    override suspend fun createEnvelope(
-        groupId: String,
-        name: String,
-        kind: EnvelopeKind,
-        monthlyTargetCents: Long,
-    ): Result<String> {
-        calls += "createEnvelope($groupId, $name, $kind, $monthlyTargetCents)"
+    override suspend fun createEnvelope(groupId: String, draft: EnvelopeDraft): Result<String> {
+        calls += "createEnvelope($groupId, ${draft.name}, ${draft.kind}, ${draft.monthlyTargetCents})"
+        createdDraft = draft
         return createResult
     }
 
-    override suspend fun updateEnvelope(
-        id: String,
-        name: String,
-        kind: EnvelopeKind,
-        monthlyTargetCents: Long,
-    ): Result<Unit> {
-        calls += "updateEnvelope($id, $name, $kind, $monthlyTargetCents)"
+    override suspend fun updateEnvelope(id: String, draft: EnvelopeDraft): Result<Unit> {
+        calls += "updateEnvelope($id, ${draft.name}, ${draft.kind}, ${draft.monthlyTargetCents})"
+        updatedDraft = draft
         return updateResult
     }
 

@@ -147,7 +147,7 @@
     <string name="field_envelope_name">Envelope name</string>
     <string name="field_envelope_kind">Type</string>
     <string name="field_monthly_target">Monthly target</string>
-    <string name="monthly_target_hint">Leave it empty for no target.</string>
+    <string name="monthly_target_hint">Assigned automatically from Unassigned at the start of each period. Leave it empty for no target.</string>
     <string name="validation_amount_negative">The amount can\'t be negative.</string>
     <string name="validation_amount_positive">Enter an amount greater than zero.</string>
     <string name="validation_source_invalid">Choose the envelope the money comes from.</string>
@@ -313,4 +313,17 @@
     <string name="state_expanded">Expanded</string>
     <string name="state_collapsed">Collapsed</string>
     <string name="field_period_start_short">Period starts on</string>
+    <string name="accounts_in_envelopes_title">In envelopes</string>
+    <string name="accounts_outside_envelopes_title">Outside envelopes</string>
+    <string name="account_reopened">%1$s reopened</string>
+    <string name="envelope_reopened">%1$s reopened</string>
+    <string name="form_section_account">Account</string>
+    <string name="form_section_envelope">Envelope</string>
+    <string name="field_holder">Holder</string>
+    <string name="holder_common">Common</string>
+    <string name="field_in_envelopes">Shares its money into envelopes</string>
+    <string name="account_in_envelopes_note">Inside: its money is distributed among the envelopes and appears in Unassigned. Outside: savings or investment money that is never distributed.</string>
+    <string name="account_scope_edit_note">From today. If it has a balance, it moves between Unassigned and the money outside the envelopes.</string>
+    <string name="error_account_scope_movements">This account has movements dated today or later. Change its scope before recording them, or tomorrow.</string>
+    <string name="row_subtitle">%1$s · %2$s</string>
 </resources>

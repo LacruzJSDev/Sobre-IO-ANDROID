@@ -40,10 +40,20 @@ val uiModule = module {
         )
     }
     viewModel { params -> GroupFormViewModel(groupId = params.get<String?>(0), groups = get()) }
-    viewModel { params -> AccountFormViewModel(groupId = params.get<String>(0), accountId = params.get<String?>(1), accounts = get()) }
+    viewModel { params -> AccountFormViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String?>(1),
+            accounts = get(),
+            members = get(),
+        ) }
     viewModel { params ->
-        EnvelopeFormViewModel(groupId = params.get<String>(0), envelopeId = params.get<String?>(1), envelopes = get())
+        EnvelopeFormViewModel(
+            groupId = params.get<String>(0),
+            envelopeId = params.get<String?>(1),
+            envelopes = get(),
+            members = get(),
+        )
     }
-    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get()) }
-    viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get()) }
+    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }
+    viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get()) }
 }

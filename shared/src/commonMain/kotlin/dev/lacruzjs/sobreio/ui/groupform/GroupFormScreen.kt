@@ -1,6 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupform
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -35,28 +32,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
-import dev.lacruzjs.sobreio.generated.resources.color_none
 import dev.lacruzjs.sobreio.generated.resources.currency_locked_note
-import dev.lacruzjs.sobreio.generated.resources.field_color
-import dev.lacruzjs.sobreio.generated.resources.field_icon
 import dev.lacruzjs.sobreio.generated.resources.field_period_start_short
 import dev.lacruzjs.sobreio.generated.resources.form_section_appearance
 import dev.lacruzjs.sobreio.generated.resources.form_section_currency_period
-import dev.lacruzjs.sobreio.generated.resources.icon_none
 import dev.lacruzjs.sobreio.generated.resources.period_day_next
 import dev.lacruzjs.sobreio.generated.resources.period_day_previous
 import dev.lacruzjs.sobreio.generated.resources.period_day_value
 import dev.lacruzjs.sobreio.generated.resources.period_start_day_note
-import dev.lacruzjs.sobreio.generated.resources.state_collapsed
-import dev.lacruzjs.sobreio.generated.resources.state_expanded
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
-import dev.lacruzjs.sobreio.ui.components.IconCatalog
-import dev.lacruzjs.sobreio.ui.components.fill
-import dev.lacruzjs.sobreio.ui.components.labelRes
 import dev.lacruzjs.sobreio.ui.groups.MAX_PERIOD_START_DAY
 import dev.lacruzjs.sobreio.ui.groups.MIN_PERIOD_START_DAY
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -67,13 +55,14 @@ import dev.lacruzjs.sobreio.generated.resources.field_currency
 import dev.lacruzjs.sobreio.generated.resources.field_group_name
 import dev.lacruzjs.sobreio.generated.resources.field_time_zone
 import dev.lacruzjs.sobreio.generated.resources.new_group_currency_note
-import dev.lacruzjs.sobreio.ui.components.ColorPicker
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.ColorFormTile
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.IconFormTile
+import dev.lacruzjs.sobreio.ui.components.expandedStateText
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.IconCategory
-import dev.lacruzjs.sobreio.ui.components.IconPicker
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.groups.GroupCurrencies
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
@@ -175,44 +164,20 @@ fun GroupFormScreen(
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_appearance)) {
-                    ExpandableFormTile(
-                        label = stringResource(Res.string.field_color),
+                    ColorFormTile(
+                        selected = color,
                         expanded = open == OpenTile.Color,
                         onToggle = { toggle(OpenTile.Color) },
-                        expandedDescription = expandedState(open == OpenTile.Color),
-                        preview = {
-                            FormTileValue(stringResource(color?.labelRes() ?: Res.string.color_none))
-                            ColorDot(color)
-                        },
-                    ) {
-                        ColorPicker(
-                            selected = color,
-                            onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(color = it?.hex))) },
-                        )
-                    }
-                    ExpandableFormTile(
-                        label = stringResource(Res.string.field_icon),
+                        onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(color = it?.hex))) },
+                    )
+                    IconFormTile(
+                        category = IconCategory.Group,
+                        selectedKey = form.icon,
+                        color = color,
                         expanded = open == OpenTile.Icon,
                         onToggle = { toggle(OpenTile.Icon) },
-                        expandedDescription = expandedState(open == OpenTile.Icon),
-                        preview = {
-                            val option = IconCatalog.iconFor(IconCategory.Group, form.icon)
-                            if (option == null) {
-                                FormTileValue(stringResource(Res.string.icon_none))
-                            } else {
-                                FormTileValue(stringResource(option.label))
-                                Icon(option.vector, contentDescription = null, modifier = Modifier.size(24.dp))
-                            }
-                        },
-                    ) {
-                        IconPicker(
-                            category = IconCategory.Group,
-                            selected = form.icon,
-                            color = color,
-                            onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(icon = it))) },
-                            cellColor = MaterialTheme.colorScheme.background,
-                        )
-                    }
+                        onSelect = { onEvent(GroupFormEvent.FormChanged(form.copy(icon = it))) },
+                    )
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_currency_period)) {
@@ -226,7 +191,7 @@ fun GroupFormScreen(
                             label = stringResource(Res.string.field_currency),
                             expanded = open == OpenTile.Currency,
                             onToggle = { toggle(OpenTile.Currency) },
-                            expandedDescription = expandedState(open == OpenTile.Currency),
+                            expandedDescription = expandedStateText(open == OpenTile.Currency),
                             preview = { FormTileValue(form.currency) },
                         ) {
                             CurrencyChips(
@@ -261,21 +226,6 @@ fun GroupFormScreen(
 
 /** Which expandable tile of the form is open; one at a time keeps the form short. */
 private enum class OpenTile { None, Color, Icon, Currency }
-
-@Composable
-private fun expandedState(expanded: Boolean): String =
-    stringResource(if (expanded) Res.string.state_expanded else Res.string.state_collapsed)
-
-/** The chosen colour as a small dot in a tile header; the ink for no colour. */
-@Composable
-private fun ColorDot(color: EntityColor?) {
-    Box(
-        modifier = Modifier
-            .size(20.dp)
-            .clip(CircleShape)
-            .background(color.fill()),
-    )
-}
 
 @Composable
 private fun CurrencyChips(selected: String, enabled: Boolean, onSelect: (String) -> Unit) {

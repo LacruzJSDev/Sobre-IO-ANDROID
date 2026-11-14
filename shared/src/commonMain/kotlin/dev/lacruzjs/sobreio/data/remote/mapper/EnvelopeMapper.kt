@@ -1,13 +1,14 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 
 /** Null for an envelope the app never shows (`external`, or a kind added by a newer database). */
-internal fun EnvelopeDto.toDomain(): Envelope? {
+internal fun EnvelopeDto.toDomain(style: EnvelopeStyleDto? = null): Envelope? {
     val kind = kind.toEnvelopeKind() ?: return null
     return Envelope(
         id = id,
@@ -16,6 +17,10 @@ internal fun EnvelopeDto.toDomain(): Envelope? {
         kind = kind,
         monthlyTargetCents = monthlyTarget,
         balanceCents = balance,
+        color = style?.color,
+        icon = style?.icon,
+        ownerUserId = ownerUserId,
+        archivedAt = archivedAt,
     )
 }
 
