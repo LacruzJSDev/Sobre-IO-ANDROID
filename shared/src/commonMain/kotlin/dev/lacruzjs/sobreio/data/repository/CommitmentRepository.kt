@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.data.repository
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.OccurrencePage
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
@@ -22,6 +23,12 @@ interface CommitmentRepository {
 
     /** One commitment with its versions; fails with [dev.lacruzjs.sobreio.domain.error.AppError.NotFound] when it is not visible. */
     suspend fun getCommitment(id: String): Result<Commitment>
+
+    /**
+     * `commitment_funding_status`: the reservation of a funded commitment in its current cycle, or null when the database
+     * returns nothing (not funded in force, archived, no due date to prepare).
+     */
+    suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?>
 
     /**
      * A page of the resolved due items (registered or skipped) of a commitment, newest due date first: at most [limit]

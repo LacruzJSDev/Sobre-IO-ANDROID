@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.commitmentdetail
 
 import dev.lacruzjs.sobreio.domain.error.AppError
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import kotlinx.datetime.LocalDate
 
@@ -40,6 +41,10 @@ data class CommitmentDetailUiState(
     val currencyCode: String = "EUR",
     /** The pencil: owner or admin, live group, live commitment and a kind that can be edited from this account. */
     val canEdit: Boolean = false,
+    /** The reservation of a funded commitment, null when it is not funded or the database has nothing to say. */
+    val funding: CommitmentFunding? = null,
+    /** The name of the envelope the money is reserved in, null when it is not known. */
+    val fundingEnvelopeName: String? = null,
     /** The resolved due items loaded so far, newest first (a page at a time). */
     val occurrences: List<OccurrenceRow> = emptyList(),
     /** How many resolved due items the commitment has in all, loaded or not. */

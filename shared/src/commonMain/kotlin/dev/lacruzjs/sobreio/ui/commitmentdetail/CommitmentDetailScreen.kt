@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.error.AppError
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
@@ -42,6 +43,12 @@ import dev.lacruzjs.sobreio.generated.resources.commitment_detail_changes_title
 import dev.lacruzjs.sobreio.generated.resources.commitment_detail_history_empty
 import dev.lacruzjs.sobreio.generated.resources.commitment_detail_history_title
 import dev.lacruzjs.sobreio.generated.resources.commitment_due_on
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_due_now
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_none_this_period
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_progress
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_this_period
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_this_period_no_envelope
+import dev.lacruzjs.sobreio.generated.resources.commitment_funding_title
 import dev.lacruzjs.sobreio.generated.resources.commitment_registered_on
 import dev.lacruzjs.sobreio.generated.resources.commitment_skipped
 import dev.lacruzjs.sobreio.generated.resources.commitment_version_account
@@ -57,13 +64,16 @@ import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.CollapsibleListSection
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.FormInfoTile
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
+import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -172,6 +182,8 @@ private fun DetailContent(
             modifier = Modifier.padding(horizontal = 4.dp),
         )
 
+        state.funding?.let { FundingBlock(it, state.fundingEnvelopeName, state.currencyCode, languageTag) }
+
         CollapsibleListSection(
             title = stringResource(Res.string.commitment_detail_history_title),
             count = state.occurrencesTotal,
@@ -197,6 +209,28 @@ private fun DetailContent(
             itemKey = { it.version.id },
         ) { VersionItem(it, state.currencyCode, languageTag) }
     }
+}
+
+/** The reservation of a funded commitment: what this period sets aside and how far the cycle has got. */
+@Composable
+private fun FundingBlock(funding: CommitmentFunding, envelopeName: String?, currencyCode: String, languageTag: String) {
+    val thisPeriod = formatMoney(funding.thisPeriodCents, currencyCode, languageTag)
+    val reserved = formatMoney(funding.reservedInCycleCents, currencyCode, languageTag)
+    val total = formatMoney(funding.cycleAmountCents, currencyCode, languageTag)
+    val due = formatDate(funding.nextDueDate, languageTag)
+    FormInfoTile(
+        title = stringResource(Res.string.commitment_funding_title),
+        text = when {
+            funding.thisPeriodCents <= 0 -> stringResource(Res.string.commitment_funding_none_this_period)
+            envelopeName != null -> stringResource(Res.string.commitment_funding_this_period, thisPeriod, envelopeName)
+            else -> stringResource(Res.string.commitment_funding_this_period_no_envelope, thisPeriod)
+        },
+        secondary = if (funding.periodsLeft <= 0) {
+            stringResource(Res.string.commitment_funding_due_now, reserved, total, due)
+        } else {
+            pluralStringResource(Res.plurals.commitment_funding_progress, funding.periodsLeft, reserved, total, due, funding.periodsLeft)
+        },
+    )
 }
 
 @Composable
@@ -290,6 +324,11 @@ private fun CommitmentDetailPreview() {
                 version = previewVersion,
                 signedCents = -69_815,
                 canEdit = true,
+                funding = CommitmentFunding(
+                    envelopeId = "e", nextDueDate = LocalDate(2027, 3, 19), cycleAmountCents = 25_100, cycleStart = LocalDate(2026, 11, 1),
+                    reservedInCycleCents = 5_020, thisPeriodCents = 5_020, periodsInCycle = 5, periodsLeft = 4,
+                ),
+                fundingEnvelopeName = "Seguros",
                 occurrencesTotal = 2,
                 occurrences = listOf(
                     OccurrenceRow(LocalDate(2026, 11, 5), skipped = false, signedCents = -69_815, date = LocalDate(2026, 11, 7)),

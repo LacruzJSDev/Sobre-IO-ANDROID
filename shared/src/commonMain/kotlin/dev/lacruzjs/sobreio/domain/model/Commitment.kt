@@ -152,3 +152,20 @@ data class LinkedCommitmentDraft(
     val funded: Boolean = false,
     val autoRegister: Boolean = true,
 )
+
+/**
+ * Where the funding of a commitment stands in the cycle the current period belongs to (`commitment_funding_status`).
+ * The database computes every figure: [reservedInCycleCents] is what the cycle has reserved so far (this period included),
+ * [thisPeriodCents] what the current period reserves (0 when nothing), [periodsLeft] the periods after the current one
+ * until the one that holds [nextDueDate].
+ */
+data class CommitmentFunding(
+    val envelopeId: String?,
+    val nextDueDate: LocalDate,
+    val cycleAmountCents: Long,
+    val cycleStart: LocalDate,
+    val reservedInCycleCents: Long,
+    val thisPeriodCents: Long,
+    val periodsInCycle: Int,
+    val periodsLeft: Int,
+)

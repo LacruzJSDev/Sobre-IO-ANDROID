@@ -84,6 +84,13 @@ class CommitmentDetailViewModel(
             val accountNames = accounts.getAccounts(groupId).getOrDefault(emptyList()).associate { it.id to it.name }
             val envelopeList = envelopes.getEnvelopes(groupId).getOrDefault(emptyList()).associateBy { it.id }
 
+            // The reservation is a bonus: when it fails the block is simply left out
+            val funding = if (version.funded && !commitment.isArchived) {
+                commitments.getFundingStatus(commitment.id).getOrNull()
+            } else {
+                null
+            }
+
             val section = sectionOf(version, accountId)
             // A contribution can only be changed with its link, which members of one group may not see
             val editableKind = when (section) {
@@ -114,6 +121,8 @@ class CommitmentDetailViewModel(
                     version = version,
                     signedCents = signedAmount(version, accountId),
                     isArchived = commitment.isArchived,
+                    funding = funding,
+                    fundingEnvelopeName = funding?.envelopeId?.let { id -> envelopeList[id]?.takeIf { e -> e.kind != EnvelopeKind.System }?.name },
                     currencyCode = group.currencyCode,
                     canEdit = group.canEdit && !commitment.isArchived && editableKind,
                     occurrences = occurrencesResult.getOrThrow().items

@@ -93,6 +93,33 @@ fun FormTile(
     }
 }
 
+/**
+ * A read only tile in the look of [FormTile] with a small [title], a main line and an optional muted [secondary] line
+ * under it, for a short status that needs two lines (the reservation of a funded commitment).
+ */
+@Composable
+fun FormInfoTile(
+    title: String,
+    text: String,
+    modifier: Modifier = Modifier,
+    secondary: String? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(text = title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = text, style = MaterialTheme.typography.bodyLarge)
+        if (secondary != null) {
+            Text(text = secondary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
 /** The value shown at the right of a [FormTile]. */
 @Composable
 fun FormTileValue(text: String, modifier: Modifier = Modifier) {

@@ -433,6 +433,15 @@
     <string name="commitment_account_change_note">Los vencimientos desde el %1$s se cargarán en %2$s; los anteriores siguen en %3$s.</string>
     <string name="commitment_account_linked_note">Para cambiar la cuenta, archiva esta aportación y crea una nueva.</string>
     <string name="commitment_moves_to">Pasa a %1$s el %2$s</string>
+    <string name="commitment_funding_title">Reserva</string>
+    <string name="commitment_funding_this_period">%1$s este periodo en %2$s</string>
+    <string name="commitment_funding_this_period_no_envelope">%1$s este periodo</string>
+    <string name="commitment_funding_none_this_period">Nada reservado este periodo</string>
+    <string name="commitment_funding_due_now">%1$s de %2$s reservados para el %3$s · vence este periodo</string>
+    <plurals name="commitment_funding_progress">
+        <item quantity="one">%1$s de %2$s reservados para el %3$s · queda %4$d periodo</item>
+        <item quantity="other">%1$s de %2$s reservados para el %3$s · quedan %4$d periodos</item>
+    </plurals>
     <string name="commitment_detail_history_title">Historial</string>
     <string name="commitment_detail_changes_title">Cambios</string>
     <string name="commitment_detail_history_empty">Aún no hay vencimientos resueltos.</string>

@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentDto
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentFundingDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.dto.OccurrenceFactDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentVersionDto
@@ -19,6 +20,23 @@ class CommitmentMapperTest {
         id = id, commitmentId = "c1", effectiveFrom = from, effectiveTo = to, kind = kind, amount = 5_000,
         accountId = "a1", firstDueDate = from, isRecurring = true, everyN = 2, unit = "week", autoRegister = true,
     )
+
+    @Test
+    fun mapsTheFundingStatusAsTheDatabaseGivesIt() {
+        val funding = CommitmentFundingDto(
+            envelopeId = "e1", nextDueDate = "2027-03-19", cycleAmount = 25_100, cycleStart = "2026-11-01",
+            reservedInCycle = 5_020, thisPeriod = 5_020, periodsInCycle = 5, periodsLeft = 4,
+        ).toDomain()
+
+        assertEquals("e1", funding.envelopeId)
+        assertEquals(LocalDate(2027, 3, 19), funding.nextDueDate)
+        assertEquals(LocalDate(2026, 11, 1), funding.cycleStart)
+        assertEquals(25_100, funding.cycleAmountCents)
+        assertEquals(5_020, funding.reservedInCycleCents)
+        assertEquals(5_020, funding.thisPeriodCents)
+        assertEquals(5, funding.periodsInCycle)
+        assertEquals(4, funding.periodsLeft)
+    }
 
     @Test
     fun mapsAVersionWithItsDatesAndSchedule() {

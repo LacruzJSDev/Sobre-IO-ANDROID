@@ -434,6 +434,15 @@
     <string name="commitment_account_change_note">Due dates from %1$s will be charged to %2$s; earlier ones stay in %3$s.</string>
     <string name="commitment_account_linked_note">To change the account, archive this contribution and create a new one.</string>
     <string name="commitment_moves_to">Moves to %1$s on %2$s</string>
+    <string name="commitment_funding_title">Reservation</string>
+    <string name="commitment_funding_this_period">%1$s this period in %2$s</string>
+    <string name="commitment_funding_this_period_no_envelope">%1$s this period</string>
+    <string name="commitment_funding_none_this_period">Nothing reserved this period</string>
+    <string name="commitment_funding_due_now">%1$s of %2$s reserved for %3$s · due this period</string>
+    <plurals name="commitment_funding_progress">
+        <item quantity="one">%1$s of %2$s reserved for %3$s · %4$d period left</item>
+        <item quantity="other">%1$s of %2$s reserved for %3$s · %4$d periods left</item>
+    </plurals>
     <string name="commitment_detail_history_title">History</string>
     <string name="commitment_detail_changes_title">Changes</string>
     <string name="commitment_detail_history_empty">No resolved due items yet.</string>

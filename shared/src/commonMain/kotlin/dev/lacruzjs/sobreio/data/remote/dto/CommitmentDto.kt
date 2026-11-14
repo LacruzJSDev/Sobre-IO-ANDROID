@@ -82,3 +82,16 @@ internal data class CommitmentOccurrenceDto(
     val transactions: OccurrenceFactDto? = null,
     @SerialName("account_transfers") val transfer: OccurrenceFactDto? = null,
 )
+
+/** The row of `commitment_funding_status`; dates travel as ISO text. */
+@Serializable
+internal data class CommitmentFundingDto(
+    @SerialName("envelope_id") val envelopeId: String? = null,
+    @SerialName("next_due_date") val nextDueDate: String,
+    @SerialName("cycle_amount") val cycleAmount: Long = 0,
+    @SerialName("cycle_start") val cycleStart: String,
+    @SerialName("reserved_in_cycle") val reservedInCycle: Long = 0,
+    @SerialName("this_period") val thisPeriod: Long = 0,
+    @SerialName("periods_in_cycle") val periodsInCycle: Int = 0,
+    @SerialName("periods_left") val periodsLeft: Int = 0,
+)

@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
 import dev.lacruzjs.sobreio.domain.model.Commitment
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
@@ -80,6 +81,57 @@ class CommitmentDetailViewModelTest : MainDispatcherTest() {
         assertEquals(-70_000, state.signedCents)
         assertEquals("EUR", state.currencyCode)
         assertFalse(state.isArchived)
+    }
+
+    private val funding = CommitmentFunding(
+        envelopeId = "food", nextDueDate = LocalDate(2027, 3, 19), cycleAmountCents = 25_100, cycleStart = LocalDate(2026, 11, 1),
+        reservedInCycleCents = 5_020, thisPeriodCents = 5_020, periodsInCycle = 5, periodsLeft = 4,
+    )
+
+    private fun fundedRent(archivedAt: String? = null) = Commitment(
+        "c1", "g1", "Rent", archivedAt = archivedAt, versions = listOf(newVersion.copy(funded = true)),
+    )
+
+    @Test
+    fun aFundedCommitmentShowsItsReservationWithTheEnvelopeName() {
+        repository.commitments = listOf(fundedRent())
+        repository.funding = funding
+
+        val state = viewModel().state.value
+
+        assertEquals(funding, state.funding)
+        assertEquals("Food", state.fundingEnvelopeName)
+        assertTrue(repository.calls.contains("getFundingStatus(c1)"))
+    }
+
+    @Test
+    fun theReservationIsHiddenWhenTheCommitmentIsNotFunded() {
+        repository.funding = funding
+
+        val state = viewModel().state.value
+
+        assertNull(state.funding)
+        assertFalse(repository.calls.any { it.startsWith("getFundingStatus") })
+    }
+
+    @Test
+    fun theReservationIsHiddenWhenTheDatabaseHasNothingOrFails() {
+        repository.commitments = listOf(fundedRent())
+        assertNull(viewModel().state.value.funding)
+
+        repository.fundingResult = Result.failure(AppError.Network)
+        val failed = viewModel().state.value
+        assertNull(failed.funding)
+        assertFalse(failed.isLoading)
+        assertNull(failed.error)
+    }
+
+    @Test
+    fun anArchivedCommitmentAsksForNoReservation() {
+        repository.commitments = listOf(fundedRent(archivedAt = "2026-11-01T00:00:00Z"))
+        repository.funding = funding
+
+        assertNull(viewModel().state.value.funding)
     }
 
     @Test

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentFundingDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentIdDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
@@ -11,6 +12,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.OccurrencePage
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
@@ -62,6 +64,13 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
             .decodeSingleOrNull<CommitmentWithVersionsDto>()
             ?.let { it.header().toDomain(it.versions) }
             ?: throw AppError.NotFound
+    }
+
+    override suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?> = safeCall {
+        postgrest.rpc("commitment_funding_status", buildJsonObject { put("p_commitment_id", commitmentId) })
+            .decodeList<CommitmentFundingDto>()
+            .firstOrNull()
+            ?.toDomain()
     }
 
     override suspend fun getOccurrences(commitmentId: String, offset: Int, limit: Int): Result<OccurrencePage> = safeCall {

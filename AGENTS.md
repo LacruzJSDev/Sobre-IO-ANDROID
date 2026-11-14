@@ -179,6 +179,10 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `CommitmentDetailViewModel` with Koin params by position): `ScreenHeader` with the kind-icon avatar, the name and the account of the
   version shown as subtitle; a pencil (`Group.canEdit`, live commitment, editable kind, a contribution also needs its link) opens
   `CommitmentForm`; the screen reloads each time it is shown. Content: a line with the signed amount, the frequency and "Archived";
+  when the version shown is funded (and the commitment live), a "Reservation" block (`FormInfoTile` in `FormSections.kt`) from
+  `CommitmentRepository.getFundingStatus` (`commitment_funding_status`, `CommitmentFunding`; nothing summed in the app; a failure or
+  an empty answer leaves the block out): "<this period> this period in <envelope>" and a muted line "<reserved> of <cycle amount> reserved
+  for <due date> · N periods left" (plural `commitment_funding_progress`; "due this period" when none are left);
   "History" (a `CollapsibleListSection`, open by default, count in the header; `CommitmentRepository.getOccurrences(id, offset, limit = 20)`
   returns an `OccurrencePage` with the exact total (`count(Count.EXACT)` + `range`) from `commitment_occurrences` with `transactions(...)` / `account_transfers(...)`
   embedded, newest first; the ViewModel appends the next page on `LoadMoreOccurrences` (ignored while loading or when all is loaded; a failure keeps the rows and shows a retry in the section); rows: due date, the registered amount signed for the account and the movement's date when it differs,

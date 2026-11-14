@@ -1,10 +1,12 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentDto
+import dev.lacruzjs.sobreio.data.remote.dto.CommitmentFundingDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentVersionDto
 import dev.lacruzjs.sobreio.domain.model.Commitment
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
@@ -42,6 +44,17 @@ internal fun CommitmentDto.toDomain(versions: List<CommitmentVersionDto>) = Comm
     notes = notes,
     archivedAt = archivedAt,
     versions = versions.map { it.toDomain() }.sortedByDescending { it.effectiveFrom },
+)
+
+internal fun CommitmentFundingDto.toDomain() = CommitmentFunding(
+    envelopeId = envelopeId,
+    nextDueDate = LocalDate.parse(nextDueDate),
+    cycleAmountCents = cycleAmount,
+    cycleStart = LocalDate.parse(cycleStart),
+    reservedInCycleCents = reservedInCycle,
+    thisPeriodCents = thisPeriod,
+    periodsInCycle = periodsInCycle,
+    periodsLeft = periodsLeft,
 )
 
 internal fun CommitmentLinkDto.toDomain() = CommitmentLink(

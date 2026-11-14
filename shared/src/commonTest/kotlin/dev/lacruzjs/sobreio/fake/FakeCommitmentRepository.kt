@@ -5,6 +5,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentOccurrence
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
@@ -24,6 +25,9 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     /** While set, a page with an offset above 0 waits for it, to keep a load in flight. */
     var loadMoreGate: CompletableDeferred<Unit>? = null
     val loadMoreResults = ArrayDeque<Result<OccurrencePage>>()
+
+    var funding: CommitmentFunding? = null
+    var fundingResult: Result<CommitmentFunding?>? = null
 
     var createdDraft: CommitmentDraft? = null
     var createdLinkedDraft: LinkedCommitmentDraft? = null
@@ -47,6 +51,11 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     override suspend fun getCommitment(id: String): Result<Commitment> {
         calls += "getCommitment($id)"
         return commitments.firstOrNull { it.id == id }?.let { Result.success(it) } ?: Result.failure(AppError.NotFound)
+    }
+
+    override suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?> {
+        calls += "getFundingStatus($commitmentId)"
+        return fundingResult ?: Result.success(funding)
     }
 
     override suspend fun getOccurrences(commitmentId: String, offset: Int, limit: Int): Result<OccurrencePage> {
