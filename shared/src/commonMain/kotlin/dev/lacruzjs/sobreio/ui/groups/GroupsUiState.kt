@@ -15,12 +15,10 @@ data class GroupsUiState(
     /** Failure of loading the list. */
     val error: AppError? = null,
     val sheet: GroupsSheet = GroupsSheet.None,
-    /** The fields of the Create sheet. */
-    val form: GroupFormState = GroupFormState(),
     val code: String = "",
     val codeError: StringResource? = null,
     val isSubmitting: Boolean = false,
-    /** Failure of creating or joining, shown inside the open sheet. */
+    /** Failure of joining, shown inside the open sheet. */
     val submitError: AppError? = null,
     val isSigningOut: Boolean = false,
     /** Failure of signing out, shown above the bottom section. */
@@ -29,6 +27,6 @@ data class GroupsUiState(
     val actionError: AppError? = null,
     /** Snackbar with "Undo" for the last delete, archive or leave. */
     val undoMessage: UndoMessage? = null,
-    /** Id of the group to open after creating or joining one. The Route consumes it. */
+    /** Id of the group to open after joining one. The Route consumes it. */
     val navigateToGroup: String? = null,
 )

@@ -6,11 +6,10 @@ import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
-import dev.lacruzjs.sobreio.ui.groups.GroupFormState
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 
 /** Which bottom sheet of the group settings is open. */
-enum class GroupSettingsSheet { None, Edit, Invite, Role }
+enum class GroupSettingsSheet { None, Invite, Role }
 
 data class GroupSettingsUiState(
     val group: Group? = null,
@@ -24,10 +23,8 @@ data class GroupSettingsUiState(
     /** Failure of loading the group. */
     val error: AppError? = null,
     val sheet: GroupSettingsSheet = GroupSettingsSheet.None,
-    /** The fields of the Edit sheet. */
-    val form: GroupFormState = GroupFormState(),
     val isSubmitting: Boolean = false,
-    /** Failure of saving the group, creating an invitation or changing a role, shown inside the open sheet. */
+    /** Failure of creating an invitation or changing a role, shown inside the open sheet. */
     val submitError: AppError? = null,
     /** Role chosen in the Invite sheet; the invitation it creates takes it. */
     val inviteRole: GroupRole = GroupRole.Member,

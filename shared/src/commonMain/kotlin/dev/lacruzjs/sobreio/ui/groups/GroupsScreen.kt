@@ -42,6 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun GroupsRoute(
     onOpenGroup: (groupId: String) -> Unit,
     onOpenProfile: () -> Unit,
+    onNewGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupsViewModel = koinViewModel(),
 ) {
@@ -62,6 +63,7 @@ fun GroupsRoute(
         onEvent = { event ->
             when (event) {
                 GroupsEvent.ProfileClicked -> onOpenProfile()
+                GroupsEvent.NewGroupClicked -> onNewGroup()
                 is GroupsEvent.GroupClicked -> onOpenGroup(event.groupId)
                 else -> viewModel.onEvent(event)
             }
@@ -119,14 +121,6 @@ fun GroupsScreen(
 
     when (state.sheet) {
         GroupsSheet.None -> Unit
-        GroupsSheet.Create -> GroupFormSheet(
-            form = state.form,
-            onChange = { onEvent(GroupsEvent.FormChanged(it)) },
-            onConfirm = { onEvent(GroupsEvent.CreateConfirmed) },
-            onDismiss = { onEvent(GroupsEvent.SheetDismissed) },
-            isSubmitting = state.isSubmitting,
-            submitError = state.submitError,
-        )
         GroupsSheet.Join -> JoinGroupSheet(state, onEvent)
     }
 }

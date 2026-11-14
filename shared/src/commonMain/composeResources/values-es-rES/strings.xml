@@ -248,7 +248,6 @@
     <string name="color_brown">Marrón</string>
     <string name="icon_none">Sin icono</string>
     <string name="color_none">Sin color</string>
-    <string name="appearance_title">Apariencia</string>
     <string name="appearance_field_label">Color e icono</string>
     <string name="holder_joint">Conjunta</string>
     <string name="action_done">Hecho</string>
@@ -299,4 +298,7 @@
     <string name="settings_section_accepted">Aceptadas</string>
     <string name="member_former">Antiguo miembro</string>
     <string name="invitation_accepted_on">Aceptada el %1$s</string>
+    <string name="action_close">Cerrar</string>
+    <string name="time_zone_search">Buscar zona horaria</string>
+    <string name="time_zone_current">Zona horaria actual</string>
 </resources>

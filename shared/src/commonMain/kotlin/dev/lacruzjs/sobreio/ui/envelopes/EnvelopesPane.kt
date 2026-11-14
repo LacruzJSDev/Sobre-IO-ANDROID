@@ -27,7 +27,7 @@ import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Content of the Envelopes tab: summary, sections, undo snackbar and the create, edit and assign sheets. It lives
+ * Content of the Envelopes tab: summary, sections, undo snackbar and the assign sheet. It lives
  * inside the group shell, so the snackbar sits above the navigation bar. The "+" is in the shell's header.
  */
 @Composable
@@ -63,7 +63,6 @@ fun EnvelopesPane(
 
     when (state.sheet) {
         EnvelopesSheet.None -> Unit
-        EnvelopesSheet.Create, EnvelopesSheet.Edit -> EnvelopeFormSheet(state, onEvent)
         EnvelopesSheet.Assign -> AssignSheet(state, onEvent)
     }
 }

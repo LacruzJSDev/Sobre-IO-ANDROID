@@ -73,6 +73,8 @@ fun GroupRoute(
     groupId: String,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAccountForm: (accountId: String?) -> Unit,
+    onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
@@ -117,27 +119,43 @@ fun GroupRoute(
             if (accountsState.canEdit) {
                 AddIconButton(
                     contentDescription = stringResource(Res.string.action_new_account),
-                    onClick = { accountsViewModel.onEvent(AccountsEvent.NewAccountClicked) },
+                    onClick = { onOpenAccountForm(null) },
                 )
             }
         },
         accountsContent = {
             // Shown again each time the tab is selected, so it reads the list again
             LaunchedEffect(Unit) { accountsViewModel.onEvent(AccountsEvent.Refresh) }
-            AccountsPane(state = accountsState, onEvent = accountsViewModel::onEvent)
+            AccountsPane(
+                state = accountsState,
+                onEvent = { event ->
+                    when (event) {
+                        is AccountsEvent.EditClicked -> onOpenAccountForm(event.accountId)
+                        else -> accountsViewModel.onEvent(event)
+                    }
+                },
+            )
         },
         envelopesAction = {
             if (envelopesState.canEdit) {
                 AddIconButton(
                     contentDescription = stringResource(Res.string.action_new_envelope),
-                    onClick = { envelopesViewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked) },
+                    onClick = { onOpenEnvelopeForm(null) },
                 )
             }
         },
         envelopesContent = {
             // Shown again each time the tab is selected, so it reads the summary and the list again
             LaunchedEffect(Unit) { envelopesViewModel.onEvent(EnvelopesEvent.Refresh) }
-            EnvelopesPane(state = envelopesState, onEvent = envelopesViewModel::onEvent)
+            EnvelopesPane(
+                state = envelopesState,
+                onEvent = { event ->
+                    when (event) {
+                        is EnvelopesEvent.EditClicked -> onOpenEnvelopeForm(event.envelopeId)
+                        else -> envelopesViewModel.onEvent(event)
+                    }
+                },
+            )
         },
     )
 }

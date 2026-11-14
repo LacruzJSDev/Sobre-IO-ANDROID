@@ -80,7 +80,6 @@ import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
-import dev.lacruzjs.sobreio.ui.groups.GroupFormSheet
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -93,10 +92,14 @@ fun GroupSettingsRoute(
     groupId: String,
     onBack: () -> Unit,
     onBackToGroups: () -> Unit,
+    onEditGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupSettingsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Shown again after the group form: read the group, members and invitations again
+    LaunchedEffect(Unit) { viewModel.onEvent(GroupSettingsEvent.Refresh) }
 
     if (state.navigateToGroups) {
         LaunchedEffect(Unit) {
@@ -110,6 +113,7 @@ fun GroupSettingsRoute(
         onEvent = { event ->
             when (event) {
                 GroupSettingsEvent.BackClicked -> onBack()
+                GroupSettingsEvent.EditClicked -> onEditGroup()
                 else -> viewModel.onEvent(event)
             }
         },
@@ -156,14 +160,6 @@ fun GroupSettingsScreen(
 
     when (state.sheet) {
         GroupSettingsSheet.None -> Unit
-        GroupSettingsSheet.Edit -> GroupFormSheet(
-            form = state.form,
-            onChange = { onEvent(GroupSettingsEvent.FormChanged(it)) },
-            onConfirm = { onEvent(GroupSettingsEvent.EditConfirmed) },
-            onDismiss = { onEvent(GroupSettingsEvent.SheetDismissed) },
-            isSubmitting = state.isSubmitting,
-            submitError = state.submitError,
-        )
         GroupSettingsSheet.Invite -> InviteSheet(state, onEvent)
         GroupSettingsSheet.Role -> RoleSheet(state, onEvent)
     }

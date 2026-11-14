@@ -74,83 +74,6 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun createSendsTrimmedNameKindAndTargetThenReloads() {
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.NameChanged("  Gym  "))
-        viewModel.onEvent(EnvelopesEvent.KindSelected(EnvelopeKind.Saving))
-        viewModel.onEvent(EnvelopesEvent.MonthlyTargetChanged("12,5"))
-        repository.calls.clear()
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-
-        assertEquals(
-            listOf("createEnvelope(g1, Gym, Saving, 1250)", "materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)"),
-            repository.calls,
-        )
-        assertEquals(EnvelopesSheet.None, viewModel.state.value.sheet)
-    }
-
-    @Test
-    fun blankTargetMeansZero() {
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.NameChanged("Gym"))
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-
-        assertTrue("createEnvelope(g1, Gym, Spending, 0)" in repository.calls)
-    }
-
-    @Test
-    fun negativeTargetAndBlankNameAreRejectedWithoutCallingTheRepository() {
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.NameChanged("  "))
-        viewModel.onEvent(EnvelopesEvent.MonthlyTargetChanged("-5"))
-        repository.calls.clear()
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-
-        assertEquals(Res.string.validation_required, viewModel.state.value.nameError)
-        assertEquals(Res.string.validation_amount_negative, viewModel.state.value.monthlyTargetError)
-        assertTrue(repository.calls.isEmpty())
-        assertEquals(EnvelopesSheet.Create, viewModel.state.value.sheet)
-
-        viewModel.onEvent(EnvelopesEvent.MonthlyTargetChanged("abc"))
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-        assertEquals(Res.string.validation_amount_invalid, viewModel.state.value.monthlyTargetError)
-    }
-
-    @Test
-    fun failedCreateKeepsTheSheetOpenWithTheError() {
-        repository.createResult = Result.failure(AppError.DuplicateName)
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.NameChanged("Rent"))
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-
-        assertEquals(EnvelopesSheet.Create, viewModel.state.value.sheet)
-        assertEquals(AppError.DuplicateName, viewModel.state.value.submitError)
-        assertFalse(viewModel.state.value.isSubmitting)
-    }
-
-    @Test
-    fun editFillsTheSheetAndSaves() {
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.EditClicked("1"))
-
-        assertEquals(EnvelopesSheet.Edit, viewModel.state.value.sheet)
-        assertEquals("Rent", viewModel.state.value.name)
-        assertEquals("500", viewModel.state.value.monthlyTarget)
-
-        viewModel.onEvent(EnvelopesEvent.NameChanged("Housing"))
-        viewModel.onEvent(EnvelopesEvent.KindSelected(EnvelopeKind.Saving))
-        viewModel.onEvent(EnvelopesEvent.MonthlyTargetChanged(""))
-        viewModel.onEvent(EnvelopesEvent.ConfirmClicked)
-
-        assertTrue("updateEnvelope(1, Housing, Saving, 0)" in repository.calls)
-        assertEquals(EnvelopesSheet.None, viewModel.state.value.sheet)
-    }
-
-    @Test
     fun deleteArchivesAtOnceHidesTheRowAndOffersUndo() {
         loaded()
         viewModel.onEvent(EnvelopesEvent.DeleteClicked("1"))
@@ -262,23 +185,12 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun membersCannotCreateEditOrDelete() {
+    fun membersCannotDelete() {
         loaded(canEdit = false)
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.EditClicked("1"))
         viewModel.onEvent(EnvelopesEvent.DeleteClicked("1"))
 
-        assertEquals(EnvelopesSheet.None, viewModel.state.value.sheet)
         assertEquals(listOf(food, rent), viewModel.state.value.spending)
         assertTrue(repository.calls.none { it.startsWith("archive") || it.startsWith("create") })
     }
 
-    @Test
-    fun dismissingTheSheetClosesIt() {
-        loaded()
-        viewModel.onEvent(EnvelopesEvent.NewEnvelopeClicked)
-        viewModel.onEvent(EnvelopesEvent.SheetDismissed)
-
-        assertEquals(EnvelopesSheet.None, viewModel.state.value.sheet)
-    }
 }

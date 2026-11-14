@@ -29,7 +29,7 @@ import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Content of the Accounts tab: total, list, undo snackbar and the create/edit sheet. It lives inside the group shell,
+ * Content of the Accounts tab: total, list, undo snackbar. It lives inside the group shell,
  * so the snackbar sits above the navigation bar. The "+" is in the shell's header.
  */
 @Composable
@@ -66,11 +66,6 @@ fun AccountsPane(
             onUndo = { onEvent(AccountsEvent.UndoClicked) },
             onDismiss = { onEvent(AccountsEvent.UndoExpired) },
         )
-    }
-
-    when (state.sheet) {
-        AccountsSheet.None -> Unit
-        AccountsSheet.Create, AccountsSheet.Edit -> AccountFormSheet(state, onEvent)
     }
 }
 

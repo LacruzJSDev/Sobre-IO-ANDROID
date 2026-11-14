@@ -1,19 +1,19 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
 
 import dev.lacruzjs.sobreio.domain.model.GroupRole
-import dev.lacruzjs.sobreio.ui.groups.GroupFormState
 
 sealed interface GroupSettingsEvent {
     /** Handled by the Route, which owns the back stack. */
     data object BackClicked : GroupSettingsEvent
     data object Retry : GroupSettingsEvent
+
+    /** Reload quietly when the screen is shown again (for example after editing the group in its form). */
+    data object Refresh : GroupSettingsEvent
     data object NavigationHandled : GroupSettingsEvent
     data object SheetDismissed : GroupSettingsEvent
 
-    /** Details: the "Edit" button opens the group sheet; every change of its fields comes as [FormChanged]. */
+    /** Details: the "Edit" button. Handled by the Route, which opens the group form. */
     data object EditClicked : GroupSettingsEvent
-    data class FormChanged(val form: GroupFormState) : GroupSettingsEvent
-    data object EditConfirmed : GroupSettingsEvent
 
     /** Members (owner only): swipe actions of another member's row. */
     data class RoleClicked(val userId: String) : GroupSettingsEvent

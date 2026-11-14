@@ -4,11 +4,11 @@ sealed interface GroupsEvent {
     /** Load the list; sent each time the screen is shown. */
     data object Refresh : GroupsEvent
 
-    /** ProfileClicked and GroupClicked are handled by the Route, which owns the back stack. */
+    /** The Route handles these, it owns the back stack: profile, a group, and the "+" that opens the group form. */
     data object ProfileClicked : GroupsEvent
+    data object NewGroupClicked : GroupsEvent
     data class GroupClicked(val groupId: String) : GroupsEvent
 
-    data object NewGroupClicked : GroupsEvent
 
     /**
      * Swipe actions of a row, none confirmed: Archive and Delete (owner only) and Leave (everyone, owners included).
@@ -28,10 +28,6 @@ sealed interface GroupsEvent {
     data object SignOutClicked : GroupsEvent
     data object JoinClicked : GroupsEvent
     data object SheetDismissed : GroupsEvent
-
-    /** Any change of the create sheet's fields: name, currency, colour, icon, period day or time zone. */
-    data class FormChanged(val form: GroupFormState) : GroupsEvent
-    data object CreateConfirmed : GroupsEvent
 
     data class CodeChanged(val value: String) : GroupsEvent
     data object JoinConfirmed : GroupsEvent

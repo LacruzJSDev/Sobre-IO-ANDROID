@@ -12,11 +12,9 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.group_archived_message
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
 import dev.lacruzjs.sobreio.generated.resources.group_left
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -59,74 +57,6 @@ class GroupsViewModelTest : MainDispatcherTest() {
 
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.isLoading)
-    }
-
-    private fun changeForm(change: GroupFormState.() -> GroupFormState) =
-        viewModel.onEvent(GroupsEvent.FormChanged(viewModel.state.value.form.change()))
-
-    @Test
-    fun createSendsEveryFieldThenAsksToOpenTheGroup() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        changeForm {
-            copy(
-                name = "  Casa  ",
-                currency = "USD",
-                color = "#3B6E8F",
-                icon = "home",
-                periodStartDay = 5,
-                timezone = "America/New_York",
-            )
-        }
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(listOf("createGroup(Casa, USD, America/New_York, 5, #3B6E8F, home)"), repository.calls)
-        assertEquals("new-id", viewModel.state.value.navigateToGroup)
-        assertEquals(GroupsSheet.None, viewModel.state.value.sheet)
-
-        viewModel.onEvent(GroupsEvent.NavigationHandled)
-        assertNull(viewModel.state.value.navigateToGroup)
-    }
-
-    @Test
-    fun createDefaultsToTheDeviceTimeZoneDayOneAndNoAppearance() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        changeForm { copy(name = "Casa") }
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        val zone = TimeZone.currentSystemDefault().id
-        assertEquals(listOf("createGroup(Casa, EUR, $zone, 1, null, null)"), repository.calls)
-    }
-
-    @Test
-    fun blankNameIsRejectedWithoutCallingTheRepository() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        changeForm { copy(name = "   ") }
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(Res.string.validation_required, viewModel.state.value.form.nameError)
-        assertTrue(repository.calls.isEmpty())
-    }
-
-    @Test
-    fun tooLongNameIsRejected() {
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        changeForm { copy(name = "a".repeat(MAX_GROUP_NAME_LENGTH + 1)) }
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(Res.string.validation_name_too_long, viewModel.state.value.form.nameError)
-        assertTrue(repository.calls.isEmpty())
-    }
-
-    @Test
-    fun failedCreateKeepsTheSheetOpenWithTheError() {
-        repository.createResult = Result.failure(AppError.Network)
-        viewModel.onEvent(GroupsEvent.NewGroupClicked)
-        changeForm { copy(name = "Casa") }
-        viewModel.onEvent(GroupsEvent.CreateConfirmed)
-
-        assertEquals(GroupsSheet.Create, viewModel.state.value.sheet)
-        assertEquals(AppError.Network, viewModel.state.value.submitError)
-        assertNull(viewModel.state.value.navigateToGroup)
     }
 
     @Test

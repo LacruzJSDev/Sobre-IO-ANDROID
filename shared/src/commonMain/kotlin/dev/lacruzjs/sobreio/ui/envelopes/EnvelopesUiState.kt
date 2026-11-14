@@ -6,10 +6,8 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 import org.jetbrains.compose.resources.StringResource
 
-const val MAX_ENVELOPE_NAME_LENGTH = 100
-
 /** Which bottom sheet of the Envelopes tab is open. */
-enum class EnvelopesSheet { None, Create, Edit, Assign }
+enum class EnvelopesSheet { None, Assign }
 
 data class EnvelopesUiState(
     /** The spending and saving envelopes, ordered by name. The "Unassigned" one is [unassigned]. */
@@ -29,13 +27,6 @@ data class EnvelopesUiState(
     /** Failure of loading. */
     val error: AppError? = null,
     val sheet: EnvelopesSheet = EnvelopesSheet.None,
-    val editingEnvelope: Envelope? = null,
-    val name: String = "",
-    val nameError: StringResource? = null,
-    val kind: EnvelopeKind = EnvelopeKind.Spending,
-    /** Text of the monthly target field; blank means no target. */
-    val monthlyTarget: String = "",
-    val monthlyTargetError: StringResource? = null,
     /** Destination of the open Assign sheet. */
     val assignTarget: Envelope? = null,
     val amount: String = "",
@@ -44,7 +35,7 @@ data class EnvelopesUiState(
     val sourceId: String? = null,
     val sourceError: StringResource? = null,
     val isSubmitting: Boolean = false,
-    /** Failure of creating, editing or assigning, shown inside the open sheet. */
+    /** Failure of assigning, shown inside the open sheet. */
     val submitError: AppError? = null,
     /** Failure of deleting or undoing, shown above the list. */
     val actionError: AppError? = null,

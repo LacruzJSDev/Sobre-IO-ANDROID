@@ -30,8 +30,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Package and application id: `dev.lacruzjs.sobreio` (shared module namespace `dev.lacruzjs.sobreio.shared`).
 - Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
-  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, create group
-  in a bottom sheet, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
+  sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
+  full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
   Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still empty
   states). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
@@ -54,12 +54,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   bottom section with no divider (spacing only): "Join with a code" and "Profile" as `PrimaryButton`s and "Sign out" as a
   `DestructiveButton`. Rows show an `EntityAvatar` with the group's colour and icon. Each row swipes left
   (`SwipeActionsRow`): Archive (owner), Delete (owner, red) and Leave (everyone, owners included, red). There is no Edit
-  here: editing lives only in the group settings. The "+" opens the create sheet (`GroupFormSheet`, fields in
-  `GroupFormState`, shared with the group settings): name, currency (read-only on edit), `AppearanceField` (colour and
-  icon, category Group), the period start day (`PeriodDayField`, a "-" / "Day N" / "+" stepper limited to 1-28, with a
-  note that it only affects periods not created yet, D-29) and the time zone (`TimeZoneField`, default
-  `TimeZone.currentSystemDefault()`: an `ExposedDropdownMenuBox` with an editable field that filters
-  `TimeZone.availableZoneIds` as you type and lists at most 50; no sheet on top of the sheet). Archive, Delete and Leave
+  here: editing lives only in the group settings. The "+" opens the full-screen group form (`GroupForm(null)`, see
+  Group form below). Archive, Delete and Leave
   are never confirmed: an "Undo" snackbar follows (`UndoController`, see Rules). Archive sets `archived_at` at once (the
   row moves to the Archived section) and Undo reopens it. Owner delete calls `request_group_purge` immediately and Undo
   calls `cancel_group_purge`. Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is
@@ -73,8 +69,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   and pending groups, so Accounts and Envelopes become read only.
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter): the total (`group_overview.accounts_total`,
   never summed in the app) and the accounts from the `account_balances` view (`AccountsPane`, `AccountList`: square ink icon,
-  name, kind label, balance; negatives in the normal text colour). Owner and admin see the header "+" (create sheet: name,
-  kind chips, opening balance parsed by `parseMoneyInput`, `create_account` RPC) and swipe rows for Edit (name and kind) and
+  name, kind label, balance; negatives in the normal text colour). Owner and admin see the header "+" (opens the full-screen account
+  form: name, kind chips, opening balance parsed by `parseMoneyInput`, `create_account` RPC) and swipe rows for Edit (name and kind) and
   Delete. Delete archives (`archived_at`) at once, so FZ008 returns immediately and the row comes back; Undo unarchives.
   Members only read. Name clashes (SQLSTATE 23505) map to `AppError.DuplicateName`. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
@@ -85,7 +81,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary block on top: Total and, prominent on a soft block, "Unassigned" (label from resources by kind `System`, never the
   database name). Below, "Spending" and "Saving" sections ordered by name (empty ones hidden): square ink icon, name,
   "Target X a month" when the target is above 0, balance. `external` is filtered out in the mapper. Owner and admin see the "+"
-  (create sheet: name, kind chips, optional monthly target; direct insert into `envelopes`) and swipe Edit and Delete (archive
+  (opens the full-screen envelope form: name, kind chips, optional monthly target; direct insert into `envelopes`) and swipe Edit and Delete (archive
   with Undo, FZ008 restores the row). Any member swipes "Assign": a sheet with an amount and the source as chips
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
   Tapping a row does nothing yet (envelope detail comes later).
@@ -93,10 +89,24 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens a "Coming soon" sheet until that feature exists (Accounts and Envelopes
   have their own, see above).
+- Full-screen forms (`FormScaffold`: close X on the left, title, "Save" on the right with a spinner while saving; the
+  fields scroll above the keyboard with `imePadding()`; system back = the X): `GroupForm(groupId?)` (`ui/groupform`),
+  `AccountForm(groupId, accountId?)` (`ui/accountform`) and `EnvelopeForm(groupId, envelopeId?)` (`ui/envelopeform`),
+  each with its own ViewModel (ids as Koin parameters by position, `params.get<String?>(1)`) that loads the item when
+  editing, validates, calls the repository and sets a `saved` flag the Route turns into back. The list or settings
+  screen reloads when shown again (`Refresh`). Group form: name, colour and icon inline (`ColorPicker`, `IconPicker`),
+  currency (create only, read-only text when editing), period start day (`PeriodDayField`, a "-" / "Day N" / "+"
+  stepper limited to 1-28, with a note that it only affects periods not created yet, D-29) and the time zone, a row
+  that opens `TimeZonePicker(current)` (`ui/timezone`: back arrow, autofocused search field, the current zone first and
+  highlighted, then every `TimeZone.availableZoneIds` filtered case-insensitively, spaces matching underscores). The
+  picked id travels back through a `pickedTimeZone` holder in `AppNavigation` (saved state, above both entries): the
+  picker sets it and pops, the still-alive form ViewModel takes it once (`TimeZonePicked`) and clears it. Creating a
+  group pops the form and opens the new group. Account and envelope forms keep today's fields only (name, kind,
+  opening balance on create / monthly target); holder and the rest of the scope come next.
 - Group settings (`ui/groupsettings`, `GroupSettingsViewModel` with the group id as Koin parameter): compact, sections
   separated by spacing, no bottom buttons (archive, delete and leave are Groups list swipes). Details: avatar, name,
   currency, period day and time zone, plus an "Edit" button (owner and admin, live group) that opens the same
-  `GroupFormSheet`; an archived group shows a read-only note. Members (`MemberRepository`): initial avatar, name ("You"
+  full-screen group form (`GroupForm(groupId)`); the screen reloads when it is shown again; an archived group shows a read-only note. Members (`MemberRepository`): initial avatar, name ("You"
   marker) and role label; an owner swipes a member's row for Role (sheet with owner/admin/member chips,
   `account_group_members.role` update; FZ009 shows inside the sheet; also on their own row) and, on other members' rows,
   Remove (hidden at once with Undo; `left_at` is written only when the snackbar ends without Undo). Invitations (owner
@@ -121,12 +131,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
   in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
-- Appearance components (built, not yet used by screens): `ui/theme/EntityColor` is the fixed 12-colour palette (the DB
+- Appearance components (colour and icon are inline in the group form; accounts and envelopes will use them too): `ui/theme/EntityColor` is the fixed 12-colour palette (the DB
   `color` column stores the light `#RRGGBB`, `fromHex` is case-insensitive and null for unknown; `dark` is a lighter
   variant); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 20, Account 20, Envelope 32;
   keys are snake_case English, stored in the DB `icon` column, never rename them; `iconFor` is null for unknown keys).
-  Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker`, `AppearanceField` /
-  `AppearanceSheet` (avatar preview row that opens the pickers in a bottom sheet) and `HolderPicker` (Joint plus one
+  Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker` (used directly in the
+  forms, no sheet) and `HolderPicker` (Joint plus one
   chip per member; hide it with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
   with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
   (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
@@ -163,7 +173,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `accounts`, `envelopes`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `movements`,
 plus the `newmovement` bottom sheet.
 
 ## Rules
@@ -195,6 +205,8 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
+  only for short one-step actions (Assign, role change, invite plus code, join with a code).
 - Lists: rows swipe left for Edit/Delete with `SwipeActionsRow`; creation is the "+" in the header; there are no
   per-item settings screens. Destructive actions are never confirmed with a dialog: the item is hidden at once (soft
   delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,

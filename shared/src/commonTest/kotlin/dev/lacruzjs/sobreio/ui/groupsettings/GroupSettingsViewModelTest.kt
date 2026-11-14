@@ -14,9 +14,7 @@ import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
-import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
-import dev.lacruzjs.sobreio.ui.groups.GroupFormState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -49,9 +47,6 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         groupRepository.invitations = listOf(invitation, expired)
         return GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock)
     }
-
-    private fun GroupSettingsViewModel.change(change: GroupFormState.() -> GroupFormState) =
-        onEvent(GroupSettingsEvent.FormChanged(state.value.form.change()))
 
     // Loading and permissions
 
@@ -100,7 +95,6 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         assertTrue(state.pendingInvitations.isEmpty())
         assertTrue(groupRepository.calls.none { it.startsWith("getInvitations") })
 
-        viewModel.onEvent(GroupSettingsEvent.EditClicked)
         viewModel.onEvent(GroupSettingsEvent.InviteClicked)
         assertEquals(GroupSettingsSheet.None, viewModel.state.value.sheet)
     }
@@ -128,47 +122,6 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     }
 
     // Details
-
-    @Test
-    fun editSendsEveryFieldAndUpdatesTheDetails() {
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.EditClicked)
-        assertEquals(GroupSettingsSheet.Edit, viewModel.state.value.sheet)
-        assertEquals("Casa", viewModel.state.value.form.name)
-
-        viewModel.change {
-            copy(name = " Hogar ", color = "#8E3B4A", icon = "key", periodStartDay = 15, timezone = "Europe/Lisbon")
-        }
-        viewModel.onEvent(GroupSettingsEvent.EditConfirmed)
-
-        assertTrue("updateGroup(g1, Hogar, Europe/Lisbon, 15, #8E3B4A, key)" in groupRepository.calls)
-        val group = viewModel.state.value.group
-        assertEquals("Hogar", group?.name)
-        assertEquals(15, group?.periodStartDay)
-        assertEquals("Europe/Lisbon", group?.timezone)
-        assertEquals("#8E3B4A", group?.color)
-        assertEquals("key", group?.icon)
-        assertEquals(GroupSettingsSheet.None, viewModel.state.value.sheet)
-    }
-
-    @Test
-    fun editRejectsABlankNameAndKeepsTheSheetOpenOnFailure() {
-        val viewModel = viewModel()
-        viewModel.onEvent(GroupSettingsEvent.EditClicked)
-        viewModel.change { copy(name = "  ") }
-        viewModel.onEvent(GroupSettingsEvent.EditConfirmed)
-        assertEquals(Res.string.validation_required, viewModel.state.value.form.nameError)
-        assertTrue(groupRepository.calls.none { it.startsWith("updateGroup") })
-
-        groupRepository.updateResult = Result.failure(AppError.Network)
-        viewModel.change { copy(name = "Hogar") }
-        viewModel.onEvent(GroupSettingsEvent.EditConfirmed)
-        assertEquals(GroupSettingsSheet.Edit, viewModel.state.value.sheet)
-        assertEquals(AppError.Network, viewModel.state.value.submitError)
-        assertEquals("Casa", viewModel.state.value.group?.name)
-    }
-
-    // Members
 
     @Test
     fun anOwnerChangesAnotherMembersRole() {
@@ -387,5 +340,17 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
 
         assertEquals(1, state.pendingInvitations.size)
         assertEquals(1, state.acceptedInvitations.size)
+    }
+
+    @Test
+    fun refreshReloadsTheGroupAndTheMembersQuietly() {
+        val viewModel = viewModel()
+        groupRepository.groups = groupRepository.groups.map { it.copy(name = "Hogar") }
+        memberRepository.members = listOf(ana)
+        viewModel.onEvent(GroupSettingsEvent.Refresh)
+
+        assertEquals("Hogar", viewModel.state.value.group?.name)
+        assertEquals(listOf(ana), viewModel.state.value.members)
+        assertFalse(viewModel.state.value.isLoading)
     }
 }

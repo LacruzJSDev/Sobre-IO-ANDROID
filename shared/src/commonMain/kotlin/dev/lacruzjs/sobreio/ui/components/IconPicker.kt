@@ -34,8 +34,9 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * The icons of [category] in titled sections. The first cell is "no icon" (the avatar then shows the initial). The
- * selected cell is filled with [color] (ink when null) and shows a white icon; the others are soft grey. Scrolls on
- * its own, so give it a bounded height (for example `heightIn(max = ...)`) inside a bottom sheet.
+ * selected cell is filled with [color] (ink when null) and shows a white icon; the others are soft grey. All sections are laid out at full
+ * height, so the page around it scrolls; pass [scrollable] with a bounded height (`heightIn(max = ...)`) to make it scroll
+ * on its own instead.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -45,9 +46,10 @@ fun IconPicker(
     color: EntityColor?,
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
+    scrollable: Boolean = false,
 ) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = if (scrollable) modifier.verticalScroll(rememberScrollState()) else modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         IconCatalog.sections(category).forEachIndexed { index, section ->

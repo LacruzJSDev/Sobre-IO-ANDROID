@@ -45,7 +45,6 @@ class GroupsViewModel(
                 undo.commit()
                 load()
             }
-            GroupsEvent.NewGroupClicked -> _state.update { it.openSheet(GroupsSheet.Create) }
             is GroupsEvent.ArchiveClicked -> archive(event.groupId)
             is GroupsEvent.DeleteClicked -> delete(event.groupId)
             is GroupsEvent.LeaveClicked -> leave(event.groupId)
@@ -54,15 +53,13 @@ class GroupsViewModel(
             GroupsEvent.SignOutClicked -> signOut()
             GroupsEvent.JoinClicked -> _state.update { it.openSheet(GroupsSheet.Join) }
             GroupsEvent.SheetDismissed -> _state.update { if (it.isSubmitting) it else it.copy(sheet = GroupsSheet.None) }
-            is GroupsEvent.FormChanged -> _state.update { it.copy(form = event.form, submitError = null) }
             is GroupsEvent.ReopenClicked -> reopen(event.groupId)
             is GroupsEvent.CancelDeletionClicked -> cancelDeletion(event.groupId)
-            GroupsEvent.CreateConfirmed -> createGroup()
             is GroupsEvent.CodeChanged -> _state.update { it.copy(code = event.value, codeError = null, submitError = null) }
             GroupsEvent.JoinConfirmed -> joinGroup()
             GroupsEvent.NavigationHandled -> _state.update { it.copy(navigateToGroup = null) }
             // Handled by the Route, which owns the back stack
-            GroupsEvent.ProfileClicked, is GroupsEvent.GroupClicked -> Unit
+            GroupsEvent.ProfileClicked, GroupsEvent.NewGroupClicked, is GroupsEvent.GroupClicked -> Unit
         }
     }
 
@@ -189,29 +186,6 @@ class GroupsViewModel(
         if (lastGroup.get(userId) == groupId) lastGroup.clear(userId)
     }
 
-    private fun createGroup() {
-        val current = _state.value
-        if (current.isSubmitting) return
-        val form = current.form.validated()
-        if (form.nameError != null) {
-            _state.update { it.copy(form = form) }
-            return
-        }
-        _state.update { it.copy(isSubmitting = true, submitError = null) }
-        viewModelScope.launch {
-            groups.createGroup(
-                name = form.name.trim(),
-                currencyCode = form.currency,
-                timezone = form.timezone,
-                periodStartDay = form.periodStartDay,
-                color = form.color,
-                icon = form.icon,
-            )
-                .onSuccess { id -> _state.update { it.opened(id) } }
-                .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
-        }
-    }
-
     private fun joinGroup() {
         val current = _state.value
         if (current.isSubmitting) return
@@ -231,7 +205,6 @@ class GroupsViewModel(
 
     private fun GroupsUiState.openSheet(sheet: GroupsSheet) = copy(
         sheet = sheet,
-        form = GroupFormState.forNew(),
         code = "",
         codeError = null,
         submitError = null,

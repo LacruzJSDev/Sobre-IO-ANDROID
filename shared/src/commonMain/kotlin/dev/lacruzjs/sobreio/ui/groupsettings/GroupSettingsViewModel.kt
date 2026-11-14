@@ -15,7 +15,6 @@ import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
-import dev.lacruzjs.sobreio.ui.groups.GroupFormState
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,9 +58,7 @@ class GroupSettingsViewModel(
             GroupSettingsEvent.NavigationHandled -> _state.update { it.copy(navigateToGroups = false) }
             GroupSettingsEvent.SheetDismissed ->
                 _state.update { if (it.isSubmitting) it else it.copy(sheet = GroupSettingsSheet.None) }
-            GroupSettingsEvent.EditClicked -> edit()
-            is GroupSettingsEvent.FormChanged -> _state.update { it.copy(form = event.form, submitError = null) }
-            GroupSettingsEvent.EditConfirmed -> saveEdit()
+            GroupSettingsEvent.Refresh -> if (_state.value.group != null) load()
             is GroupSettingsEvent.RoleClicked -> openRoleSheet(event.userId)
             is GroupSettingsEvent.RoleSelected -> changeRole(event.role)
             is GroupSettingsEvent.RemoveMemberClicked -> removeMember(event.userId)
@@ -73,7 +70,7 @@ class GroupSettingsViewModel(
             GroupSettingsEvent.UndoClicked -> undo.undo()
             GroupSettingsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which owns the back stack
-            GroupSettingsEvent.BackClicked -> Unit
+            GroupSettingsEvent.BackClicked, GroupSettingsEvent.EditClicked -> Unit
         }
     }
 
@@ -123,47 +120,6 @@ class GroupSettingsViewModel(
 
     private suspend fun currentUserId(): String =
         auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
-
-    // Details
-
-    private fun edit() {
-        val group = _state.value.group?.takeIf { it.canEdit } ?: return
-        _state.update {
-            it.copy(sheet = GroupSettingsSheet.Edit, form = GroupFormState.forEdit(group), submitError = null)
-        }
-    }
-
-    private fun saveEdit() {
-        val current = _state.value
-        val group = current.group?.takeIf { it.canEdit } ?: return
-        if (current.isSubmitting || current.sheet != GroupSettingsSheet.Edit) return
-        val form = current.form.validated()
-        if (form.nameError != null) {
-            _state.update { it.copy(form = form) }
-            return
-        }
-        val name = form.name.trim()
-        _state.update { it.copy(isSubmitting = true, submitError = null) }
-        viewModelScope.launch {
-            groups.updateGroup(group.id, name, form.timezone, form.periodStartDay, form.color, form.icon)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            isSubmitting = false,
-                            sheet = GroupSettingsSheet.None,
-                            group = group.copy(
-                                name = name,
-                                color = form.color,
-                                icon = form.icon,
-                                timezone = form.timezone,
-                                periodStartDay = form.periodStartDay,
-                            ),
-                        )
-                    }
-                }
-                .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
-        }
-    }
 
     // Members
 

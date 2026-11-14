@@ -20,6 +20,10 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(Groups::class)
             subclass(Group::class)
             subclass(GroupSettings::class)
+            subclass(GroupForm::class)
+            subclass(AccountForm::class)
+            subclass(EnvelopeForm::class)
+            subclass(TimeZonePicker::class)
             subclass(Profile::class)
         }
     }
