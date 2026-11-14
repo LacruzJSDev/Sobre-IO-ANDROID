@@ -34,9 +34,13 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
   Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still empty
   states). Root navigation follows the session (`SessionViewModel`).
-- Signed-in back stack: `[Groups]`, or `[Groups, Group(last)]` when `LastGroupStore` holds a group for this user
-  (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). `GroupViewModel`
-  stores the group as last once it loads, and clears it (then goes back to Groups) when it does not load because it is
+- Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
+  (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
+  page above Groups: its header has a menu button (`MenuButton`, three lines), never a back arrow, and system back or the
+  back gesture never lead to Groups (back from the root leaves the app). Groups is a root too, with no back arrow: the menu
+  button and a group that is gone replace the stack with `[Groups]` (`showOnlyGroups`), and picking or creating a group
+  replaces it with that group (`openGroup`). Groups stays a screen of its own so a wide layout can show it as a pane. `GroupViewModel`
+  stores the group as last once it loads, and clears it (then shows only Groups) when it does not load because it is
   gone or the user is no longer a member (`AppError.NotFound`). The store is `SettingsLastGroupStore` on
   `multiplatform-settings-no-arg` 1.3.0, one key per user id. `kotlinx-datetime` 0.8.0 gives the device time zone that
   `SupabaseGroupRepository.createGroup` sends to `create_group`.

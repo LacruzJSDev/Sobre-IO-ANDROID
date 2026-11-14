@@ -73,6 +73,7 @@
     <string name="groups_title">Grupos</string>
     <string name="action_profile">Perfil</string>
     <string name="action_back">Atrás</string>
+    <string name="action_open_groups">Grupos</string>
     <string name="action_retry">Reintentar</string>
     <string name="action_new_group">Nuevo grupo</string>
     <string name="action_join_with_code">Unirme con un código</string>

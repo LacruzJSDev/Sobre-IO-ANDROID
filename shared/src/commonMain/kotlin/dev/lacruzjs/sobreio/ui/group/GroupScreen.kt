@@ -55,6 +55,7 @@ import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
+import dev.lacruzjs.sobreio.ui.components.MenuButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
@@ -71,7 +72,8 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun GroupRoute(
     groupId: String,
-    onBack: () -> Unit,
+    onOpenGroups: () -> Unit,
+    onGroupGone: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAccountForm: (accountId: String?) -> Unit,
     onOpenAccount: (accountId: String) -> Unit,
@@ -117,7 +119,7 @@ fun GroupRoute(
 
     if (state.navigateBack) {
         LaunchedEffect(Unit) {
-            onBack()
+            onGroupGone()
             viewModel.onEvent(GroupEvent.NavigationHandled)
         }
     }
@@ -126,7 +128,7 @@ fun GroupRoute(
         state = state.copy(selectedTab = GroupTab.entries[selectedIndex]),
         onEvent = { event ->
             when (event) {
-                GroupEvent.BackClicked -> onBack()
+                GroupEvent.MenuClicked -> onOpenGroups()
                 GroupEvent.SettingsClicked -> onOpenSettings()
                 is GroupEvent.TabSelected -> selectedIndex = event.tab.ordinal
                 else -> viewModel.onEvent(event)
@@ -242,7 +244,8 @@ fun GroupScreen(
                 // Same header on every tab. The right side is free for the actions of each section.
                 ScreenHeader(
                     title = state.group?.name.orEmpty(),
-                    onBack = { onEvent(GroupEvent.BackClicked) },
+                    // A group is a root, not a page above Groups: a menu button opens them, never a back arrow
+                    navigation = { MenuButton(onClick = { onEvent(GroupEvent.MenuClicked) }) },
                     leading = {
                         EntityAvatar(
                             name = state.group?.name.orEmpty(),

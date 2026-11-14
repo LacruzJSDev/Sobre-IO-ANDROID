@@ -42,7 +42,7 @@ class GroupViewModel(
             GroupEvent.NewItemDismissed -> _state.update { it.copy(newItemSheetOpen = false) }
             GroupEvent.Refresh -> refresh()
             // Handled by the Route
-            GroupEvent.BackClicked, is GroupEvent.TabSelected, GroupEvent.SettingsClicked -> Unit
+            GroupEvent.MenuClicked, is GroupEvent.TabSelected, GroupEvent.SettingsClicked -> Unit
         }
     }
 
