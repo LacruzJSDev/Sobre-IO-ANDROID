@@ -74,6 +74,7 @@
     <string name="groups_title">Groups</string>
     <string name="action_profile">Profile</string>
     <string name="action_back">Back</string>
+    <string name="action_open_groups">Groups</string>
     <string name="action_retry">Try again</string>
     <string name="action_new_group">New group</string>
     <string name="action_join_with_code">Join with a code</string>

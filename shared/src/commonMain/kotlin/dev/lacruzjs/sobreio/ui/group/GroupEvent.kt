@@ -4,7 +4,7 @@ sealed interface GroupEvent {
     data object Retry : GroupEvent
 
     /** Handled by the Route: the arrow goes back to Groups, like the system back. */
-    data object BackClicked : GroupEvent
+    data object MenuClicked : GroupEvent
 
     /** Handled by the Route, which keeps the selected tab across recreation. */
     data class TabSelected(val tab: GroupTab) : GroupEvent

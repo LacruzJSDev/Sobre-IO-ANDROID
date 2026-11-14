@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_back
+import dev.lacruzjs.sobreio.generated.resources.action_open_groups
 import dev.lacruzjs.sobreio.generated.resources.ic_arrow_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -31,6 +34,14 @@ import org.jetbrains.compose.resources.stringResource
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = stringResource(Res.string.action_back))
+    }
+}
+
+/** Menu button of a group's header: opens the Groups screen (a group is a root, so it has no back arrow). */
+@Composable
+fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick, modifier = modifier) {
+        Icon(imageVector = Icons.Filled.Menu, contentDescription = stringResource(Res.string.action_open_groups))
     }
 }
 
@@ -44,6 +55,8 @@ fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    /** Replaces the back arrow, e.g. the [MenuButton] of a group. */
+    navigation: (@Composable () -> Unit)? = null,
     subtitle: String? = null,
     leading: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
@@ -56,11 +69,15 @@ fun ScreenHeader(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (onBack != null) BackButton(onClick = onBack)
+        val hasNavigation = onBack != null || navigation != null
+        when {
+            navigation != null -> navigation()
+            onBack != null -> BackButton(onClick = onBack)
+        }
         Row(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = if (onBack == null) 8.dp else 0.dp),
+                .padding(start = if (hasNavigation) 0.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leading()

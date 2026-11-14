@@ -28,8 +28,10 @@ import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
 
 /**
- * Screens shown while signed in. The stack starts as Groups plus the user's last group, decided before the first
- * frame from a synchronous read, so the Groups screen never flashes and nothing animates at start-up.
+ * Screens shown while signed in. The stack starts with the user's last group alone (or Groups when there is none),
+ * decided before the first frame from a synchronous read, so nothing flashes or animates at start-up. A group is a root and
+ * so is Groups: the group's menu button replaces the stack with Groups, and picking a group replaces it with that group,
+ * so back never moves between them.
  */
 @Composable
 fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
@@ -57,7 +59,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
         entryProvider = entryProvider {
             entry<Groups> {
                 GroupsRoute(
-                    onOpenGroup = { groupId -> backStack.add(Group(groupId)) },
+                    onOpenGroup = { groupId -> backStack.openGroup(groupId) },
                     onOpenProfile = { backStack.add(Profile) },
                     onNewGroup = { backStack.add(GroupForm(null)) },
                 )
@@ -65,7 +67,8 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             entry<Group> { key ->
                 GroupRoute(
                     groupId = key.groupId,
-                    onBack = { backStack.popToPrevious() },
+                    onOpenGroups = { backStack.showOnlyGroups() },
+                    onGroupGone = { backStack.showOnlyGroups() },
                     onOpenSettings = { backStack.add(GroupSettings(key.groupId)) },
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
                     onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
@@ -97,7 +100,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                 GroupSettingsRoute(
                     groupId = key.groupId,
                     onBack = { backStack.popToPrevious() },
-                    onBackToGroups = { backStack.popToRoot() },
+                    onBackToGroups = { backStack.showOnlyGroups() },
                     onEditGroup = { backStack.add(GroupForm(key.groupId)) },
                 )
             }
@@ -109,9 +112,8 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onClose = { backStack.popToPrevious() },
                     onPickTimeZone = { current -> backStack.add(TimeZonePicker(current)) },
                     onSaved = { savedId, created ->
-                        backStack.popToPrevious()
-                        // A new group opens at once, as joining one does
-                        if (created) backStack.add(Group(savedId))
+                        // A new group opens at once as the root, as joining one does
+                        if (created) backStack.openGroup(savedId) else backStack.popToPrevious()
                     },
                 )
             }
@@ -153,14 +155,4 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             }
         },
     )
-}
-
-/** Back to the Groups screen, the root, whatever is above it (a group deleted or left from its settings). */
-private fun MutableList<NavKey>.popToRoot() {
-    while (size > 1) removeAt(lastIndex)
-}
-
-/** Groups is the root of the stack and stays; back from it leaves the app. */
-private fun MutableList<NavKey>.popToPrevious() {
-    if (size > 1) removeAt(lastIndex)
 }
