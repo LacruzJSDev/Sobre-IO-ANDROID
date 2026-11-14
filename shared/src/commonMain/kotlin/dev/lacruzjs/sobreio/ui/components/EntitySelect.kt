@@ -237,7 +237,7 @@ private fun OptionList(
 }
 
 @Composable
-private fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> Unit) {
+internal fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -22,6 +22,7 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(GroupSettings::class)
             subclass(GroupForm::class)
             subclass(AccountDetail::class)
+            subclass(AccountMovements::class)
             subclass(AccountForm::class)
             subclass(EnvelopeForm::class)
             subclass(CommitmentForm::class)

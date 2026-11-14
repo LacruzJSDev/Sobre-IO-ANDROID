@@ -61,6 +61,11 @@ import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesViewModel
 import dev.lacruzjs.sobreio.ui.error.messageRes
+import dev.lacruzjs.sobreio.ui.movements.MovementsEvent
+import dev.lacruzjs.sobreio.ui.movements.MovementsHeaderActions
+import dev.lacruzjs.sobreio.ui.movements.MovementsPane
+import dev.lacruzjs.sobreio.ui.movements.MovementsSearchHeader
+import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -79,34 +84,19 @@ fun GroupRoute(
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     modifier: Modifier = Modifier,
-    /**
-     * Set by "See all" in an account's detail: the Movements tab opens filtered to this account. [onMovementsFilterConsumed]
-     * clears it where it is held (AppNavigation), so rotating or coming back does not select the tab again.
-     */
-    movementsAccountFilter: String? = null,
-    onMovementsFilterConsumed: () -> Unit = {},
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
     envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
+    movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
 
-    // The account the Movements tab is filtered to; the tab itself does not exist yet (it shows its empty state), and when
-    // it does it reads this. Kept here, saved, so it survives rotation until another account or no account replaces it.
-    var movementsFilter by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(movementsAccountFilter) {
-        if (movementsAccountFilter != null) {
-            movementsFilter = movementsAccountFilter
-            selectedIndex = GroupTab.Movements.ordinal
-            onMovementsFilterConsumed()
-        }
-    }
-
     val accountsState by accountsViewModel.state.collectAsStateWithLifecycle()
     // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
     val envelopesState by envelopesViewModel.state.collectAsStateWithLifecycle()
+    val movementsState by movementsViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.group) {
         state.group?.let {
             accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit))
@@ -178,6 +168,29 @@ fun GroupRoute(
                 },
             )
         },
+        movementsAction = {
+            MovementsHeaderActions(
+                onSearch = { movementsViewModel.onEvent(MovementsEvent.SearchOpened) },
+                onNew = { movementsViewModel.onEvent(MovementsEvent.NewClicked) },
+            )
+        },
+        // While searching the whole header becomes the search field
+        movementsHeader = if (movementsState.searchOpen) {
+            {
+                MovementsSearchHeader(
+                    text = movementsState.searchText,
+                    onTextChange = { movementsViewModel.onEvent(MovementsEvent.SearchChanged(it)) },
+                    onClose = { movementsViewModel.onEvent(MovementsEvent.SearchClosed) },
+                )
+            }
+        } else {
+            null
+        },
+        movementsContent = {
+            // Shown again each time the tab is selected, so it reads the ledger again; the filters are kept
+            LaunchedEffect(Unit) { movementsViewModel.onEvent(MovementsEvent.Refresh) }
+            MovementsPane(state = movementsState, onEvent = movementsViewModel::onEvent)
+        },
     )
 }
 
@@ -194,6 +207,15 @@ fun GroupScreen(
     accountsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_accounts_empty)) },
     envelopesAction: @Composable () -> Unit = {},
     envelopesContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_envelopes_empty)) },
+    movementsAction: @Composable () -> Unit = {
+        AddIconButton(
+            contentDescription = stringResource(Res.string.action_new_movement),
+            onClick = { onEvent(GroupEvent.NewItemClicked) },
+        )
+    },
+    /** Replaces the whole header on the Movements tab while it is not null (the search field). */
+    movementsHeader: (@Composable () -> Unit)? = null,
+    movementsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_movements_empty)) },
 ) {
     if (state.newItemSheetOpen) {
         ComingSoonSheet(
@@ -242,7 +264,7 @@ fun GroupScreen(
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 // Same header on every tab. The right side is free for the actions of each section.
-                ScreenHeader(
+                if (state.selectedTab == GroupTab.Movements && movementsHeader != null) movementsHeader() else ScreenHeader(
                     title = state.group?.name.orEmpty(),
                     // A group is a root, not a page above Groups: a menu button opens them, never a back arrow
                     navigation = { MenuButton(onClick = { onEvent(GroupEvent.MenuClicked) }) },
@@ -254,7 +276,7 @@ fun GroupScreen(
                             size = 36.dp,
                         )
                     },
-                    actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction) },
+                    actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction, movementsAction) },
                 )
                 when {
                     state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -265,6 +287,7 @@ fun GroupScreen(
                     }
                     state.selectedTab == GroupTab.Accounts -> accountsContent()
                     state.selectedTab == GroupTab.Envelopes -> envelopesContent()
+                    state.selectedTab == GroupTab.Movements -> movementsContent()
                     else -> EmptyState(message = stringResource(state.selectedTab.emptyMessage()))
                 }
             }
@@ -279,6 +302,7 @@ private fun HeaderAction(
     onEvent: (GroupEvent) -> Unit,
     accountsAction: @Composable () -> Unit,
     envelopesAction: @Composable () -> Unit,
+    movementsAction: @Composable () -> Unit,
 ) {
     when (state.selectedTab) {
         GroupTab.Group -> IconButton(onClick = { onEvent(GroupEvent.SettingsClicked) }) {
@@ -289,10 +313,7 @@ private fun HeaderAction(
         }
         GroupTab.Accounts -> accountsAction()
         GroupTab.Envelopes -> envelopesAction()
-        GroupTab.Movements -> AddIconButton(
-            contentDescription = stringResource(state.selectedTab.newItemLabel()),
-            onClick = { onEvent(GroupEvent.NewItemClicked) },
-        )
+        GroupTab.Movements -> movementsAction()
     }
 }
 

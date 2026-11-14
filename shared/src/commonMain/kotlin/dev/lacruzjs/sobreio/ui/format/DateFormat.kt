@@ -38,3 +38,12 @@ fun formatMonthShort(date: LocalDate, languageTag: String): String =
     if (isSpanish(languageTag)) SpanishMonths[date.month.ordinal] else EnglishMonths[date.month.ordinal]
 
 private fun isSpanish(languageTag: String) = languageTag.substringBefore('-').substringBefore('_').lowercase() == "es"
+
+private val EnglishWeekdays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+private val SpanishWeekdays = listOf("lun", "mar", "mié", "jue", "vie", "sáb", "dom")
+
+/** Weekday, day and month for a day header: `Fri Nov 12` in English, `vie 12 nov` in Spanish. */
+fun formatWeekdayDayMonth(date: LocalDate, languageTag: String): String {
+    val weekdays = if (isSpanish(languageTag)) SpanishWeekdays else EnglishWeekdays
+    return "${weekdays[date.dayOfWeek.ordinal]} ${formatDayMonth(date, languageTag)}"
+}

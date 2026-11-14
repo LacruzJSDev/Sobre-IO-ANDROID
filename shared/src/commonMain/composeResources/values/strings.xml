@@ -481,4 +481,43 @@
     <string name="entity_select_placeholder">Choose</string>
     <string name="entity_select_search">Search</string>
     <string name="list_load_more_failed">Could not load more.</string>
+
+    <!-- Movements -->
+    <string name="action_clear_filter">Clear filter</string>
+    <string name="action_clear_filters">Clear filters</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_search">Search</string>
+    <string name="action_search_close">Close search</string>
+    <string name="filter_account">Account</string>
+    <string name="filter_envelope">Envelope</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_dates">Dates</string>
+    <string name="filter_tags">Tags</string>
+    <string name="filter_person">Person</string>
+    <string name="entity_all_accounts">All accounts</string>
+    <string name="entity_all_envelopes">All envelopes</string>
+    <string name="entity_all_types">All types</string>
+    <string name="entity_any_date">Any date</string>
+    <string name="entity_all_people">Everyone</string>
+    <string name="movement_type_expenses">Expenses</string>
+    <string name="movement_type_incomes">Income</string>
+    <string name="movement_type_transfers">Transfers</string>
+    <string name="movement_type_adjustments">Adjustments</string>
+    <string name="movement_type_group_transfers">Contributions</string>
+    <string name="date_preset_this_period">This period</string>
+    <string name="date_preset_previous_period">Previous period</string>
+    <string name="date_preset_last_3_months">Last 3 months</string>
+    <string name="date_preset_this_year">This year</string>
+    <string name="date_preset_custom">Custom</string>
+    <string name="filter_tags_count">%1$d tags</string>
+    <string name="filter_tags_empty">This group has no tags yet.</string>
+    <string name="filter_date_range">%1$s – %2$s</string>
+    <string name="movements_search_label">Search notes or amounts</string>
+    <string name="movements_day_today">Today · %1$s</string>
+    <string name="movements_day_yesterday">Yesterday · %1$s</string>
+    <string name="movement_kind_transfer">Transfer</string>
+    <string name="movement_transfer_route">%1$s → %2$s</string>
+    <string name="movements_empty">No movements yet.</string>
+    <string name="movements_empty_filtered">No movements match these filters.</string>
+    <string name="movement_deleted">Movement of %1$s deleted</string>
 </resources>

@@ -32,8 +32,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
   full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
-  Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still empty
-  states). Root navigation follows the session (`SessionViewModel`).
+  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes and Movements work, Group is still an empty
+  state). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
   page above Groups: its header has a menu button (`MenuButton`, three lines), never a back arrow, and system back or the
@@ -158,7 +158,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
-  due items; latest 5 movements with "See all"; "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
+  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
   `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
   snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
   `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
@@ -208,11 +208,31 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
-- "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
-  `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the
-  account in its own saved `movementsFilter` and clears the AppNavigation value. The Movements tab is still an empty
-  state: when it exists it must read `movementsFilter` in `GroupRoute` (null means the whole ledger) and show the account
-  filter; from there "back" should return to the detail (re-push `AccountDetail` when a filter is set, not done yet).
+- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?)`, one screen in two places): the Movements
+  tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
+  account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
+  detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
+  (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
+  (`MovementsSearchHeader`; the group shell takes it through its `movementsHeader` slot), debounced 300 ms, matching notes
+  or an amount ("42,30" or "42.30"). "+" still opens the "Coming soon" sheet (`MovementsSheet.New`) until the new-movement form exists.
+  Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
+  only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
+  (small avatar for account, envelope, member) and an X that clears it. A chip opens an `EntityPickerSheet` (`FlatBottomSheet`,
+  `EntitySelect` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
+  multiple choice (`EntityMultiPickerSheet`, "Apply"). Type: Expenses, Income, Transfers, Adjustments, Contributions
+  (`MovementType`, sent as `p_kinds` group names). Dates: This period, Previous period (read from `periods`), Last 3 months,
+  This year and Custom (`CustomRangeDialog`, a flat `DateRangePicker`); `DatePreset` and `datePresetRange` are pure. Filters
+  and search text live in the ViewModel (not saved on disk). The list is grouped by day (`groupByDay`, pure: "Today · 14 Nov",
+  "Yesterday · 13 Nov", then "Fri 12 Nov"), 50 per page with load-more near the end and a progress row, and its own empty
+  states (no movements, no results with "Clear filters"). Row: envelope avatar (inbox for Unassigned), title = notes or the
+  kind label, second line "envelope · account" (account left out with a single account or on level 3); an account transfer has
+  an ink avatar with a transfer icon, "A → B" in the group ledger (shown once, unsigned) and "To/From <account>" on an
+  account's list (signed). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
+  `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs have no swipe
+  (they are voided as a pair with `void_group_transfer`, not offered yet); edit comes with the form.
+  `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`,
+  `getDateContext` = `group_today`, `current_period` and the previous `periods` row) and `TagRepository` (live `tags`).
+  Nothing is summed or filtered in the app; the DB function shows an account transfer once in the group ledger (D-45).
 - Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
   contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
   and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,

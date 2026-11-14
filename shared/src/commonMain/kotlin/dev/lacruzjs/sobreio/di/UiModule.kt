@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormViewModel
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormViewModel
 import dev.lacruzjs.sobreio.ui.groups.GroupsViewModel
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsViewModel
+import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
 import org.koin.core.module.dsl.viewModel
@@ -105,4 +106,16 @@ val uiModule = module {
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }
     viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get()) }
+    viewModel { params ->
+        MovementsViewModel(
+            groupId = params.get<String>(0),
+            fixedAccountId = params.get<String?>(1),
+            movements = get(),
+            groups = get(),
+            accounts = get(),
+            envelopes = get(),
+            members = get(),
+            tags = get(),
+        )
+    }
 }
