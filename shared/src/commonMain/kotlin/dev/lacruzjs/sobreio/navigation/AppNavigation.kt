@@ -24,6 +24,7 @@ import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
 import dev.lacruzjs.sobreio.ui.movements.AccountMovementsRoute
+import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
@@ -70,6 +71,9 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
                     onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
+                    onOpenMovementForm = { movementId, source ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
+                    },
                 )
             }
             entry<AccountDetail> { key ->
@@ -92,6 +96,18 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     groupId = key.groupId,
                     accountId = key.accountId,
                     onBack = { backStack.popToPrevious() },
+                    onOpenMovementForm = { movementId, source, accountId ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, accountId))
+                    },
+                )
+            }
+            entry<MovementForm> { key ->
+                MovementFormRoute(
+                    groupId = key.groupId,
+                    movementId = key.movementId,
+                    source = key.source,
+                    accountId = key.accountId,
+                    onClose = { backStack.popToPrevious() },
                 )
             }
             entry<GroupSettings> { key ->

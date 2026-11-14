@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.MovementType
 import kotlinx.datetime.LocalDate
 
@@ -30,9 +31,9 @@ sealed interface MovementsEvent {
     data class TagsApplied(val tagIds: Set<String>) : MovementsEvent
     data class PersonSelected(val userId: String?) : MovementsEvent
 
-    /** The header "+": the new-movement form does not exist yet, so a "Coming soon" sheet opens. */
+    /** The header "+" and the Edit swipe action only navigate: the Route opens the movement form, the ViewModel ignores them. */
     data object NewClicked : MovementsEvent
-    data object NewDismissed : MovementsEvent
+    data class EditClicked(val movementId: String, val source: MovementSource) : MovementsEvent
 
     data class DeleteClicked(val movementId: String) : MovementsEvent
     data object UndoClicked : MovementsEvent

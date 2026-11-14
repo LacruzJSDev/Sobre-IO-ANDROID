@@ -119,6 +119,7 @@ fun EntitySelect(
     LaunchedEffect(expanded) { if (!expanded) query = "" }
     val open = expanded && enabled
     val expandedText = expandedStateText(expanded)
+    val dismissKeyboard = rememberDismissKeyboard()
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Column {
@@ -128,7 +129,7 @@ fun EntitySelect(
                     .heightIn(min = 56.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .clickable(enabled = enabled, role = Role.Button, onClick = onToggle)
+                    .clickable(enabled = enabled, role = Role.Button) { dismissKeyboard(); onToggle() }
                     .semantics { stateDescription = expandedText }
                     .padding(start = 16.dp, end = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,

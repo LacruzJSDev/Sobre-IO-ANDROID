@@ -89,8 +89,7 @@ class MovementsViewModel(
             MovementsEvent.CustomRangeDismissed -> _state.update { it.copy(customRangeOpen = false) }
             is MovementsEvent.TagsApplied -> applyFilter(_state.value.filter.copy(tagIds = event.tagIds))
             is MovementsEvent.PersonSelected -> applyFilter(_state.value.filter.copy(createdBy = event.userId))
-            MovementsEvent.NewClicked -> _state.update { it.copy(sheet = MovementsSheet.New) }
-            MovementsEvent.NewDismissed -> _state.update { it.copy(sheet = MovementsSheet.None) }
+            MovementsEvent.NewClicked, is MovementsEvent.EditClicked -> Unit
             is MovementsEvent.DeleteClicked -> delete(event.movementId)
             MovementsEvent.UndoClicked -> undo.undo()
             MovementsEvent.UndoExpired -> undo.commit()

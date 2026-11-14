@@ -102,7 +102,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
-  again) and, on Movements, a "+" that opens a "Coming soon" sheet until that feature exists (Accounts and Envelopes
+  again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
   have their own, see above).
 - Full-screen forms (`FormScaffold`: close X on the left, title, "Save" on the right with a spinner while saving; the
   fields scroll above the keyboard with `imePadding()`; system back = the X): `GroupForm(groupId?)` (`ui/groupform`),
@@ -208,13 +208,30 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
+- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?)`, `MovementFormViewModel` with those
+  four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
+  locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
+  and income: Account `EntitySelect` (default: the fixed account, else the last one used in this group, stored per user and group in
+  `LastAccountStore` on `multiplatform-settings`, set after creating; else none) and Envelope `EntitySelect` with Unassigned first
+  (its real system id; expense starts with nothing chosen and requires one, income starts on Unassigned; hidden with a note when the
+  account is outside the envelopes). Cover note when creating an expense whose envelope balance (from `envelope_balances`) is below
+  the amount, with an optional "Also cover from" envelope sent as `p_cover=[{envelope_id, amount: its full balance}]`; the database
+  takes only what is needed. Editing a higher expense shows a note that nothing is covered. Transfer: From / To (different), a
+  "To another group" switch on create (destination group of the same currency + its account, `create_group_transfer`, both envelopes
+  Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
+  expense and income, Tags as toggle chips plus "+ New" (a small sheet; duplicate name shows the error). Writes go through
+  `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
+  of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
+  outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
+  `account_transfers`; then the tag step (`transaction_tags` insert / delete). A tag failure keeps the movement, shows the error and
+  the next Save only retries the tags. Saved pops the form and the lists reload when shown again.
 - Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?)`, one screen in two places): the Movements
   tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
   (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
   (`MovementsSearchHeader`; the group shell takes it through its `movementsHeader` slot), debounced 300 ms, matching notes
-  or an amount ("42,30" or "42.30"). "+" still opens the "Coming soon" sheet (`MovementsSheet.New`) until the new-movement form exists.
+  or an amount ("42,30" or "42.30"). "+" opens the movement form (`NewClicked`, intercepted by the Route; on an account's list it preselects that account). Expense and income rows and account transfer rows swipe Edit (`Movement.canEdit`: not adjustments or contribution legs; `EditClicked(id, source)` opens `MovementForm`) and Delete.
   Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
   only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
   (small avatar for account, envelope, member) and an X that clears it. A chip opens an `EntityPickerSheet` (`FlatBottomSheet`,
@@ -294,11 +311,12 @@ iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodepro
 ```
 
 Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `movements`,
-plus the `newmovement` bottom sheet.
+plus `movementform` (the new / edit movement form).
 
 ## Rules
 
 - Screen structure follows the workspace `docs/agents/navigation.md`; read it before adding or changing a screen.
+- Editing a live movement is a plain update validated by the DB guards and recorded in `audit_log`; deleting is voiding.
 - Common first: write code in `shared/src/commonMain`. Platform code goes only in `androidMain` / `iosMain`, behind an
   `expect`/`actual` declaration or an interface that common code owns (for example `rememberGoogleSignInLauncher`,
   `supabaseUrl`). `:app` and `iosApp` stay thin shells: no screens, no business logic.

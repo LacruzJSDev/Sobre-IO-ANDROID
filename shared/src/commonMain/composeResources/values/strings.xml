@@ -520,4 +520,23 @@
     <string name="movements_empty">No movements yet.</string>
     <string name="movements_empty_filtered">No movements match these filters.</string>
     <string name="movement_deleted">Movement of %1$s deleted</string>
+    <string name="edit_movement_title">Edit movement</string>
+    <string name="amount_placeholder">0.00</string>
+    <string name="field_date">Date</string>
+    <string name="field_from">From</string>
+    <string name="field_to">To</string>
+    <string name="field_other_group">To another group</string>
+    <string name="field_cover_also">Also cover from</string>
+    <string name="field_tag_name">Tag name</string>
+    <string name="form_section_details">Details</string>
+    <string name="movement_cover_none">None</string>
+    <string name="movement_cover_note">%1$s has %2$s: whatever is missing will be covered from Unassigned.</string>
+    <string name="movement_outside_note">This account is outside the envelopes, so the movement doesn\'t touch any envelope.</string>
+    <string name="movement_edit_extra_note">The extra amount isn\'t covered automatically: the envelope may go negative.</string>
+    <string name="movement_boundary_note">This transfer crosses the envelopes\' boundary, so the money passes through Unassigned.</string>
+    <string name="movement_no_groups_note">You have no other live group with the same currency.</string>
+    <string name="movement_tag_new">+ New</string>
+    <string name="movement_tag_new_title">New tag</string>
+    <string name="validation_account_required">Choose an account.</string>
+    <string name="validation_tag_name_too_long">Use at most 50 characters.</string>
 </resources>

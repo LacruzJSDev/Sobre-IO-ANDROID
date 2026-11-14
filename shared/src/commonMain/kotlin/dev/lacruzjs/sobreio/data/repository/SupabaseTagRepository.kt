@@ -9,8 +9,10 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
-/** Reads the `tags` table of the group. */
+/** Reads and creates the rows of the `tags` table of the group. */
 class SupabaseTagRepository(client: SupabaseClient) : TagRepository {
 
     private val postgrest = client.postgrest
@@ -26,5 +28,17 @@ class SupabaseTagRepository(client: SupabaseClient) : TagRepository {
             }
             .decodeList<TagDto>()
             .map { it.toDomain() }
+    }
+
+    override suspend fun createTag(groupId: String, name: String): Result<Tag> = safeCall {
+        postgrest.from("tags")
+            .insert(
+                buildJsonObject {
+                    put("group_id", groupId)
+                    put("name", name)
+                },
+            ) { select(Columns.raw("id,group_id,name,color")) }
+            .decodeSingle<TagDto>()
+            .toDomain()
     }
 }

@@ -61,6 +61,7 @@ import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesViewModel
 import dev.lacruzjs.sobreio.ui.error.messageRes
+import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.ui.movements.MovementsEvent
 import dev.lacruzjs.sobreio.ui.movements.MovementsHeaderActions
 import dev.lacruzjs.sobreio.ui.movements.MovementsPane
@@ -83,6 +84,7 @@ fun GroupRoute(
     onOpenAccountForm: (accountId: String?) -> Unit,
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
+    onOpenMovementForm: (movementId: String?, source: MovementSource?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
@@ -171,7 +173,7 @@ fun GroupRoute(
         movementsAction = {
             MovementsHeaderActions(
                 onSearch = { movementsViewModel.onEvent(MovementsEvent.SearchOpened) },
-                onNew = { movementsViewModel.onEvent(MovementsEvent.NewClicked) },
+                onNew = { onOpenMovementForm(null, null) },
             )
         },
         // While searching the whole header becomes the search field
@@ -189,7 +191,15 @@ fun GroupRoute(
         movementsContent = {
             // Shown again each time the tab is selected, so it reads the ledger again; the filters are kept
             LaunchedEffect(Unit) { movementsViewModel.onEvent(MovementsEvent.Refresh) }
-            MovementsPane(state = movementsState, onEvent = movementsViewModel::onEvent)
+            MovementsPane(
+                state = movementsState,
+                onEvent = { event ->
+                    when (event) {
+                        is MovementsEvent.EditClicked -> onOpenMovementForm(event.movementId, event.source)
+                        else -> movementsViewModel.onEvent(event)
+                    }
+                },
+            )
         },
     )
 }

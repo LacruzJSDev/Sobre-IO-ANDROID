@@ -1,7 +1,9 @@
 package dev.lacruzjs.sobreio.di
 
 import com.russhwolf.settings.Settings
+import dev.lacruzjs.sobreio.data.local.LastAccountStore
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
+import dev.lacruzjs.sobreio.data.local.SettingsLastAccountStore
 import dev.lacruzjs.sobreio.data.local.SettingsLastGroupStore
 import dev.lacruzjs.sobreio.data.remote.buildSupabaseClient
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -11,6 +13,7 @@ import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
+import dev.lacruzjs.sobreio.data.repository.MovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.MovementRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseAccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseAccountRepository
@@ -19,6 +22,7 @@ import dev.lacruzjs.sobreio.data.repository.SupabaseCommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseEnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseGroupRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseMemberRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseMovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseMovementRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseTagRepository
 import dev.lacruzjs.sobreio.data.repository.TagRepository
@@ -35,6 +39,8 @@ val dataModule = module {
     single<EnvelopeRepository> { SupabaseEnvelopeRepository(get()) }
     single<MemberRepository> { SupabaseMemberRepository(get()) }
     single<MovementRepository> { SupabaseMovementRepository(get()) }
+    single<MovementFormRepository> { SupabaseMovementFormRepository(get()) }
     single<TagRepository> { SupabaseTagRepository(get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }
+    single<LastAccountStore> { SettingsLastAccountStore(Settings()) }
 }

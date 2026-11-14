@@ -74,7 +74,6 @@ import dev.lacruzjs.sobreio.generated.resources.movements_empty
 import dev.lacruzjs.sobreio.generated.resources.movements_empty_filtered
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
-import dev.lacruzjs.sobreio.ui.components.ComingSoonSheet
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.EntityMultiPickerSheet
@@ -86,6 +85,7 @@ import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.components.deleteAction
+import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -259,15 +259,19 @@ private fun MovementList(state: MovementsUiState, onEvent: (MovementsEvent) -> U
             item(key = "day-${section.date}") { DayHeader(section, languageTag) }
             items(section.movements, key = { "${it.id}-${it.accountId}" }) { movement ->
                 val row: @Composable () -> Unit = { MovementRow(movement, state, languageTag) }
-                if (movement.canDelete) {
+                val actions = listOfNotNull(
+                    if (movement.canEdit) editAction { onEvent(MovementsEvent.EditClicked(movement.id, movement.source)) } else null,
+                    if (movement.canDelete) deleteAction { onEvent(MovementsEvent.DeleteClicked(movement.id)) } else null,
+                )
+                if (actions.isNotEmpty()) {
                     SwipeActionsRow(
-                        actions = listOf(deleteAction { onEvent(MovementsEvent.DeleteClicked(movement.id)) }),
+                        actions = actions,
                         isOpen = openId == movement.id,
                         // A row reporting "closed" must not close another one that has just opened
                         onOpenChange = { open ->
                             if (open) openId = movement.id else if (openId == movement.id) openId = null
                         },
-                        // Movements have no detail screen; editing comes with the form
+                        // Movements have no detail screen: they are edited by swiping
                         onClick = {},
                         content = row,
                     )
@@ -409,10 +413,6 @@ private fun MovementsSheets(state: MovementsUiState, onEvent: (MovementsEvent) -
     val allIcon = Icons.Filled.Apps
     when (state.sheet) {
         MovementsSheet.None -> Unit
-        MovementsSheet.New -> ComingSoonSheet(
-            title = stringResource(Res.string.action_new_movement),
-            onDismiss = { onEvent(MovementsEvent.NewDismissed) },
-        )
         MovementsSheet.Account -> EntityPickerSheet(
             title = stringResource(Res.string.filter_account),
             allOption = EntityOption(null, stringResource(Res.string.entity_all_accounts), allIcon),

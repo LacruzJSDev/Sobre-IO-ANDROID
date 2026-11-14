@@ -519,4 +519,23 @@
     <string name="movements_empty">Aún no hay movimientos.</string>
     <string name="movements_empty_filtered">Ningún movimiento coincide con estos filtros.</string>
     <string name="movement_deleted">Movimiento de %1$s eliminado</string>
+    <string name="edit_movement_title">Editar movimiento</string>
+    <string name="amount_placeholder">0,00</string>
+    <string name="field_date">Fecha</string>
+    <string name="field_from">Desde</string>
+    <string name="field_to">Hacia</string>
+    <string name="field_other_group">A otro grupo</string>
+    <string name="field_cover_also">Cubrir también desde</string>
+    <string name="field_tag_name">Nombre de la etiqueta</string>
+    <string name="form_section_details">Detalles</string>
+    <string name="movement_cover_none">Ninguno</string>
+    <string name="movement_cover_note">%1$s tiene %2$s: lo que falte se cubrirá desde Sin asignar.</string>
+    <string name="movement_outside_note">Esta cuenta está fuera de los sobres, así que el movimiento no toca ningún sobre.</string>
+    <string name="movement_edit_extra_note">La parte añadida no se cubre automáticamente: el sobre puede quedar en negativo.</string>
+    <string name="movement_boundary_note">Esta transferencia cruza la frontera de los sobres, así que el dinero pasa por Sin asignar.</string>
+    <string name="movement_no_groups_note">No tienes otro grupo activo con la misma moneda.</string>
+    <string name="movement_tag_new">+ Nueva</string>
+    <string name="movement_tag_new_title">Nueva etiqueta</string>
+    <string name="validation_account_required">Elige una cuenta.</string>
+    <string name="validation_tag_name_too_long">Usa como máximo 50 caracteres.</string>
 </resources>

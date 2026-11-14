@@ -12,8 +12,8 @@ import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 import kotlinx.datetime.LocalDate
 
-/** Which bottom sheet of the Movements screen is open: one per chip, and the "Coming soon" one of the "+". */
-enum class MovementsSheet { None, Account, Envelope, Type, Dates, Tags, Person, New }
+/** Which bottom sheet of the Movements screen is open: one per chip. */
+enum class MovementsSheet { None, Account, Envelope, Type, Dates, Tags, Person }
 
 data class MovementsUiState(
     val groupName: String = "",

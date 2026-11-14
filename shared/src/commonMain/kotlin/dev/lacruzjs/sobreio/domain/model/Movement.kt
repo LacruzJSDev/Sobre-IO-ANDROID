@@ -31,6 +31,9 @@ data class Movement(
 
     /** Contribution legs are voided as a pair (`void_group_transfer`), which this screen does not offer yet. */
     val canDelete: Boolean get() = !isGroupTransfer
+
+    /** Expenses, incomes and account transfers are edited in the form; adjustments and contribution legs are not. */
+    val canEdit: Boolean get() = !isGroupTransfer && kind != MovementKind.Adjustment
 }
 
 /** The kinds the Type filter offers; [wireName] is what `search_movements` expects in `p_kinds`. */

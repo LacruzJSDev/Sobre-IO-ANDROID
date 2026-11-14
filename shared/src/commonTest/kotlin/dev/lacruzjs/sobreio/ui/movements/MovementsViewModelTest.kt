@@ -345,13 +345,12 @@ class MovementsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun theNewButtonOpensTheComingSoonSheet() {
+    fun theNewAndEditButtonsOnlyNavigate() {
         val viewModel = loaded()
 
         viewModel.onEvent(MovementsEvent.NewClicked)
-        assertEquals(MovementsSheet.New, viewModel.state.value.sheet)
+        viewModel.onEvent(MovementsEvent.EditClicked("m1", dev.lacruzjs.sobreio.domain.model.MovementSource.Transaction))
 
-        viewModel.onEvent(MovementsEvent.NewDismissed)
         assertEquals(MovementsSheet.None, viewModel.state.value.sheet)
     }
 

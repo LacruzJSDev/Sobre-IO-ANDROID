@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.domain.model.MovementSource
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -27,12 +29,24 @@ fun AccountMovementsRoute(
     groupId: String,
     accountId: String,
     onBack: () -> Unit,
+    onOpenMovementForm: (movementId: String?, source: MovementSource?, accountId: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, accountId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }
-    AccountMovementsScreen(state = state, onEvent = viewModel::onEvent, onBack = onBack, modifier = modifier)
+    AccountMovementsScreen(
+        state = state,
+        onEvent = { event ->
+            when (event) {
+                MovementsEvent.NewClicked -> onOpenMovementForm(null, null, accountId)
+                is MovementsEvent.EditClicked -> onOpenMovementForm(event.movementId, event.source, null)
+                else -> viewModel.onEvent(event)
+            }
+        },
+        onBack = onBack,
+        modifier = modifier,
+    )
 }
 
 @Composable

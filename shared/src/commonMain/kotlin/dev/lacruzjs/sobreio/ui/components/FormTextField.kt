@@ -9,10 +9,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -21,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.amount_sign_toggle
 import org.jetbrains.compose.resources.StringResource
@@ -137,8 +140,76 @@ fun Modifier.clearFocusOnTap(): Modifier = composed {
     pointerInput(Unit) { detectTapGestures { dismissKeyboard(focusManager, keyboard) } }
 }
 
+/**
+ * Closes the keyboard and clears the focus. Opening a choice (an [EntitySelect], an [ExpandableFormTile]) calls it
+ * first, so the keypad of an amount never covers the options that open below.
+ */
+@Composable
+internal fun rememberDismissKeyboard(): () -> Unit {
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    return { dismissKeyboard(focusManager, keyboard) }
+}
+
 private fun dismissKeyboard(focusManager: FocusManager, keyboard: SoftwareKeyboardController?) {
     // On iOS clearing the focus alone can leave the keyboard up
     keyboard?.hide()
     focusManager.clearFocus(force = true)
+}
+
+/**
+ * The amount of a movement, big and centred: the one thing the form is about. Same rules as [AmountField] (decimal
+ * keypad, no minus sign); with [focusRequester] the form can open the keypad by itself. [currencyCode] is shown muted
+ * under the number and [placeholder] when empty.
+ */
+@Composable
+fun LargeAmountField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    currencySymbol: String,
+    modifier: Modifier = Modifier,
+    errorRes: StringResource? = null,
+    enabled: Boolean = true,
+    focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
+) {
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val style = MaterialTheme.typography.displaySmall.copy(
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    androidx.compose.foundation.layout.Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+    ) {
+        androidx.compose.foundation.text.BasicTextField(
+            value = value,
+            onValueChange = { onValueChange(it.replace("-", "")) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .let { if (focusRequester != null) it.focusRequester(focusRequester) else it }
+                .semantics { contentDescription = label },
+            enabled = enabled,
+            singleLine = true,
+            textStyle = style,
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { dismissKeyboard(focusManager, keyboard) }),
+            decorationBox = { inner ->
+                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+                    if (value.isEmpty()) {
+                        Text(text = placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
+                    }
+                    inner()
+                }
+            },
+        )
+        Text(text = currencySymbol, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (errorRes != null) {
+            Text(text = stringResource(errorRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+    }
 }

@@ -65,6 +65,19 @@ data class CommitmentDetail(val groupId: String, val accountId: String, val comm
 @Serializable
 data class CommitmentForm(val groupId: String, val accountId: String, val commitmentId: String?) : NavKey
 
+/**
+ * Create (`movementId` null) or edit a movement, as a full screen. [source] is the [dev.lacruzjs.sobreio.domain.model.MovementSource]
+ * name of the row being edited; [accountId] preselects the account when creating from an account's list. Opened by the "+"
+ * of the Movements tab and of an account's movements, and by the Edit swipe action of a row.
+ */
+@Serializable
+data class MovementForm(
+    val groupId: String,
+    val movementId: String?,
+    val source: String?,
+    val accountId: String?,
+) : NavKey
+
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable
 data class EnvelopeForm(val groupId: String, val envelopeId: String?) : NavKey
