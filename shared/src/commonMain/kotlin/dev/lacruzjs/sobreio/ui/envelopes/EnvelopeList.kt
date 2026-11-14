@@ -33,9 +33,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_assign
-import dev.lacruzjs.sobreio.generated.resources.action_delete
-import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.envelope_target_per_month
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_editor
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_member
@@ -45,8 +42,10 @@ import dev.lacruzjs.sobreio.generated.resources.envelopes_total
 import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.ic_envelope
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.SwipeAction
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
+import dev.lacruzjs.sobreio.ui.components.assignAction
+import dev.lacruzjs.sobreio.ui.components.deleteAction
+import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -66,9 +65,6 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openEnvelopeId = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val assignLabel = stringResource(Res.string.action_assign)
-    val editLabel = stringResource(Res.string.action_edit)
-    val deleteLabel = stringResource(Res.string.action_delete)
 
     val section: LazyListScope.(StringResource, List<Envelope>) -> Unit = { title, list ->
         if (list.isNotEmpty()) {
@@ -82,31 +78,10 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
             }
             items(list, key = { it.id }) { envelope ->
                 val actions = buildList {
-                    add(
-                        SwipeAction(
-                            label = assignLabel,
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            onClick = { onEvent(EnvelopesEvent.AssignClicked(envelope.id)) },
-                        ),
-                    )
+                    add(assignAction { onEvent(EnvelopesEvent.AssignClicked(envelope.id)) })
                     if (state.canEdit) {
-                        add(
-                            SwipeAction(
-                                label = editLabel,
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                onClick = { onEvent(EnvelopesEvent.EditClicked(envelope.id)) },
-                            ),
-                        )
-                        add(
-                            SwipeAction(
-                                label = deleteLabel,
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                                onClick = { onEvent(EnvelopesEvent.DeleteClicked(envelope.id)) },
-                            ),
-                        )
+                        add(editAction { onEvent(EnvelopesEvent.EditClicked(envelope.id)) })
+                        add(deleteAction { onEvent(EnvelopesEvent.DeleteClicked(envelope.id)) })
                     }
                 }
                 SwipeActionsRow(

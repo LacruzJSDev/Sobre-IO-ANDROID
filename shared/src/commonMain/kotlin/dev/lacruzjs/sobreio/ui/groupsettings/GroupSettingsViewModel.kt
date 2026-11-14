@@ -15,6 +15,7 @@ import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
+import dev.lacruzjs.sobreio.generated.resources.role_changed
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -149,6 +150,7 @@ class GroupSettingsViewModel(
         viewModelScope.launch {
             members.changeRole(groupId, member.userId, role)
                 .onSuccess {
+                    undo.notify(Res.string.role_changed, member.displayName)
                     _state.update { s ->
                         s.copy(
                             isSubmitting = false,

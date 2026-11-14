@@ -11,6 +11,8 @@ import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.group_archived_message
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
+import dev.lacruzjs.sobreio.generated.resources.group_deletion_cancelled
+import dev.lacruzjs.sobreio.generated.resources.group_reopened
 import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
@@ -332,5 +334,53 @@ class GroupsViewModelTest : MainDispatcherTest() {
         assertTrue("leaveGroup(1)" in repository.calls)
         assertEquals(AppError.BusinessRule("FZ009"), viewModel.state.value.actionError)
         assertEquals(listOf(casa, piso), viewModel.state.value.groups)
+    }
+
+    @Test
+    fun theOnlyActiveOwnerCannotLeave() {
+        repository.groups = listOf(casa.copy(activeOwnerCount = 1), piso)
+        loaded()
+        viewModel.onEvent(GroupsEvent.LeaveClicked("1"))
+
+        assertEquals(listOf("Casa", "Piso"), viewModel.state.value.groups.map { it.name })
+        assertNull(viewModel.state.value.undoMessage)
+        assertTrue(viewModel.state.value.groups.first { it.id == "1" }.isSoleOwner)
+    }
+
+    @Test
+    fun anOwnerWithAnotherOwnerCanLeave() {
+        repository.groups = listOf(casa.copy(activeOwnerCount = 2), piso)
+        loaded()
+        viewModel.onEvent(GroupsEvent.LeaveClicked("1"))
+
+        assertEquals(Res.string.group_left, viewModel.state.value.undoMessage?.message)
+    }
+
+    @Test
+    fun reopeningShowsASnackbarAndUndoArchivesAgain() {
+        repository.groups = listOf(casa, vieja)
+        loaded()
+        viewModel.onEvent(GroupsEvent.ReopenClicked("3"))
+
+        assertEquals(Res.string.group_reopened, viewModel.state.value.undoMessage?.message)
+        assertEquals("Vieja", viewModel.state.value.undoMessage?.argument)
+
+        viewModel.onEvent(GroupsEvent.UndoClicked)
+
+        assertTrue("archiveGroup(3)" in repository.calls)
+        assertEquals(listOf("Vieja"), viewModel.state.value.archivedGroups.map { it.name })
+    }
+
+    @Test
+    fun cancellingADeletionShowsASnackbarAndUndoRequestsItAgain() {
+        repository.groups = listOf(casa, borrada)
+        loaded()
+        viewModel.onEvent(GroupsEvent.CancelDeletionClicked("4"))
+
+        assertEquals(Res.string.group_deletion_cancelled, viewModel.state.value.undoMessage?.message)
+
+        viewModel.onEvent(GroupsEvent.UndoClicked)
+
+        assertTrue("requestGroupDeletion(4)" in repository.calls)
     }
 }

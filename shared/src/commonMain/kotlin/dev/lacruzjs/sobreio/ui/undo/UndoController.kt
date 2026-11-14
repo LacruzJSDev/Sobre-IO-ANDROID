@@ -5,6 +5,7 @@ import dev.lacruzjs.sobreio.domain.error.asAppError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * ViewModel-side half of the undo pattern, reused by every list (groups, accounts, envelopes, movements): it holds the
@@ -18,12 +19,20 @@ class UndoController(
 ) {
     private var pending: UndoableAction? = null
     private var nextKey = 0L
+    private var noticeShown = false
 
     /** The action's item is already hidden; shows the snackbar. */
     fun show(action: UndoableAction) {
         commit()
         pending = action
         onMessage(UndoMessage(++nextKey, action.message, action.argument))
+    }
+
+    /** A plain notice for something already done that needs no undo (no "Undo" button). Commits a pending action first. */
+    fun notify(message: StringResource, argument: String) {
+        commit()
+        noticeShown = true
+        onMessage(UndoMessage(++nextKey, message, argument, undoable = false))
     }
 
     /** The user tapped "Undo". */
@@ -56,7 +65,16 @@ class UndoController(
     }
 
     private fun take(): UndoableAction? {
-        val action = pending ?: return null
+        val action = pending
+        if (action == null) {
+            // A plain notice ended: take it off the screen state
+            if (noticeShown) {
+                noticeShown = false
+                onMessage(null)
+            }
+            return null
+        }
+        noticeShown = false
         pending = null
         onMessage(null)
         return action

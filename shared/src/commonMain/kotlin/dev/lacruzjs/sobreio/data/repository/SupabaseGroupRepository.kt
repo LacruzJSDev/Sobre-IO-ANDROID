@@ -30,8 +30,11 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
 
     override suspend fun getGroups(): Result<List<Group>> = safeCall {
         postgrest.from(TABLE)
-            .select(GROUP_COLUMNS) {
-                filter { mine() }
+            .select(GROUP_LIST_COLUMNS) {
+                filter {
+                    mine()
+                    owners()
+                }
                 order("name", Order.ASCENDING)
             }
             .decodeList<GroupDto>()
@@ -186,6 +189,12 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
         exact("$MEMBERS_TABLE.left_at", null)
     }
 
+    /** The `owners` embed lists only the group's active owners, so its size is how many there are. */
+    private fun PostgrestFilterBuilder.owners() {
+        eq("owners.role", "owner")
+        exact("owners.left_at", null)
+    }
+
     @Serializable
     private data class IdDto(val id: String)
 
@@ -196,6 +205,11 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
         val GROUP_COLUMNS = Columns.raw(
             "id,name,currency,timezone,period_start_day,color,icon,archived_at,purge_requested_at," +
                 "$MEMBERS_TABLE!inner(role)",
+        )
+        // The list also embeds the active owners (same table, aliased) to know whether the user is the only one
+        val GROUP_LIST_COLUMNS = Columns.raw(
+            "id,name,currency,timezone,period_start_day,color,icon,archived_at,purge_requested_at," +
+                "$MEMBERS_TABLE!inner(role),owners:$MEMBERS_TABLE(user_id)",
         )
         val INVITATION_COLUMNS = Columns.list("id", "code", "role", "status", "accepted_by", "accepted_at", "expires_at")
     }

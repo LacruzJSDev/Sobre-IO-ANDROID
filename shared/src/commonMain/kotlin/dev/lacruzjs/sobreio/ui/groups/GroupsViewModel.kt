@@ -11,6 +11,8 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.group_archived_message
 import dev.lacruzjs.sobreio.generated.resources.group_deleted
+import dev.lacruzjs.sobreio.generated.resources.group_deletion_cancelled
+import dev.lacruzjs.sobreio.generated.resources.group_reopened
 import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.undo.UndoController
@@ -93,7 +95,18 @@ class GroupsViewModel(
         _state.update { it.copy(actionError = null) }
         viewModelScope.launch {
             groups.reopenGroup(group.id)
-                .onSuccess { load() }
+                .onSuccess {
+                    load()
+                    undo.show(
+                        UndoableAction(
+                            message = Res.string.group_reopened,
+                            argument = group.name,
+                            commit = { Result.success(Unit) },
+                            undo = { groups.archiveGroup(group.id) },
+                            restore = { load() },
+                        ),
+                    )
+                }
                 .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
@@ -104,7 +117,18 @@ class GroupsViewModel(
         _state.update { it.copy(actionError = null) }
         viewModelScope.launch {
             groups.cancelGroupDeletion(group.id)
-                .onSuccess { load() }
+                .onSuccess {
+                    load()
+                    undo.show(
+                        UndoableAction(
+                            message = Res.string.group_deletion_cancelled,
+                            argument = group.name,
+                            commit = { Result.success(Unit) },
+                            undo = { groups.requestGroupDeletion(group.id) },
+                            restore = { load() },
+                        ),
+                    )
+                }
                 .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
@@ -167,7 +191,7 @@ class GroupsViewModel(
      * owner is refused (FZ009) and the row comes back with the error.
      */
     private fun leave(groupId: String) {
-        val group = _state.value.groups.firstOrNull { it.id == groupId } ?: return
+        val group = _state.value.groups.firstOrNull { it.id == groupId && !it.isSoleOwner } ?: return
         undo.commit()
         _state.update { it.copy(groups = it.groups - group, actionError = null) }
         undo.show(

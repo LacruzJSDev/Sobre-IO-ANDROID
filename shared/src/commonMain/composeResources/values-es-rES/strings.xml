@@ -301,4 +301,7 @@
     <string name="action_close">Cerrar</string>
     <string name="time_zone_search">Buscar zona horaria</string>
     <string name="time_zone_current">Zona horaria actual</string>
+    <string name="group_reopened">%1$s reabierto</string>
+    <string name="group_deletion_cancelled">Eliminación de %1$s cancelada</string>
+    <string name="role_changed">Rol de %1$s cambiado</string>
 </resources>

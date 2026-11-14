@@ -37,7 +37,7 @@ fun UndoSnackbarHost(
         }
         val result = hostState.showSnackbar(
             message = getString(message.message, message.argument),
-            actionLabel = getString(Res.string.action_undo),
+            actionLabel = if (message.undoable) getString(Res.string.action_undo) else null,
             duration = SnackbarDuration.Long,
         )
         when (result) {

@@ -28,18 +28,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_cancel_deletion
-import dev.lacruzjs.sobreio.generated.resources.action_delete
-import dev.lacruzjs.sobreio.generated.resources.action_archive
-import dev.lacruzjs.sobreio.generated.resources.action_leave
-import dev.lacruzjs.sobreio.generated.resources.action_reopen
 import dev.lacruzjs.sobreio.generated.resources.group_archived_label
 import dev.lacruzjs.sobreio.generated.resources.group_deletion_date
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconCategory
-import dev.lacruzjs.sobreio.ui.components.SwipeAction
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
+import dev.lacruzjs.sobreio.ui.components.archiveAction
+import dev.lacruzjs.sobreio.ui.components.cancelDeletionAction
+import dev.lacruzjs.sobreio.ui.components.deleteAction
+import dev.lacruzjs.sobreio.ui.components.leaveAction
+import dev.lacruzjs.sobreio.ui.components.reopenAction
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
@@ -60,11 +59,6 @@ internal fun GroupList(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openGroupId = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val archiveLabel = stringResource(Res.string.action_archive)
-    val deleteLabel = stringResource(Res.string.action_delete)
-    val leaveLabel = stringResource(Res.string.action_leave)
-    val reopenLabel = stringResource(Res.string.action_reopen)
-    val cancelDeletionLabel = stringResource(Res.string.action_cancel_deletion)
 
     LazyColumn(
         state = listState,
@@ -75,31 +69,11 @@ internal fun GroupList(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
         items(state.groups, key = { it.id }) { group ->
             val actions = buildList {
                 if (group.isOwner) {
-                    add(
-                        SwipeAction(
-                            label = archiveLabel,
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            onClick = { onEvent(GroupsEvent.ArchiveClicked(group.id)) },
-                        ),
-                    )
-                    add(
-                        SwipeAction(
-                            label = deleteLabel,
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                            onClick = { onEvent(GroupsEvent.DeleteClicked(group.id)) },
-                        ),
-                    )
+                    add(archiveAction { onEvent(GroupsEvent.ArchiveClicked(group.id)) })
+                    add(deleteAction { onEvent(GroupsEvent.DeleteClicked(group.id)) })
                 }
-                add(
-                    SwipeAction(
-                        label = leaveLabel,
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                        onClick = { onEvent(GroupsEvent.LeaveClicked(group.id)) },
-                    ),
-                )
+                // The only active owner cannot leave (the database would refuse it, FZ009)
+                if (!group.isSoleOwner) add(leaveAction { onEvent(GroupsEvent.LeaveClicked(group.id)) })
             }
             SwipeActionsRow(
                 actions = actions,
@@ -139,18 +113,8 @@ internal fun GroupList(state: GroupsUiState, onEvent: (GroupsEvent) -> Unit) {
                 }
                 val action = when {
                     !group.isOwner -> null
-                    pending -> SwipeAction(
-                        label = cancelDeletionLabel,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = { onEvent(GroupsEvent.CancelDeletionClicked(group.id)) },
-                    )
-                    else -> SwipeAction(
-                        label = reopenLabel,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        onClick = { onEvent(GroupsEvent.ReopenClicked(group.id)) },
-                    )
+                    pending -> cancelDeletionAction { onEvent(GroupsEvent.CancelDeletionClicked(group.id)) }
+                    else -> reopenAction { onEvent(GroupsEvent.ReopenClicked(group.id)) }
                 }
                 // A group pending deletion cannot be opened; an archived one opens read only
                 val onClick = { if (!pending) onEvent(GroupsEvent.GroupClicked(group.id)) }

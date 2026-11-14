@@ -20,8 +20,12 @@ data class Group(
     val periodStartDay: Int = 1,
     val archivedAt: Instant? = null,
     val purgeRequestedAt: Instant? = null,
+    /** How many active owners the group has; null when unknown (then nobody is treated as the sole owner). */
+    val activeOwnerCount: Int? = null,
 ) {
     val isOwner: Boolean get() = role == GroupRole.Owner
+    /** The signed-in user is the group's only active owner: leaving would be refused (FZ009), so it is not offered. */
+    val isSoleOwner: Boolean get() = isOwner && activeOwnerCount == 1
     val isArchived: Boolean get() = archivedAt != null
     val isPendingDeletion: Boolean get() = purgeRequestedAt != null
 

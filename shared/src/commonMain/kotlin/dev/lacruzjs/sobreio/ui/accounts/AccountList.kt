@@ -28,12 +28,11 @@ import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.accounts_total
-import dev.lacruzjs.sobreio.generated.resources.action_delete
-import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.ic_account_balance
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.SwipeAction
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
+import dev.lacruzjs.sobreio.ui.components.deleteAction
+import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -56,8 +55,6 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openAccountId = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val editLabel = stringResource(Res.string.action_edit)
-    val deleteLabel = stringResource(Res.string.action_delete)
 
     LazyColumn(
         state = listState,
@@ -84,18 +81,8 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
             if (state.canEdit) {
                 SwipeActionsRow(
                     actions = listOf(
-                        SwipeAction(
-                            label = editLabel,
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            onClick = { onEvent(AccountsEvent.EditClicked(account.id)) },
-                        ),
-                        SwipeAction(
-                            label = deleteLabel,
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                            onClick = { onEvent(AccountsEvent.DeleteClicked(account.id)) },
-                        ),
+                        editAction { onEvent(AccountsEvent.EditClicked(account.id)) },
+                        deleteAction { onEvent(AccountsEvent.DeleteClicked(account.id)) },
                     ),
                     isOpen = openAccountId == account.id,
                     // A row reporting "closed" must not close another one that has just opened

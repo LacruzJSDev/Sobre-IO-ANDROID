@@ -88,4 +88,25 @@ class GroupMapperTest {
         assertEquals("u3", invitation.acceptedBy)
         assertEquals(Instant.parse("2026-11-12T10:00:00Z"), invitation.acceptedAt)
     }
+
+    @Test
+    fun countsTheActiveOwnersOfTheListQuery() {
+        val sole = json.decodeFromString<GroupDto>(
+            """{"id":"g1","name":"Casa","currency":"EUR","account_group_members":[{"role":"owner"}],
+               "owners":[{"user_id":"u1"}]}""",
+        ).toDomain()
+        val shared = json.decodeFromString<GroupDto>(
+            """{"id":"g1","name":"Casa","currency":"EUR","account_group_members":[{"role":"owner"}],
+               "owners":[{"user_id":"u1"},{"user_id":"u2"}]}""",
+        ).toDomain()
+        val unknown = json.decodeFromString<GroupDto>(
+            """{"id":"g1","name":"Casa","currency":"EUR","account_group_members":[{"role":"owner"}]}""",
+        ).toDomain()
+
+        assertTrue(sole.isSoleOwner)
+        assertEquals(2, shared.activeOwnerCount)
+        assertEquals(false, shared.isSoleOwner)
+        assertEquals(null, unknown.activeOwnerCount)
+        assertEquals(false, unknown.isSoleOwner)
+    }
 }

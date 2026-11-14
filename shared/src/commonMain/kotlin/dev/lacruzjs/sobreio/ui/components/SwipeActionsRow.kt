@@ -13,9 +13,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,7 +31,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -40,7 +40,7 @@ import kotlin.math.roundToInt
 
 private enum class SwipeValue { Closed, Open }
 
-private val ActionWidth = 88.dp
+private val ActionWidth = 64.dp
 
 /**
  * A list row that swipes left to reveal [actions] on its right (Edit, Delete...), the pattern of every list in the app.
@@ -101,23 +101,25 @@ fun SwipeActionsRow(
             horizontalArrangement = Arrangement.End,
         ) {
             actions.forEach { action ->
-                Box(
-                    modifier = Modifier
-                        .width(ActionWidth)
-                        .fillMaxHeight()
-                        .background(action.containerColor)
-                        .clickable {
-                            action.onClick()
-                            currentOnOpenChange(false)
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = action.label,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = action.contentColor,
-                        textAlign = TextAlign.Center,
-                    )
+                LabelTooltip(label = action.label) {
+                    Box(
+                        modifier = Modifier
+                            .width(ActionWidth)
+                            .fillMaxHeight()
+                            .background(action.containerColor)
+                            .clickable(onClickLabel = action.label) {
+                                action.onClick()
+                                currentOnOpenChange(false)
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = action.icon,
+                            contentDescription = action.label,
+                            tint = action.contentColor,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
         }

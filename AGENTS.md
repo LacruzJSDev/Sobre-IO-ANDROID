@@ -50,16 +50,19 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   maps `AppError` to string resources.
 - `ui/format/MoneyFormat.kt`: `formatMoney(amountCents, currencyCode, languageTag)` gives `1.298,15 €` for `es`,
   `€1,298.15` otherwise; only the euro has a symbol, other currencies show their ISO code (`USD 1,298.15`).
-- Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and a fixed
-  bottom section with no divider (spacing only): "Join with a code" and "Profile" as `PrimaryButton`s and "Sign out" as a
-  `DestructiveButton`. Rows show an `EntityAvatar` with the group's colour and icon. Each row swipes left
-  (`SwipeActionsRow`): Archive (owner), Delete (owner, red) and Leave (everyone, owners included, red). There is no Edit
+- Groups screen: header with the title and a "+" (new group), the list of groups as the only scrolling part, and at the
+  very bottom, with no divider, one row of icon buttons spread evenly (`IconActionButton`: join with a code, profile and
+  sign out in red; each has an accessible name that also shows on long press). Rows show an `EntityAvatar` with the group's colour and icon. Each row swipes left
+  (`SwipeActionsRow`, icon actions): Archive and Delete (owner) and Leave (everyone except the sole active owner). There is no Edit
   here: editing lives only in the group settings. The "+" opens the full-screen group form (`GroupForm(null)`, see
   Group form below). Archive, Delete and Leave
   are never confirmed: an "Undo" snackbar follows (`UndoController`, see Rules). Archive sets `archived_at` at once (the
   row moves to the Archived section) and Undo reopens it. Owner delete calls `request_group_purge` immediately and Undo
   calls `cancel_group_purge`. Leave is deferred (rejoining needs an invitation): `account_group_members.left_at` is
-  updated only when the snackbar ends without Undo, and the last owner gets FZ009 with the row back.
+  updated only when the snackbar ends without Undo. `getGroups` also embeds the active owners (`owners:account_group_members(user_id)`,
+  filtered with `owners.role=eq.owner` and `owners.left_at=is.null`, alias of the same table) into `Group.activeOwnerCount`;
+  `Group.isSoleOwner` hides Leave, and FZ009 stays as a fallback (the row comes back with the error). Reopen and Cancel
+  deletion also show a snackbar with Undo.
   `SupabaseGroupRepository.getGroups` returns every group of the user with its role (PostgREST embedding
   `account_group_members!inner(role)`, filtered to the user and `left_at is null`); the ViewModel splits them: live
   groups in `groups`, and `archivedGroups` (archived first, then those with `purge_requested_at`) for a collapsed
@@ -108,7 +111,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   currency, period day and time zone, plus an "Edit" button (owner and admin, live group) that opens the same
   full-screen group form (`GroupForm(groupId)`); the screen reloads when it is shown again; an archived group shows a read-only note. Members (`MemberRepository`): initial avatar, name ("You"
   marker) and role label; an owner swipes a member's row for Role (sheet with owner/admin/member chips,
-  `account_group_members.role` update; FZ009 shows inside the sheet; also on their own row) and, on other members' rows,
+  `account_group_members.role` update; FZ009 shows inside the sheet; also on their own row; a "Role changed" snackbar follows, without Undo) and, on other members' rows,
   Remove (hidden at once with Undo; `left_at` is written only when the snackbar ends without Undo). Invitations (owner
   and admin, live group), the "+" on the header opens a sheet to choose the role (Member default, Admin; never owner),
   creates the `invitations` row and shows the code with a copy button. Two small sections, each hidden when empty:
@@ -207,6 +210,13 @@ plus the `newmovement` bottom sheet.
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
+- Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
+  Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
+  grey, Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,
+  Remove member and Revoke invitation in red) and used by every list; never build a `SwipeAction` by hand. Each has an
+  accessible label shown on long press (`LabelTooltip`, Material3 `TooltipBox`). Every swipe action (and the role
+  change) that does not open a screen or sheet shows a bottom snackbar saying what happened, with Undo when possible
+  (`UndoController.show`, or `notify` for a plain notice).
 - Lists: rows swipe left for Edit/Delete with `SwipeActionsRow`; creation is the "+" in the header; there are no
   per-item settings screens. Destructive actions are never confirmed with a dialog: the item is hidden at once (soft
   delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,

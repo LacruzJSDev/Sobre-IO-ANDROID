@@ -48,10 +48,7 @@ import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.action_invite
-import dev.lacruzjs.sobreio.generated.resources.action_remove
 import dev.lacruzjs.sobreio.generated.resources.action_retry
-import dev.lacruzjs.sobreio.generated.resources.action_revoke
-import dev.lacruzjs.sobreio.generated.resources.action_role
 import dev.lacruzjs.sobreio.generated.resources.group_archived_banner
 import dev.lacruzjs.sobreio.generated.resources.group_settings_title
 import dev.lacruzjs.sobreio.generated.resources.invitation_expires_on
@@ -74,8 +71,10 @@ import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
-import dev.lacruzjs.sobreio.ui.components.SwipeAction
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
+import dev.lacruzjs.sobreio.ui.components.changeRoleAction
+import dev.lacruzjs.sobreio.ui.components.removeMemberAction
+import dev.lacruzjs.sobreio.ui.components.revokeAction
 import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -174,9 +173,6 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) openKey = null }
 
     val languageTag = Locale.current.toLanguageTag()
-    val roleLabel = stringResource(Res.string.action_role)
-    val removeLabel = stringResource(Res.string.action_remove)
-    val revokeLabel = stringResource(Res.string.action_revoke)
 
     LazyColumn(
         state = listState,
@@ -199,25 +195,9 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
             if (state.canManageMembers) {
                 SwipeActionsRow(
                     actions = buildList {
-                        add(
-                            SwipeAction(
-                                label = roleLabel,
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                onClick = { onEvent(GroupSettingsEvent.RoleClicked(member.userId)) },
-                            ),
-                        )
-                        // Your own row has no Remove: that is "Leave group"
-                        if (!isYou) {
-                            add(
-                                SwipeAction(
-                                    label = removeLabel,
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError,
-                                    onClick = { onEvent(GroupSettingsEvent.RemoveMemberClicked(member.userId)) },
-                                ),
-                            )
-                        }
+                        add(changeRoleAction { onEvent(GroupSettingsEvent.RoleClicked(member.userId)) })
+                        // Your own row has no Remove
+                        if (!isYou) add(removeMemberAction { onEvent(GroupSettingsEvent.RemoveMemberClicked(member.userId)) })
                     },
                     isOpen = openKey == "member-${member.userId}",
                     onOpenChange = { open ->
@@ -257,14 +237,7 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
             }
             items(state.pendingInvitations, key = { "invitation-${it.id}" }) { invitation ->
                 SwipeActionsRow(
-                    actions = listOf(
-                        SwipeAction(
-                            label = revokeLabel,
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                            onClick = { onEvent(GroupSettingsEvent.RevokeInvitationClicked(invitation.id)) },
-                        ),
-                    ),
+                    actions = listOf(revokeAction { onEvent(GroupSettingsEvent.RevokeInvitationClicked(invitation.id)) }),
                     isOpen = openKey == "invitation-${invitation.id}",
                     onOpenChange = { open ->
                         val key = "invitation-${invitation.id}"

@@ -16,6 +16,7 @@ internal fun GroupDto.toDomain(): Group = Group(
     periodStartDay = periodStartDay,
     archivedAt = archivedAt?.let(Instant::parse),
     purgeRequestedAt = purgeRequestedAt?.let(Instant::parse),
+    activeOwnerCount = owners?.size,
 )
 
 internal fun String?.toGroupRole(): GroupRole = when (this) {

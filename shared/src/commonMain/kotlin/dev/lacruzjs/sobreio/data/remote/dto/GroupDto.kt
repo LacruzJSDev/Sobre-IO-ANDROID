@@ -19,7 +19,12 @@ internal data class GroupDto(
     @SerialName("archived_at") val archivedAt: String? = null,
     @SerialName("purge_requested_at") val purgeRequestedAt: String? = null,
     @SerialName("account_group_members") val members: List<MemberRoleDto> = emptyList(),
+    /** The active owners (`owners:account_group_members` filtered to role owner and not left); null when not requested. */
+    val owners: List<OwnerDto>? = null,
 )
 
 @Serializable
 internal data class MemberRoleDto(val role: String)
+
+@Serializable
+internal data class OwnerDto(@SerialName("user_id") val userId: String)

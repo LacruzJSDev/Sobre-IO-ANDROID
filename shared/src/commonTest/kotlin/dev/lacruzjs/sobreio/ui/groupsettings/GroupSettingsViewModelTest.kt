@@ -14,6 +14,7 @@ import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
+import dev.lacruzjs.sobreio.generated.resources.role_changed
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -133,6 +134,9 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupSettingsEvent.RoleSelected(GroupRole.Owner))
 
         assertEquals(listOf("changeRole(g1, u3, Owner)"), memberRepository.calls)
+        // A plain notice (no Undo) tells what happened
+        assertEquals(Res.string.role_changed, viewModel.state.value.undoMessage?.message)
+        assertFalse(viewModel.state.value.undoMessage?.undoable == true)
         assertEquals(GroupRole.Owner, viewModel.state.value.members.first { it.userId == "u3" }.role)
         assertEquals(GroupSettingsSheet.None, viewModel.state.value.sheet)
     }
