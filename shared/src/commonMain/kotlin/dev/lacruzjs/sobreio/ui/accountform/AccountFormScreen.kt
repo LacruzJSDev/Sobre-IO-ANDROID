@@ -49,6 +49,7 @@ import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
+import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
@@ -217,15 +218,14 @@ fun AccountFormScreen(
                         )
                     }
                     if (!isEditing) {
-                        // The plain text keyboard is used on purpose: the decimal pads of some platforms have no minus sign
-                        FormTextField(
+                        // Numeric keypad; a debt (credit card) is entered with the ± button, as the pad has no minus key
+                        AmountField(
                             value = state.openingBalance,
                             onValueChange = { onEvent(AccountFormEvent.OpeningBalanceChanged(it)) },
                             label = stringResource(Res.string.field_opening_balance),
                             errorRes = state.openingBalanceError,
                             enabled = !state.isSubmitting,
-                            imeAction = ImeAction.Done,
-                            onImeAction = { onEvent(AccountFormEvent.SaveClicked) },
+                            allowNegative = true,
                         )
                         FormNote(stringResource(Res.string.opening_balance_hint))
                     }

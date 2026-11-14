@@ -326,4 +326,5 @@
     <string name="account_scope_edit_note">From today. If it has a balance, it moves between Unassigned and the money outside the envelopes.</string>
     <string name="error_account_scope_movements">This account has movements dated today or later. Change its scope before recording them, or tomorrow.</string>
     <string name="row_subtitle">%1$s · %2$s</string>
+    <string name="amount_sign_toggle">Change sign (debt)</string>
 </resources>

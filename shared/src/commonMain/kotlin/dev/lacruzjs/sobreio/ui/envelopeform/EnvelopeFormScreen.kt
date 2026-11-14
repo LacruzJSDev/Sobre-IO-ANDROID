@@ -44,6 +44,7 @@ import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
+import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
 import dev.lacruzjs.sobreio.ui.components.HolderPicker
@@ -196,14 +197,12 @@ fun EnvelopeFormScreen(
                             )
                         }
                     }
-                    FormTextField(
+                    AmountField(
                         value = state.monthlyTarget,
                         onValueChange = { onEvent(EnvelopeFormEvent.MonthlyTargetChanged(it)) },
                         label = stringResource(Res.string.field_monthly_target),
                         errorRes = state.monthlyTargetError,
                         enabled = !state.isSubmitting,
-                        imeAction = ImeAction.Done,
-                        onImeAction = { onEvent(EnvelopeFormEvent.SaveClicked) },
                     )
                     FormNote(stringResource(Res.string.monthly_target_hint))
                 }

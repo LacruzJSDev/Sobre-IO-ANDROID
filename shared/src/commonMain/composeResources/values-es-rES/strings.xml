@@ -325,4 +325,5 @@
     <string name="account_scope_edit_note">Desde hoy. Si tiene saldo, se mueve entre «Sin asignar» y el dinero fuera de sobres.</string>
     <string name="error_account_scope_movements">Esta cuenta tiene movimientos de hoy o posteriores. Cambia su ámbito antes de apuntarlos, o mañana.</string>
     <string name="row_subtitle">%1$s · %2$s</string>
+    <string name="amount_sign_toggle">Cambiar el signo (deuda)</string>
 </resources>

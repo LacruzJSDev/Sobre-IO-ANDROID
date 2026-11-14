@@ -232,6 +232,10 @@ plus the `newmovement` bottom sheet.
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
+- Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
+  money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
+  has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
+  `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
   avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
   options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time; long lists open a

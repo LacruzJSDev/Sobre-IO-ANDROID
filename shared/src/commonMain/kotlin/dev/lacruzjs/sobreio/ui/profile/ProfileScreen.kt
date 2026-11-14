@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.profile
 
+import dev.lacruzjs.sobreio.ui.components.clearFocusOnTap
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -69,6 +70,7 @@ fun ProfileScreen(
             )
             Column(
                 modifier = Modifier
+                    .clearFocusOnTap()
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
                     .padding(horizontal = 24.dp, vertical = 16.dp)
                     .widthIn(max = 480.dp)

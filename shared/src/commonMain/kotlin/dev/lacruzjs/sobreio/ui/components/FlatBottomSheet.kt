@@ -35,6 +35,7 @@ fun FlatBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clearFocusOnTap()
                 .navigationBarsPadding()
                 // Above the keyboard, and scrollable so a focused field can be brought into view
                 .imePadding()

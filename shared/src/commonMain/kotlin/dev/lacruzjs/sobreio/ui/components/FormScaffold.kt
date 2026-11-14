@@ -54,7 +54,8 @@ fun FormScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        // A tap outside the fields closes the keyboard
+        Column(modifier = Modifier.fillMaxSize().clearFocusOnTap()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

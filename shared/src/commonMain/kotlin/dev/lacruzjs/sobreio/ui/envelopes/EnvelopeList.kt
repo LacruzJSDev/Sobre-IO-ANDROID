@@ -191,7 +191,7 @@ private fun EnvelopesTotal(state: EnvelopesUiState, languageTag: String) {
     }
 }
 
-/** "Unassigned" as one more envelope, the first: the money still to assign, with a prominent figure. */
+/** "Unassigned" as one more envelope, the first, drawn exactly like the others (it only lacks the swipe actions). */
 @Composable
 private fun UnassignedRow(balanceCents: Long, currencyCode: String, languageTag: String) {
     Row(
@@ -209,7 +209,7 @@ private fun UnassignedRow(balanceCents: Long, currencyCode: String, languageTag:
         )
         Text(
             text = formatMoney(balanceCents, currencyCode, languageTag),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,
         )

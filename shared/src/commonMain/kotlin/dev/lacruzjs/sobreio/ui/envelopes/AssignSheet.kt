@@ -22,6 +22,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_amount
 import dev.lacruzjs.sobreio.generated.resources.field_assign_from
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
+import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.format.formatMoney
@@ -40,14 +41,12 @@ internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> U
         title = stringResource(Res.string.assign_title, target.name),
         onDismiss = { onEvent(EnvelopesEvent.SheetDismissed) },
     ) {
-        FormTextField(
+        AmountField(
             value = state.amount,
             onValueChange = { onEvent(EnvelopesEvent.AmountChanged(it)) },
             label = stringResource(Res.string.field_amount),
             errorRes = state.amountError,
             enabled = !state.isSubmitting,
-            imeAction = ImeAction.Done,
-            onImeAction = { onEvent(EnvelopesEvent.AssignConfirmed) },
         )
         Text(text = stringResource(Res.string.field_assign_from), style = MaterialTheme.typography.labelLarge)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
