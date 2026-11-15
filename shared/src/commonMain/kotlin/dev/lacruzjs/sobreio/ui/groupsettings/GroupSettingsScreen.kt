@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Edit
 import dev.lacruzjs.sobreio.generated.resources.edit_group_title
 import dev.lacruzjs.sobreio.generated.resources.field_period_start_short
 import dev.lacruzjs.sobreio.generated.resources.field_time_zone
@@ -331,7 +332,9 @@ private fun TagsSection(tags: List<Tag>?, canManage: Boolean, onEvent: (GroupSet
                 }
             } else {
                 IconActionButton(
-                    icon = Icons.Filled.Edit,
+                    icon = Icons.Outlined.Edit,
+                    // Same visual weight as the thin "+" of the other section titles
+                    iconSize = 24.dp,
                     label = stringResource(Res.string.action_manage_tags),
                     onClick = { onEvent(GroupSettingsEvent.TagsClicked) },
                 )

@@ -673,4 +673,6 @@
         <item quantity="one">%1$d tag</item>
         <item quantity="other">%1$d tags</item>
     </plurals>
+    <string name="movement_row_aside">· %1$s</string>
+    <string name="movement_tags_more">+%1$d</string>
 </resources>
