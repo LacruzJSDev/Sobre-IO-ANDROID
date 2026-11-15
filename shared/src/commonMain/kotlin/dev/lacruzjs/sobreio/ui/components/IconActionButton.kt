@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -24,13 +25,15 @@ fun IconActionButton(
     tint: Color = MaterialTheme.colorScheme.onSurface,
     isLoading: Boolean = false,
     enabled: Boolean = true,
+    /** 28 dp for header and toolbar actions; 24 dp sits next to a section title, matching the "+" of `AddIconButton`. */
+    iconSize: Dp = 28.dp,
 ) {
     LabelTooltip(label = label, modifier = modifier) {
         IconButton(onClick = onClick, enabled = enabled && !isLoading, modifier = Modifier.size(56.dp)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = tint)
             } else {
-                Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(28.dp))
+                Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(iconSize))
             }
         }
     }

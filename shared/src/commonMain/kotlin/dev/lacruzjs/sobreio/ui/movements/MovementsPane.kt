@@ -1,5 +1,14 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.generated.resources.movement_no_tags
+import dev.lacruzjs.sobreio.generated.resources.movement_tags_more
+import dev.lacruzjs.sobreio.generated.resources.movement_row_aside
+import dev.lacruzjs.sobreio.ui.components.TagDot
+import dev.lacruzjs.sobreio.domain.model.Tag
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -328,79 +337,73 @@ private fun DayHeader(section: DaySection, languageTag: String) {
     )
 }
 
+/**
+ * One movement: the ACCOUNT's avatar (the movement belongs to an account, so rows differ and relate to it), then
+ * line 1 with the notes (or the kind) cut to leave room for the envelope next to them (or, for a transfer, the other
+ * account), and line 2 always reserved for the tags so rows keep the same height: up to 3, or 2 and "+N".
+ * "Unassigned" is not named: it is the default and would repeat on most rows.
+ */
 @Composable
 private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag: String) {
     // On an account's list each row is that account's side; in the group ledger a transfer is one row, shown unsigned
     val accountSide = state.filter.accountId != null
     val ledgerTransfer = movement.isAccountTransfer && !accountSide
-    val unassignedName = stringResource(Res.string.envelopes_unassigned)
 
-    val envelope = state.envelope(movement.envelopeId)
-    val envelopeName = when {
-        movement.isAccountTransfer -> null
-        envelope == null || envelope.kind == EnvelopeKind.System -> unassignedName
-        else -> envelope.name
-    }
-    val accountName = state.accountName(movement.accountId)
+    val account = state.accounts.firstOrNull { it.id == movement.accountId }
     val counterName = state.accountName(movement.counterAccountId)
+    val envelope = state.envelope(movement.envelopeId)
 
     val title = movement.notes ?: stringResource(
         if (ledgerTransfer) Res.string.movement_kind_transfer else movement.kind.labelRes(),
     )
-    val subtitle: String? = when {
-        ledgerTransfer -> if (accountName != null && counterName != null) {
-            stringResource(Res.string.movement_transfer_route, accountName, counterName)
-        } else {
-            null
-        }
+    // What sits next to the title: the envelope, or where a transfer goes or comes from
+    val aside: String? = when {
         movement.isAccountTransfer -> counterName?.let {
             stringResource(
-                if (movement.kind == MovementKind.TransferOut) Res.string.movement_to_account else Res.string.movement_from_account,
+                if (ledgerTransfer || movement.kind == MovementKind.TransferOut) Res.string.movement_to_account
+                else Res.string.movement_from_account,
                 it,
             )
         }
-        else -> {
-            // One account (or the fixed one) would repeat itself on every row
-            val showAccount = state.hasSeveralAccounts && state.fixedAccountId == null
-            when {
-                // The envelope is the screen's own: the second line tells the account instead
-                state.fixedEnvelopeId != null -> accountName.takeIf { showAccount }
-                showAccount && accountName != null -> stringResource(Res.string.row_subtitle, envelopeName.orEmpty(), accountName)
-                else -> envelopeName
-            }
-        }
+        // On an envelope's own list it would repeat on every row
+        state.fixedEnvelopeId != null -> null
+        envelope == null || envelope.kind == EnvelopeKind.System -> stringResource(Res.string.envelopes_unassigned)
+        else -> envelope.name
     }
+    val tags = movement.tagIds.mapNotNull { id -> state.tags.firstOrNull { it.id == id } }
     val amount = if (ledgerTransfer) kotlin.math.abs(movement.amountCents) else movement.amountCents
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (movement.isAccountTransfer) {
-            // Brand ink with the transfer icon: it belongs to no envelope
-            EntityAvatar(name = title, icon = Icons.Filled.SwapHoriz, color = null)
-        } else {
-            EntityAvatar(
-                name = envelopeName.orEmpty(),
-                icon = if (envelope == null || envelope.kind == EnvelopeKind.System) {
-                    Icons.Filled.Inbox
-                } else {
-                    iconFor(IconCategory.Envelope, envelope.icon)
-                },
-                color = EntityColor.fromHex(envelope?.color),
-            )
-        }
+        EntityAvatar(
+            name = account?.name ?: title,
+            icon = if (account == null) Icons.Filled.SwapHoriz else iconFor(IconCategory.Account, account.icon),
+            color = EntityColor.fromHex(account?.color),
+        )
         Column(modifier = Modifier.weight(1f).padding(start = 16.dp, end = 12.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (subtitle != null) {
+            Row {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    // Takes what is left, never pushing the envelope out
+                    modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
                 )
+                if (aside != null) {
+                    Text(
+                        text = stringResource(Res.string.movement_row_aside, aside),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 4.dp).widthIn(max = 130.dp).alignByBaseline(),
+                    )
+                }
             }
+            MovementTags(tags)
         }
         MoneyText(
             amountCents = amount,
@@ -410,6 +413,54 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
             textAlign = TextAlign.End,
             maxLines = 1,
         )
+    }
+}
+
+/** Up to this many tags fit on line 2; with more, one fewer is shown and a "+N" chip says how many are left. */
+private const val MAX_ROW_TAGS = 3
+
+/** Line 2 of a movement: its tags as small chips, or "No tags", always at the same height so rows never shift. */
+@Composable
+private fun MovementTags(tags: List<Tag>) {
+    Row(
+        modifier = Modifier.padding(top = 4.dp).height(22.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val shown = if (tags.size > MAX_ROW_TAGS) tags.take(MAX_ROW_TAGS - 1) else tags
+        shown.forEach { tag ->
+            Row(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                TagDot(tag.color, size = 7.dp)
+                Text(
+                    text = tag.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 90.dp),
+                )
+            }
+        }
+        if (tags.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.movement_no_tags),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (tags.size > shown.size) {
+            Text(
+                text = stringResource(Res.string.movement_tags_more, tags.size - shown.size),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

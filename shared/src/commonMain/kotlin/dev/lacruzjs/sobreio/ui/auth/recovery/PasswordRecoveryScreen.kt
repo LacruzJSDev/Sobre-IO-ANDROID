@@ -30,6 +30,8 @@ import dev.lacruzjs.sobreio.generated.resources.recovery_title
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.auth.CODE_LENGTH
+import dev.lacruzjs.sobreio.ui.components.digitsOnly
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.PasswordField
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
@@ -114,6 +116,7 @@ private fun ResetStep(state: PasswordRecoveryUiState, onEvent: (PasswordRecovery
         errorRes = state.codeError,
         enabled = !state.isLoading,
         keyboardType = KeyboardType.NumberPassword,
+        inputTransformation = digitsOnly(CODE_LENGTH),
     )
     PasswordField(
         value = state.newPassword,

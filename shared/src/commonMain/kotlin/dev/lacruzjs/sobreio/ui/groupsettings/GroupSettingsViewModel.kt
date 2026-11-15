@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
+import dev.lacruzjs.sobreio.data.repository.TagRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
@@ -37,6 +38,7 @@ class GroupSettingsViewModel(
     private val groups: GroupRepository,
     private val members: MemberRepository,
     private val auth: AuthRepository,
+    private val tags: TagRepository,
     private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
@@ -71,7 +73,7 @@ class GroupSettingsViewModel(
             GroupSettingsEvent.UndoClicked -> undo.undo()
             GroupSettingsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which owns the back stack
-            GroupSettingsEvent.BackClicked, GroupSettingsEvent.EditClicked -> Unit
+            GroupSettingsEvent.BackClicked, GroupSettingsEvent.EditClicked, GroupSettingsEvent.TagsClicked, GroupSettingsEvent.NewTagClicked -> Unit
         }
     }
 
@@ -87,6 +89,10 @@ class GroupSettingsViewModel(
             groups.getGroup(groupId)
                 .onSuccess { group ->
                     _state.update { it.copy(group = group, currentUserId = userId, isLoading = false) }
+                    // The Tags section previews the tags themselves; without them it only shows its title
+                    tags.getTags(groupId).onSuccess { list ->
+                        _state.update { it.copy(tags = list.sortedBy { tag -> tag.name.lowercase() }) }
+                    }
                     members.getMembers(groupId)
                         .onSuccess { list -> _state.update { it.copy(members = list) } }
                         .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }

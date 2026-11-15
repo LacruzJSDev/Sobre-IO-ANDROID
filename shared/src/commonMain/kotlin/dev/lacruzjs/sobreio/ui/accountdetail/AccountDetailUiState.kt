@@ -36,6 +36,8 @@ data class MovementRowState(
 data class CompareState(
     /** What the user typed: the balance their bank shows. */
     val bankInput: String = "",
+    /** The bank shows a debt: [bankInput], always typed positive, is compared as a negative balance. */
+    val bankIsNegative: Boolean = false,
     /** The answer for [bankInput]; null while there is none (empty input, typing, waiting). */
     val result: BankComparison? = null,
     val isComparing: Boolean = false,

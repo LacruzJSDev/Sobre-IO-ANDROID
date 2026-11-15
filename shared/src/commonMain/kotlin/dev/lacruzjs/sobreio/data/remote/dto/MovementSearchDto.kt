@@ -29,6 +29,16 @@ internal data class TagDto(
     val color: String? = null,
 )
 
+/** A row of `tag_usage`. */
+@Serializable
+internal data class TagUsageDto(
+    @SerialName("tag_id") val tagId: String,
+    val name: String,
+    val color: String? = null,
+    @SerialName("archived_at") val archivedAt: String? = null,
+    val movements: Long = 0,
+)
+
 /** The columns of `periods` that the Movements screen reads. */
 @Serializable
 internal data class PeriodDto(

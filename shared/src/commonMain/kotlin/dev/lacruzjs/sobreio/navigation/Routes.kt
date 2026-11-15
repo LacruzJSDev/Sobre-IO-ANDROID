@@ -29,6 +29,10 @@ data class Group(val groupId: String) : NavKey
 @Serializable
 data class GroupSettings(val groupId: String) : NavKey
 
+/** The tags of a group: count of movements, create, edit, merge, delete (level 3 of the Group tab). Opened from the group settings. */
+@Serializable
+data class Tags(val groupId: String, val startWithCreate: Boolean = false) : NavKey
+
 /**
  * The due dates waiting for review (level 2 of the Group tab): confirm or skip each one. Opened by the "Review" button of
  * the Group tab's review card; back returns to [Group], which reads its figures again.

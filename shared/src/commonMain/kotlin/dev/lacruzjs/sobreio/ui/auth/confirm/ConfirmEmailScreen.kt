@@ -25,6 +25,8 @@ import dev.lacruzjs.sobreio.generated.resources.field_code
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.auth.CODE_LENGTH
+import dev.lacruzjs.sobreio.ui.components.digitsOnly
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
@@ -72,6 +74,7 @@ fun ConfirmEmailScreen(
             errorRes = state.codeError,
             enabled = !state.isLoading,
             keyboardType = KeyboardType.NumberPassword,
+            inputTransformation = digitsOnly(CODE_LENGTH),
             imeAction = ImeAction.Done,
             onImeAction = { onEvent(ConfirmEmailEvent.ConfirmClicked) },
         )

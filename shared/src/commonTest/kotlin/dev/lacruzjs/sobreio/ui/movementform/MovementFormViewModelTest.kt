@@ -30,6 +30,8 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
 import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
+import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
+import dev.lacruzjs.sobreio.ui.theme.TagColor
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -297,29 +299,61 @@ class MovementFormViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun createsATagAndSelectsIt() {
+    fun createsATagFromTheSearchTextAndSelectsIt() {
         val vm = vm()
-        vm.onEvent(MovementFormEvent.NewTagClicked)
-        vm.onEvent(MovementFormEvent.NewTagNameChanged("Gifts"))
-        vm.onEvent(MovementFormEvent.NewTagConfirmed)
+        vm.onEvent(MovementFormEvent.TagQueryChanged("  Gifts   2026 "))
+        assertEquals("Gifts 2026", vm.state.value.tagPicker.createName)
+        vm.onEvent(MovementFormEvent.TagCreateClicked)
 
         val s = vm.state.value
-        assertFalse(s.newTagOpen)
-        assertEquals(listOf("Gifts"), tags.created)
-        assertTrue(s.tags.any { it.name == "Gifts" })
+        assertEquals(listOf("Gifts 2026"), tags.created)
+        assertEquals(listOf<String?>(TagColor.Default.hex), tags.createdColors)
+        assertTrue(s.tags.any { it.name == "Gifts 2026" })
         assertEquals(1, s.selectedTagIds.size)
+        assertEquals("", s.tagQuery)
     }
 
     @Test
-    fun aDuplicateTagNameShowsTheErrorInTheSheet() {
+    fun aTagWithTheSameKeyIsNotOfferedForCreation() {
+        val vm = vm()
+        vm.onEvent(MovementFormEvent.TagQueryChanged("  TRÍP "))
+
+        val picker = vm.state.value.tagPicker
+        assertNull(picker.createName)
+        assertEquals("t1", picker.suggestion?.id)
+        assertEquals(listOf("t1"), picker.rows.map { it.id })
+    }
+
+    @Test
+    fun aDuplicateTagNameShowsTheErrorUnderTheSearchField() {
         tags.createResult = Result.failure(AppError.DuplicateName)
         val vm = vm()
-        vm.onEvent(MovementFormEvent.NewTagClicked)
-        vm.onEvent(MovementFormEvent.NewTagNameChanged("trip"))
-        vm.onEvent(MovementFormEvent.NewTagConfirmed)
+        vm.onEvent(MovementFormEvent.TagQueryChanged("Gifts"))
+        vm.onEvent(MovementFormEvent.TagCreateClicked)
 
-        assertTrue(vm.state.value.newTagOpen)
-        assertEquals(Res.string.error_duplicate_name, vm.state.value.newTagError)
+        assertEquals(Res.string.error_duplicate_name, vm.state.value.tagError)
+        assertEquals("Gifts", vm.state.value.tagQuery)
+    }
+
+    @Test
+    fun aTooLongTagNameIsRejectedBeforeCallingTheDatabase() {
+        val vm = vm()
+        vm.onEvent(MovementFormEvent.TagQueryChanged("x".repeat(51)))
+        vm.onEvent(MovementFormEvent.TagCreateClicked)
+
+        assertEquals(Res.string.validation_tag_name_too_long, vm.state.value.tagError)
+        assertTrue(tags.created.isEmpty())
+    }
+
+    @Test
+    fun selectedTagsFollowTheListOrder() {
+        val vm = vm()
+        vm.onEvent(MovementFormEvent.TagToggled("t2"))
+        vm.onEvent(MovementFormEvent.TagToggled("t1"))
+
+        assertEquals(listOf("t1", "t2"), vm.state.value.selectedTags.map { it.id })
+        vm.onEvent(MovementFormEvent.TagToggled("t1"))
+        assertEquals(listOf("t2"), vm.state.value.selectedTags.map { it.id })
     }
 
     @Test

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.automirrored.filled.MergeType
 import androidx.compose.material.icons.filled.MoveToInbox
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.RestoreFromTrash
@@ -20,6 +21,7 @@ import dev.lacruzjs.sobreio.generated.resources.action_cancel_deletion
 import dev.lacruzjs.sobreio.generated.resources.action_delete
 import dev.lacruzjs.sobreio.generated.resources.action_edit
 import dev.lacruzjs.sobreio.generated.resources.action_leave
+import dev.lacruzjs.sobreio.generated.resources.action_merge
 import dev.lacruzjs.sobreio.generated.resources.action_remove
 import dev.lacruzjs.sobreio.generated.resources.action_reopen
 import dev.lacruzjs.sobreio.generated.resources.action_revoke
@@ -69,6 +71,10 @@ fun cancelDeletionAction(onClick: () -> Unit) =
 /** Person with a shield, ink: change a member's role. */
 @Composable
 fun changeRoleAction(onClick: () -> Unit) = inkAction(stringResource(Res.string.action_role), Icons.Filled.AdminPanelSettings, onClick)
+
+/** Two paths joining, ink: merge a tag into another. */
+@Composable
+fun mergeAction(onClick: () -> Unit) = inkAction(stringResource(Res.string.action_merge), Icons.AutoMirrored.Filled.MergeType, onClick)
 
 /** Arrow into an envelope, soft grey with an ink icon: assign money. */
 @Composable

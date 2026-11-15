@@ -69,5 +69,21 @@ data class MovementPage(val items: List<Movement>, val total: Long)
 /** A free label of the group that movements can carry. */
 data class Tag(val id: String, val groupId: String, val name: String, val color: String? = null)
 
+/**
+ * A tag with how many live (not voided) movements carry it, as `tag_usage` counts them. [archivedAt] is set for an
+ * archived tag, which the Tags screen lists apart.
+ */
+data class TagUsage(
+    val id: String,
+    val name: String,
+    val color: String?,
+    val archivedAt: String?,
+    val movements: Long,
+) {
+    val isArchived: Boolean get() = archivedAt != null
+
+    fun toTag(groupId: String) = Tag(id, groupId, name, color)
+}
+
 /** Today (the group's time zone) and the group's periods, to turn "This period" and the like into dates. */
 data class DateContext(val today: LocalDate, val currentPeriod: PeriodRange, val previousPeriod: PeriodRange?)

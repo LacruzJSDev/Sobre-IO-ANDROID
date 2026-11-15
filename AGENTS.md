@@ -253,8 +253,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
-  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
-  `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
+  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField` plus the "In credit / Debt" chips, `CompareState.bankIsNegative`, default Debt when the
+  account balance is negative; debounced `compare_with_bank`, re-run when the sign changes) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
   snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
   `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
   `account_period_flows`, `upcoming_occurrences` (filtered to the account and signed in `UpcomingDto.toUpcomingFor`, the
@@ -303,6 +303,26 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
+- Tags (decision D-49 in the DB repo; `ui/tags`, route `Tags(groupId)`, level 3 of the Group tab, `TagsViewModel(groupId)` with
+  `TagRepository` and `GroupRepository`; `TagsScreen`, `TagSheet`, `MergeSheet`): opened from the group settings'
+  "Tags" section: its title carries the count ("Tags · N") and a pencil, and a soft card previews the tags themselves as
+  coloured chips (up to 8, then "+N more"; `GroupSettingsUiState.tags`); the card and the pencil open the screen. With no tags
+  the title stands alone with a "+" (any member of a live group, `canManageTags`) that opens it with the create sheet
+  (`Tags(groupId, startWithCreate = true)`) and a line explains what tags are for; every member sees the section. Any member of a live group manages tags (`TagsUiState.canEdit`). `ScreenHeader` with back, title, group
+  subtitle and "+". Rows come from `tag_usage` (`TagRepository.getUsage`: live and archived tags with the count of live
+  movements, counted by the database): a `TagDot` (colour), name and "N movements". Live rows swipe Edit, Merge
+  (`mergeAction`, hidden with a single live tag) and Delete (archive at once, Undo unarchives); a collapsed "Archived (N)" section
+  with Reopen (a clash with a live name shows `AppError.DuplicateName`). "+" and Edit open `TagSheet` (name `FormTextField`
+  at most 50, the `TagColorPicker` swatches, Save; a duplicate name shows under the field). Merge opens `MergeSheet` ("Merge X
+  with…": an `EntitySelect` of the other live tags and a note that X will be archived), calls `merge_tags` and ends with a plain
+  notice "Tags merged" (`UndoController.notify`, no Undo: it cannot be undone). The tag palette is `ui/theme/TagColor` (10 soft
+  colours, light hex stored in `tags.color`, a deeper dark variant, names `tag_color_<key>`), separate from `EntityColor`;
+  a new tag starts on `TagColor.Default`.
+- Tag names: the database stores them trimmed with inner whitespace collapsed and keeps them unique among live tags ignoring
+  case and accents. `domain/TagMatching.kt` mirrors that key (`normalizeTagKey`, `normalizeTagName`, unit tested) and drives the
+  picker through `tagPickerOptions(tags, query)`: rows whose key contains the text, a `suggestion` (the same tag, or one within one
+  edit when both keys have at least 4 letters) and `createName` (null when the key matches a live tag exactly, or the name
+  is over 50 characters).
 - Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?, prefillKind?, prefillFromAccountId?, prefillToAccountId?, prefillAmountCents?)`, `MovementFormViewModel` with those
   four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
   locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
@@ -314,7 +334,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   takes only what is needed. Editing a higher expense shows a note that nothing is covered. Transfer: From / To (different), a
   "To another group" switch on create (destination group of the same currency + its account, `create_group_transfer`, both envelopes
   Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
-  expense and income, Tags as toggle chips plus "+ New" (a small sheet; duplicate name shows the error). Writes go through
+  expense and income, Tags: an expandable multi-select tile (`TagPicker`) with a search field, a "Did you mean X?" line, a first
+  "Create <text>" row (`TagRepository.createTag` with the default colour, selected at once) and the live tags with a colour dot and
+  a check; the chosen ones show as removable chips under the tile. Writes go through
   `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
   of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
@@ -336,10 +358,11 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   This year and Custom (`CustomRangeDialog`, a flat `DateRangePicker`); `DatePreset` and `datePresetRange` are pure. Filters
   and search text live in the ViewModel (not saved on disk). The list is grouped by day (`groupByDay`, pure: "Today · 14 Nov",
   "Yesterday · 13 Nov", then "Fri 12 Nov"), 50 per page with load-more near the end and a progress row, and its own empty
-  states (no movements, no results with "Clear filters"). Row: envelope avatar (inbox for Unassigned), title = notes or the
-  kind label, second line "envelope · account" (account left out with a single account or on level 3); an account transfer has
-  an ink avatar with a transfer icon, "A → B" in the group ledger (shown once, unsigned) and "To/From <account>" on an
-  account's list (signed). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
+  states (no movements, no results with "Clear filters"). Row (`MovementRow`): the ACCOUNT's avatar (colour + account icon), line 1 the notes or the kind label, cut
+  (weight without fill) to leave room for "· <envelope>" next to them, baseline aligned (max 130 dp; "Unassigned" by name too;
+  not on an envelope's own list; a transfer shows "To/From <account>" there), line 2 ALWAYS filled (22 dp): the tags as small
+  chips with their colour dot (`MovementTags`: up to 3, or 2 and "+N") or a muted "No tags", so rows keep one height; the amount
+  on the right (unsigned for a transfer in the group ledger). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
   `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs have no swipe
   (they are voided as a pair with `void_group_transfer`, not offered yet); edit comes with the form.
   `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`,
@@ -420,7 +443,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules
@@ -467,8 +490,14 @@ plus `movementform` (the new / edit movement form).
 - Funded commitments only point to Recibos (Bills) envelopes; the envelope type decides its fields and its progress bar (D-46).
   The app never decides progress: it draws what `envelope_progress` returns.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
-  money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
-  has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
+  money amount an `AmountField` (numeric pad with decimal separator). The input components (`FormTextField`,
+  `AmountField`, `LargeAmountField`, `PasswordField`) own a `TextFieldState` kept in step with the outside String by
+  `rememberSyncedTextFieldState` / `TextSync` (`ui/components/TextSync.kt`): never hold the text in a value-based field
+  fed from a `StateFlow`, the late round trip makes the cursor jump. Screens and ViewModels keep `value` / `onValueChange(String)`.
+  Amounts are always typed positive (`AmountField` rejects "-"); a real negative balance is chosen with the "In credit /
+  Debt" chips (`BalanceSignChips`): the account form's opening balance (`openingBalanceIsDebt`, Debt by default for a
+  credit card until the user taps a chip) and Compare with bank; the ViewModel applies the sign. The 6-digit codes use
+  `digitsOnly(maxLength)`. Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
   avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many

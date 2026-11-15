@@ -7,10 +7,12 @@ import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Invitation
 import dev.lacruzjs.sobreio.domain.model.InvitationStatus
 import dev.lacruzjs.sobreio.domain.model.Member
+import dev.lacruzjs.sobreio.domain.model.Tag
 import dev.lacruzjs.sobreio.domain.model.User
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
+import dev.lacruzjs.sobreio.fake.FakeTagRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.invitation_revoked
 import dev.lacruzjs.sobreio.generated.resources.member_removed
@@ -42,11 +44,35 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     private val groupRepository = FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner)))
     private val memberRepository = FakeMemberRepository(listOf(ana, marta, luis))
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
+    private val tagRepository = FakeTagRepository(listOf(Tag("t1", "g1", "Trip"), Tag("t2", "g1", "Home")))
 
     private fun viewModel(role: GroupRole = GroupRole.Owner): GroupSettingsViewModel {
         groupRepository.groups = groupRepository.groups.map { it.copy(role = role) }
         groupRepository.invitations = listOf(invitation, expired)
-        return GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock)
+        return GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, tagRepository, clock)
+    }
+
+    @Test
+    fun theTagSectionPreviewsTheLiveTagsByName() {
+        val state = viewModel().state.value
+
+        assertEquals(listOf("Home", "Trip"), state.tags?.map { it.name })
+        assertEquals(2, state.tagCount)
+    }
+
+    @Test
+    fun anyMemberOfALiveGroupCanManageTags() {
+        assertEquals(true, viewModel(GroupRole.Member).state.value.canManageTags)
+    }
+
+    @Test
+    fun aFailedTagReadJustLeavesTheCountOut() {
+        tagRepository.tagsResult = Result.failure(AppError.Network)
+        val state = viewModel().state.value
+
+        assertNull(state.tagCount)
+        assertNull(state.actionError)
+        assertEquals("Casa", state.group?.name)
     }
 
     // Loading and permissions
@@ -103,7 +129,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     @Test
     fun aGroupThatIsGoneAsksToGoBackToGroups() {
         groupRepository.groups = emptyList()
-        val viewModel = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock)
+        val viewModel = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, tagRepository, clock)
 
         assertTrue(viewModel.state.value.navigateToGroups)
         viewModel.onEvent(GroupSettingsEvent.NavigationHandled)
@@ -116,7 +142,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
         val failing = object : dev.lacruzjs.sobreio.data.repository.GroupRepository by groupRepository {
             override suspend fun getGroup(id: String): Result<Group> = Result.failure(AppError.Network)
         }
-        val viewModel = GroupSettingsViewModel("g1", failing, memberRepository, auth, clock)
+        val viewModel = GroupSettingsViewModel("g1", failing, memberRepository, auth, tagRepository, clock)
 
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.navigateToGroups)
@@ -320,7 +346,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     @Test
     fun invitationsAreSplitIntoPendingAndAcceptedAndExpiredOnesAreDropped() {
         groupRepository.invitations = listOf(invitation, expired, accepted)
-        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, tagRepository, clock).state.value
 
         assertEquals(listOf(invitation), state.pendingInvitations)
         assertEquals(listOf(accepted), state.acceptedInvitations)
@@ -329,7 +355,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     @Test
     fun anAcceptedInvitationKeepsWhoAcceptedAndWhen() {
         groupRepository.invitations = listOf(accepted)
-        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, tagRepository, clock).state.value
 
         assertEquals("u3", state.acceptedInvitations.single().acceptedBy)
         assertEquals(Instant.parse("2026-11-12T10:00:00Z"), state.acceptedInvitations.single().acceptedAt)
@@ -340,7 +366,7 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     fun anAdminAlsoSeesBothInvitationLists() {
         groupRepository.invitations = listOf(invitation, accepted)
         groupRepository.groups = groupRepository.groups.map { it.copy(role = GroupRole.Admin) }
-        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, clock).state.value
+        val state = GroupSettingsViewModel("g1", groupRepository, memberRepository, auth, tagRepository, clock).state.value
 
         assertEquals(1, state.pendingInvitations.size)
         assertEquals(1, state.acceptedInvitations.size)

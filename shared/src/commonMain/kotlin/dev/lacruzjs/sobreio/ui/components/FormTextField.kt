@@ -2,13 +2,18 @@ package dev.lacruzjs.sobreio.ui.components
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextFieldDecorator
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -24,8 +29,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.amount_sign_toggle
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -48,50 +51,45 @@ fun FormTextField(
     imeAction: ImeAction = ImeAction.Next,
     onImeAction: () -> Unit = {},
     leadingIcon: (@Composable () -> Unit)? = null,
+    inputTransformation: InputTransformation? = null,
 ) {
-    val focusManager = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
+    val state = rememberSyncedTextFieldState(value, onValueChange)
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        state = state,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         shape = MaterialTheme.shapes.medium,
         isError = errorRes != null,
         leadingIcon = leadingIcon,
         supportingText = errorRes?.let { { Text(stringResource(it)) } },
+        inputTransformation = inputTransformation,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        keyboardActions = KeyboardActions(
-            onNext = {
-                if (!focusManager.moveFocus(FocusDirection.Down)) dismissKeyboard(focusManager, keyboard)
-                onImeAction()
-            },
-            onDone = {
-                dismissKeyboard(focusManager, keyboard)
-                onImeAction()
-            },
-            onGo = {
-                dismissKeyboard(focusManager, keyboard)
-                onImeAction()
-            },
-            onSearch = {
-                dismissKeyboard(focusManager, keyboard)
-                onImeAction()
-            },
-            onSend = {
-                dismissKeyboard(focusManager, keyboard)
-                onImeAction()
-            },
-        ),
+        onKeyboardAction = rememberKeyboardActionHandler(imeAction, onImeAction),
     )
+}
+
+/** "Next" moves to the next field (or closes the keyboard on the last one); any other action closes it. */
+@Composable
+internal fun rememberKeyboardActionHandler(imeAction: ImeAction, onImeAction: () -> Unit): KeyboardActionHandler {
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val latest by rememberUpdatedState(onImeAction)
+    return KeyboardActionHandler {
+        if (imeAction == ImeAction.Next) {
+            if (!focusManager.moveFocus(FocusDirection.Down)) dismissKeyboard(focusManager, keyboard)
+        } else {
+            dismissKeyboard(focusManager, keyboard)
+        }
+        latest()
+    }
 }
 
 /**
  * A money amount in cents typed as text ("1250,50"). It opens the numeric keypad with a decimal separator, the one
- * people expect for money. The numeric pads of some platforms have no minus key, so when [allowNegative] (an opening
- * balance that is a debt) a "±" button in the field flips the sign.
+ * people expect for money. Amounts are always typed positive (a minus sign never gets in): a debt is chosen with the
+ * "In credit / Debt" chips next to it.
  */
 @Composable
 fun AmountField(
@@ -101,13 +99,12 @@ fun AmountField(
     modifier: Modifier = Modifier,
     errorRes: StringResource? = null,
     enabled: Boolean = true,
-    allowNegative: Boolean = false,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: () -> Unit = {},
 ) {
     FormTextField(
         value = value,
-        onValueChange = { text -> onValueChange(if (allowNegative) text else text.replace("-", "")) },
+        onValueChange = onValueChange,
         label = label,
         modifier = modifier,
         errorRes = errorRes,
@@ -115,21 +112,7 @@ fun AmountField(
         keyboardType = KeyboardType.Decimal,
         imeAction = imeAction,
         onImeAction = onImeAction,
-        leadingIcon = if (allowNegative) {
-            {
-                val signLabel = stringResource(Res.string.amount_sign_toggle)
-                TextButton(
-                    onClick = { onValueChange(if (value.startsWith("-")) value.removePrefix("-") else "-$value") },
-                    enabled = enabled,
-                    // Read by screen readers instead of the bare symbol
-                    modifier = Modifier.semantics { contentDescription = signLabel },
-                ) {
-                    Text(text = "±", style = MaterialTheme.typography.titleMedium)
-                }
-            }
-        } else {
-            null
-        },
+        inputTransformation = noMinusSign,
     )
 }
 
@@ -176,8 +159,7 @@ fun LargeAmountField(
     /** The colour of the typed amount (the placeholder stays muted): the money colour of the kind of movement. */
     amountColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    val focusManager = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
+    val state = rememberSyncedTextFieldState(value, onValueChange)
     val style = MaterialTheme.typography.displaySmall.copy(
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         color = amountColor,
@@ -187,22 +169,22 @@ fun LargeAmountField(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
     ) {
-        androidx.compose.foundation.text.BasicTextField(
-            value = value,
-            onValueChange = { onValueChange(it.replace("-", "")) },
+        BasicTextField(
+            state = state,
             modifier = Modifier
                 .fillMaxWidth()
                 .let { if (focusRequester != null) it.focusRequester(focusRequester) else it }
                 .semantics { contentDescription = label },
             enabled = enabled,
-            singleLine = true,
+            inputTransformation = noMinusSign,
+            lineLimits = TextFieldLineLimits.SingleLine,
             textStyle = style,
             cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { dismissKeyboard(focusManager, keyboard) }),
-            decorationBox = { inner ->
+            onKeyboardAction = rememberKeyboardActionHandler(ImeAction.Done) {},
+            decorator = TextFieldDecorator { inner ->
                 androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
-                    if (value.isEmpty()) {
+                    if (state.text.isEmpty()) {
                         Text(text = placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
                     }
                     inner()

@@ -325,7 +325,9 @@
     <string name="account_scope_edit_note">Desde hoy. Si tiene saldo, se mueve entre «Sin asignar» y el dinero fuera de sobres.</string>
     <string name="error_account_scope_movements">Esta cuenta tiene movimientos de hoy o posteriores. Cambia su ámbito antes de apuntarlos, o mañana.</string>
     <string name="row_subtitle">%1$s · %2$s</string>
-    <string name="amount_sign_toggle">Cambiar el signo (deuda)</string>
+    <string name="balance_sign_credit">A favor</string>
+    <string name="balance_sign_debt">Deuda</string>
+    <string name="field_balance_sign">Saldo</string>
 
     <!-- Detalle de cuenta -->
     <string name="account_detail_tab_summary">Resumen</string>
@@ -534,8 +536,6 @@
     <string name="movement_edit_extra_note">La parte añadida no se cubre automáticamente: el sobre puede quedar en negativo.</string>
     <string name="movement_boundary_note">Esta transferencia cruza la frontera de los sobres, así que el dinero pasa por Sin asignar.</string>
     <string name="movement_no_groups_note">No tienes otro grupo activo con la misma moneda.</string>
-    <string name="movement_tag_new">+ Nueva</string>
-    <string name="movement_tag_new_title">Nueva etiqueta</string>
     <string name="validation_account_required">Elige una cuenta.</string>
     <string name="validation_tag_name_too_long">Usa como máximo 50 caracteres.</string>
     <string name="envelope_detail_available">Disponible</string>
@@ -630,4 +630,51 @@
     <string name="group_summary_spending_title">En qué se ha ido este periodo</string>
     <string name="group_summary_spending_all">Ver todos los sobres</string>
     <string name="group_summary_flows_title">Entradas y salidas por periodo</string>
+    <string name="tag_color_sage">Salvia</string>
+    <string name="tag_color_sky">Cielo</string>
+    <string name="tag_color_lavender">Lavanda</string>
+    <string name="tag_color_rose">Rosa</string>
+    <string name="tag_color_peach">Melocotón</string>
+    <string name="tag_color_sand">Arena</string>
+    <string name="tag_color_mint">Menta</string>
+    <string name="tag_color_coral">Coral</string>
+    <string name="tag_color_lilac">Lila</string>
+    <string name="tag_color_stone">Piedra</string>
+    <string name="tags_title">Etiquetas</string>
+    <string name="settings_section_tags">Etiquetas</string>
+    <plurals name="tags_movements_count">
+        <item quantity="one">%1$d movimiento</item>
+        <item quantity="other">%1$d movimientos</item>
+    </plurals>
+    <string name="tags_empty">Todavía no hay etiquetas. Pulsa + para crear una.</string>
+    <string name="tag_new_title">Nueva etiqueta</string>
+    <string name="tag_edit_title">Editar etiqueta</string>
+    <string name="field_tag_color">Color</string>
+    <string name="tag_merge_title">Fusionar «%1$s» con…</string>
+    <string name="tag_merge_note">Los movimientos de «%1$s» pasarán a la elegida y «%1$s» se archivará.</string>
+    <string name="field_tag_merge_into">Fusionar con</string>
+    <string name="action_merge">Fusionar</string>
+    <string name="validation_tag_merge_target">Elige una etiqueta.</string>
+    <string name="tags_merged">Etiquetas fusionadas</string>
+    <string name="tag_deleted">%1$s eliminada</string>
+    <string name="tag_reopened">%1$s reabierta</string>
+    <string name="error_fz022_tag_merge">Esas etiquetas no se pueden fusionar.</string>
+    <string name="tag_picker_search">Buscar o crear una etiqueta</string>
+    <string name="tag_picker_none">Ninguna</string>
+    <string name="tag_picker_create">Crear «%1$s»</string>
+    <string name="tag_picker_suggestion">¿Quisiste decir «%1$s»?</string>
+    <string name="tag_picker_empty">Aún no hay etiquetas. Escribe un nombre para crear una.</string>
+    <string name="tag_remove">Quitar %1$s</string>
+    <string name="settings_tags_title_count">%1$s · %2$d</string>
+    <string name="settings_tags_empty">Agrupa movimientos por tema, como «viaje» o «regalos».</string>
+    <string name="settings_tags_more">+%1$d más</string>
+    <string name="action_manage_tags">Gestionar etiquetas</string>
+    <string name="action_new_tag">Nueva etiqueta</string>
+    <plurals name="settings_tags_count">
+        <item quantity="one">%1$d etiqueta</item>
+        <item quantity="other">%1$d etiquetas</item>
+    </plurals>
+    <string name="movement_row_aside">· %1$s</string>
+    <string name="movement_tags_more">+%1$d</string>
+    <string name="movement_no_tags">Sin etiquetas</string>
 </resources>

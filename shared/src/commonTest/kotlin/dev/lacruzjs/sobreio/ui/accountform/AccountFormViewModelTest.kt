@@ -33,6 +33,37 @@ class AccountFormViewModelTest : MainDispatcherTest() {
     private fun form(accountId: String? = null) = AccountFormViewModel("g1", accountId, repository, memberRepository)
 
     @Test
+    fun aCreditCardStartsAsDebtUntilTheUserPicksTheSign() {
+        val viewModel = form()
+        viewModel.onEvent(AccountFormEvent.KindSelected(AccountKind.CreditCard))
+        assertTrue(viewModel.state.value.openingBalanceIsDebt)
+        viewModel.onEvent(AccountFormEvent.KindSelected(AccountKind.Bank))
+        assertFalse(viewModel.state.value.openingBalanceIsDebt)
+        viewModel.onEvent(AccountFormEvent.OpeningBalanceSignChanged(false))
+        viewModel.onEvent(AccountFormEvent.KindSelected(AccountKind.CreditCard))
+        assertFalse(viewModel.state.value.openingBalanceIsDebt)
+    }
+
+    @Test
+    fun theChosenSignIsAppliedToThePositiveAmount() {
+        val viewModel = form()
+        viewModel.onEvent(AccountFormEvent.NameChanged("Loan"))
+        viewModel.onEvent(AccountFormEvent.OpeningBalanceChanged("100"))
+        viewModel.onEvent(AccountFormEvent.OpeningBalanceSignChanged(true))
+        viewModel.onEvent(AccountFormEvent.SaveClicked)
+        assertEquals(-10_000L, repository.createdOpeningBalance)
+    }
+
+    @Test
+    fun zeroStaysZeroWhateverTheSign() {
+        val viewModel = form()
+        viewModel.onEvent(AccountFormEvent.NameChanged("Loan"))
+        viewModel.onEvent(AccountFormEvent.OpeningBalanceSignChanged(true))
+        viewModel.onEvent(AccountFormEvent.SaveClicked)
+        assertEquals(0L, repository.createdOpeningBalance)
+    }
+
+    @Test
     fun createSendsEveryFieldInOneCallAndAsksToLeave() {
         val viewModel = form()
         viewModel.onEvent(AccountFormEvent.NameChanged("  Visa  "))
@@ -41,7 +72,7 @@ class AccountFormViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(AccountFormEvent.IconSelected("credit_card"))
         viewModel.onEvent(AccountFormEvent.HolderSelected("u1"))
         viewModel.onEvent(AccountFormEvent.InEnvelopesChanged(false))
-        viewModel.onEvent(AccountFormEvent.OpeningBalanceChanged("-250,5"))
+        viewModel.onEvent(AccountFormEvent.OpeningBalanceChanged("250,5"))
         viewModel.onEvent(AccountFormEvent.SaveClicked)
 
         assertEquals(listOf("createAccount(g1, Visa, CreditCard, -25050)"), repository.calls)

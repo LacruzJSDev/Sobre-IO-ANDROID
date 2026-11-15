@@ -326,7 +326,9 @@
     <string name="account_scope_edit_note">From today. If it has a balance, it moves between Unassigned and the money outside the envelopes.</string>
     <string name="error_account_scope_movements">This account has movements dated today or later. Change its scope before recording them, or tomorrow.</string>
     <string name="row_subtitle">%1$s · %2$s</string>
-    <string name="amount_sign_toggle">Change sign (debt)</string>
+    <string name="balance_sign_credit">In credit</string>
+    <string name="balance_sign_debt">Debt</string>
+    <string name="field_balance_sign">Balance</string>
 
     <!-- Account detail -->
     <string name="account_detail_tab_summary">Summary</string>
@@ -535,8 +537,6 @@
     <string name="movement_edit_extra_note">The extra amount isn\'t covered automatically: the envelope may go negative.</string>
     <string name="movement_boundary_note">This transfer crosses the envelopes\' boundary, so the money passes through Unassigned.</string>
     <string name="movement_no_groups_note">You have no other live group with the same currency.</string>
-    <string name="movement_tag_new">+ New</string>
-    <string name="movement_tag_new_title">New tag</string>
     <string name="validation_account_required">Choose an account.</string>
     <string name="validation_tag_name_too_long">Use at most 50 characters.</string>
     <string name="envelope_detail_available">Available</string>
@@ -631,4 +631,51 @@
     <string name="group_summary_spending_title">Where this period\'s money went</string>
     <string name="group_summary_spending_all">See all envelopes</string>
     <string name="group_summary_flows_title">In and out by period</string>
+    <string name="tag_color_sage">Sage</string>
+    <string name="tag_color_sky">Sky</string>
+    <string name="tag_color_lavender">Lavender</string>
+    <string name="tag_color_rose">Rose</string>
+    <string name="tag_color_peach">Peach</string>
+    <string name="tag_color_sand">Sand</string>
+    <string name="tag_color_mint">Mint</string>
+    <string name="tag_color_coral">Coral</string>
+    <string name="tag_color_lilac">Lilac</string>
+    <string name="tag_color_stone">Stone</string>
+    <string name="tags_title">Tags</string>
+    <string name="settings_section_tags">Tags</string>
+    <plurals name="tags_movements_count">
+        <item quantity="one">%1$d movement</item>
+        <item quantity="other">%1$d movements</item>
+    </plurals>
+    <string name="tags_empty">No tags yet. Tap + to create one.</string>
+    <string name="tag_new_title">New tag</string>
+    <string name="tag_edit_title">Edit tag</string>
+    <string name="field_tag_color">Colour</string>
+    <string name="tag_merge_title">Merge “%1$s” with…</string>
+    <string name="tag_merge_note">The movements of “%1$s” will move to the chosen tag and “%1$s” will be archived.</string>
+    <string name="field_tag_merge_into">Merge with</string>
+    <string name="action_merge">Merge</string>
+    <string name="validation_tag_merge_target">Choose a tag.</string>
+    <string name="tags_merged">Tags merged</string>
+    <string name="tag_deleted">%1$s deleted</string>
+    <string name="tag_reopened">%1$s reopened</string>
+    <string name="error_fz022_tag_merge">Those tags cannot be merged.</string>
+    <string name="tag_picker_search">Search or create a tag</string>
+    <string name="tag_picker_none">None</string>
+    <string name="tag_picker_create">Create “%1$s”</string>
+    <string name="tag_picker_suggestion">Did you mean “%1$s”?</string>
+    <string name="tag_picker_empty">No tags yet. Type a name to create one.</string>
+    <string name="tag_remove">Remove %1$s</string>
+    <string name="settings_tags_title_count">%1$s · %2$d</string>
+    <string name="settings_tags_empty">Group movements by topic, such as “trip” or “gifts”.</string>
+    <string name="settings_tags_more">+%1$d more</string>
+    <string name="action_manage_tags">Manage tags</string>
+    <string name="action_new_tag">New tag</string>
+    <plurals name="settings_tags_count">
+        <item quantity="one">%1$d tag</item>
+        <item quantity="other">%1$d tags</item>
+    </plurals>
+    <string name="movement_row_aside">· %1$s</string>
+    <string name="movement_tags_more">+%1$d</string>
+    <string name="movement_no_tags">No tags</string>
 </resources>
