@@ -51,7 +51,7 @@ class EnvelopesViewModel(
             }
             is EnvelopesEvent.AssignClicked -> openAssign(event.envelopeId)
             // Handled by the Route, which opens the form
-            is EnvelopesEvent.EditClicked -> Unit
+            is EnvelopesEvent.EditClicked, is EnvelopesEvent.OpenClicked -> Unit
             is EnvelopesEvent.DeleteClicked -> delete(event.envelopeId)
             is EnvelopesEvent.ReopenClicked -> reopen(event.envelopeId)
             EnvelopesEvent.UndoClicked -> undo.undo()
@@ -77,6 +77,8 @@ class EnvelopesViewModel(
             envelopes.materializeThroughToday(groupId)
             val list = envelopes.getEnvelopes(groupId)
             val summary = envelopes.getSummary(groupId)
+            // Only draws the bars: without it the rows simply have none
+            val progress = envelopes.getProgress(groupId).getOrDefault(emptyList()).associateBy { it.envelopeId }
             val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()
             if (failure != null) {
                 _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
@@ -89,6 +91,7 @@ class EnvelopesViewModel(
                         envelopes = live.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
                         archivedEnvelopes = archived.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
                         unassigned = live.firstOrNull { e -> e.kind == EnvelopeKind.System },
+                        progress = progress,
                         totalCents = figures.totalCents,
                         unassignedCents = figures.unassignedCents,
                         isLoading = false,

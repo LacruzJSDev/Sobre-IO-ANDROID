@@ -73,10 +73,10 @@ fun ChartLegend(items: List<LegendItem>, modifier: Modifier = Modifier) {
 
 /**
  * Reports the x position of a touch while the finger is down and moves horizontally: on press and on every move. A
- * gesture that goes mostly vertical is left alone (the page scrolls). Whole-chart hit area, far bigger than the marks.
+ * gesture that goes mostly vertical is left alone (the page scrolls) and clears the selection through [onScrollAway]. Whole-chart hit area, far bigger than the marks.
  */
 @Composable
-internal fun Modifier.chartTouch(key: Any?, onTouch: (Float) -> Unit): Modifier {
+internal fun Modifier.chartTouch(key: Any?, onScrollAway: () -> Unit = {}, onTouch: (Float) -> Unit): Modifier {
     val slop = LocalViewConfiguration.current.touchSlop
     return pointerInput(key) {
         awaitEachGesture {
@@ -88,7 +88,11 @@ internal fun Modifier.chartTouch(key: Any?, onTouch: (Float) -> Unit): Modifier 
                 if (!change.pressed) break
                 val dx = abs(change.position.x - down.position.x)
                 val dy = abs(change.position.y - down.position.y)
-                if (dy > slop && dy > dx) break
+                if (dy > slop && dy > dx) {
+                    // The page is scrolling: the selection goes away
+                    onScrollAway()
+                    break
+                }
                 onTouch(change.position.x)
                 if (dx > slop) change.consume()
             }

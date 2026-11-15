@@ -39,6 +39,8 @@ import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.commitment_account_change_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_account_linked_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_effective_note
+import dev.lacruzjs.sobreio.generated.resources.commitment_funded_bills_note
+import dev.lacruzjs.sobreio.generated.resources.commitment_funded_no_bills_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_funded_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_linked_note
 import dev.lacruzjs.sobreio.generated.resources.commitment_no_groups_note
@@ -171,7 +173,7 @@ fun CommitmentFormScreen(
                 val enabled = !state.isSubmitting
                 val unassigned = stringResource(Res.string.envelopes_unassigned)
                 val accountOptions = state.accounts.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
-                val envelopeOptions = state.envelopes.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
+                val envelopeOptions = state.envelopeChoices.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     EntityAvatar(name = state.name, icon = state.kind.icon(), color = null, size = 64.dp)
@@ -268,6 +270,7 @@ fun CommitmentFormScreen(
                                 enabled = enabled && !state.fieldsLocked,
                                 error = state.envelopeError,
                             )
+                            if (state.fundedEffective) FundedEnvelopeNote(state.hasBillsEnvelope)
                         } else {
                             FormNote(stringResource(Res.string.commitment_outside_note))
                         }
@@ -394,6 +397,16 @@ private val CreatableKinds = listOf(
     CommitmentKind.GroupTransferOut,
 )
 
+/** Why the envelope list only has Bills envelopes while the reserve is on, or what to do when there are none. */
+@Composable
+private fun FundedEnvelopeNote(hasBillsEnvelope: Boolean) {
+    FormNote(
+        stringResource(
+            if (hasBillsEnvelope) Res.string.commitment_funded_bills_note else Res.string.commitment_funded_no_bills_note,
+        ),
+    )
+}
+
 /** Destination group, its account, and the optional envelopes on both sides of a contribution. */
 @Composable
 private fun ContributionTiles(
@@ -439,13 +452,16 @@ private fun ContributionTiles(
     }
     EntitySelect(
         label = stringResource(Res.string.field_source_envelope),
-        options = listOf(unassignedOption(unassigned)) + envelopeOptions,
+        // With the reserve on, only Bills envelopes: "Unassigned" cannot hold a reserve
+        options = (if (state.fundedEffective) emptyList() else listOf(unassignedOption(unassigned))) + envelopeOptions,
         selectedId = state.envelopeId,
         onSelect = { onEvent(CommitmentFormEvent.EnvelopeSelected(it)) },
         expanded = open == OpenTile.Envelope,
         onToggle = { onToggle(OpenTile.Envelope) },
         enabled = creating && !state.isSubmitting,
+        error = state.envelopeError,
     )
+    if (state.fundedEffective) FundedEnvelopeNote(state.hasBillsEnvelope)
     if (state.destGroupId != null) {
         EntitySelect(
             label = stringResource(Res.string.field_dest_envelope),

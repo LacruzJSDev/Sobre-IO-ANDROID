@@ -157,7 +157,7 @@ private fun FilterChips(state: MovementsUiState, onEvent: (MovementsEvent) -> Un
     val chips = buildList {
         // The level 3 list is one account's: there is nothing to choose
         if (state.fixedAccountId == null) add(MovementsChip.Account)
-        add(MovementsChip.Envelope)
+        if (state.fixedEnvelopeId == null) add(MovementsChip.Envelope)
         add(MovementsChip.Type)
         add(MovementsChip.Dates)
         add(MovementsChip.Tags)
@@ -362,7 +362,12 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
         else -> {
             // One account (or the fixed one) would repeat itself on every row
             val showAccount = state.hasSeveralAccounts && state.fixedAccountId == null
-            if (showAccount && accountName != null) stringResource(Res.string.row_subtitle, envelopeName.orEmpty(), accountName) else envelopeName
+            when {
+                // The envelope is the screen's own: the second line tells the account instead
+                state.fixedEnvelopeId != null -> accountName.takeIf { showAccount }
+                showAccount && accountName != null -> stringResource(Res.string.row_subtitle, envelopeName.orEmpty(), accountName)
+                else -> envelopeName
+            }
         }
     }
     val amount = if (ledgerTransfer) kotlin.math.abs(movement.amountCents) else movement.amountCents

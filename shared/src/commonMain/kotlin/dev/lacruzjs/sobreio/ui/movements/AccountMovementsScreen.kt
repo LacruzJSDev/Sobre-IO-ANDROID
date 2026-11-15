@@ -31,7 +31,7 @@ fun AccountMovementsRoute(
     onBack: () -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?, accountId: String?) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, accountId) },
+    viewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, accountId, null) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }
@@ -57,6 +57,39 @@ fun AccountMovementsScreen(
     modifier: Modifier = Modifier,
 ) {
     val account = state.fixedAccount
+    FixedFilterMovementsScreen(
+        state = state,
+        onEvent = onEvent,
+        onBack = onBack,
+        title = account?.name.orEmpty(),
+        modifier = modifier,
+        leading = {
+            if (account != null) {
+                EntityAvatar(
+                    name = account.name,
+                    icon = iconFor(IconCategory.Account, account.icon),
+                    color = EntityColor.fromHex(account.color),
+                    size = 36.dp,
+                )
+            }
+        },
+    )
+}
+
+/**
+ * A Movements list whose account or envelope is fixed by the screen that opened it: the header names that item (with the
+ * group as a small subtitle), has search and "+", and the pane below has the filter chips and the rows. Shared by
+ * [AccountMovementsScreen] and [EnvelopeMovementsScreen].
+ */
+@Composable
+internal fun FixedFilterMovementsScreen(
+    state: MovementsUiState,
+    onEvent: (MovementsEvent) -> Unit,
+    onBack: () -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    leading: @Composable () -> Unit,
+) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (state.searchOpen) {
@@ -67,19 +100,10 @@ fun AccountMovementsScreen(
                 )
             } else {
                 ScreenHeader(
-                    title = account?.name.orEmpty(),
+                    title = title,
                     subtitle = state.groupName.takeIf { it.isNotEmpty() },
                     onBack = onBack,
-                    leading = {
-                        if (account != null) {
-                            EntityAvatar(
-                                name = account.name,
-                                icon = iconFor(IconCategory.Account, account.icon),
-                                color = EntityColor.fromHex(account.color),
-                                size = 36.dp,
-                            )
-                        }
-                    },
+                    leading = leading,
                     actions = {
                         MovementsHeaderActions(
                             onSearch = { onEvent(MovementsEvent.SearchOpened) },

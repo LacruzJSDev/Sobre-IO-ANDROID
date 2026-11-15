@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.onSizeChanged
+import dev.lacruzjs.sobreio.ui.components.closeOnOutsidePress
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalDensity
@@ -98,6 +99,8 @@ fun BalanceLineChart(
             .fillMaxWidth()
             .height(CHART_HEIGHT)
             .semantics { this.contentDescription = contentDescription }
+            // A press anywhere outside the chart clears the selection (app-wide outside-press host)
+            .closeOnOutsidePress(selectedDay != null) { selectedDay = null }
             .onSizeChanged { size = it },
     ) {
         if (all.isEmpty() || size == IntSize.Zero) return@Box
@@ -121,7 +124,7 @@ fun BalanceLineChart(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .chartTouch(key = all) { touchX ->
+                .chartTouch(key = all, onScrollAway = { selectedDay = null }) { touchX ->
                     selectedDay = xScale.invert(touchX).roundToLong().coerceIn(xMin, xMax)
                 },
         ) {

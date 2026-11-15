@@ -3,6 +3,8 @@ package dev.lacruzjs.sobreio.ui.envelopes
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
@@ -20,6 +22,11 @@ data class EnvelopesUiState(
     val members: List<Member> = emptyList(),
     /** The system "Unassigned" envelope; null until the first load ends. */
     val unassigned: Envelope? = null,
+    /**
+     * How each live envelope stands against its type (`envelope_progress`), by envelope id. Empty when it could not be
+     * read: the rows then show no bar.
+     */
+    val progress: Map<String, EnvelopeProgress> = emptyMap(),
     /** Money inside the envelopes, as the database computes it. */
     val totalCents: Long = 0,
     /** Balance of "Unassigned", as the database computes it: money still to assign. */
@@ -48,8 +55,11 @@ data class EnvelopesUiState(
     /** Snackbar for the last delete or reopen. */
     val undoMessage: UndoMessage? = null,
 ) {
-    val spending: List<Envelope> get() = envelopes.filter { it.kind == EnvelopeKind.Spending }
-    val saving: List<Envelope> get() = envelopes.filter { it.kind == EnvelopeKind.Saving }
+    /** The non-empty sections by type, in display order: monthly spending, bills, savings, free. */
+    val sections: List<Pair<EnvelopePurpose, List<Envelope>>>
+        get() = EnvelopePurpose.entries.mapNotNull { purpose ->
+            envelopes.filter { (it.purpose ?: EnvelopePurpose.Free) == purpose }.takeIf { it.isNotEmpty() }?.let { purpose to it }
+        }
 
     val hasSeveralMembers: Boolean get() = members.hasSeveralMembers()
 

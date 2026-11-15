@@ -84,12 +84,13 @@ fun GroupRoute(
     onOpenAccountForm: (accountId: String?) -> Unit,
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
+    onOpenEnvelope: (envelopeId: String) -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
     envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
-    movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null) },
+    movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null, null) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
@@ -165,6 +166,7 @@ fun GroupRoute(
                 onEvent = { event ->
                     when (event) {
                         is EnvelopesEvent.EditClicked -> onOpenEnvelopeForm(event.envelopeId)
+                        is EnvelopesEvent.OpenClicked -> onOpenEnvelope(event.envelopeId)
                         else -> envelopesViewModel.onEvent(event)
                     }
                 },

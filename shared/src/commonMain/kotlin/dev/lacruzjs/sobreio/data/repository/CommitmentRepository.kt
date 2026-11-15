@@ -37,6 +37,12 @@ interface CommitmentRepository {
     suspend fun getOccurrences(commitmentId: String, offset: Int = 0, limit: Int = 20): Result<OccurrencePage>
 
     /**
+     * The ids among [commitmentIds] that have a due date inside [from]..[to] (both included) already registered as a real
+     * movement (a skipped one does not count). Read from the resolved due items; nothing is computed.
+     */
+    suspend fun getPaidCommitmentIds(commitmentIds: List<String>, from: LocalDate, to: LocalDate): Result<Set<String>>
+
+    /**
      * The links of the contributions among [commitmentIds] (either half). A link is only visible to members of both
      * groups, so a contribution without a row here cannot be changed from this group.
      */

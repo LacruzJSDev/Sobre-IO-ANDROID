@@ -33,6 +33,10 @@ fun formatDayMonth(date: LocalDate, languageTag: String): String =
         "${EnglishMonths[date.month.ordinal]} ${date.day}"
     }
 
+/** [formatDayMonth] for the current year and [formatDate] (with the year) for any other. */
+fun formatShortDate(date: LocalDate, languageTag: String, currentYear: Int): String =
+    if (date.year == currentYear) formatDayMonth(date, languageTag) else formatDate(date, languageTag)
+
 /** Three-letter month of [date]: `Nov` in English, `nov` in Spanish. */
 fun formatMonthShort(date: LocalDate, languageTag: String): String =
     if (isSpanish(languageTag)) SpanishMonths[date.month.ordinal] else EnglishMonths[date.month.ordinal]

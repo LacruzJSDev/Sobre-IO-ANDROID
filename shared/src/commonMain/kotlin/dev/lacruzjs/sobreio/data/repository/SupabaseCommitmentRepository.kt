@@ -5,6 +5,7 @@ import dev.lacruzjs.sobreio.data.remote.dto.CommitmentIdDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentWithVersionsDto
+import dev.lacruzjs.sobreio.data.remote.dto.PaidOccurrenceDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.safeCall
@@ -83,6 +84,26 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
             }
         val items = result.decodeList<CommitmentOccurrenceDto>().map { it.toDomain() }
         OccurrencePage(items, (result.countOrNull() ?: (offset + items.size).toLong()).toInt())
+    }
+
+    override suspend fun getPaidCommitmentIds(
+        commitmentIds: List<String>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Result<Set<String>> = safeCall {
+        if (commitmentIds.isEmpty()) return@safeCall emptySet()
+        postgrest.from(OCCURRENCES_TABLE)
+            .select(Columns.list("commitment_id")) {
+                filter {
+                    isIn("commitment_id", commitmentIds)
+                    eq("status", "materialized")
+                    gte("due_date", from.toString())
+                    lte("due_date", to.toString())
+                }
+            }
+            .decodeList<PaidOccurrenceDto>()
+            .map { it.commitmentId }
+            .toSet()
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> = safeCall {

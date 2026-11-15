@@ -98,6 +98,12 @@ class AccountCommitmentsViewModel(
                 .groupBy { it.commitmentId }
                 .mapValues { (_, items) -> items.minOf { it.dueDate } }
 
+            // Registered this period: only to say "Paid this period"; without it the row shows its next date as before
+            val period = detail.getCurrentPeriod(groupId).getOrNull()
+            val paid = if (period == null) emptySet() else commitments
+                .getPaidCommitmentIds(mine.filter { (c, _) -> !c.isArchived }.map { it.first.id }, period.start, period.end)
+                .getOrDefault(emptySet())
+
             val all = mine.map { (c, v) ->
                 val section = sectionOf(v, accountId)
                 val link = if (section == CommitmentSection.Contributions) links[c.id] else null
@@ -110,6 +116,7 @@ class AccountCommitmentsViewModel(
                     section = section,
                     signedCents = signedAmount(v, accountId),
                     nextDue = if (c.isArchived) null else nextDue[c.id],
+                    paidThisPeriod = c.id in paid,
                     link = link,
                     startsOn = v.effectiveFrom.takeIf { arriving },
                     movesToName = leavesTo?.let { accountNames[it.accountId] },

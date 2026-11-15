@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -31,6 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /*
  * Building blocks of the full-screen forms. A form is a few sections; each section has a small muted title and a stack of
@@ -116,6 +120,42 @@ fun FormInfoTile(
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
         if (secondary != null) {
             Text(text = secondary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * A tile for a short, fixed choice that is better seen than hidden behind an arrow (the four envelope types): the
+ * [label] on top and the options as [FormChip]s under it, wrapping to more lines when they do not fit. [error] is a
+ * validation or database message shown under the tile in the error colour.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ChipFormTile(
+    label: String,
+    modifier: Modifier = Modifier,
+    error: StringResource? = null,
+    chips: @Composable () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { chips() }
+        }
+        if (error != null) {
+            Text(
+                text = stringResource(error),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
     }
 }

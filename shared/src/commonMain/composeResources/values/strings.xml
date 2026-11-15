@@ -42,7 +42,7 @@
     <string name="recovery_email_body">Enter your email and we\'ll send you a code to choose a new password.</string>
     <string name="recovery_reset_body">Enter the code we sent to %1$s and choose a new password.</string>
 
-    <!-- Errors. Database codes FZ001–FZ020 (D-23) are mapped in ui/error/ErrorMessages.kt -->
+    <!-- Errors. Database codes FZ001–FZ021 (D-23) are mapped in ui/error/ErrorMessages.kt -->
     <string name="error_unknown">Something went wrong. Please try again.</string>
     <string name="error_network">Can\'t reach the server. Check your connection and try again.</string>
     <string name="error_invalid_credentials">Incorrect email or password.</string>
@@ -136,10 +136,8 @@
     <string name="error_duplicate_name">That name is already in use.</string>
 
     <!-- Envelopes tab -->
-    <string name="envelopes_total">Total</string>
+    <string name="envelopes_total">Total in envelopes</string>
     <string name="envelopes_unassigned">Unassigned</string>
-    <string name="envelopes_section_spending">Spending</string>
-    <string name="envelopes_section_saving">Saving</string>
     <string name="envelope_target_per_month">Target %1$s a month</string>
     <string name="envelopes_empty_editor">No envelopes yet. Create the first one with the + button.</string>
     <string name="envelopes_empty_member">There are no envelopes yet.</string>
@@ -148,7 +146,6 @@
     <string name="field_envelope_name">Envelope name</string>
     <string name="field_envelope_kind">Type</string>
     <string name="field_monthly_target">Monthly target</string>
-    <string name="monthly_target_hint">Assigned automatically from Unassigned at the start of each period. Leave it empty for no target.</string>
     <string name="validation_amount_negative">The amount can\'t be negative.</string>
     <string name="validation_amount_positive">Enter an amount greater than zero.</string>
     <string name="validation_source_invalid">Choose the envelope the money comes from.</string>
@@ -351,7 +348,7 @@
     <string name="forecast_scheduled_in">Scheduled in</string>
     <string name="forecast_scheduled_out">Scheduled out</string>
     <string name="forecast_projected_end">Projected end</string>
-    <string name="forecast_shortfall">%1$s short by %2$s</string>
+    <string name="forecast_shortfall">Short by %1$s on %2$s</string>
     <string name="detail_section_flows">In and out by period</string>
     <string name="chart_legend_in">In</string>
     <string name="chart_legend_out">Out</string>
@@ -542,4 +539,59 @@
     <string name="movement_tag_new_title">New tag</string>
     <string name="validation_account_required">Choose an account.</string>
     <string name="validation_tag_name_too_long">Use at most 50 characters.</string>
+    <string name="envelope_detail_available">Available</string>
+    <string name="envelope_detail_section_period">This period</string>
+    <string name="envelope_detail_brought">Brought forward</string>
+    <string name="envelope_detail_assigned">Assigned</string>
+    <string name="envelope_detail_activity">Movements</string>
+    <string name="envelope_detail_left">Left</string>
+    <string name="envelope_detail_section_free">Really free</string>
+    <string name="envelope_detail_committed">Committed</string>
+    <string name="envelope_detail_free">Free</string>
+    <string name="envelope_detail_shortfall">%1$s missing for this period\'s commitments</string>
+    <string name="envelope_detail_section_chart">Assigned and movements by period</string>
+    <string name="chart_legend_assigned">Assigned</string>
+    <string name="chart_legend_spent">Spent</string>
+    <string name="envelope_chart_description">Assigned and spent in the last %1$d periods. %2$s</string>
+    <string name="envelope_chart_period">%1$s: assigned %2$s, spent %3$s.</string>
+    <string name="envelope_detail_section_commitments">Commitments that fund it</string>
+    <string name="envelope_funding_row">%1$s this period · due %2$s</string>
+    <string name="envelope_detail_section_transfers">Moves between envelopes</string>
+    <string name="envelope_detail_transfers_empty">No moves between envelopes yet.</string>
+    <string name="transfer_origin_manual">Assignment</string>
+    <string name="transfer_origin_target">Monthly target</string>
+    <string name="transfer_origin_commitment">Reserve for \"%1$s\"</string>
+    <string name="transfer_origin_commitment_plain">Commitment reserve</string>
+    <string name="transfer_origin_cover">Cover</string>
+    <string name="transfer_from">From %1$s</string>
+    <string name="transfer_to">To %1$s</string>
+    <string name="transfer_deleted">Assignment of %1$s deleted</string>
+
+    <!-- Envelope types (D-46) -->
+    <string name="envelope_purpose_monthly">Monthly spending</string>
+    <string name="envelope_purpose_bills">Bills</string>
+    <string name="envelope_purpose_savings">Savings</string>
+    <string name="envelope_purpose_free">Free</string>
+    <string name="field_monthly_contribution">Monthly contribution</string>
+    <string name="envelope_purpose_note_monthly">Each period the target is assigned from Unassigned. The bar shows what is left of the month.</string>
+    <string name="envelope_purpose_note_bills">Commitments with a reserve set aside here, little by little, the money of each payment. Choose this envelope when you create the commitment.</string>
+    <string name="envelope_purpose_note_savings">Keeps money for later. If you set a monthly contribution, it is assigned by itself each period.</string>
+    <string name="envelope_purpose_note_free">It only receives what you assign by hand.</string>
+    <string name="envelope_type_has_funded">It has commitments with a reserve: move them to another Bills envelope or remove the reserve first.</string>
+    <string name="error_fz021_envelope_type">That envelope type does not fit its commitments with a reserve.</string>
+    <string name="commitment_funded_bills_note">With a reserve you can only choose Bills envelopes: that is where the money of each payment is set aside.</string>
+    <string name="commitment_funded_no_bills_note">You don\'t have a Bills envelope yet. Create one first to set money aside for this commitment.</string>
+    <string name="validation_funded_needs_bills">Choose a Bills envelope or turn off the reserve.</string>
+    <string name="validation_funded_no_bills">Create a Bills envelope first, or turn off the reserve.</string>
+    <string name="envelopes_unassigned_subtitle">Free to distribute</string>
+    <string name="envelope_progress_remaining">%1$s left of %2$s this month</string>
+    <string name="envelope_progress_reserved_of">%1$s of %2$s reserved</string>
+    <string name="envelope_progress_pays_on">Payment on %1$s</string>
+    <string name="envelope_progress_then">then %1$s</string>
+    <string name="envelope_progress_next">next %1$s</string>
+    <string name="envelope_progress_paid">✓ Paid on %1$s</string>
+    <string name="envelope_progress_contributing">Contributed %1$s of %2$s this month</string>
+    <string name="envelope_progress_overspent">Overspent: %1$s</string>
+    <string name="envelope_progress_pending">%1$d to review in Group</string>
+    <string name="commitment_paid_this_period">Paid this period</string>
 </resources>

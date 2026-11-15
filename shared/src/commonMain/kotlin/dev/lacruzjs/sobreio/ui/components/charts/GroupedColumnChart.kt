@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.onSizeChanged
+import dev.lacruzjs.sobreio.ui.components.closeOnOutsidePress
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -72,6 +73,8 @@ fun GroupedColumnChart(
                 .fillMaxWidth()
                 .height(CHART_HEIGHT)
                 .semantics { this.contentDescription = contentDescription }
+                // A press anywhere outside the chart clears the selection (app-wide outside-press host)
+                .closeOnOutsidePress(selected != null) { selected = null }
                 .onSizeChanged { size = it },
         ) {
             if (groups.isEmpty() || size == IntSize.Zero) return@Box
@@ -93,7 +96,7 @@ fun GroupedColumnChart(
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-                    .chartTouch(key = groups) { touchX ->
+                    .chartTouch(key = groups, onScrollAway = { selected = null }) { touchX ->
                         selected = slotAt(touchX - plot.left, plot.width, groups.size)
                     },
             ) {

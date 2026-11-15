@@ -97,8 +97,8 @@ fun SwipeActionsRow(
     // Open as far as the user can see: dragged open or still sliding back
     fun isDrawnOpen(): Boolean = state.targetValue == SwipeValue.Open || state.currentValue == SwipeValue.Open
 
-    // While drawn open, a press anywhere outside this row closes it (app-wide rule, see SwipeRowsHost)
-    val host = LocalSwipeRowsHost.current
+    // While drawn open, a press anywhere outside this row closes it (app-wide rule, see OutsidePressHost)
+    val host = LocalOutsidePressHost.current
     var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val drawnOpen by remember(state) { derivedStateOf { isDrawnOpen() } }
     val registrationKey = remember { Any() }

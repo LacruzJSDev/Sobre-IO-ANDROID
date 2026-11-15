@@ -10,7 +10,7 @@ import kotlin.test.assertNotEquals
 
 class ErrorMessagesTest {
 
-    private val raisedCodes = (1..20).map { "FZ${it.toString().padStart(3, '0')}" } - setOf("FZ004", "FZ010")
+    private val raisedCodes = (1..21).map { "FZ${it.toString().padStart(3, '0')}" } - setOf("FZ004", "FZ010")
 
     @Test
     fun everyRaisedCodeHasItsOwnMessage() {

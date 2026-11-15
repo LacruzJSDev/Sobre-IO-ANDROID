@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.action_assign
 import dev.lacruzjs.sobreio.generated.resources.assign_title
 import dev.lacruzjs.sobreio.generated.resources.field_amount
@@ -48,7 +49,7 @@ internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> U
         EntitySelect(
             label = stringResource(Res.string.field_assign_from),
             options = state.assignSources.map { source ->
-                val name = if (source.kind == EnvelopeKind.System) stringResource(source.kind.labelRes()) else source.name
+                val name = if (source.kind == EnvelopeKind.System) stringResource(Res.string.envelopes_unassigned) else source.name
                 val balance = MoneyAmount(source.balanceCents, state.currencyCode)
                 if (source.kind == EnvelopeKind.System) {
                     unassignedOption(name, balance = balance).copy(id = source.id)

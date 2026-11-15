@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
+import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 
 /** The envelopes of a group. Failures are [dev.lacruzjs.sobreio.domain.error.AppError]s. */
@@ -19,6 +20,12 @@ interface EnvelopeRepository {
 
     /** Total inside the envelopes and balance of "Unassigned", as the database computes them. */
     suspend fun getSummary(groupId: String): Result<EnvelopeSummary>
+
+    /**
+     * The progress of every live spending and saving envelope of the group (`envelope_progress`, D-46): the state, the
+     * figures of the bar and the pending due dates. The database does all the arithmetic.
+     */
+    suspend fun getProgress(groupId: String): Result<List<EnvelopeProgress>>
 
     /**
      * Creates a spending or saving envelope with every field and returns its id. Owner or admin only. Fails with

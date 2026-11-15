@@ -28,12 +28,18 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
 
     var funding: CommitmentFunding? = null
     var fundingResult: Result<CommitmentFunding?>? = null
+    /** Status by commitment id; an id listed here wins over [funding] (null = nothing reserved). */
+    var fundingById: Map<String, CommitmentFunding?> = emptyMap()
 
     var createdDraft: CommitmentDraft? = null
     var createdLinkedDraft: LinkedCommitmentDraft? = null
     var changedWith: CommitmentChange? = null
     var linkedAmount: Long? = null
     var linkedFrom: LocalDate? = null
+
+    /** Ids with a registered due date inside the period asked for; [paidResult] scripts a failure. */
+    var paidIds: Set<String> = emptySet()
+    var paidResult: Result<Set<String>>? = null
 
     var listResult: Result<List<Commitment>>? = null
     var createResult: Result<String> = Result.success("new-id")
@@ -53,8 +59,14 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
         return commitments.firstOrNull { it.id == id }?.let { Result.success(it) } ?: Result.failure(AppError.NotFound)
     }
 
+    override suspend fun getPaidCommitmentIds(commitmentIds: List<String>, from: LocalDate, to: LocalDate): Result<Set<String>> {
+        calls += "getPaidCommitmentIds($from, $to)"
+        return paidResult ?: Result.success(paidIds.intersect(commitmentIds.toSet()))
+    }
+
     override suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?> {
         calls += "getFundingStatus($commitmentId)"
+        if (commitmentId in fundingById) return Result.success(fundingById[commitmentId])
         return fundingResult ?: Result.success(funding)
     }
 

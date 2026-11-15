@@ -22,6 +22,8 @@ data class MovementsUiState(
     val canEdit: Boolean = false,
     /** The account of the level 3 screen: the list is always its own and the Account chip is not shown. Null on the tab. */
     val fixedAccountId: String? = null,
+    /** The envelope of its level 3 screen: the list is always its own and the Envelope chip is not shown. Null elsewhere. */
+    val fixedEnvelopeId: String? = null,
     val filter: MovementFilter = MovementFilter(),
     /** Which Dates option produced `filter.from` and `filter.to`; null when no dates are set. */
     val datePreset: DatePreset? = null,
@@ -51,6 +53,8 @@ data class MovementsUiState(
 ) {
     val fixedAccount: Account? get() = fixedAccountId?.let { id -> accounts.firstOrNull { it.id == id } }
 
+    val fixedEnvelope: Envelope? get() = fixedEnvelopeId?.let { id -> envelopes.firstOrNull { it.id == id } }
+
     val hasSeveralMembers: Boolean get() = members.hasSeveralMembers()
 
     /** With one live account every row would repeat its name, so the second line leaves it out. */
@@ -58,9 +62,12 @@ data class MovementsUiState(
 
     val today: LocalDate? get() = dateContext?.today
 
-    /** A filter or a search is on (the fixed account does not count): the empty state then says "no results". */
+    /** A filter or a search is on (the fixed account or envelope does not count): the empty state then says "no results". */
     val hasActiveFilters: Boolean
-        get() = filter.copy(accountId = if (fixedAccountId != null) null else filter.accountId) != MovementFilter()
+        get() = filter.copy(
+            accountId = if (fixedAccountId != null) null else filter.accountId,
+            envelopeId = if (fixedEnvelopeId != null) null else filter.envelopeId,
+        ) != MovementFilter()
 
     val sections: List<DaySection> get() = groupByDay(items, today)
 

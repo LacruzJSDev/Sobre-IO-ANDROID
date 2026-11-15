@@ -83,6 +83,10 @@ internal data class CommitmentOccurrenceDto(
     @SerialName("account_transfers") val transfer: OccurrenceFactDto? = null,
 )
 
+/** The commitment of a registered (materialized) due date: only its id is read. */
+@Serializable
+internal data class PaidOccurrenceDto(@SerialName("commitment_id") val commitmentId: String)
+
 /** The row of `commitment_funding_status`; dates travel as ISO text. */
 @Serializable
 internal data class CommitmentFundingDto(
