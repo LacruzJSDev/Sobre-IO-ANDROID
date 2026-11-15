@@ -44,5 +44,6 @@ internal fun String?.toTransferOrigin(): TransferOrigin = when (this) {
     "manual" -> TransferOrigin.Manual
     "target" -> TransferOrigin.Target
     "commitment" -> TransferOrigin.Commitment
+    "release" -> TransferOrigin.Release
     else -> TransferOrigin.Cover
 }

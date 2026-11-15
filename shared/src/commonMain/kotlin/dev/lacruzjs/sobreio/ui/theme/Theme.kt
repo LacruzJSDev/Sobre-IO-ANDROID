@@ -81,6 +81,10 @@ fun SobreioTheme(
         typography = sobreioTypography(),
         shapes = SobreioShapes,
     ) {
-        CompositionLocalProvider(LocalMoneyColors provides moneyColors(darkTheme, colorBlindSafe), content = content)
+        CompositionLocalProvider(
+            LocalMoneyColors provides moneyColors(darkTheme, colorBlindSafe),
+            LocalHeroColors provides heroColors(darkTheme, colorBlindSafe),
+            content = content,
+        )
     }
 }

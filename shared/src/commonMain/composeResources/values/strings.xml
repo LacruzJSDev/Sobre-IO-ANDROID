@@ -118,7 +118,8 @@
     <string name="coming_soon">Coming soon</string>
 
     <!-- Accounts tab -->
-    <string name="accounts_total">Total</string>
+    <string name="accounts_total">Total in accounts</string>
+    <string name="hero_below_zero">Below zero</string>
     <string name="accounts_empty_editor">No accounts yet. Create the first one with the + button.</string>
     <string name="account_deleted">%1$s deleted</string>
     <string name="edit_account_title">Edit account</string>
@@ -562,6 +563,8 @@
     <string name="transfer_origin_commitment">Reserve for \"%1$s\"</string>
     <string name="transfer_origin_commitment_plain">Commitment reserve</string>
     <string name="transfer_origin_cover">Cover</string>
+    <string name="transfer_origin_release">Released from \"%1$s\"</string>
+    <string name="transfer_origin_release_plain">Commitment reserve released</string>
     <string name="transfer_from">From %1$s</string>
     <string name="transfer_to">To %1$s</string>
     <string name="transfer_deleted">Assignment of %1$s deleted</string>

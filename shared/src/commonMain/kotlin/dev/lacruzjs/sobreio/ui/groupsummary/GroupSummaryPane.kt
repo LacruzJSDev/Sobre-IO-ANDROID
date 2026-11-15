@@ -80,6 +80,10 @@ import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormSection
+import dev.lacruzjs.sobreio.ui.components.HeroCard
+import dev.lacruzjs.sobreio.ui.components.HeroFigure
+import dev.lacruzjs.sobreio.ui.components.HeroLabel
+import dev.lacruzjs.sobreio.ui.components.HeroSplitBar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
@@ -94,6 +98,7 @@ import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.format.formatMonthShort
 import dev.lacruzjs.sobreio.ui.format.formatWeekdayDayMonth
+import dev.lacruzjs.sobreio.ui.theme.LocalHeroColors
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import org.jetbrains.compose.resources.stringResource
@@ -132,7 +137,7 @@ private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, on
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
-        HeroCard(state, outlook, languageTag)
+        GroupHero(state, outlook, languageTag)
         ReviewCard(state, languageTag, onEvent)
         if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
         if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
@@ -142,49 +147,24 @@ private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, on
 }
 
 /**
- * Ink card with paper text: the really free money today, its projection to the end of the period, the projected figure
- * with the database figure that explains the difference, the lowest day when it goes below zero and how far into the
- * period we are. Negative figures keep the negative money colour.
+ * The hero card: the really free money today, its projection to the end of the period, the projected figure with the
+ * database figure that explains the difference, the lowest day when it goes below zero and how far into the period we
+ * are. The big figure is always white; when it is negative a "Below zero" chip says so (`HeroFigure`).
  */
 @Composable
-private fun HeroCard(state: GroupSummaryUiState, outlook: GroupOutlook, languageTag: String) {
-    val ink = MaterialTheme.colorScheme.primary
-    val paper = MaterialTheme.colorScheme.onPrimary
-    val muted = paper.copy(alpha = 0.7f)
-    val negative = LocalMoneyColors.current.negative
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(ink)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languageTag: String) {
+    val hero = LocalHeroColors.current
+    val paper = hero.onContainer
+    HeroCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(Res.string.group_summary_free_today),
-                style = MaterialTheme.typography.labelMedium,
-                color = muted,
-                modifier = Modifier.weight(1f),
-            )
+            HeroLabel(text = stringResource(Res.string.group_summary_free_today), modifier = Modifier.weight(1f))
             val day = state.periodDay
             val length = state.periodLength
             if (day != null && length != null) {
-                Text(
-                    text = stringResource(Res.string.group_hero_period_day, day, length),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = muted,
-                )
+                HeroLabel(text = stringResource(Res.string.group_hero_period_day, day, length))
             }
         }
-        MoneyText(
-            amountCents = outlook.freeTodayCents,
-            currencyCode = state.currencyCode,
-            role = MoneyRole.Balance,
-            style = MaterialTheme.typography.displaySmall,
-            maxLines = 1,
-            ink = paper,
-        )
+        HeroFigure(amountCents = outlook.freeTodayCents, currencyCode = state.currencyCode)
         if (state.freeProjection.isNotEmpty() && state.today != null) {
             val points = remember(state.freeProjection) { state.freeProjection.map { LineChartPoint(it.day.toEpochDays(), it.freeCents) } }
             val first = state.freeProjection.first()
@@ -193,8 +173,9 @@ private fun HeroCard(state: GroupSummaryUiState, outlook: GroupOutlook, language
                 points = points,
                 todayX = state.today.toEpochDays(),
                 lineColor = paper,
-                negativeColor = negative,
-                ringColor = ink,
+                negativeColor = hero.negativeOnContainer,
+                ringColor = hero.container,
+                height = 56.dp,
                 contentDescription = stringResource(
                     Res.string.group_hero_chart_description,
                     formatDayMonth(first.day, languageTag),
@@ -206,15 +187,11 @@ private fun HeroCard(state: GroupSummaryUiState, outlook: GroupOutlook, language
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(Res.string.group_hero_projected_on, formatDayMonth(outlook.periodEnd, languageTag)),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = muted,
-                )
+                HeroLabel(text = stringResource(Res.string.group_hero_projected_on, formatDayMonth(outlook.periodEnd, languageTag)))
                 MoneyText(
                     amountCents = outlook.freeProjectedCents,
                     currencyCode = state.currencyCode,
-                    role = MoneyRole.Balance,
+                    role = MoneyRole.Plain,
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     ink = paper,
@@ -250,13 +227,11 @@ private fun HeroCard(state: GroupSummaryUiState, outlook: GroupOutlook, language
                     formatDayMonth(lowest.day, languageTag),
                 ),
                 style = MaterialTheme.typography.bodyMedium,
-                color = negative,
+                color = hero.negativeOnContainer,
             )
         }
         // Days elapsed over days in the period: a display ratio, not a figure
-        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50)).background(paper.copy(alpha = 0.2f))) {
-            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(state.periodProgress).background(paper))
-        }
+        HeroSplitBar(fraction = state.periodProgress)
     }
 }
 

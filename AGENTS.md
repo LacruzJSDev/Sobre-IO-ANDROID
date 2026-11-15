@@ -74,7 +74,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   deletion (`cancel_group_purge`); `getGroup` still hides groups pending deletion. `Group.canEdit` is false for archived
   and pending groups, so Accounts and Envelopes become read only.
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter, `MemberRepository` for holder names): on
-  top the total and, when some accounts are outside the envelopes, two small figures "In envelopes" / "Outside envelopes"
+  top a `HeroCard` (see Rules): "Total in accounts" and the big total (`HeroFigure`) and, when some accounts are outside the
+  envelopes, two figures "In envelopes" / "Outside envelopes" (85 % labels, white `MoneyText` Plain with `ink`) and a thin
+  `HeroSplitBar` of their proportion (`envelopeSplitFraction`: a display ratio of absolute values, hidden when outside is 0)
   (`group_overview.accounts_total`, `in_envelopes_total`, `outside_total`, never summed in the app). Then the live accounts in two sections,
   "In envelopes" and "Outside envelopes" (empty ones hidden; the "In envelopes" title only shows when there is an outside
   section): `EntityAvatar` (colour + account icon, the initial when there is no icon), name, kind label (+ " · holder", or
@@ -110,15 +112,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Tapping a row opens the envelope detail.
 - Group tab (`ui/groupsummary`, `GroupSummaryViewModel(groupId)` with `GroupSummaryRepository`, `AccountDetailRepository`,
   `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`): read only, it counts the due dates to review and opens the review
-  screen. Top to bottom: (1) the hero card, ink background (`primary`) with paper text (`onPrimary`), `shapes.large`: a row "Really
-  free today" and "Day X of Y" (period day, a display count), the big `free_today` figure (`MoneyText` Balance with `ink = paper`;
-  below zero it takes the negative money colour), a compact 90 dp `FreeProjectionChart` (`ui/components/charts`, paper line, step-after,
+  screen. Top to bottom: (1) the `HeroCard` (see Rules): a row "Really
+  free today" and "Day X of Y" (period day, a display count), the big `free_today` figure (`HeroFigure`: always white, a
+  "Below zero" chip when negative), a compact 56 dp `FreeProjectionChart` (`ui/components/charts`, paper line, step-after,
   solid up to today and dashed after, the part below zero in `LocalMoneyColors.negative`, end dot) of `group_free_projection`, a row
   "Projected on <period end>" with `free_projected` (`titleLarge`) and, right, a translucent chip with the database figure that
   explains the difference (`GroupSummaryUiState.projectionNote`, nothing is subtracted in the app): `committed_shortfall` ("-X for
   commitments"), else `pending_out` ("-X in contributions"), else `pending_income` ("+X of expected income"), none when all are 0;
   when the projection goes below zero after today, a line "Will drop to X on <day>" in the negative colour (`lowestPoint`: the
-  smallest row of the database, a selection); a thin bar of days elapsed over days in the period (`periodProgress`, a display ratio).
+  smallest row of the database, a selection, in `HeroColors.negativeOnContainer`); a `HeroSplitBar` of days elapsed over days in the period (`periodProgress`, a display ratio).
   (2) The review card, always visible: with nothing pending a check icon and "All caught up: nothing to review"; otherwise "N to
   review", the oldest due date muted and ONE `PrimaryButton` "Review" that opens `GroupReview(groupId)`. N counts
   `pending_occurrences` without the receiving half of a contribution (`group_transfer_in`, the contributor registers it, FZ018). The Group
@@ -348,6 +350,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Hero card (`ui/components/HeroCard.kt`, tokens in `ui/theme/HeroColors.kt`): the main figure of a tab (Group: really free money;
+  Accounts: total in accounts) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
+  Group tab's content decides it) dark card with `SobreioShapes.large` that spreads its content top to bottom; `HeroLabel` is the
+  card's text at 85 % alpha; `HeroFigure` draws the big figure through `MoneyText(Plain, ink = onHeroContainer)`, so it is ALWAYS
+  white, and a negative one gets a "Below zero" chip (`showsBelowZeroChip`; light background, text in the LIGHT palette's negative
+  colour so it contrasts); any other figure on the card is a `MoneyText` Plain with `ink = onHeroContainer`; `HeroSplitBar` draws a
+  display ratio. Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
+  (`LocalHeroColors`, `heroColors(dark, colorBlindSafe)`): light `#0C0C0C` / paper; dark `#2D2D2A` / `#F4F4F4` (`primary` is near-white
+  in dark mode, so it is not used); `negativeOnContainer` is the dark palette's negative for lines and text drawn on the card.
 - Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
   `LocalMoneyColors`, chosen by dark/light and the colour-blind preference (`moneyColors(dark, colorBlindSafe)`); `moneyColorFor(role,
   amount, colors, ink)` is the pure rule behind `ui/components/MoneyText` (Flow: positive inflow with "+", otherwise outflow;

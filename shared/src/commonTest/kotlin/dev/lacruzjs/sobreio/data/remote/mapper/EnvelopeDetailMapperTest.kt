@@ -56,6 +56,7 @@ class EnvelopeDetailMapperTest {
         assertEquals(TransferOrigin.Manual, "manual".toTransferOrigin())
         assertEquals(TransferOrigin.Target, "target".toTransferOrigin())
         assertEquals(TransferOrigin.Commitment, "commitment".toTransferOrigin())
+        assertEquals(TransferOrigin.Release, "release".toTransferOrigin())
         assertEquals(TransferOrigin.Cover, "cover".toTransferOrigin())
         // A value added by a newer database must not be deletable by mistake
         assertEquals(TransferOrigin.Cover, "something-new".toTransferOrigin())

@@ -117,7 +117,8 @@
     <string name="coming_soon">Próximamente</string>
 
     <!-- Accounts tab -->
-    <string name="accounts_total">Total</string>
+    <string name="accounts_total">Total en cuentas</string>
+    <string name="hero_below_zero">Por debajo de cero</string>
     <string name="accounts_empty_editor">Todavía no hay cuentas. Crea la primera con el botón +.</string>
     <string name="account_deleted">%1$s eliminada</string>
     <string name="edit_account_title">Editar cuenta</string>
@@ -561,6 +562,8 @@
     <string name="transfer_origin_commitment">Reserva de «%1$s»</string>
     <string name="transfer_origin_commitment_plain">Reserva de compromiso</string>
     <string name="transfer_origin_cover">Cobertura</string>
+    <string name="transfer_origin_release">Liberado de «%1$s»</string>
+    <string name="transfer_origin_release_plain">Reserva de compromiso liberada</string>
     <string name="transfer_from">Desde %1$s</string>
     <string name="transfer_to">A %1$s</string>
     <string name="transfer_deleted">Asignación de %1$s eliminada</string>

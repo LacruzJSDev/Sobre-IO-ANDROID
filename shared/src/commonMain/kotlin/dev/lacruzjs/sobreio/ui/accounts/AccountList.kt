@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
@@ -38,7 +39,12 @@ import dev.lacruzjs.sobreio.generated.resources.accounts_total
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.HeroCard
+import dev.lacruzjs.sobreio.ui.components.HeroFigure
+import dev.lacruzjs.sobreio.ui.components.HeroLabel
+import dev.lacruzjs.sobreio.ui.components.HeroSplitBar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.LocalHeroColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
@@ -50,6 +56,7 @@ import dev.lacruzjs.sobreio.ui.components.reopenAction
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.abs
 
 /**
  * The summary, the accounts in two sections (in the envelopes and outside them) and, at the end, a collapsed
@@ -102,7 +109,7 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        item(key = "summary") { AccountsSummaryBlock(state, languageTag) }
+        item(key = "summary") { AccountsHero(state) }
         if (state.actionError != null) {
             item(key = "action-error") {
                 ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
@@ -144,36 +151,47 @@ private fun SectionTitle(text: String) {
     )
 }
 
-/** The total and, when some accounts are outside the envelopes, how it splits between inside and outside. */
+/**
+ * The hero card of the tab: the total in accounts and, when some accounts are outside the envelopes, how it splits
+ * between inside and outside with a thin bar (hidden when nothing is outside).
+ */
 @Composable
-private fun AccountsSummaryBlock(state: AccountsUiState, languageTag: String) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp)) {
-        Text(
-            text = stringResource(Res.string.accounts_total),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        MoneyText(
-            amountCents = state.totalCents,
-            currencyCode = state.currencyCode,
-            role = MoneyRole.Balance,
-            style = MaterialTheme.typography.headlineMedium,
-        )
+private fun AccountsHero(state: AccountsUiState) {
+    val ink = LocalHeroColors.current.onContainer
+    HeroCard(modifier = Modifier.padding(bottom = 8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            HeroLabel(stringResource(Res.string.accounts_total))
+            HeroFigure(amountCents = state.totalCents, currencyCode = state.currencyCode)
+        }
         if (state.outsideEnvelopes.isNotEmpty()) {
-            Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                SmallFigure(stringResource(Res.string.accounts_in_envelopes_title), state.inEnvelopesCents, state.currencyCode)
-                SmallFigure(stringResource(Res.string.accounts_outside_envelopes_title), state.outsideCents, state.currencyCode)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                    HeroFigureLine(stringResource(Res.string.accounts_in_envelopes_title), state.inEnvelopesCents, state.currencyCode, ink)
+                    HeroFigureLine(stringResource(Res.string.accounts_outside_envelopes_title), state.outsideCents, state.currencyCode, ink)
+                }
+                envelopeSplitFraction(state.inEnvelopesCents, state.outsideCents)?.let { HeroSplitBar(it) }
             }
         }
     }
 }
 
 @Composable
-private fun SmallFigure(label: String, amountCents: Long, currencyCode: String) {
+private fun HeroFigureLine(label: String, amountCents: Long, currencyCode: String, ink: Color) {
     Column {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        MoneyText(amountCents, currencyCode, MoneyRole.Balance, style = MaterialTheme.typography.titleMedium)
+        HeroLabel(label)
+        MoneyText(amountCents, currencyCode, MoneyRole.Plain, style = MaterialTheme.typography.titleMedium, ink = ink)
     }
+}
+
+/**
+ * The share of the total that sits in the envelopes, for the hero's split bar: a display ratio of the two database
+ * figures (their absolute values, so an overdrawn side still gets its share), null when nothing is outside the envelopes.
+ */
+internal fun envelopeSplitFraction(inEnvelopesCents: Long, outsideCents: Long): Float? {
+    if (outsideCents == 0L) return null
+    val inside = abs(inEnvelopesCents).toDouble()
+    val outside = abs(outsideCents).toDouble()
+    return (inside / (inside + outside)).toFloat()
 }
 
 @Composable
