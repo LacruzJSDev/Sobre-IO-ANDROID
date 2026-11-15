@@ -3,6 +3,9 @@ package dev.lacruzjs.sobreio.ui.envelopes
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
+import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
@@ -17,6 +20,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.generated.resources.validation_source_invalid
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -26,14 +30,27 @@ import kotlin.test.assertTrue
 class EnvelopesViewModelTest : MainDispatcherTest() {
 
     private val unassigned = Envelope("0", "g1", "Sin asignar", EnvelopeKind.System, 0, 30_000)
-    private val rent = Envelope("1", "g1", "Rent", EnvelopeKind.Spending, 50_000, 10_000)
-    private val food = Envelope("2", "g1", "food", EnvelopeKind.Spending, 20_000, 5_000)
-    private val trip = Envelope("3", "g1", "Trip", EnvelopeKind.Saving, 0, 80_000)
+    private val rent = Envelope("1", "g1", "Rent", EnvelopeKind.Spending, 50_000, 10_000, purpose = EnvelopePurpose.Monthly)
+    private val food = Envelope("2", "g1", "food", EnvelopeKind.Spending, 20_000, 5_000, purpose = EnvelopePurpose.Monthly)
+    private val trip = Envelope("3", "g1", "Trip", EnvelopeKind.Saving, 0, 80_000, purpose = EnvelopePurpose.Savings)
     private val repository = FakeEnvelopeRepository(listOf(unassigned, trip, rent, food))
         .also { it.summary = EnvelopeSummary(totalCents = 125_000, unassignedCents = 30_000) }
     private val memberRepository = FakeMemberRepository()
-    private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z")
+    private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z", purpose = EnvelopePurpose.Savings)
     private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository) }
+
+    private fun EnvelopesUiState.section(purpose: EnvelopePurpose): List<Envelope> =
+        sections.firstOrNull { it.first == purpose }?.second.orEmpty()
+
+    private fun progress(
+        id: String,
+        state: ProgressState,
+        current: Long = 0,
+        goal: Long = 0,
+        nextDue: LocalDate? = null,
+        paidOn: LocalDate? = null,
+        pending: Int = 0,
+    ) = EnvelopeProgress(id, null, state, current, goal, nextDue, paidOn, pending)
 
     private fun loaded(canEdit: Boolean = true): EnvelopesViewModel = viewModel.also {
         it.onEvent(EnvelopesEvent.GroupLoaded("USD", canEdit))
@@ -44,7 +61,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     fun refreshMaterializesTargetsBeforeReading() {
         loaded()
 
-        assertEquals(listOf("materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)"), repository.calls)
+        assertEquals(listOf("materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)", "getProgress(g1)"), repository.calls)
     }
 
     @Test
@@ -62,8 +79,8 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
 
         val state = viewModel.state.value
         assertEquals(unassigned, state.unassigned)
-        assertEquals(listOf(food, rent), state.spending)
-        assertEquals(listOf(trip), state.saving)
+        assertEquals(listOf(food, rent), state.section(EnvelopePurpose.Monthly))
+        assertEquals(listOf(trip), state.section(EnvelopePurpose.Savings))
         assertEquals(125_000, state.totalCents)
         assertEquals(30_000, state.unassignedCents)
         assertEquals("USD", state.currencyCode)
@@ -85,7 +102,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopesEvent.DeleteClicked("1"))
 
         assertTrue("archiveEnvelope(1)" in repository.calls)
-        assertEquals(listOf(food), viewModel.state.value.spending)
+        assertEquals(listOf(food), viewModel.state.value.section(EnvelopePurpose.Monthly))
         assertEquals(Res.string.envelope_deleted, viewModel.state.value.undoMessage?.message)
         assertEquals("Rent", viewModel.state.value.undoMessage?.argument)
     }
@@ -97,7 +114,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopesEvent.UndoClicked)
 
         assertTrue("unarchiveEnvelope(1)" in repository.calls)
-        assertEquals(listOf(food, rent), viewModel.state.value.spending)
+        assertEquals(listOf(food, rent), viewModel.state.value.section(EnvelopePurpose.Monthly))
         assertNull(viewModel.state.value.undoMessage)
     }
 
@@ -107,7 +124,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         loaded()
         viewModel.onEvent(EnvelopesEvent.DeleteClicked("1"))
 
-        assertEquals(listOf(food, rent), viewModel.state.value.spending)
+        assertEquals(listOf(food, rent), viewModel.state.value.section(EnvelopePurpose.Monthly))
         assertEquals(AppError.BusinessRule("FZ008"), viewModel.state.value.actionError)
         assertNull(viewModel.state.value.undoMessage)
     }
@@ -126,7 +143,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopesEvent.AssignConfirmed)
 
         assertEquals(
-            listOf("assign(g1, 0, 1, 2550)", "materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)"),
+            listOf("assign(g1, 0, 1, 2550)", "materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)", "getProgress(g1)"),
             repository.calls,
         )
         assertEquals(EnvelopesSheet.None, viewModel.state.value.sheet)
@@ -195,7 +212,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         loaded(canEdit = false)
         viewModel.onEvent(EnvelopesEvent.DeleteClicked("1"))
 
-        assertEquals(listOf(food, rent), viewModel.state.value.spending)
+        assertEquals(listOf(food, rent), viewModel.state.value.section(EnvelopePurpose.Monthly))
         assertTrue(repository.calls.none { it.startsWith("archive") || it.startsWith("create") })
     }
 
@@ -234,7 +251,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopesEvent.ReopenClicked("4"))
 
         assertTrue("unarchiveEnvelope(4)" in repository.calls)
-        assertEquals(listOf("Old"), viewModel.state.value.saving.map { it.name })
+        assertEquals(listOf("Old"), viewModel.state.value.section(EnvelopePurpose.Savings).map { it.name })
         assertTrue(viewModel.state.value.archivedEnvelopes.isEmpty())
         assertEquals(Res.string.envelope_reopened, viewModel.state.value.undoMessage?.message)
         assertEquals("Old", viewModel.state.value.undoMessage?.argument)
@@ -284,5 +301,78 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopesEvent.Refresh)
         assertEquals("Marta", viewModel.state.value.holderName(held))
         assertNull(viewModel.state.value.holderName(rent))
+    }
+
+    @Test
+    fun sectionsFollowTheTypeInDisplayOrderAndHideTheEmptyOnes() {
+        val bills = Envelope("5", "g1", "Utilities", EnvelopeKind.Spending, 0, 0, purpose = EnvelopePurpose.Bills)
+        val free = Envelope("6", "g1", "Fun", EnvelopeKind.Spending, 0, 0, purpose = EnvelopePurpose.Free)
+        repository.envelopes = listOf(unassigned, free, trip, bills, rent)
+        loaded()
+
+        assertEquals(
+            listOf(
+                EnvelopePurpose.Monthly to listOf(rent),
+                EnvelopePurpose.Bills to listOf(bills),
+                EnvelopePurpose.Savings to listOf(trip),
+                EnvelopePurpose.Free to listOf(free),
+            ),
+            viewModel.state.value.sections,
+        )
+
+        repository.envelopes = listOf(unassigned, rent)
+        viewModel.onEvent(EnvelopesEvent.Refresh)
+        assertEquals(listOf(EnvelopePurpose.Monthly), viewModel.state.value.sections.map { it.first })
+    }
+
+    @Test
+    fun progressOfEveryStateReachesTheRowsByEnvelopeId() {
+        val due = LocalDate(2026, 12, 5)
+        val paid = LocalDate(2026, 11, 5)
+        repository.progress = listOf(
+            progress("1", ProgressState.Remaining, 25_000, 50_000),
+            progress("2", ProgressState.Reserving, 3_000, 9_000, nextDue = due, pending = 2),
+            progress("3", ProgressState.Contributing, 7_000, 5_000),
+            progress("5", ProgressState.Paid, 9_000, 9_000, paidOn = paid),
+            progress("6", ProgressState.Overspent, -1_500),
+            progress("7", ProgressState.None),
+        )
+        loaded()
+
+        val byId = viewModel.state.value.progress
+        assertEquals(6, byId.size)
+        assertEquals(ProgressState.Remaining, byId["1"]?.state)
+        assertEquals(0.5f, byId["1"]?.fraction)
+        assertEquals(due, byId["2"]?.nextDue)
+        assertEquals(2, byId["2"]?.pending)
+        // Contributing past its goal fills the bar and no more
+        assertEquals(1f, byId["3"]?.fraction)
+        assertEquals(paid, byId["5"]?.paidOn)
+        assertEquals(1f, byId["5"]?.fraction)
+        assertEquals(1f, byId["6"]?.fraction)
+        assertEquals(-1_500L, byId["6"]?.currentCents)
+        assertFalse(byId.getValue("7").hasBar)
+    }
+
+    @Test
+    fun aFailedProgressReadLeavesTheListWithoutBars() {
+        repository.progressResult = Result.failure(AppError.Network)
+        loaded()
+
+        val state = viewModel.state.value
+        assertNull(state.error)
+        assertTrue(state.progress.isEmpty())
+        assertEquals(3, state.envelopes.size)
+    }
+
+    @Test
+    fun theFixedTotalIsTheDatabaseFigureAndSurvivesARefresh() {
+        loaded()
+        assertEquals(125_000L, viewModel.state.value.totalCents)
+
+        repository.summary = EnvelopeSummary(totalCents = 99_000, unassignedCents = 1_000)
+        viewModel.onEvent(EnvelopesEvent.Refresh)
+        assertEquals(99_000L, viewModel.state.value.totalCents)
+        assertEquals(1_000L, viewModel.state.value.unassignedCents)
     }
 }

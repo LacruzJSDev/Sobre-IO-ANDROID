@@ -37,6 +37,10 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     var linkedAmount: Long? = null
     var linkedFrom: LocalDate? = null
 
+    /** Ids with a registered due date inside the period asked for; [paidResult] scripts a failure. */
+    var paidIds: Set<String> = emptySet()
+    var paidResult: Result<Set<String>>? = null
+
     var listResult: Result<List<Commitment>>? = null
     var createResult: Result<String> = Result.success("new-id")
     var changeResult: Result<Unit> = Result.success(Unit)
@@ -53,6 +57,11 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
     override suspend fun getCommitment(id: String): Result<Commitment> {
         calls += "getCommitment($id)"
         return commitments.firstOrNull { it.id == id }?.let { Result.success(it) } ?: Result.failure(AppError.NotFound)
+    }
+
+    override suspend fun getPaidCommitmentIds(commitmentIds: List<String>, from: LocalDate, to: LocalDate): Result<Set<String>> {
+        calls += "getPaidCommitmentIds($from, $to)"
+        return paidResult ?: Result.success(paidIds.intersect(commitmentIds.toSet()))
     }
 
     override suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?> {

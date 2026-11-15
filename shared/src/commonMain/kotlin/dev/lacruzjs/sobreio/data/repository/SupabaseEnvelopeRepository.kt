@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeProgressDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
@@ -10,6 +11,7 @@ import dev.lacruzjs.sobreio.data.remote.safeCall
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
+import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -44,10 +46,16 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
             .decodeList<EnvelopeDto>()
         // The balances view has no colour or icon: they come from `envelopes`, joined by id
         val styles = postgrest.from(TABLE)
-            .select(Columns.list("id", "color", "icon")) { filter { eq("group_id", groupId) } }
+            .select(Columns.list("id", "color", "icon", "purpose")) { filter { eq("group_id", groupId) } }
             .decodeList<EnvelopeStyleDto>()
             .associateBy { it.id }
         balances.mapNotNull { it.toDomain(styles[it.id]) }
+    }
+
+    override suspend fun getProgress(groupId: String): Result<List<EnvelopeProgress>> = safeCall {
+        postgrest.rpc("envelope_progress", buildJsonObject { put("p_group_id", groupId) })
+            .decodeList<EnvelopeProgressDto>()
+            .map { it.toDomain() }
     }
 
     override suspend fun getSummary(groupId: String): Result<EnvelopeSummary> = safeCall {
@@ -64,6 +72,7 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
                     put("group_id", groupId)
                     put("name", draft.name)
                     put("kind", draft.kind.toDbValue())
+                    put("purpose", draft.purpose.toDbValue())
                     put("monthly_target", draft.monthlyTargetCents)
                     put("owner_user_id", draft.ownerUserId)
                     put("color", draft.color)
@@ -78,6 +87,7 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
         update(id) {
             set("name", draft.name)
             set("kind", draft.kind.toDbValue())
+            set("purpose", draft.purpose.toDbValue())
             set("monthly_target", draft.monthlyTargetCents)
             set("owner_user_id", draft.ownerUserId)
             set("color", draft.color)

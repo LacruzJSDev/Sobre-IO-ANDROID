@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.Envelope
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.Group
 import kotlinx.datetime.LocalDate
@@ -101,21 +102,29 @@ data class CommitmentFormUiState(
     val showsExpenseEnvelope: Boolean get() = kind == CommitmentKind.Expense && accountInEnvelopes
 
     /**
-     * The database only funds an expense with an envelope that is inside the envelopes, or a contribution with a source
-     * envelope, and only one-off or monthly and yearly ones (weekly and daily go in the envelope's monthly target).
+     * The database only funds an expense of an account inside the envelopes, or a contribution, and only one-off or
+     * monthly and yearly ones (weekly and daily go in the envelope's monthly target). The envelope is a separate
+     * choice: a funded commitment only points to a Bills envelope (D-46).
      */
     val canFund: Boolean
         get() {
-            val hasEnvelope = when (kind) {
-                CommitmentKind.Expense -> accountInEnvelopes && envelopeId != null
-                CommitmentKind.GroupTransferOut -> envelopeId != null
+            val kindOk = when (kind) {
+                CommitmentKind.Expense -> accountInEnvelopes
+                CommitmentKind.GroupTransferOut -> true
                 else -> false
             }
-            return hasEnvelope && (!isRecurring || unit == FrequencyUnit.Month || unit == FrequencyUnit.Year)
+            return kindOk && (!isRecurring || unit == FrequencyUnit.Month || unit == FrequencyUnit.Year)
         }
 
     /** What is sent: a switch left on that no longer applies is off. */
     val fundedEffective: Boolean get() = funded && canFund
+
+    /** The envelopes the choice lists: with the reserve on, only Bills ones (the database refuses any other, FZ021). */
+    val envelopeChoices: List<Envelope>
+        get() = if (fundedEffective) envelopes.filter { it.purpose == EnvelopePurpose.Bills } else envelopes
+
+    /** There is a Bills envelope to reserve into; without one the reserve cannot be saved. */
+    val hasBillsEnvelope: Boolean get() = envelopes.any { it.purpose == EnvelopePurpose.Bills }
 
     /** Every field but name, amount and date is read only while editing a contribution. */
     val fieldsLocked: Boolean get() = isLinkedEdit

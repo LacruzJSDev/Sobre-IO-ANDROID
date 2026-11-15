@@ -6,13 +6,17 @@ import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
+import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.envelope_type_has_funded
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
+import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
@@ -28,14 +32,17 @@ const val MAX_ENVELOPE_NAME_LENGTH = 100
 data class EnvelopeFormUiState(
     val name: String = "",
     val nameError: StringResource? = null,
-    val kind: EnvelopeKind = EnvelopeKind.Spending,
+    /** The envelope type (D-46): it decides the fields below and the note at the end of the form. */
+    val purpose: EnvelopePurpose = EnvelopePurpose.Monthly,
+    /** The database refused to change the type (FZ021): shown under the type choice. */
+    val purposeError: StringResource? = null,
     /** Hex of the chosen palette colour; null is the brand ink. */
     val color: String? = null,
     /** Key of the chosen icon of the envelope catalogue; null is none. */
     val icon: String? = null,
     /** Holder: a member's user id, or null for a common envelope. */
     val ownerUserId: String? = null,
-    /** Text of the monthly target field; blank means no target. */
+    /** Text of the monthly target (Monthly, required) or contribution (Savings, optional) field; unused by Bills and Free. */
     val monthlyTarget: String = "",
     val monthlyTargetError: StringResource? = null,
     /** The active members: they are the holders to choose from. */
@@ -50,13 +57,19 @@ data class EnvelopeFormUiState(
 ) {
     /** The holder is only asked for when there is someone to choose between. */
     val hasSeveralMembers: Boolean get() = members.hasSeveralMembers()
+
+    /** Monthly and Savings have an amount field; Bills and Free send 0. */
+    val showsTarget: Boolean get() = purpose.hasTarget
+
+    /** A monthly envelope cannot exist without its target. */
+    val targetRequired: Boolean get() = purpose == EnvelopePurpose.Monthly
 }
 
 sealed interface EnvelopeFormEvent {
     /** Handled by the Route, which owns the back stack. */
     data object CloseClicked : EnvelopeFormEvent
     data class NameChanged(val value: String) : EnvelopeFormEvent
-    data class KindSelected(val kind: EnvelopeKind) : EnvelopeFormEvent
+    data class PurposeSelected(val purpose: EnvelopePurpose) : EnvelopeFormEvent
     data class ColorSelected(val hex: String?) : EnvelopeFormEvent
     data class IconSelected(val key: String?) : EnvelopeFormEvent
     data class HolderSelected(val userId: String?) : EnvelopeFormEvent
@@ -66,7 +79,7 @@ sealed interface EnvelopeFormEvent {
     data object NavigationHandled : EnvelopeFormEvent
 }
 
-/** The create and edit form of an envelope: name, kind, holder, colour, icon and monthly target. [envelopeId] null creates. */
+/** The create and edit form of an envelope: name, type, holder, colour, icon and, for some types, the monthly amount. [envelopeId] null creates. */
 class EnvelopeFormViewModel(
     private val groupId: String,
     private val envelopeId: String?,
@@ -86,7 +99,8 @@ class EnvelopeFormViewModel(
         when (event) {
             is EnvelopeFormEvent.NameChanged ->
                 _state.update { it.copy(name = event.value, nameError = null, submitError = null) }
-            is EnvelopeFormEvent.KindSelected -> _state.update { it.copy(kind = event.kind) }
+            is EnvelopeFormEvent.PurposeSelected ->
+                _state.update { it.copy(purpose = event.purpose, purposeError = null, monthlyTargetError = null, submitError = null) }
             is EnvelopeFormEvent.ColorSelected -> _state.update { it.copy(color = event.hex) }
             is EnvelopeFormEvent.IconSelected -> _state.update { it.copy(icon = event.key) }
             is EnvelopeFormEvent.HolderSelected -> _state.update { it.copy(ownerUserId = event.userId) }
@@ -119,7 +133,7 @@ class EnvelopeFormViewModel(
                             it.copy(
                                 isLoading = false,
                                 name = envelope.name,
-                                kind = envelope.kind,
+                                purpose = envelope.purpose ?: envelope.fallbackPurpose(),
                                 color = envelope.color,
                                 icon = envelope.icon,
                                 ownerUserId = envelope.ownerUserId,
@@ -137,21 +151,23 @@ class EnvelopeFormViewModel(
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val name = current.name.trim()
         val nameError = validateName(name)
-        val target = parseMoneyInput(current.monthlyTarget)
+        // Bills and Free have no target field: the database wants 0 there
+        val target = if (current.showsTarget) parseMoneyInput(current.monthlyTarget) else 0L
         val targetError = when {
             target == null -> Res.string.validation_amount_invalid
             target < 0 -> Res.string.validation_amount_negative
+            current.targetRequired && target == 0L -> Res.string.validation_amount_positive
             else -> null
         }
         if (nameError != null || targetError != null || target == null) {
             _state.update { it.copy(nameError = nameError, monthlyTargetError = targetError) }
             return
         }
-        _state.update { it.copy(isSubmitting = true, submitError = null) }
+        _state.update { it.copy(isSubmitting = true, submitError = null, purposeError = null) }
         viewModelScope.launch {
             val draft = EnvelopeDraft(
                 name = name,
-                kind = current.kind,
+                purpose = current.purpose,
                 monthlyTargetCents = target,
                 ownerUserId = current.ownerUserId,
                 color = current.color,
@@ -164,8 +180,23 @@ class EnvelopeFormViewModel(
             }
             result
                 .onSuccess { _state.update { it.copy(isSubmitting = false, saved = true) } }
-                .onFailure { e -> _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) } }
+                .onFailure { e -> _state.update { it.failedWith(e.asAppError()) } }
         }
+    }
+
+    /** Leaving Bills while funded commitments still point here (FZ021) is explained under the type choice. */
+    private fun EnvelopeFormUiState.failedWith(error: AppError): EnvelopeFormUiState =
+        if (error is AppError.BusinessRule && error.code == "FZ021") {
+            copy(isSubmitting = false, purposeError = Res.string.envelope_type_has_funded)
+        } else {
+            copy(isSubmitting = false, submitError = error)
+        }
+
+    /** Only for a database that sent no type: the same deduction the database makes when a client sends none. */
+    private fun Envelope.fallbackPurpose(): EnvelopePurpose = when {
+        kind == EnvelopeKind.Saving -> EnvelopePurpose.Savings
+        monthlyTargetCents > 0 -> EnvelopePurpose.Monthly
+        else -> EnvelopePurpose.Free
     }
 
     private fun validateName(name: String): StringResource? = when {

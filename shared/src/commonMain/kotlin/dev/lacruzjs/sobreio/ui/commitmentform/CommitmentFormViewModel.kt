@@ -17,6 +17,7 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -28,6 +29,8 @@ import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
 import dev.lacruzjs.sobreio.generated.resources.validation_end_date_before_start
 import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
+import dev.lacruzjs.sobreio.generated.resources.validation_funded_needs_bills
+import dev.lacruzjs.sobreio.generated.resources.validation_funded_no_bills
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
@@ -89,7 +92,7 @@ class CommitmentFormViewModel(
             is CommitmentFormEvent.UnitSelected -> edit { it.copy(unit = event.unit) }
             is CommitmentFormEvent.EndDateChanged -> edit { it.copy(endDate = event.date, endDateError = null) }
             is CommitmentFormEvent.AutoRegisterChanged -> edit { it.copy(autoRegister = event.value) }
-            is CommitmentFormEvent.FundedChanged -> edit { it.copy(funded = event.value) }
+            is CommitmentFormEvent.FundedChanged -> edit { it.withFunded(event.value) }
             is CommitmentFormEvent.NotesChanged -> edit { it.copy(notes = event.value) }
             is CommitmentFormEvent.EffectiveFromChanged -> edit(touchRules = false) { it.copy(effectiveFrom = event.date) }
             CommitmentFormEvent.SaveClicked -> save()
@@ -115,6 +118,16 @@ class CommitmentFormViewModel(
                 toAccountError = null,
             )
         }
+    }
+
+    /** Turning the reserve on keeps the envelope only when it is a Bills one: the list no longer offers any other. */
+    private fun CommitmentFormUiState.withFunded(value: Boolean): CommitmentFormUiState {
+        val chosenIsBills = envelopes.firstOrNull { it.id == envelopeId }?.purpose == EnvelopePurpose.Bills
+        return copy(
+            funded = value,
+            envelopeId = if (value && !chosenIsBills) null else envelopeId,
+            envelopeError = null,
+        )
     }
 
     private fun edit(touchRules: Boolean = true, change: (CommitmentFormUiState) -> CommitmentFormUiState) {
@@ -281,7 +294,16 @@ class CommitmentFormViewModel(
             current.toAccountId == current.accountId -> Res.string.validation_accounts_differ
             else -> null
         }
-        val envelopeError = if (rules && current.showsExpenseEnvelope && current.envelopeId == null) {
+        // A reserve needs a Bills envelope; a name-only edit of an old commitment is not held back by it
+        val fundedEnvelopeError = if (rules && current.fundedEffective && (!editing || rulesTouched)) {
+            when {
+                !current.hasBillsEnvelope -> Res.string.validation_funded_no_bills
+                current.envelopes.firstOrNull { it.id == current.envelopeId }?.purpose != EnvelopePurpose.Bills ->
+                    Res.string.validation_funded_needs_bills
+                else -> null
+            }
+        } else null
+        val envelopeError = fundedEnvelopeError ?: if (rules && current.showsExpenseEnvelope && current.envelopeId == null) {
             Res.string.validation_envelope_required
         } else null
         val creatingContribution = !editing && current.isContribution
@@ -407,6 +429,9 @@ class CommitmentFormViewModel(
         _state.update {
             if (error == AppError.DuplicateName) {
                 it.copy(isSubmitting = false, nameError = Res.string.error_duplicate_name)
+            } else if (error is AppError.BusinessRule && error.code == "FZ021") {
+                // The envelope is not a Bills one (its type changed since the list was read)
+                it.copy(isSubmitting = false, envelopeError = Res.string.validation_funded_needs_bills)
             } else {
                 it.copy(isSubmitting = false, submitError = error)
             }

@@ -44,6 +44,8 @@ data class CommitmentRow(
     /** Set (with [movesOn]) when the next version moves the commitment to another account: that account's name. */
     val movesToName: String? = null,
     val movesOn: LocalDate? = null,
+    /** A due date of the current period is already registered as a real movement: the row says so instead of "Next". */
+    val paidThisPeriod: Boolean = false,
 ) {
     val id: String get() = commitment.id
 }

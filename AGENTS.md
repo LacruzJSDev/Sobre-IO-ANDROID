@@ -87,19 +87,26 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the balances (`account_balances`, with `owner_user_id` and `archived_at`, archived rows included) and the colour and icon
   from `accounts` (the view has neither) in two queries joined by id in the repository. `GroupScreen` stays stateless: it takes
   `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
-  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail (account detail comes later).
+  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail.
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
-  `envelope_balances` view (colour and icon from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
-  `unassigned_balance`, never summed in the app) and the members are read. A compact "Total" line on top; "Unassigned" is the
-  first row (inbox icon, name from resources by kind `System`, never the database name; prominent balance; no swipe); then the
-  "Spending" and "Saving" sections ordered by name (empty ones hidden): `EntityAvatar` (colour + envelope icon), name, "Target X a
-  month" when the target is above 0 and the holder ("Common" or the member) when the group has several members, balance.
-  `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe Reopen (snackbar
-  with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with Undo, FZ008
-  restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as an `EntitySelect` ("Unassigned" by
-  default, each envelope with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row
-  opens the envelope detail (see Envelope detail below), also for "Unassigned" and the archived rows.
+  `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
+  `unassigned_balance`, never summed in the app), `envelope_progress` (failure ignored: rows just have no bar) and the members are
+  read. "Unassigned" is the first item, in its own soft card (inbox icon, name from resources by kind `System`, never the
+  database name; amount in `titleLarge`, subtitle "Free to distribute"; no swipe). The envelopes follow in sections by type
+  (`EnvelopePurpose`: Monthly spending, Bills, Savings, Free, ordered by name, empty ones hidden). Each row: `EntityAvatar`
+  (colour + envelope icon), name, "Target X a month" (only when it has no bar) and the holder ("Common" or the member) when the
+  group has several members, a 5 dp rounded progress bar (track = soft container) and one muted line, then the balance. The bar
+  and line come from `EnvelopeProgress` (`domain/model`): remaining fills in ink "N left of M this month"; reserving fills in the
+  inflow colour "Reserved N of M · <next due>"; paid is a full inflow bar and "Paid on <date>" in inflow; contributing fills in
+  inflow "Contributed N of M this month"; overspent is a full bar and "Overspent: N" in the negative colour; none draws nothing.
+  `pending > 0` adds "· N to review in Group" (muted). `EnvelopeProgress.fraction` is only a 0..1 clamp of the two database figures.
+  Colours come from `LocalMoneyColors` (colour-blind aware). "Total in envelopes" is fixed below the scrolling list (outside it,
+  no divider). `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe
+  Reopen (snackbar with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with
+  Undo, FZ008 restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips
+  ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
+  Tapping a row opens the envelope detail.
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
@@ -110,7 +117,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   each with its own ViewModel (ids as Koin parameters by position, `params.get<String?>(1)`) that loads the item when
   editing, validates, calls the repository and sets a `saved` flag the Route turns into back. The list or settings
   screen reloads when shown again (`Refresh`). Forms are laid out with `ui/components/FormSections.kt`:
-  `FormSection` (small muted title), `FormTile` (soft tile, label left, value or control right, optional note) and
+  `FormSection` (small muted title), `FormTile` (soft tile, label left, value or control right, optional note),
+  `ChipFormTile` (label and a row of `FormChip`s for a short fixed choice, optional error under it) and
   `ExpandableFormTile` (header with a preview of the choice and an arrow; content opens under it, one open at a time).
   Group form: the avatar next to the name field; "Appearance" with Colour and Icon as separate expandable tiles
   (`ColorPicker`, `IconPicker` with paper cells); "Currency and period" with the currency (expandable chips when
@@ -130,9 +138,16 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   differs from the stored scope, `changeAccountScope` (`change_account_scope`, a dated event from today) runs first and then
   `updateAccount` writes name, kind, holder, colour and icon (`in_envelopes` can never be updated directly, FZ017); a retry after
   a failed update does not repeat the scope call. FZ017 from the scope call shows "has movements dated today or later..." under
-  the switch (`AccountFormUiState.scopeError`). Envelope form (`EnvelopeFormViewModel`): avatar + name, "Appearance" (envelope
-  icons), "Envelope": Kind (spending/saving), Holder ("Common" or a member, same visibility rule) and the monthly target field
-  with its note; create inserts and edit updates all fields of `envelopes` (`EnvelopeDraft`).
+  the switch (`AccountFormUiState.scopeError`). Envelope form (`EnvelopeFormViewModel`): avatar + name, "Appearance" (envelope icons), "Envelope": the type as a
+  `ChipFormTile` of four chips (Monthly spending, Bills, Savings, Free; D-46), the holder ("Common" or a member, same visibility
+  rule) and the amount field only for Monthly (monthly target, required above 0) and Savings (monthly contribution, optional);
+  Bills and Free send 0. A `FormNote` at the very end explains the chosen type. Create inserts and edit updates all fields of
+  `envelopes` (`EnvelopeDraft`: `purpose` and the kind that follows it, savings is `saving` and the rest `spending`); the type can
+  be changed when editing, and FZ021 (leaving Bills while funded commitments point to it) shows "It has commitments with a
+  reserve..." under the type (`purposeError`). Commitment form: when "Set aside each period" is on, the envelope `EntitySelect`
+  lists only Bills envelopes (and no "Unassigned" for a contribution), a `FormNote` says why, or says to create a Bills envelope
+  first when there is none; saving with the reserve on and no Bills envelope chosen fails validation (`envelopeError`); the
+  database's FZ021 maps to the same message. Unfunded commitments take any spending envelope.
 - Group settings (`ui/groupsettings`, `GroupSettingsViewModel` with the group id as Koin parameter): compact, sections
   separated by spacing, no bottom buttons (archive, delete and leave are Groups list swipes). The header has a pencil on the
   right (owner and admin, live group), in the same place as the gear that opened the screen, which opens the full-screen
@@ -155,7 +170,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   tapping any Envelopes row, "Unassigned" and archived ones included (read only: no pencil, no commitments, name from
   resources, inbox icon; the outlook is skipped for them too). `ScreenHeader` with the avatar, name, group subtitle and a
   pencil (`canEditEnvelope`: owner or admin of a live group, live envelope, not Unassigned) that opens `EnvelopeForm`; the screen
-  reloads each time it is shown. One scroll: "Available" (`MoneyText` Balance, headline; under it kind, holder with several
+  reloads each time it is shown. One scroll: "Available" (`MoneyText` Balance, headline; under it the envelope type, holder with several
   members, "Target X a month"); "This period" tile from the `envelope_periods` row that holds the group's today (brought
   forward Balance, assigned Flow, movements Flow, left Balance emphasised); "Really free" from `envelope_outlook_current`
   (committed Flow negative, free Balance, and when `shortfall > 0` a line in `LocalMoneyColors.negative`); `GroupedColumnChart`
@@ -173,6 +188,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `MovementsViewModel` and `MovementsPane` with `fixedEnvelopeId` (Koin params `groupId, fixedAccountId, fixedEnvelopeId`; the
   Envelope chip is hidden and the rows show their account instead), through the shared `FixedFilterMovementsScreen` that
   `AccountMovementsScreen` also uses. Back returns to the detail.
+- Commitments tab rows (`ui/commitments`): the subtitle says "Paid this period" in the inflow colour when a due date of the current period
+  is already registered (`CommitmentRepository.getPaidCommitmentIds` over `commitment_occurrences`, status `materialized`), otherwise
+  "Next <date>" as before.
 - Account detail (`ui/accountdetail`, route `AccountDetail(groupId, accountId)`, level 2): opened by tapping an account row
   (swipe actions stay). Header with the account avatar and name, the group as a subtitle (`ScreenHeader(subtitle)`) and a
   pencil (owner and admin, `Group.canEdit`) that opens `AccountForm`; the screen reloads each time it is shown. Flat top
@@ -359,7 +377,7 @@ plus `movementform` (the new / edit movement form).
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ021` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
 - Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a
@@ -382,6 +400,8 @@ plus `movementform` (the new / edit movement form).
 - Figures: two or more related amounts are ONE `StatCard` (`ui/components/StatCard.kt`: rows of label left and
   `MoneyText` right, optional emphasised result row, optional title and shortfall warning line), never one tile per figure.
   `FormTile` is for inputs only.
+- Funded commitments only point to Recibos (Bills) envelopes; the envelope type decides its fields and its progress bar (D-46).
+  The app never decides progress: it draws what `envelope_progress` returns.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
   has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,

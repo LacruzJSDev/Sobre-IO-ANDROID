@@ -9,6 +9,7 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
@@ -24,6 +25,8 @@ import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
 import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
 import dev.lacruzjs.sobreio.generated.resources.validation_end_date_before_start
 import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
+import dev.lacruzjs.sobreio.generated.resources.validation_funded_needs_bills
+import dev.lacruzjs.sobreio.generated.resources.validation_funded_no_bills
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.datetime.LocalDate
@@ -38,11 +41,13 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
     private val today = LocalDate(2026, 11, 14)
     private val bank = Account("acc", "g1", "Bank", AccountKind.Bank, true, 100_000)
     private val cash = Account("acc2", "g1", "Cash", AccountKind.Cash, true, 5_000)
-    private val food = Envelope("env", "g1", "Food", EnvelopeKind.Spending, 0, 0)
+    // "Food" is the Bills envelope the funded tests point to; "Fun" is a free one that cannot hold a reserve (D-46)
+    private val food = Envelope("env", "g1", "Food", EnvelopeKind.Spending, 0, 0, purpose = EnvelopePurpose.Bills)
+    private val fun_ = Envelope("free", "g1", "Fun", EnvelopeKind.Spending, 0, 0, purpose = EnvelopePurpose.Free)
     private val unassigned = Envelope("sys", "g1", "Sin asignar", EnvelopeKind.System, 0, 0)
 
     private val accounts = FakeAccountRepository(listOf(bank, cash))
-    private val envelopes = FakeEnvelopeRepository(listOf(unassigned, food))
+    private val envelopes = FakeEnvelopeRepository(listOf(unassigned, food, fun_))
     private val groups = FakeGroupRepository(
         listOf(Group("g1", "Casa", "EUR", GroupRole.Owner), Group("g2", "Pareja", "EUR", GroupRole.Admin), Group("g3", "Dollars", "USD", GroupRole.Owner)),
     )
@@ -71,7 +76,7 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
         assertEquals(today, state.firstDueDate)
         assertEquals(listOf("Bank", "Cash"), state.accounts.map { it.name })
         assertEquals(listOf("Cash"), state.destinationAccounts.map { it.name })
-        assertEquals(listOf("Food"), state.envelopes.map { it.name })
+        assertEquals(listOf("Food", "Fun"), state.envelopes.map { it.name })
         // Only the live group with the same currency where the user can edit
         assertEquals(listOf("g2"), state.groups.map { it.id })
     }
@@ -150,10 +155,8 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun fundedIsOnlyAllowedWithAnEnvelopeAndAMonthlyYearlyOrOneOffSchedule() {
+    fun fundedIsOnlyAllowedForAnExpenseWithAMonthlyYearlyOrOneOffSchedule() {
         val vm = form()
-        assertFalse(vm.state.value.canFund)
-        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("env"))
         assertTrue(vm.state.value.canFund)
         vm.onEvent(CommitmentFormEvent.UnitSelected(FrequencyUnit.Week))
         assertFalse(vm.state.value.canFund)
@@ -395,5 +398,129 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
         assertEquals("acc", state.accountId)
         assertEquals("900", state.amount)
         assertEquals(LocalDate(2026, 12, 1), state.effectiveFrom)
+    }
+
+    @Test
+    fun theReserveListsOnlyBillsEnvelopesAndSayingSoIsTheViewsJob() {
+        val vm = form()
+        assertEquals(listOf("Food", "Fun"), vm.state.value.envelopeChoices.map { it.name })
+
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        assertEquals(listOf("Food"), vm.state.value.envelopeChoices.map { it.name })
+        assertTrue(vm.state.value.hasBillsEnvelope)
+
+        vm.onEvent(CommitmentFormEvent.FundedChanged(false))
+        assertEquals(listOf("Food", "Fun"), vm.state.value.envelopeChoices.map { it.name })
+    }
+
+    @Test
+    fun turningTheReserveOnDropsAnEnvelopeThatIsNotBills() {
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("free"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        assertNull(vm.state.value.envelopeId)
+        assertTrue(vm.state.value.funded)
+
+        // A Bills envelope stays selected
+        vm.onEvent(CommitmentFormEvent.FundedChanged(false))
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("env"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        assertEquals("env", vm.state.value.envelopeId)
+    }
+
+    @Test
+    fun anUnfundedExpenseCanUseAnyEnvelope() {
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.NameChanged("Cinema"))
+        vm.onEvent(CommitmentFormEvent.AmountChanged("12"))
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("free"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals("free", commitments.createdDraft?.envelopeId)
+        assertFalse(commitments.createdDraft?.funded ?: true)
+        assertTrue(vm.state.value.saved)
+    }
+
+    @Test
+    fun aReserveWithoutABillsEnvelopeChosenCannotBeSaved() {
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.NameChanged("Insurance"))
+        vm.onEvent(CommitmentFormEvent.AmountChanged("40"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals(Res.string.validation_funded_needs_bills, vm.state.value.envelopeError)
+        assertNull(commitments.createdDraft)
+    }
+
+    @Test
+    fun aReserveWithNoBillsEnvelopeAtAllSaysToCreateOneFirst() {
+        envelopes.envelopes = listOf(unassigned, fun_)
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.NameChanged("Insurance"))
+        vm.onEvent(CommitmentFormEvent.AmountChanged("40"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+
+        assertFalse(vm.state.value.hasBillsEnvelope)
+        assertTrue(vm.state.value.envelopeChoices.isEmpty())
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals(Res.string.validation_funded_no_bills, vm.state.value.envelopeError)
+        assertNull(commitments.createdDraft)
+
+        // Without the reserve the same commitment saves into a free envelope
+        vm.onEvent(CommitmentFormEvent.FundedChanged(false))
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("free"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+        assertTrue(vm.state.value.saved)
+    }
+
+    @Test
+    fun theDatabaseRefusingTheReserveSaysSoUnderTheEnvelope() {
+        commitments.createResult = Result.failure(AppError.BusinessRule("FZ021"))
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.NameChanged("Insurance"))
+        vm.onEvent(CommitmentFormEvent.AmountChanged("40"))
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("env"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals(Res.string.validation_funded_needs_bills, vm.state.value.envelopeError)
+        assertNull(vm.state.value.submitError)
+        assertFalse(vm.state.value.saved)
+    }
+
+    @Test
+    fun aContributionReserveNeedsABillsSourceEnvelopeToo() {
+        val vm = form()
+        vm.onEvent(CommitmentFormEvent.KindSelected(CommitmentKind.GroupTransferOut))
+        vm.onEvent(CommitmentFormEvent.NameChanged("Rent share"))
+        vm.onEvent(CommitmentFormEvent.AmountChanged("300"))
+        vm.onEvent(CommitmentFormEvent.DestGroupSelected("g2"))
+        vm.onEvent(CommitmentFormEvent.DestAccountSelected("acc2"))
+        vm.onEvent(CommitmentFormEvent.FundedChanged(true))
+        assertTrue(vm.state.value.fundedEffective)
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertEquals(Res.string.validation_funded_needs_bills, vm.state.value.envelopeError)
+        assertNull(commitments.createdLinkedDraft)
+
+        vm.onEvent(CommitmentFormEvent.EnvelopeSelected("env"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+        assertEquals("env", commitments.createdLinkedDraft?.outEnvelopeId)
+        assertEquals(true, commitments.createdLinkedDraft?.funded)
+    }
+
+    @Test
+    fun editingOnlyTheNameOfAnOldReserveOnANonBillsEnvelopeIsNotBlocked() {
+        commitments.commitments = listOf(
+            Commitment("c1", "g1", "Rent", versions = listOf(version(funded = true).copy(envelopeId = "free"))),
+        )
+        val vm = form("c1")
+        vm.onEvent(CommitmentFormEvent.NameChanged("Rent 2"))
+        vm.onEvent(CommitmentFormEvent.SaveClicked)
+
+        assertNull(vm.state.value.envelopeError)
+        assertTrue(vm.state.value.saved)
     }
 }

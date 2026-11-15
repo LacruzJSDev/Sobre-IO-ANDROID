@@ -135,10 +135,8 @@
     <string name="error_duplicate_name">Ese nombre ya está en uso.</string>
 
     <!-- Envelopes tab -->
-    <string name="envelopes_total">Total</string>
+    <string name="envelopes_total">Total en sobres</string>
     <string name="envelopes_unassigned">Sin asignar</string>
-    <string name="envelopes_section_spending">Gasto</string>
-    <string name="envelopes_section_saving">Ahorro</string>
     <string name="envelope_target_per_month">Objetivo %1$s al mes</string>
     <string name="envelopes_empty_editor">Todavía no hay sobres. Crea el primero con el botón +.</string>
     <string name="envelopes_empty_member">Todavía no hay sobres.</string>
@@ -147,7 +145,6 @@
     <string name="field_envelope_name">Nombre del sobre</string>
     <string name="field_envelope_kind">Tipo</string>
     <string name="field_monthly_target">Objetivo mensual</string>
-    <string name="monthly_target_hint">Se asigna automáticamente desde «Sin asignar» al empezar cada periodo. Déjalo vacío para no tener objetivo.</string>
     <string name="validation_amount_negative">El importe no puede ser negativo.</string>
     <string name="validation_amount_positive">Introduce un importe mayor que cero.</string>
     <string name="validation_source_invalid">Elige el sobre del que sale el dinero.</string>
@@ -568,4 +565,30 @@
     <string name="transfer_from">Desde %1$s</string>
     <string name="transfer_to">A %1$s</string>
     <string name="transfer_deleted">Asignación de %1$s eliminada</string>
+
+    <!-- Envelope types (D-46) -->
+    <string name="envelope_purpose_monthly">Gasto mensual</string>
+    <string name="envelope_purpose_bills">Recibos</string>
+    <string name="envelope_purpose_savings">Ahorro</string>
+    <string name="envelope_purpose_free">Libre</string>
+    <string name="field_monthly_contribution">Aportación mensual</string>
+    <string name="envelope_purpose_note_monthly">Cada periodo se asigna el objetivo desde Sin asignar. La barra muestra lo que te queda del mes.</string>
+    <string name="envelope_purpose_note_bills">Los compromisos con reserva van apartando aquí, poco a poco, el dinero de cada pago. Elige este sobre al crear el compromiso.</string>
+    <string name="envelope_purpose_note_savings">Guarda dinero para más adelante. Si pones una aportación mensual, se asigna sola cada periodo.</string>
+    <string name="envelope_purpose_note_free">Solo recibe lo que le asignes a mano.</string>
+    <string name="envelope_type_has_funded">Tiene compromisos con reserva: muévelos a otro sobre de Recibos o quita la reserva antes.</string>
+    <string name="error_fz021_envelope_type">Ese tipo de sobre no encaja con sus compromisos con reserva.</string>
+    <string name="commitment_funded_bills_note">Con reserva solo se pueden elegir sobres de Recibos: ahí se va apartando el dinero de cada pago.</string>
+    <string name="commitment_funded_no_bills_note">Aún no tienes ningún sobre de Recibos. Crea uno primero para poder reservar dinero para este compromiso.</string>
+    <string name="validation_funded_needs_bills">Elige un sobre de Recibos o desactiva la reserva.</string>
+    <string name="validation_funded_no_bills">Crea antes un sobre de Recibos o desactiva la reserva.</string>
+    <string name="envelopes_unassigned_subtitle">Libre para repartir</string>
+    <string name="envelope_progress_remaining">Quedan %1$s de %2$s este mes</string>
+    <string name="envelope_progress_reserving">Reservado %1$s de %2$s · %3$s</string>
+    <string name="envelope_progress_reserving_no_date">Reservado %1$s de %2$s</string>
+    <string name="envelope_progress_paid">✓ Pagado el %1$s</string>
+    <string name="envelope_progress_contributing">Aportado %1$s de %2$s este mes</string>
+    <string name="envelope_progress_overspent">Gastado de más: %1$s</string>
+    <string name="envelope_progress_pending">%1$d por revisar en Grupo</string>
+    <string name="commitment_paid_this_period">Pagado este periodo</string>
 </resources>

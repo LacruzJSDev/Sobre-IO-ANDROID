@@ -27,17 +27,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.commitment_automatic
 import dev.lacruzjs.sobreio.generated.resources.commitment_moves_to
 import dev.lacruzjs.sobreio.generated.resources.commitment_next
+import dev.lacruzjs.sobreio.generated.resources.commitment_paid_this_period
 import dev.lacruzjs.sobreio.generated.resources.commitment_starts_on
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
@@ -132,14 +137,21 @@ internal fun CommitmentList(state: AccountCommitmentsUiState, onEvent: (Commitme
 @Composable
 private fun CommitmentRowContent(row: CommitmentRow, currencyCode: String, languageTag: String) {
     val frequency = frequencyText(row.version, languageTag)
-    val next = row.nextDue?.let { stringResource(Res.string.commitment_next, formatDayMonth(it, languageTag)) }
+    val paidText = if (row.paidThisPeriod) stringResource(Res.string.commitment_paid_this_period) else null
+    val next = if (paidText != null) null else row.nextDue?.let { stringResource(Res.string.commitment_next, formatDayMonth(it, languageTag)) }
     val automatic = if (row.version.autoRegister) stringResource(Res.string.commitment_automatic) else null
     val moves = if (row.movesToName != null && row.movesOn != null) {
         stringResource(Res.string.commitment_moves_to, row.movesToName, formatDate(row.movesOn, languageTag))
     } else null
     val starts = row.startsOn?.let { stringResource(Res.string.commitment_starts_on, formatDate(it, languageTag)) }
-    val subtitle = listOfNotNull(frequency, starts, next, automatic, moves).reduce { acc, part ->
-        stringResource(Res.string.row_subtitle, acc, part)
+    val separator = stringResource(Res.string.row_subtitle, "", "")
+    val inflow = LocalMoneyColors.current.inflow
+    // The paid mark is the only coloured part (money coming through the colour-blind aware palette); the rest stays muted
+    val subtitle = buildAnnotatedString {
+        listOfNotNull(frequency, starts, next, paidText, automatic, moves).forEachIndexed { index, part ->
+            if (index > 0) append(separator)
+            if (part == paidText) withStyle(SpanStyle(color = inflow)) { append(part) } else append(part)
+        }
     }
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),

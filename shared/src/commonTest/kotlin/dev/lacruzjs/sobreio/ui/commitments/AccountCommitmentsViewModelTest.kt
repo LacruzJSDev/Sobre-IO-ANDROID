@@ -230,4 +230,36 @@ class AccountCommitmentsViewModelTest : MainDispatcherTest() {
 
         assertTrue(viewModel.state.value.rows.none { it.id == "gym" })
     }
+
+    @Test
+    fun aCommitmentWithARegisteredDueDateInThePeriodIsPaidAndKeepsItsNextDue() {
+        repository.paidIds = setOf("rent")
+        detail.upcoming = listOf(UpcomingItem("rent", "Rent", LocalDate(2026, 12, 5), -70_000))
+        loaded()
+
+        val rows = viewModel.state.value.rows
+        assertTrue(rows.first { it.id == "rent" }.paidThisPeriod)
+        assertFalse(rows.first { it.id == "salary" }.paidThisPeriod)
+        // The screen shows "Paid this period" instead of the date, which the row still carries
+        assertEquals(LocalDate(2026, 12, 5), rows.first { it.id == "rent" }.nextDue)
+        assertTrue("getPaidCommitmentIds(2026-11-01, 2026-11-30)" in repository.calls)
+    }
+
+    @Test
+    fun archivedCommitmentsAreNeverAskedAboutPayments() {
+        repository.paidIds = setOf("old")
+        loaded()
+
+        assertFalse(viewModel.state.value.archivedRows.single().paidThisPeriod)
+    }
+
+    @Test
+    fun withoutThePaidReadTheRowsAreStillListed() {
+        repository.paidResult = Result.failure(dev.lacruzjs.sobreio.domain.error.AppError.Network)
+        loaded()
+
+        assertNull(viewModel.state.value.error)
+        assertTrue(viewModel.state.value.rows.none { it.paidThisPeriod })
+        assertTrue(viewModel.state.value.rows.isNotEmpty())
+    }
 }

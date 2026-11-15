@@ -2,8 +2,6 @@ package dev.lacruzjs.sobreio.ui.envelopeform
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,7 +23,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
+import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_new_envelope
 import dev.lacruzjs.sobreio.generated.resources.action_retry
@@ -37,35 +35,34 @@ import dev.lacruzjs.sobreio.generated.resources.field_monthly_target
 import dev.lacruzjs.sobreio.generated.resources.form_section_appearance
 import dev.lacruzjs.sobreio.generated.resources.form_section_envelope
 import dev.lacruzjs.sobreio.generated.resources.holder_common
-import dev.lacruzjs.sobreio.generated.resources.monthly_target_hint
+import dev.lacruzjs.sobreio.generated.resources.field_monthly_contribution
 import dev.lacruzjs.sobreio.ui.components.ColorFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
+import dev.lacruzjs.sobreio.ui.components.ChipFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.components.FormTileValue
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.groupsettings.labelRes
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.IconFormTile
-import dev.lacruzjs.sobreio.ui.components.expandedStateText
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.envelopes.labelRes
+import dev.lacruzjs.sobreio.ui.envelopes.noteRes
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-/** The kinds a user can pick: the system envelope is never created or edited. */
-private val selectableKinds = listOf(EnvelopeKind.Spending, EnvelopeKind.Saving)
+/** The four types of envelope (D-46), in the order the choice shows them. */
+private val purposes = EnvelopePurpose.entries
 
 @Composable
 fun EnvelopeFormRoute(
@@ -96,10 +93,10 @@ fun EnvelopeFormRoute(
 }
 
 /**
- * Same layout as the group form: the avatar next to the name, "Appearance" (colour, icon) and "Envelope" (kind, holder
- * when the group has several members, monthly target with its note).
+ * Same layout as the group form: the avatar next to the name, "Appearance" (colour, icon) and "Envelope": the type as a
+ * row of chips, the holder when the group has several members and, for Monthly and Savings, the amount. The note that
+ * explains the chosen type comes last.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EnvelopeFormScreen(
     state: EnvelopeFormUiState,
@@ -163,22 +160,14 @@ fun EnvelopeFormScreen(
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_envelope)) {
-                    ExpandableFormTile(
-                        label = stringResource(Res.string.field_envelope_kind),
-                        expanded = open == OpenTile.Kind,
-                        onToggle = { toggle(OpenTile.Kind) },
-                        expandedDescription = expandedStateText(open == OpenTile.Kind),
-                        preview = { FormTileValue(stringResource(state.kind.labelRes())) },
-                    ) {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            selectableKinds.forEach { kind ->
-                                FormChip(
-                                    label = stringResource(kind.labelRes()),
-                                    selected = state.kind == kind,
-                                    enabled = !state.isSubmitting,
-                                    onClick = { onEvent(EnvelopeFormEvent.KindSelected(kind)) },
-                                )
-                            }
+                    ChipFormTile(label = stringResource(Res.string.field_envelope_kind), error = state.purposeError) {
+                        purposes.forEach { purpose ->
+                            FormChip(
+                                label = stringResource(purpose.labelRes()),
+                                selected = state.purpose == purpose,
+                                enabled = !state.isSubmitting,
+                                onClick = { onEvent(EnvelopeFormEvent.PurposeSelected(purpose)) },
+                            )
                         }
                     }
                     if (state.hasSeveralMembers) {
@@ -198,15 +187,20 @@ fun EnvelopeFormScreen(
                             enabled = !state.isSubmitting,
                         )
                     }
-                    AmountField(
-                        value = state.monthlyTarget,
-                        onValueChange = { onEvent(EnvelopeFormEvent.MonthlyTargetChanged(it)) },
-                        label = stringResource(Res.string.field_monthly_target),
-                        errorRes = state.monthlyTargetError,
-                        enabled = !state.isSubmitting,
-                    )
-                    FormNote(stringResource(Res.string.monthly_target_hint))
+                    if (state.showsTarget) {
+                        AmountField(
+                            value = state.monthlyTarget,
+                            onValueChange = { onEvent(EnvelopeFormEvent.MonthlyTargetChanged(it)) },
+                            label = stringResource(
+                                if (state.targetRequired) Res.string.field_monthly_target else Res.string.field_monthly_contribution,
+                            ),
+                            errorRes = state.monthlyTargetError,
+                            enabled = !state.isSubmitting,
+                        )
+                    }
                 }
+                // What the chosen type does, at the end so the choices above stay close together
+                FormNote(stringResource(state.purpose.noteRes()))
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
             }
         }
@@ -214,7 +208,7 @@ fun EnvelopeFormScreen(
 }
 
 /** Which expandable tile of the form is open; one at a time keeps the form short. */
-private enum class OpenTile { None, Color, Icon, Kind, Holder }
+private enum class OpenTile { None, Color, Icon, Holder }
 
 @PreviewLightDark
 @Composable

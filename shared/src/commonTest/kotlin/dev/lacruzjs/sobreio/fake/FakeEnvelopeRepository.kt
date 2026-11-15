@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.fake
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeDraft
+import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
@@ -18,6 +19,8 @@ class FakeEnvelopeRepository(var envelopes: List<Envelope> = emptyList()) : Enve
     var envelopesResult: Result<List<Envelope>>? = null
     var summary = EnvelopeSummary(totalCents = 0, unassignedCents = 0)
     var summaryResult: Result<EnvelopeSummary>? = null
+    var progress: List<EnvelopeProgress> = emptyList()
+    var progressResult: Result<List<EnvelopeProgress>>? = null
     var createResult: Result<String> = Result.success("new-id")
     var updateResult: Result<Unit> = Result.success(Unit)
     var archiveResult: Result<Unit> = Result.success(Unit)
@@ -34,19 +37,24 @@ class FakeEnvelopeRepository(var envelopes: List<Envelope> = emptyList()) : Enve
         return envelopesResult ?: Result.success(envelopes)
     }
 
+    override suspend fun getProgress(groupId: String): Result<List<EnvelopeProgress>> {
+        calls += "getProgress($groupId)"
+        return progressResult ?: Result.success(progress)
+    }
+
     override suspend fun getSummary(groupId: String): Result<EnvelopeSummary> {
         calls += "getSummary($groupId)"
         return summaryResult ?: Result.success(summary)
     }
 
     override suspend fun createEnvelope(groupId: String, draft: EnvelopeDraft): Result<String> {
-        calls += "createEnvelope($groupId, ${draft.name}, ${draft.kind}, ${draft.monthlyTargetCents})"
+        calls += "createEnvelope($groupId, ${draft.name}, ${draft.purpose}, ${draft.monthlyTargetCents})"
         createdDraft = draft
         return createResult
     }
 
     override suspend fun updateEnvelope(id: String, draft: EnvelopeDraft): Result<Unit> {
-        calls += "updateEnvelope($id, ${draft.name}, ${draft.kind}, ${draft.monthlyTargetCents})"
+        calls += "updateEnvelope($id, ${draft.name}, ${draft.purpose}, ${draft.monthlyTargetCents})"
         updatedDraft = draft
         return updateResult
     }

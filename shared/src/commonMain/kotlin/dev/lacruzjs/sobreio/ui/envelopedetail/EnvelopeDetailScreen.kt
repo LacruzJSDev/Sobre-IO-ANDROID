@@ -278,7 +278,7 @@ private fun AvailableSection(envelope: Envelope, state: EnvelopeDetailUiState, l
             null
         }
         val subtitle = listOfNotNull(
-            if (state.isUnassigned) null else stringResource(envelope.kind.labelRes()),
+            if (state.isUnassigned) null else envelope.purpose?.let { stringResource(it.labelRes()) },
             holder,
             target,
         ).reduceOrNull { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
