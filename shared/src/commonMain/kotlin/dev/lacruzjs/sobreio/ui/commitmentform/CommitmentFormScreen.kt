@@ -97,6 +97,7 @@ import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.FormTileValue
 import dev.lacruzjs.sobreio.ui.components.expandedStateText
+import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.components.unassignedOption
 import dev.lacruzjs.sobreio.ui.format.formatMoney
@@ -169,8 +170,8 @@ fun CommitmentFormScreen(
                 val languageTag = Locale.current.toLanguageTag()
                 val enabled = !state.isSubmitting
                 val unassigned = stringResource(Res.string.envelopes_unassigned)
-                val accountOptions = state.accounts.map { it.toEntityOption(formatMoney(it.balanceCents, state.currencyCode, languageTag)) }
-                val envelopeOptions = state.envelopes.map { it.toEntityOption(formatMoney(it.balanceCents, state.currencyCode, languageTag)) }
+                val accountOptions = state.accounts.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
+                val envelopeOptions = state.envelopes.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     EntityAvatar(name = state.name, icon = state.kind.icon(), color = null, size = 64.dp)
@@ -423,7 +424,7 @@ private fun ContributionTiles(
         error = state.destGroupError,
     )
     if (state.destGroupId != null) {
-        val destAccountOptions = state.destAccounts.map { it.toEntityOption(money(it.balanceCents)) }
+        val destAccountOptions = state.destAccounts.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
         EntitySelect(
             label = stringResource(Res.string.field_dest_account),
             options = destAccountOptions,
@@ -448,7 +449,7 @@ private fun ContributionTiles(
     if (state.destGroupId != null) {
         EntitySelect(
             label = stringResource(Res.string.field_dest_envelope),
-            options = listOf(unassignedOption(unassigned)) + state.destEnvelopes.map { it.toEntityOption(money(it.balanceCents)) },
+            options = listOf(unassignedOption(unassigned)) + state.destEnvelopes.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) },
             selectedId = state.destEnvelopeId,
             onSelect = { onEvent(CommitmentFormEvent.DestEnvelopeSelected(it)) },
             expanded = open == OpenTile.DestEnvelope,

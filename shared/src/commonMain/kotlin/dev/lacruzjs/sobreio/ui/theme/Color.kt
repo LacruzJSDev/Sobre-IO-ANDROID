@@ -26,9 +26,11 @@ val DarkRed = Color(0xFFF97066)
 val DarkRedSoft = Color(0xFF3B1A17)
 val DarkRedInk = Color(0xFFFDA29B)
 
-// Chart series colours (validated for colour-blind separation): blue for money in, orange for money out. Never the
-// red of `error`, which is kept for destructive actions.
-val LightChartIn = Color(0xFF2A78D6)
-val LightChartOut = Color(0xFFEB6834)
-val DarkChartIn = Color(0xFF3987E5)
-val DarkChartOut = Color(0xFFD95926)
+// Money colours (see MoneyColors.kt): green in / blue in colour-blind mode, orange for negative in colour-blind mode.
+// Never the red of `error`, which is kept for destructive actions.
+val LightInflow = Color(0xFF1E874B)
+val DarkInflow = Color(0xFF4CC27E)
+val LightInflowColorBlind = Color(0xFF2369C4)
+val DarkInflowColorBlind = Color(0xFF6AA6F0)
+val LightNegativeColorBlind = Color(0xFFC2410C)
+val DarkNegativeColorBlind = Color(0xFFF38744)

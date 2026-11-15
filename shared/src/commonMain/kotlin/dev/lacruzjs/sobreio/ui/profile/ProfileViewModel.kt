@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
@@ -15,7 +16,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
-class ProfileViewModel(private val auth: AuthRepository) : ViewModel() {
+class ProfileViewModel(
+    private val auth: AuthRepository,
+    private val preferences: AppPreferencesStore,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
@@ -24,6 +28,9 @@ class ProfileViewModel(private val auth: AuthRepository) : ViewModel() {
     private var nameLoaded = false
 
     init {
+        viewModelScope.launch {
+            preferences.colorBlindSafe.collect { enabled -> _state.update { it.copy(colorBlindSafe = enabled) } }
+        }
         viewModelScope.launch {
             auth.authState.collect { authState ->
                 val user = (authState as? AuthState.SignedIn)?.user
@@ -41,6 +48,7 @@ class ProfileViewModel(private val auth: AuthRepository) : ViewModel() {
             is ProfileEvent.NameChanged ->
                 _state.update { it.copy(name = event.value, nameError = null, saveError = null, saved = false) }
             ProfileEvent.SaveClicked -> save()
+            is ProfileEvent.ColorBlindSafeChanged -> preferences.setColorBlindSafe(event.enabled)
             // Handled by the Route, which owns the back stack
             ProfileEvent.BackClicked -> Unit
         }

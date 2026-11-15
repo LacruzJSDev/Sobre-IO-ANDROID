@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +31,12 @@ import dev.lacruzjs.sobreio.generated.resources.action_save
 import dev.lacruzjs.sobreio.generated.resources.field_display_name
 import dev.lacruzjs.sobreio.generated.resources.profile_name_saved
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.generated.resources.profile_accessibility_section
+import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_label
+import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_note
+import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
@@ -108,6 +114,17 @@ fun ProfileScreen(
                     isLoading = state.isSaving,
                     enabled = state.isDirty,
                 )
+                FormSection(title = stringResource(Res.string.profile_accessibility_section)) {
+                    FormTile(
+                        label = stringResource(Res.string.profile_color_blind_label),
+                        note = stringResource(Res.string.profile_color_blind_note),
+                    ) {
+                        Switch(
+                            checked = state.colorBlindSafe,
+                            onCheckedChange = { onEvent(ProfileEvent.ColorBlindSafeChanged(it)) },
+                        )
+                    }
+                }
             }
         }
     }

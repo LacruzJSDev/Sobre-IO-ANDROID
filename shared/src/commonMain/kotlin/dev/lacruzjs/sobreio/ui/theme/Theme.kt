@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkInk,
@@ -72,12 +73,14 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun SobreioTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    colorBlindSafe: Boolean = false,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = sobreioTypography(),
         shapes = SobreioShapes,
-        content = content
-    )
+    ) {
+        CompositionLocalProvider(LocalMoneyColors provides moneyColors(darkTheme, colorBlindSafe), content = content)
+    }
 }

@@ -23,6 +23,8 @@ import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
+import dev.lacruzjs.sobreio.ui.movements.AccountMovementsRoute
+import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
@@ -43,10 +45,6 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // The time zone chosen in the picker, waiting for the group form below it to take it. Held here, above both
     // entries, because the form's ViewModel stays alive underneath the picker: the form applies it once and clears it.
     var pickedTimeZone by rememberSaveable { mutableStateOf<String?>(null) }
-
-    // "See all" in an account's detail: the account whose movements the group's Movements tab must show. Held here, above
-    // both entries, because the detail leaves the stack before the group reads it (like the time zone above).
-    var movementsAccountFilter by rememberSaveable { mutableStateOf<String?>(null) }
 
     NavDisplay(
         backStack = backStack,
@@ -73,8 +71,9 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
                     onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
-                    movementsAccountFilter = movementsAccountFilter,
-                    onMovementsFilterConsumed = { movementsAccountFilter = null },
+                    onOpenMovementForm = { movementId, source ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
+                    },
                 )
             }
             entry<AccountDetail> { key ->
@@ -89,11 +88,26 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenCommitment = { commitmentId ->
                         backStack.add(CommitmentDetail(key.groupId, key.accountId, commitmentId))
                     },
-                    onSeeAllMovements = {
-                        // Back to the group, which selects its Movements tab filtered to this account
-                        movementsAccountFilter = key.accountId
-                        backStack.popToPrevious()
+                    onSeeAllMovements = { backStack.add(AccountMovements(key.groupId, key.accountId)) },
+                )
+            }
+            entry<AccountMovements> { key ->
+                AccountMovementsRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    onBack = { backStack.popToPrevious() },
+                    onOpenMovementForm = { movementId, source, accountId ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, accountId))
                     },
+                )
+            }
+            entry<MovementForm> { key ->
+                MovementFormRoute(
+                    groupId = key.groupId,
+                    movementId = key.movementId,
+                    source = key.source,
+                    accountId = key.accountId,
+                    onClose = { backStack.popToPrevious() },
                 )
             }
             entry<GroupSettings> { key ->

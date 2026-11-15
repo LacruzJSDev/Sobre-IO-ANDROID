@@ -43,6 +43,8 @@ import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_common
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
@@ -184,8 +186,10 @@ private fun EnvelopesTotal(state: EnvelopesUiState, languageTag: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Text(
-            text = formatMoney(state.totalCents, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = state.totalCents,
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.titleLarge,
         )
     }
@@ -207,8 +211,10 @@ private fun UnassignedRow(balanceCents: Long, currencyCode: String, languageTag:
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 16.dp, end = 12.dp),
         )
-        Text(
-            text = formatMoney(balanceCents, currencyCode, languageTag),
+        MoneyText(
+            amountCents = balanceCents,
+            currencyCode = currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,
@@ -261,8 +267,10 @@ private fun EnvelopeRow(envelope: Envelope, state: EnvelopesUiState, languageTag
                 )
             }
         }
-        Text(
-            text = formatMoney(envelope.balanceCents, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = envelope.balanceCents,
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,

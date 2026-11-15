@@ -49,6 +49,7 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.entity_select_placeholder
 import dev.lacruzjs.sobreio.generated.resources.entity_select_search
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,20 +69,25 @@ data class EntityOption(
     val icon: ImageVector? = null,
     val color: EntityColor? = null,
     val trailing: String? = null,
+    /** A balance shown on the right as a [MoneyText] (role Balance), instead of [trailing]. */
+    val balance: MoneyAmount? = null,
 )
 
+/** An amount of money in a group currency, for options that show a balance. */
+data class MoneyAmount(val cents: Long, val currencyCode: String)
+
 /** The "Unassigned" special option: a null id with the inbox icon, like the envelope list. */
-fun unassignedOption(name: String, trailing: String? = null) =
-    EntityOption(id = null, name = name, icon = Icons.Filled.Inbox, trailing = trailing)
+fun unassignedOption(name: String, trailing: String? = null, balance: MoneyAmount? = null) =
+    EntityOption(id = null, name = name, icon = Icons.Filled.Inbox, trailing = trailing, balance = balance)
 
-fun Account.toEntityOption(trailing: String? = null) =
-    EntityOption(id, name, iconFor(IconCategory.Account, icon), EntityColor.fromHex(color), trailing)
+fun Account.toEntityOption(trailing: String? = null, balance: MoneyAmount? = null) =
+    EntityOption(id, name, iconFor(IconCategory.Account, icon), EntityColor.fromHex(color), trailing, balance)
 
-fun Envelope.toEntityOption(trailing: String? = null) =
-    EntityOption(id, name, iconFor(IconCategory.Envelope, icon), EntityColor.fromHex(color), trailing)
+fun Envelope.toEntityOption(trailing: String? = null, balance: MoneyAmount? = null) =
+    EntityOption(id, name, iconFor(IconCategory.Envelope, icon), EntityColor.fromHex(color), trailing, balance)
 
-fun Group.toEntityOption(trailing: String? = null) =
-    EntityOption(id, name, iconFor(IconCategory.Group, icon), EntityColor.fromHex(color), trailing)
+fun Group.toEntityOption(trailing: String? = null, balance: MoneyAmount? = null) =
+    EntityOption(id, name, iconFor(IconCategory.Group, icon), EntityColor.fromHex(color), trailing, balance)
 
 /** A member shows the initial of their name; [trailing] is usually their role. */
 fun Member.toEntityOption(trailing: String? = null) = EntityOption(userId, displayName, trailing = trailing)
@@ -119,6 +125,7 @@ fun EntitySelect(
     LaunchedEffect(expanded) { if (!expanded) query = "" }
     val open = expanded && enabled
     val expandedText = expandedStateText(expanded)
+    val dismissKeyboard = rememberDismissKeyboard()
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Column {
@@ -128,7 +135,7 @@ fun EntitySelect(
                     .heightIn(min = 56.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .clickable(enabled = enabled, role = Role.Button, onClick = onToggle)
+                    .clickable(enabled = enabled, role = Role.Button) { dismissKeyboard(); onToggle() }
                     .semantics { stateDescription = expandedText }
                     .padding(start = 16.dp, end = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -237,7 +244,7 @@ private fun OptionList(
 }
 
 @Composable
-private fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> Unit) {
+internal fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,7 +265,15 @@ private fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> Un
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        if (option.trailing != null) {
+        if (option.balance != null) {
+            MoneyText(
+                amountCents = option.balance.cents,
+                currencyCode = option.balance.currencyCode,
+                role = MoneyRole.Balance,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+            )
+        } else if (option.trailing != null) {
             Text(
                 text = option.trailing,
                 style = MaterialTheme.typography.bodyMedium,

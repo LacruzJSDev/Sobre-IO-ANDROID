@@ -28,6 +28,8 @@ import dev.lacruzjs.sobreio.generated.resources.field_bank_balance
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
+import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.format.formatMoney
@@ -51,7 +53,7 @@ internal fun CompareSheet(
         onDismiss = { onEvent(AccountDetailEvent.CompareDismissed) },
     ) {
         FormTile(label = stringResource(Res.string.compare_app_balance)) {
-            FigureText(formatMoney(appBalanceCents, currencyCode, languageTag))
+            FigureText(appBalanceCents, currencyCode)
         }
         AmountField(
             value = compare.bankInput,
@@ -76,7 +78,7 @@ internal fun CompareSheet(
                     Text(text = stringResource(Res.string.compare_matches), style = MaterialTheme.typography.titleMedium)
                 }
                 else -> FormTile(label = stringResource(Res.string.compare_difference)) {
-                    FigureText(formatSignedMoney(result.differenceCents, currencyCode, languageTag))
+                    FigureText(result.differenceCents, currencyCode, MoneyRole.Flow)
                 }
             }
         }
@@ -92,6 +94,14 @@ internal fun CompareSheet(
 }
 
 @Composable
-private fun FigureText(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(end = 8.dp), maxLines = 1)
+/** A figure of the sheet; the difference keeps its sign (Flow), the app balance is a Balance. */
+private fun FigureText(amountCents: Long, currencyCode: String, role: MoneyRole = MoneyRole.Balance) {
+    MoneyText(
+        amountCents = amountCents,
+        currencyCode = currencyCode,
+        role = role,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(end = 8.dp),
+        maxLines = 1,
+    )
 }

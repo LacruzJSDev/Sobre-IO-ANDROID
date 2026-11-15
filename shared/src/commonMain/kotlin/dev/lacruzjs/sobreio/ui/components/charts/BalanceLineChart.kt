@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
+import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -75,6 +77,8 @@ fun BalanceLineChart(
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
 ) {
     val ink = MaterialTheme.colorScheme.primary
+    // The part of the line (and its area) below zero is drawn in the negative colour
+    val negative = LocalMoneyColors.current.negative
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val zeroColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -124,6 +128,19 @@ fun BalanceLineChart(
             drawGrid(plot, ticks, yScale, yLabels, gridColor, zeroColor)
             drawXLabels(measurer, labelStyle, plot, xScale, xMin, xMax, texts.formatXAxis)
 
+            // The split sits half a stroke below zero, so a balance of exactly zero stays ink (zero is not negative)
+            val zeroY = yScale.map(0.0).coerceIn(plot.top, plot.bottom) + 1.dp.toPx()
+            val hasNegative = all.any { it.y < 0 }
+            // Runs [block] twice: clipped to above zero with the ink and to below zero with the negative colour
+            val canvasSize = this.size
+            fun splitByZero(block: DrawScope.(Color) -> Unit) {
+                if (!hasNegative) {
+                    block(ink)
+                    return
+                }
+                clipRect(left = 0f, top = 0f, right = canvasSize.width, bottom = zeroY) { block(ink) }
+                clipRect(left = 0f, top = zeroY, right = canvasSize.width, bottom = canvasSize.height) { block(negative) }
+            }
             val pastPath = stepPath(past, xScale, yScale)
             if (past.size > 1) {
                 val area = Path().apply {
@@ -132,23 +149,21 @@ fun BalanceLineChart(
                     lineTo(xScale.map(past.first().x.toDouble()), plot.bottom)
                     close()
                 }
-                drawPath(area, ink.copy(alpha = 0.10f))
+                splitByZero { color -> drawPath(area, color.copy(alpha = 0.10f)) }
             }
             val stroke = 2.dp.toPx()
             if (projection.size > 1) {
                 val projectionPath = stepPath(projection, xScale, yScale)
-                drawPath(
-                    projectionPath,
-                    ink.copy(alpha = 0.45f),
-                    style = Stroke(
-                        width = stroke,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())),
-                    ),
+                val dashed = Stroke(
+                    width = stroke,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())),
                 )
+                splitByZero { color -> drawPath(projectionPath, color.copy(alpha = 0.45f), style = dashed) }
             }
-            drawPath(pastPath, ink, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val solid = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            splitByZero { color -> drawPath(pastPath, color, style = solid) }
 
             // Today: a hairline with its label, when there is a projection to the right of it
             if (todayX < xMax) {
@@ -158,13 +173,13 @@ fun BalanceLineChart(
                 drawText(label, topLeft = Offset(x + 4.dp.toPx(), 0f))
             }
             past.lastOrNull()?.let { last ->
-                drawEndDot(Offset(xScale.map(last.x.toDouble()), yScale.map(last.y.toDouble())), ink, backgroundColor)
+                drawEndDot(Offset(xScale.map(last.x.toDouble()), yScale.map(last.y.toDouble())), if (last.y < 0) negative else ink, backgroundColor)
             }
             selectedDay?.let { day ->
                 val p = LineChartPoint(day, stepValueAt(all.map { it.x }, all.map { it.y }, day) ?: return@let)
                 val x = xScale.map(p.x.toDouble())
                 drawLine(ink.copy(alpha = 0.5f), Offset(x, plot.top), Offset(x, plot.bottom), strokeWidth = 1.dp.toPx())
-                drawEndDot(Offset(x, yScale.map(p.y.toDouble())), ink, backgroundColor)
+                drawEndDot(Offset(x, yScale.map(p.y.toDouble())), if (p.y < 0) negative else ink, backgroundColor)
             }
         }
 

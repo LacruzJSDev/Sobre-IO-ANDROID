@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_amount
 import dev.lacruzjs.sobreio.generated.resources.field_assign_from
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.components.unassignedOption
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
@@ -48,11 +49,11 @@ internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> U
             label = stringResource(Res.string.field_assign_from),
             options = state.assignSources.map { source ->
                 val name = if (source.kind == EnvelopeKind.System) stringResource(source.kind.labelRes()) else source.name
-                val balance = formatMoney(source.balanceCents, state.currencyCode, languageTag)
+                val balance = MoneyAmount(source.balanceCents, state.currencyCode)
                 if (source.kind == EnvelopeKind.System) {
-                    unassignedOption(name, balance).copy(id = source.id)
+                    unassignedOption(name, balance = balance).copy(id = source.id)
                 } else {
-                    source.toEntityOption(balance)
+                    source.toEntityOption(balance = balance)
                 }
             },
             selectedId = state.sourceId,

@@ -35,10 +35,17 @@ data class GroupForm(val groupId: String?) : NavKey
 
 /**
  * One account (level 2 of the Accounts tab): top tabs Summary and Commitments. Opened by tapping an account row; back goes
- * to [Group]. The pencil opens [AccountForm], and "See all" returns to [Group] on its Movements tab filtered to the account.
+ * to [Group]. The pencil opens [AccountForm], and "See all" opens [AccountMovements] above it.
  */
 @Serializable
 data class AccountDetail(val groupId: String, val accountId: String) : NavKey
+
+/**
+ * The movements of one account (level 3 of the Accounts tab), opened by "See all" in the account's detail: the Movements
+ * list with the account fixed. Back returns to the [AccountDetail].
+ */
+@Serializable
+data class AccountMovements(val groupId: String, val accountId: String) : NavKey
 
 /** Create (`accountId` null) or edit an account, as a full screen. Opened from the Accounts tab. */
 @Serializable
@@ -57,6 +64,19 @@ data class CommitmentDetail(val groupId: String, val accountId: String, val comm
  */
 @Serializable
 data class CommitmentForm(val groupId: String, val accountId: String, val commitmentId: String?) : NavKey
+
+/**
+ * Create (`movementId` null) or edit a movement, as a full screen. [source] is the [dev.lacruzjs.sobreio.domain.model.MovementSource]
+ * name of the row being edited; [accountId] preselects the account when creating from an account's list. Opened by the "+"
+ * of the Movements tab and of an account's movements, and by the Edit swipe action of a row.
+ */
+@Serializable
+data class MovementForm(
+    val groupId: String,
+    val movementId: String?,
+    val source: String?,
+    val accountId: String?,
+) : NavKey
 
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable

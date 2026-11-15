@@ -19,7 +19,7 @@ está a mano en `app/src/main/res/xml/locales_config.xml`); en iOS se usa el idi
 Base técnica y autenticación listas: registro con confirmación del correo mediante un código de 6 dígitos, inicio de
 sesión y recuperación de la contraseña con otro código. Una vez dentro: lista de grupos (crear uno con nombre y moneda,
 o unirse con un código de invitación), pantalla de perfil con cierre de sesión y estructura del grupo con las pestañas
-Grupo, Cuentas, Sobres y Movimientos (todavía vacías). Al abrir la app se entra directamente en el último grupo usado.
+Grupo, Cuentas, Sobres y Movimientos (la de Grupo, todavía vacía). Al abrir la app se entra directamente en el último grupo usado.
 El inicio de sesión con Google está programado, pero no se puede probar hasta tener
 las credenciales de Google.
 Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de

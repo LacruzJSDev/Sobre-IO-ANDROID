@@ -148,6 +148,7 @@ fun ExpandableFormTile(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
+    val dismissKeyboard = rememberDismissKeyboard()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -158,7 +159,7 @@ fun ExpandableFormTile(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .clickable(role = Role.Button, onClick = onToggle)
+                .clickable(role = Role.Button) { dismissKeyboard(); onToggle() }
                 .semantics { if (expandedDescription != null) stateDescription = expandedDescription }
                 .padding(start = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

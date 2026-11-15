@@ -32,8 +32,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
   full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
-  Group, Accounts, Envelopes and Movements tabs; Accounts and Envelopes work, Group and Movements are still empty
-  states). Root navigation follows the session (`SessionViewModel`).
+  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes and Movements work, Group is still an empty
+  state). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
   page above Groups: its header has a menu button (`MenuButton`, three lines), never a back arrow, and system back or the
@@ -102,7 +102,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   nothing yet (envelope detail comes later).
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
-  again) and, on Movements, a "+" that opens a "Coming soon" sheet until that feature exists (Accounts and Envelopes
+  again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
   have their own, see above).
 - Full-screen forms (`FormScaffold`: close X on the left, title, "Save" on the right with a spinner while saving; the
   fields scroll above the keyboard with `imePadding()`; system back = the X): `GroupForm(groupId?)` (`ui/groupform`),
@@ -158,7 +158,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
-  due items; latest 5 movements with "See all"; "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
+  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
   `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
   snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
   `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
@@ -208,19 +208,56 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
-- "See all" hand-off: `AppNavigation` holds `movementsAccountFilter` (saved), sets it to the account and pops back to the
-  `Group` entry; `GroupRoute(movementsAccountFilter, onMovementsFilterConsumed)` selects the Movements tab, stores the
-  account in its own saved `movementsFilter` and clears the AppNavigation value. The Movements tab is still an empty
-  state: when it exists it must read `movementsFilter` in `GroupRoute` (null means the whole ledger) and show the account
-  filter; from there "back" should return to the detail (re-push `AccountDetail` when a filter is set, not done yet).
+- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?)`, `MovementFormViewModel` with those
+  four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
+  locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
+  and income: Account `EntitySelect` (default: the fixed account, else the last one used in this group, stored per user and group in
+  `LastAccountStore` on `multiplatform-settings`, set after creating; else none) and Envelope `EntitySelect` with Unassigned first
+  (its real system id; expense starts with nothing chosen and requires one, income starts on Unassigned; hidden with a note when the
+  account is outside the envelopes). Cover note when creating an expense whose envelope balance (from `envelope_balances`) is below
+  the amount, with an optional "Also cover from" envelope sent as `p_cover=[{envelope_id, amount: its full balance}]`; the database
+  takes only what is needed. Editing a higher expense shows a note that nothing is covered. Transfer: From / To (different), a
+  "To another group" switch on create (destination group of the same currency + its account, `create_group_transfer`, both envelopes
+  Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
+  expense and income, Tags as toggle chips plus "+ New" (a small sheet; duplicate name shows the error). Writes go through
+  `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
+  of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
+  outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
+  `account_transfers`; then the tag step (`transaction_tags` insert / delete). A tag failure keeps the movement, shows the error and
+  the next Save only retries the tags. Saved pops the form and the lists reload when shown again.
+- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?)`, one screen in two places): the Movements
+  tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
+  account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
+  detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
+  (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
+  (`MovementsSearchHeader`; the group shell takes it through its `movementsHeader` slot), debounced 300 ms, matching notes
+  or an amount ("42,30" or "42.30"). "+" opens the movement form (`NewClicked`, intercepted by the Route; on an account's list it preselects that account). Expense and income rows and account transfer rows swipe Edit (`Movement.canEdit`: not adjustments or contribution legs; `EditClicked(id, source)` opens `MovementForm`) and Delete.
+  Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
+  only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
+  (small avatar for account, envelope, member) and an X that clears it. A chip opens an `EntityPickerSheet` (`FlatBottomSheet`,
+  `EntitySelect` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
+  multiple choice (`EntityMultiPickerSheet`, "Apply"). Type: Expenses, Income, Transfers, Adjustments, Contributions
+  (`MovementType`, sent as `p_kinds` group names). Dates: This period, Previous period (read from `periods`), Last 3 months,
+  This year and Custom (`CustomRangeDialog`, a flat `DateRangePicker`); `DatePreset` and `datePresetRange` are pure. Filters
+  and search text live in the ViewModel (not saved on disk). The list is grouped by day (`groupByDay`, pure: "Today · 14 Nov",
+  "Yesterday · 13 Nov", then "Fri 12 Nov"), 50 per page with load-more near the end and a progress row, and its own empty
+  states (no movements, no results with "Clear filters"). Row: envelope avatar (inbox for Unassigned), title = notes or the
+  kind label, second line "envelope · account" (account left out with a single account or on level 3); an account transfer has
+  an ink avatar with a transfer icon, "A → B" in the group ledger (shown once, unsigned) and "To/From <account>" on an
+  account's list (signed). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
+  `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs have no swipe
+  (they are voided as a pair with `void_group_transfer`, not offered yet); edit comes with the form.
+  `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`,
+  `getDateContext` = `group_today`, `current_period` and the previous `periods` row) and `TagRepository` (live `tags`).
+  Nothing is summed or filtered in the app; the DB function shows an account transfer once in the group ledger (D-45).
 - Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
   contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
   and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
   formatValue, contentDescription)` (columns up to 24 dp, 4 dp rounded free end, 2 dp gap, legend above, tooltip per group).
   Shared: `ChartTooltip`, `ChartLegend`, `chartTouch`, and the pure maths in `ChartMath.kt` (`niceTicks`, `compactAmount`,
-  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours `colorScheme.chartIn` and `chartOut`
-  (`ui/theme/ChartColors.kt`; blue and orange pairs for light and dark, never the `error` red); the balance line uses
-  `primary`. Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
+  `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
+  `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
@@ -228,6 +265,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
+  `LocalMoneyColors`, chosen by dark/light and the colour-blind preference (`moneyColors(dark, colorBlindSafe)`); `moneyColorFor(role,
+  amount, colors, ink)` is the pure rule behind `ui/components/MoneyText` (Flow: positive inflow with "+", otherwise outflow;
+  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink). The destructive red (`error`) never changes. The preference
+  lives in `AppPreferencesStore` (`data/local`, `SettingsAppPreferencesStore`, per device); `App` observes it and the Profile screen
+  has the "Accessibility" switch. Option lists (`EntityOption.balance`: `MoneyAmount`) show balances as `MoneyText`.
 - Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
   `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
   in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
@@ -274,11 +317,12 @@ iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodepro
 ```
 
 Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `movements`,
-plus the `newmovement` bottom sheet.
+plus `movementform` (the new / edit movement form).
 
 ## Rules
 
 - Screen structure follows the workspace `docs/agents/navigation.md`; read it before adding or changing a screen.
+- Editing a live movement is a plain update validated by the DB guards and recorded in `audit_log`; deleting is voiding.
 - Common first: write code in `shared/src/commonMain`. Platform code goes only in `androidMain` / `iosMain`, behind an
   `expect`/`actual` declaration or an interface that common code owns (for example `rememberGoogleSignInLauncher`,
   `supabaseUrl`). `:app` and `iosApp` stay thin shells: no screens, no business logic.
@@ -296,6 +340,9 @@ plus the `newmovement` bottom sheet.
 - Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
+- Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a
+  hand-picked colour. Inflow green / outflow ink / transfer muted / negative balance red; the colour-blind preference
+  swaps green to blue and red to orange. Amounts inside a sentence stay plain `formatMoney` text.
 - Amounts are `Long` cents everywhere; format them only in the UI with `formatMoney(…, languageTag)`, passing the
   language tag of the current configuration (`1.298,15 €` in Spanish, `€1,298.15` in English).
 - The app is bilingual. Every user-visible string is a resource with the same key in `composeResources/values/strings.xml` (English,

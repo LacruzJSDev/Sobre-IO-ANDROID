@@ -9,6 +9,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -34,7 +35,7 @@ import kotlin.time.Instant
 
 /**
  * A [FormTile] that shows a date and opens a flat Material 3 date picker dialog when tapped. [date] null shows [emptyText]
- * (for an optional date); [onClear] adds a clear button while a date is set. The picker works on UTC midnights, so the
+ * (for an optional date); [maxDate] is the last day the picker allows (null: any); [onClear] adds a clear button while a date is set. The picker works on UTC midnights, so the
  * day chosen is the day shown whatever the device's time zone.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +49,7 @@ fun DateFormTile(
     note: String? = null,
     enabled: Boolean = true,
     onClear: (() -> Unit)? = null,
+    maxDate: LocalDate? = null,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
     val languageTag = Locale.current.toLanguageTag()
@@ -66,7 +68,13 @@ fun DateFormTile(
         }
     }
     if (open) {
-        val state = rememberDatePickerState(initialSelectedDateMillis = date?.toPickerMillis())
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = date?.toPickerMillis(),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                    maxDate == null || utcTimeMillis <= maxDate.toPickerMillis()
+            },
+        )
         DatePickerDialog(
             onDismissRequest = { open = false },
             confirmButton = {
