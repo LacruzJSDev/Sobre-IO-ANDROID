@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +30,8 @@ fun MoneyText(
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    /** The colour of a figure that follows no money rule (a balance at zero or above, plain text); paper text on the dark hero card. */
+    ink: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     val languageTag = Locale.current.toLanguageTag()
     val text = when (role) {
@@ -37,7 +40,7 @@ fun MoneyText(
     }
     Text(
         text = text,
-        color = moneyColorFor(role, amountCents, LocalMoneyColors.current, MaterialTheme.colorScheme.onSurface),
+        color = moneyColorFor(role, amountCents, LocalMoneyColors.current, ink),
         style = style,
         textAlign = textAlign,
         maxLines = maxLines,

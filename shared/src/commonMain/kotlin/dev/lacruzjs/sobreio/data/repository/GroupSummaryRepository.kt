@@ -5,7 +5,10 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.ConfirmedFact
 import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
+import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
+import dev.lacruzjs.sobreio.domain.model.PeriodFlow
 import kotlinx.datetime.LocalDate
 
 /**
@@ -26,6 +29,18 @@ interface GroupSummaryRepository {
 
     /** Accounts of the group whose forecast to the end of the period goes below zero. */
     suspend fun getShortfalls(groupId: String): Result<List<AccountShortfall>>
+
+    /** `group_free_projection`: the really free money day by day from today to the end of the period, one row per day. */
+    suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>>
+
+    /** The last [periods] periods' money in and out of the group, oldest first (`group_period_flows`). */
+    suspend fun getPeriodFlows(groupId: String, periods: Int = 6): Result<List<PeriodFlow>>
+
+    /**
+     * What each envelope spent in the period that starts on [periodStart]: the `envelope_periods` rows whose `activity` is
+     * negative. Envelopes that spent nothing are not returned; the order is the database's.
+     */
+    suspend fun getEnvelopeSpending(groupId: String, periodStart: LocalDate): Result<List<EnvelopeSpending>>
 
     /**
      * `confirm_occurrence`: registers the due date with [amountCents] on [date], covering what the envelope lacks with

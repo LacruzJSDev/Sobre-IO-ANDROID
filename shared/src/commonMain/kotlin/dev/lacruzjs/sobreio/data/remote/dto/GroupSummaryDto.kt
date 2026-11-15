@@ -31,3 +31,14 @@ internal data class DueOccurrenceDto(
     @SerialName("envelope_id") val envelopeId: String? = null,
     @SerialName("auto_register") val autoRegister: Boolean = false,
 )
+
+/** A row of `group_free_projection`. */
+@Serializable
+internal data class FreePointDto(val day: String, val free: Long = 0)
+
+/** A row of `envelope_periods` read for the spending bars. */
+@Serializable
+internal data class EnvelopeSpendingDto(
+    @SerialName("envelope_id") val envelopeId: String,
+    val activity: Long = 0,
+)

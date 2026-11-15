@@ -89,6 +89,7 @@ fun GroupRoute(
     onOpenGroups: () -> Unit,
     onGroupGone: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenReview: () -> Unit,
     onOpenAccountForm: (accountId: String?) -> Unit,
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
@@ -114,7 +115,7 @@ fun GroupRoute(
         state.group?.let {
             accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit))
             envelopesViewModel.onEvent(EnvelopesEvent.GroupLoaded(it.currencyCode, it.canEdit))
-            // Any member may confirm or skip a due date, but not in an archived group or one pending deletion
+            // Any member may review a due date, but not in an archived group or one pending deletion
             summaryViewModel.onEvent(GroupSummaryEvent.GroupLoaded(it.currencyCode, !it.isArchived && !it.isPendingDeletion))
         }
     }
@@ -158,6 +159,9 @@ fun GroupRoute(
                             is GroupWarning.AccountShortfallOn -> onOpenAccount(warning.accountId)
                             is GroupWarning.CommitmentsShortfall -> selectedIndex = GroupTab.Envelopes.ordinal
                         }
+                        GroupSummaryEvent.ReviewClicked -> onOpenReview()
+                        is GroupSummaryEvent.SpendingClicked -> onOpenEnvelope(event.envelopeId)
+                        GroupSummaryEvent.SeeAllEnvelopesClicked -> selectedIndex = GroupTab.Envelopes.ordinal
                         else -> summaryViewModel.onEvent(event)
                     }
                 },

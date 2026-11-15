@@ -6,7 +6,10 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.ConfirmedFact
 import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
+import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
+import dev.lacruzjs.sobreio.domain.model.PeriodFlow
 import kotlinx.datetime.LocalDate
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
@@ -28,8 +31,14 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     var pending = emptyList<DueOccurrence>()
     var upcoming = emptyList<DueOccurrence>()
     var shortfalls = emptyList<AccountShortfall>()
+    var freeProjection = emptyList<FreePoint>()
+    var periodFlows = emptyList<PeriodFlow>()
+    var spending = emptyList<EnvelopeSpending>()
 
     var outlookResult: Result<GroupOutlook>? = null
+    var projectionResult: Result<List<FreePoint>>? = null
+    var flowsResult: Result<List<PeriodFlow>>? = null
+    var spendingResult: Result<List<EnvelopeSpending>>? = null
     var confirmResult: Result<ConfirmedFact>? = null
     var skipResult: Result<Unit> = Result.success(Unit)
     var voidResult: Result<Unit> = Result.success(Unit)
@@ -39,6 +48,8 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     var confirmedDate: LocalDate? = null
     var confirmedCover: List<CoverItem>? = null
     var upcomingRange: Pair<LocalDate, LocalDate>? = null
+    var spendingPeriodStart: LocalDate? = null
+    var flowPeriods: Int? = null
 
     /** Due dates confirmed or skipped leave [pending], as the database does. */
     override suspend fun getOutlook(groupId: String): Result<GroupOutlook> {
@@ -58,6 +69,23 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     }
 
     override suspend fun getShortfalls(groupId: String): Result<List<AccountShortfall>> = Result.success(shortfalls)
+
+    override suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>> {
+        calls += "getFreeProjection($groupId)"
+        return projectionResult ?: Result.success(freeProjection)
+    }
+
+    override suspend fun getPeriodFlows(groupId: String, periods: Int): Result<List<PeriodFlow>> {
+        calls += "getPeriodFlows($groupId, $periods)"
+        flowPeriods = periods
+        return flowsResult ?: Result.success(periodFlows)
+    }
+
+    override suspend fun getEnvelopeSpending(groupId: String, periodStart: LocalDate): Result<List<EnvelopeSpending>> {
+        calls += "getEnvelopeSpending($periodStart)"
+        spendingPeriodStart = periodStart
+        return spendingResult ?: Result.success(spending)
+    }
 
     override suspend fun confirm(
         commitmentId: String,

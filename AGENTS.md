@@ -109,26 +109,47 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
   Tapping a row opens the envelope detail.
 - Group tab (`ui/groupsummary`, `GroupSummaryViewModel(groupId)` with `GroupSummaryRepository`, `AccountDetailRepository`,
-  `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`, `ConfirmSheet`): the ONLY place where pending occurrences are reviewed.
-  Hero "Really free today" (`group_outlook_current.free_today`, `MoneyText` Balance, large) with a muted "Projected at period end: X ·
-  1 nov - 30 nov" (`free_projected`, period dates). "To review - N" card (hidden at 0): `pending_occurrences` rows (kind-icon avatar in
-  ink, name, "<account> - was due on <date>", `MoneyText` Flow signed by `DueOccurrence.signedCents`: income and incoming contribution
-  positive, the rest negative) with compact "Skip" (`SecondaryButton(compact)`) and "Confirm" buttons for any member of a live group
-  (archived or pending-deletion groups are read only). The receiving half of a contribution (`group_transfer_in`) is left out: the
-  contributor registers it (FZ018). Confirm opens `ConfirmSheet` (`FlatBottomSheet`): `AmountField` with the expected amount, `DateFormTile`
-  (due date, or today when it is later; `maxDate` = group today), and, for an expense whose envelope (not Unassigned) on an account inside
-  the envelopes has less than the amount, the movement form's cover note and optional "Also cover from" `EntitySelect`
-  (`p_cover` = that envelope's full balance). `confirm_occurrence` returns the created fact; the row goes and an Undo snackbar
-  "<name> registered" voids that fact (`transactions` / `account_transfers` `voided_at`, `void_group_transfer` for a contribution), after
-  which the database frees the due date. Skip hides the row at once, shows "<name> skipped" and writes `skip_occurrence` only when the
-  snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing the row back meanwhile). "Warnings" card (hidden when
-  empty, tappable rows with a warning icon in the negative money colour and a chevron): envelopes in `envelope_progress` state
-  `overspent` (opens the envelope detail), accounts with `account_forecast.shortfall > 0` (date from `account_projection` with
-  `shortfallDate`, opens the account detail) and `committed_shortfall > 0` (selects the Envelopes tab). "Next due items"
-  `CollapsibleListSection` with the count: `upcoming_occurrences` from tomorrow to the period end, read only. The Group tab icon carries a
-  `BadgedBox` ink badge with the pending count (hidden at 0, accessible label "N to review"); `GroupRoute` refreshes it when the shell
-  is shown and when the tab is selected, and each confirm or skip refreshes it. Everything comes from the database; the app only signs
-  and joins names. `FlatButton`, `PrimaryButton` and `SecondaryButton` take `compact` for small row buttons.
+  `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`): read only, it counts the due dates to review and opens the review
+  screen. Top to bottom: (1) the hero card, ink background (`primary`) with paper text (`onPrimary`), `shapes.large`: a row "Really
+  free today" and "Day X of Y" (period day, a display count), the big `free_today` figure (`MoneyText` Balance with `ink = paper`;
+  below zero it takes the negative money colour), a compact 90 dp `FreeProjectionChart` (`ui/components/charts`, paper line, step-after,
+  solid up to today and dashed after, the part below zero in `LocalMoneyColors.negative`, end dot) of `group_free_projection`, a row
+  "Projected on <period end>" with `free_projected` (`titleLarge`) and, right, a translucent chip with the database figure that
+  explains the difference (`GroupSummaryUiState.projectionNote`, nothing is subtracted in the app): `committed_shortfall` ("-X for
+  commitments"), else `pending_out` ("-X in contributions"), else `pending_income` ("+X of expected income"), none when all are 0;
+  when the projection goes below zero after today, a line "Will drop to X on <day>" in the negative colour (`lowestPoint`: the
+  smallest row of the database, a selection); a thin bar of days elapsed over days in the period (`periodProgress`, a display ratio).
+  (2) The review card, always visible: with nothing pending a check icon and "All caught up: nothing to review"; otherwise "N to
+  review", the oldest due date muted and ONE `PrimaryButton` "Review" that opens `GroupReview(groupId)`. N counts
+  `pending_occurrences` without the receiving half of a contribution (`group_transfer_in`, the contributor registers it, FZ018). The Group
+  tab icon carries a `BadgedBox` ink badge with the same count (hidden at 0, label "N to review"); `GroupRoute` refreshes it when the
+  shell is shown, when the tab is selected and when coming back from the review. (3) "Warnings" card (hidden when empty, tappable rows
+  with a warning icon in the negative colour and a chevron): envelopes in `envelope_progress` state `overspent` (opens the envelope
+  detail), accounts with `account_forecast.shortfall > 0` (date from `account_projection` with `shortfallDate`, opens the account
+  detail) and `committed_shortfall > 0` (selects the Envelopes tab). (4) "Where this period's money went": a bar per envelope that
+  spent in the current period (`SupabaseGroupSummaryRepository.getEnvelopeSpending`: `envelope_periods` rows of `period_start`
+  with `activity < 0`, value = -activity), biggest first (ties by name), top 6 (`MAX_SPENDING_BARS`), name left and `MoneyText` Flow
+  right, bar length = value / biggest (`spendingFraction`, a display ratio) in the outflow (ink) colour; a bar opens the envelope
+  detail and "See all envelopes" selects the Envelopes tab; hidden when nothing was spent. (5) "In and out by period":
+  `GroupedColumnChart` of `group_period_flows` (last 6 periods, `PeriodFlow`, inflow and outflow colours; internal account transfers are
+  not counted by the database). (6) "Next due items": a `LazyRow` of small cards (weekday and day, name, `MoneyText` Flow signed by
+  `DueOccurrence.signedCents`) from `upcoming_occurrences` between tomorrow and the period end; one muted card "Nothing until the
+  end of the period" when there are none. The secondary reads (projection, flows, spending, upcoming, warnings) fail alone: the
+  card is left out, never the tab. Everything comes from the database; the app only signs, joins names, picks rows and sorts.
+- Group review (`ui/groupreview`, route `GroupReview(groupId)`, level 2 of the Group tab, `GroupReviewViewModel(groupId)` with
+  `GroupRepository`, `GroupSummaryRepository`, `AccountDetailRepository`, `AccountRepository`, `EnvelopeRepository`; `GroupReviewScreen`,
+  `ConfirmSheet`): the ONLY place where pending occurrences are reviewed. `ScreenHeader` with back arrow, title "To review" and the
+  group as subtitle. One `SoftTile` per `pending_occurrences` row (kind-icon avatar in ink, name, "<account> - was due on <date>", `MoneyText`
+  Flow signed by `DueOccurrence.signedCents`) with compact "Skip" (`SecondaryButton(compact)`) and "Confirm" buttons for any member
+  of a live group (archived or pending-deletion groups are read only: no buttons). Confirm opens `ConfirmSheet` (`FlatBottomSheet`):
+  `AmountField` with the expected amount, `DateFormTile` (due date, or today when it is later; `maxDate` = group today), and, for an
+  expense whose envelope (not Unassigned) on an account inside the envelopes has less than the amount, the movement form's cover note and
+  optional "Also cover from" `EntitySelect` (`p_cover` = that envelope's full balance). `confirm_occurrence` returns the created fact;
+  the row goes and an Undo snackbar "<name> registered" voids that fact (`transactions` / `account_transfers` `voided_at`,
+  `void_group_transfer` for a contribution), after which the database frees the due date. Skip hides the row at once, shows "<name>
+  skipped" and writes `skip_occurrence` only when the snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing
+  the row back meanwhile; the back arrow and `onCleared` make a waiting skip final). With nothing left it shows "All caught up: nothing
+  to review" and a button back to the group. `FlatButton`, `PrimaryButton` and `SecondaryButton` take `compact` for small row buttons.
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
@@ -254,7 +275,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   embedded, newest first; the ViewModel appends the next page on `LoadMoreOccurrences` (ignored while loading or when all is loaded; a failure keeps the rows and shows a retry in the section); rows: due date, the registered amount signed for the account and the movement's date when it differs,
   or "Skipped"); "Changes" (a `CollapsibleListSection`, folded unless there is a single version; the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
   frequency, the account when it differs from the previous version, the envelope of an expense). It has no pending, confirm or skip
-  actions: pending occurrences are reviewed only in the Group tab.
+  actions: pending occurrences are reviewed only in the Group review screen, reached from the Group tab.
 - Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
   avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (every choice of an account, envelope or group is an `EntitySelect`: account (locked when creating),
   destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
@@ -330,7 +351,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
   `LocalMoneyColors`, chosen by dark/light and the colour-blind preference (`moneyColors(dark, colorBlindSafe)`); `moneyColorFor(role,
   amount, colors, ink)` is the pure rule behind `ui/components/MoneyText` (Flow: positive inflow with "+", otherwise outflow;
-  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink). The destructive red (`error`) never changes. The preference
+  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink; `ink` overrides that colour, paper text on the dark hero card). The destructive red (`error`) never changes. The preference
   lives in `AppPreferencesStore` (`data/local`, `SettingsAppPreferencesStore`, per device); `App` observes it and the Profile screen
   has the "Accessibility" switch. Option lists (`EntityOption.balance`: `MoneyAmount`) show balances as `MoneyText`.
 - Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
@@ -378,7 +399,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules

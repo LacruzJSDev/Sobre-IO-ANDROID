@@ -1,7 +1,9 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.DueOccurrenceDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeSpendingDto
 import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
+import dev.lacruzjs.sobreio.data.remote.dto.FreePointDto
 import dev.lacruzjs.sobreio.data.remote.dto.GroupOutlookDto
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import kotlinx.datetime.LocalDate
@@ -54,5 +56,21 @@ class GroupSummaryMapperTest {
         assertEquals(1, shortfalls.size)
         assertEquals("a1", shortfalls[0].accountId)
         assertEquals(-5_000, shortfalls[0].lowestCents)
+    }
+
+    @Test
+    fun freeProjectionRowsKeepTheDayAndTheFigure() {
+        val point = FreePointDto("2026-11-20", -1_500).toDomain()
+
+        assertEquals(LocalDate(2026, 11, 20), point.day)
+        assertEquals(-1_500, point.freeCents)
+    }
+
+    @Test
+    fun spendingTurnsTheNegativeActivityIntoAPositiveAmount() {
+        val spending = EnvelopeSpendingDto("e1", -12_050).toDomain()
+
+        assertEquals("e1", spending.envelopeId)
+        assertEquals(12_050, spending.spentCents)
     }
 }

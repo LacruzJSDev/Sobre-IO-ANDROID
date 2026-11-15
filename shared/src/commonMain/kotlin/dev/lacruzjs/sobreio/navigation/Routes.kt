@@ -29,6 +29,13 @@ data class Group(val groupId: String) : NavKey
 @Serializable
 data class GroupSettings(val groupId: String) : NavKey
 
+/**
+ * The due dates waiting for review (level 2 of the Group tab): confirm or skip each one. Opened by the "Review" button of
+ * the Group tab's review card; back returns to [Group], which reads its figures again.
+ */
+@Serializable
+data class GroupReview(val groupId: String) : NavKey
+
 /** Create (`groupId` null) or edit a group, as a full screen. Opened from Groups ("+") and the group settings ("Edit"). */
 @Serializable
 data class GroupForm(val groupId: String?) : NavKey

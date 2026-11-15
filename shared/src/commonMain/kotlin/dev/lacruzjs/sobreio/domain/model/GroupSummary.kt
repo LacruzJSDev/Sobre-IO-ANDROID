@@ -19,6 +19,12 @@ data class GroupOutlook(
     val freeProjectedCents: Long,
 )
 
+/** One day of `group_free_projection`: what is really free at the end of [day] (the group's outlook up to that day). */
+data class FreePoint(val day: LocalDate, val freeCents: Long)
+
+/** What an envelope spent in the current period: the negative `activity` of its `envelope_periods` row, as a positive amount. */
+data class EnvelopeSpending(val envelopeId: String, val spentCents: Long)
+
 /**
  * One due date of a commitment (a row of `pending_occurrences` or `upcoming_occurrences`). [amountCents] is the expected
  * amount, always positive; [signedCents] gives it the sign of the source account's side.

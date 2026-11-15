@@ -1,4 +1,4 @@
-package dev.lacruzjs.sobreio.ui.groupsummary
+package dev.lacruzjs.sobreio.ui.groupreview
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -34,17 +34,17 @@ import org.jetbrains.compose.resources.stringResource
  * cover it shows the same cover note and optional "Also cover from" envelope as the movement form.
  */
 @Composable
-internal fun ConfirmSheet(state: GroupSummaryUiState, onEvent: (GroupSummaryEvent) -> Unit) {
+internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent) -> Unit) {
     val draft = state.sheet ?: return
     val languageTag = Locale.current.toLanguageTag()
     val busy = draft.isSubmitting
     FlatBottomSheet(
         title = stringResource(Res.string.group_summary_confirm_title, draft.occurrence.name),
-        onDismiss = { onEvent(GroupSummaryEvent.SheetDismissed) },
+        onDismiss = { onEvent(GroupReviewEvent.SheetDismissed) },
     ) {
         AmountField(
             value = draft.amount,
-            onValueChange = { onEvent(GroupSummaryEvent.AmountChanged(it)) },
+            onValueChange = { onEvent(GroupReviewEvent.AmountChanged(it)) },
             label = stringResource(Res.string.field_amount),
             errorRes = draft.amountError,
             enabled = !busy,
@@ -52,7 +52,7 @@ internal fun ConfirmSheet(state: GroupSummaryUiState, onEvent: (GroupSummaryEven
         DateFormTile(
             label = stringResource(Res.string.field_date),
             date = draft.date,
-            onDateSelected = { onEvent(GroupSummaryEvent.DateChanged(it)) },
+            onDateSelected = { onEvent(GroupReviewEvent.DateChanged(it)) },
             enabled = !busy,
             maxDate = state.today,
         )
@@ -73,7 +73,7 @@ internal fun ConfirmSheet(state: GroupSummaryUiState, onEvent: (GroupSummaryEven
                     options = listOf(EntityOption(null, stringResource(Res.string.movement_cover_none))) +
                         candidates.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) },
                     selectedId = draft.coverEnvelopeId,
-                    onSelect = { onEvent(GroupSummaryEvent.CoverSelected(it)) },
+                    onSelect = { onEvent(GroupReviewEvent.CoverSelected(it)) },
                     expanded = open,
                     onToggle = { open = !open },
                     enabled = !busy,
@@ -83,7 +83,7 @@ internal fun ConfirmSheet(state: GroupSummaryUiState, onEvent: (GroupSummaryEven
         ErrorText(draft.submitError, modifier = Modifier.fillMaxWidth())
         PrimaryButton(
             text = stringResource(Res.string.action_confirm),
-            onClick = { onEvent(GroupSummaryEvent.ConfirmSubmitted) },
+            onClick = { onEvent(GroupReviewEvent.ConfirmSubmitted) },
             isLoading = busy,
         )
     }

@@ -264,7 +264,7 @@ internal fun DrawScope.drawEndDot(center: Offset, color: Color, ring: Color) {
  * A balance changes on a date and holds until the next change, so the line goes horizontally to the next point's day and
  * then vertically to its value (step after), instead of a diagonal that never happened.
  */
-private fun stepPath(points: List<LineChartPoint>, xScale: LinearScale, yScale: LinearScale): Path {
+internal fun stepPath(points: List<LineChartPoint>, xScale: LinearScale, yScale: LinearScale): Path {
     val path = Path()
     points.forEachIndexed { i, p ->
         val x = xScale.map(p.x.toDouble())

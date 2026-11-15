@@ -1,10 +1,14 @@
 package dev.lacruzjs.sobreio.data.remote.mapper
 
 import dev.lacruzjs.sobreio.data.remote.dto.DueOccurrenceDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeSpendingDto
+import dev.lacruzjs.sobreio.data.remote.dto.FreePointDto
 import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
 import dev.lacruzjs.sobreio.data.remote.dto.GroupOutlookDto
 import dev.lacruzjs.sobreio.domain.model.AccountShortfall
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
+import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import kotlinx.datetime.LocalDate
 
@@ -36,3 +40,8 @@ internal fun DueOccurrenceDto.toDomain() = DueOccurrence(
 /** Only the accounts that would run short: the database says 0 for a credit card and for accounts that stay positive. */
 internal fun List<ForecastDto>.toShortfalls(): List<AccountShortfall> =
     filter { it.shortfall > 0 }.map { AccountShortfall(it.accountId, it.shortfall, it.projectedMin) }
+
+internal fun FreePointDto.toDomain() = FreePoint(day = LocalDate.parse(day), freeCents = free)
+
+/** `activity` is negative for spending; the bar shows the amount spent, positive. */
+internal fun EnvelopeSpendingDto.toDomain() = EnvelopeSpending(envelopeId = envelopeId, spentCents = -activity)

@@ -1,8 +1,11 @@
 package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.dto.DueOccurrenceDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeSpendingDto
 import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
+import dev.lacruzjs.sobreio.data.remote.dto.FreePointDto
 import dev.lacruzjs.sobreio.data.remote.dto.GroupOutlookDto
+import dev.lacruzjs.sobreio.data.remote.dto.PeriodFlowDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toCoverJson
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.mapper.toShortfalls
@@ -13,7 +16,10 @@ import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.ConfirmedFact
 import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
+import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
+import dev.lacruzjs.sobreio.domain.model.PeriodFlow
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -59,6 +65,35 @@ class SupabaseGroupSummaryRepository(client: SupabaseClient) : GroupSummaryRepos
         postgrest.rpc("account_forecast", buildJsonObject { put("p_group_id", groupId) })
             .decodeList<ForecastDto>()
             .toShortfalls()
+    }
+
+    override suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>> = safeCall {
+        postgrest.rpc("group_free_projection", buildJsonObject { put("p_group_id", groupId) })
+            .decodeList<FreePointDto>()
+            .map { it.toDomain() }
+    }
+
+    override suspend fun getPeriodFlows(groupId: String, periods: Int): Result<List<PeriodFlow>> = safeCall {
+        postgrest.rpc(
+            "group_period_flows",
+            buildJsonObject {
+                put("p_group_id", groupId)
+                put("p_periods", periods)
+            },
+        ).decodeList<PeriodFlowDto>().map { it.toDomain() }
+    }
+
+    override suspend fun getEnvelopeSpending(groupId: String, periodStart: LocalDate): Result<List<EnvelopeSpending>> = safeCall {
+        postgrest.from("envelope_periods")
+            .select(Columns.list("envelope_id", "activity")) {
+                filter {
+                    eq("group_id", groupId)
+                    eq("start_date", periodStart.toString())
+                    lt("activity", 0)
+                }
+            }
+            .decodeList<EnvelopeSpendingDto>()
+            .map { it.toDomain() }
     }
 
     override suspend fun confirm(

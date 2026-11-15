@@ -595,9 +595,6 @@
     <string name="commitment_paid_this_period">Paid this period</string>
 
     <string name="group_summary_free_today">Really free today</string>
-    <string name="group_summary_projected">Projected at period end: %1$s · %2$s</string>
-    <string name="group_summary_period_range">%1$s – %2$s</string>
-    <string name="group_summary_review_title">To review · %1$d</string>
     <string name="group_summary_due_subtitle">%1$s · was due on %2$s</string>
     <string name="action_skip">Skip</string>
     <string name="group_summary_confirm_title">Register %1$s</string>
@@ -607,6 +604,22 @@
     <string name="warning_envelope_overspent">%1$s: overspent by %2$s</string>
     <string name="warning_account_shortfall">%1$s will drop to %2$s on %3$s</string>
     <string name="warning_commitments_shortfall">%1$s missing for this period\'s commitments</string>
-    <string name="group_summary_upcoming_empty">Nothing else is due this period.</string>
+    <string name="group_summary_upcoming_empty">Nothing until the end of the period</string>
     <string name="tab_group_badge">%1$d to review</string>
+    <string name="group_hero_period_day">Day %1$d of %2$d</string>
+    <string name="group_hero_projected_on">Projected on %1$s</string>
+    <string name="group_hero_note_commitments">−%1$s for commitments</string>
+    <string name="group_hero_note_contributions">−%1$s in contributions</string>
+    <string name="group_hero_note_income">+%1$s of expected income</string>
+    <string name="group_hero_drops">Will drop to %1$s on %2$s</string>
+    <string name="group_hero_chart_description">Really free money from %1$s to %2$s: %3$s today, %4$s at the end</string>
+    <string name="group_review_title">To review</string>
+    <string name="group_review_count">%1$d to review</string>
+    <string name="group_review_oldest">Oldest from %1$s</string>
+    <string name="group_review_open">Review</string>
+    <string name="group_review_empty">All caught up: nothing to review</string>
+    <string name="group_review_back">Back to the group</string>
+    <string name="group_summary_spending_title">Where this period\'s money went</string>
+    <string name="group_summary_spending_all">See all envelopes</string>
+    <string name="group_summary_flows_title">In and out by period</string>
 </resources>
