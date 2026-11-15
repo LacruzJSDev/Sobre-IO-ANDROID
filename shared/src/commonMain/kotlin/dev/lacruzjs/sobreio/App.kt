@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.navigation.NavigationWrapper
-import dev.lacruzjs.sobreio.ui.components.SwipeRowsHostProvider
+import dev.lacruzjs.sobreio.ui.components.OutsidePressHostProvider
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.koin.compose.koinInject
 
@@ -16,6 +16,6 @@ fun App() {
     val colorBlindSafe by preferences.colorBlindSafe.collectAsStateWithLifecycle()
     SobreioTheme(colorBlindSafe = colorBlindSafe) {
         // An open swipe row closes when anything outside it is touched, anywhere in the app
-        SwipeRowsHostProvider { NavigationWrapper() }
+        OutsidePressHostProvider { NavigationWrapper() }
     }
 }

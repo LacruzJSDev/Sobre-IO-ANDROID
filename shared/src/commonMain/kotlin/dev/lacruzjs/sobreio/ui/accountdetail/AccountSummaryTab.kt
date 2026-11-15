@@ -14,12 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -73,8 +69,9 @@ import dev.lacruzjs.sobreio.ui.accounts.labelRes
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormSection
-import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
+import dev.lacruzjs.sobreio.ui.components.StatCard
+import dev.lacruzjs.sobreio.ui.components.StatRow
 import dev.lacruzjs.sobreio.ui.components.charts.BalanceLineChart
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
@@ -113,7 +110,7 @@ internal fun AccountSummaryTab(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 16.dp)
                 .widthIn(max = 640.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
             BalanceSection(account, state, languageTag)
@@ -268,54 +265,25 @@ private fun ForecastSection(
     shortfall: Long,
     languageTag: String,
 ) {
-    FormSection(title = stringResource(Res.string.detail_section_forecast)) {
-        ForecastTile(stringResource(Res.string.forecast_scheduled_in), scheduledIn, state.currencyCode, MoneyRole.Flow)
-        ForecastTile(stringResource(Res.string.forecast_scheduled_out), -scheduledOut, state.currencyCode, MoneyRole.Flow)
-        ForecastTile(stringResource(Res.string.forecast_projected_end), projectedEnd, state.currencyCode, MoneyRole.Balance)
-        if (shortfall > 0) {
-            val date = state.shortfallDate ?: state.periodEnd ?: state.today
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(24.dp),
-                )
-                Text(
-                    text = stringResource(
-                        Res.string.forecast_shortfall,
-                        formatMoney(shortfall, state.currencyCode, languageTag),
-                        date?.let { formatDayMonth(it, languageTag) }.orEmpty(),
-                    ),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ForecastTile(label: String, amountCents: Long, currencyCode: String, role: MoneyRole) {
-    FormTile(label = label) {
-        MoneyText(
-            amountCents = amountCents,
-            currencyCode = currencyCode,
-            role = role,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(end = 8.dp),
-            maxLines = 1,
-        )
-    }
+    val date = state.shortfallDate ?: state.periodEnd ?: state.today
+    StatCard(
+        title = stringResource(Res.string.detail_section_forecast),
+        currencyCode = state.currencyCode,
+        rows = listOf(
+            StatRow(stringResource(Res.string.forecast_scheduled_in), scheduledIn, MoneyRole.Flow),
+            StatRow(stringResource(Res.string.forecast_scheduled_out), -scheduledOut, MoneyRole.Flow),
+            StatRow(stringResource(Res.string.forecast_projected_end), projectedEnd, MoneyRole.Balance, emphasised = true),
+        ),
+        warning = if (shortfall > 0) {
+            stringResource(
+                Res.string.forecast_shortfall,
+                formatMoney(shortfall, state.currencyCode, languageTag),
+                date?.let { formatDayMonth(it, languageTag) }.orEmpty(),
+            )
+        } else {
+            null
+        },
+    )
 }
 
 @Composable

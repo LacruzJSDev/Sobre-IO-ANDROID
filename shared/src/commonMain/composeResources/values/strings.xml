@@ -351,7 +351,7 @@
     <string name="forecast_scheduled_in">Scheduled in</string>
     <string name="forecast_scheduled_out">Scheduled out</string>
     <string name="forecast_projected_end">Projected end</string>
-    <string name="forecast_shortfall">%1$s short by %2$s</string>
+    <string name="forecast_shortfall">Short by %1$s on %2$s</string>
     <string name="detail_section_flows">In and out by period</string>
     <string name="chart_legend_in">In</string>
     <string name="chart_legend_out">Out</string>

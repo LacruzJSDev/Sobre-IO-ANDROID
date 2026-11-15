@@ -274,7 +274,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Nothing is summed or filtered in the app; the DB function shows an account transfer once in the group ledger (D-45).
 - Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
   contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
-  and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
+  and tooltip on touch or drag; the selection clears on a press outside the chart or when the page scrolls) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
   formatValue, contentDescription)` (columns up to 24 dp, 4 dp rounded free end, 2 dp gap, legend above, tooltip per group).
   Shared: `ChartTooltip`, `ChartLegend`, `chartTouch`, and the pure maths in `ChartMath.kt` (`niceTicks`, `compactAmount`,
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
@@ -374,10 +374,14 @@ plus `movementform` (the new / edit movement form).
   Add both translations in the same change; `StringsParityTest` fails otherwise (lint no longer sees Compose resources). Android 13+ shows the per-app language setting from
   `app/src/main/res/xml/locales_config.xml`, which is written by hand (the Android resources no longer hold the strings):
   update it, and `CFBundleLocalizations` in `iosApp/project.yml`, when a language is added. Code, comments and test names are English.
-- Swipe rows: an open `SwipeActionsRow` closes when anything outside it is pressed, anywhere in the app. This is
-  automatic: every open row registers with the `SwipeRowsHost` that `App` installs once at the root
-  (`SwipeRowsHostProvider`); never re-implement it per screen. The press is not consumed, so the touched control still
-  works. Lists keep at most one row open.
+- Transient UI (open swipe rows, chart tooltips) closes on any press outside it, through the app-wide outside-press host;
+  never re-implement it per screen. The `OutsidePressHost` that `App` installs once at the root (`OutsidePressHostProvider`,
+  `ui/components/OutsidePressHost.kt`) sees every press first; an open `SwipeActionsRow` registers with it, and a chart
+  uses `Modifier.closeOnOutsidePress(active) { clear }`. The press is not consumed, so the touched control still works.
+  Lists keep at most one row open.
+- Figures: two or more related amounts are ONE `StatCard` (`ui/components/StatCard.kt`: rows of label left and
+  `MoneyText` right, optional emphasised result row, optional title and shortfall warning line), never one tile per figure.
+  `FormTile` is for inputs only.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
   has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,

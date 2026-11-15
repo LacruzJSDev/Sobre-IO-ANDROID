@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,6 +87,8 @@ import dev.lacruzjs.sobreio.generated.resources.transfer_origin_manual
 import dev.lacruzjs.sobreio.generated.resources.transfer_origin_target
 import dev.lacruzjs.sobreio.generated.resources.transfer_to
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.StatCard
+import dev.lacruzjs.sobreio.ui.components.StatRow
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.CollapsibleListSection
@@ -95,7 +96,6 @@ import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormSection
-import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.MoneyText
@@ -243,7 +243,7 @@ private fun DetailContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 16.dp)
                 .widthIn(max = 640.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
             AvailableSection(envelope, state, languageTag)
@@ -293,50 +293,37 @@ private fun AvailableSection(envelope: Envelope, state: EnvelopeDetailUiState, l
     }
 }
 
-@Composable
-private fun FigureTile(label: String, amountCents: Long, currencyCode: String, role: MoneyRole, emphasised: Boolean = false) {
-    FormTile(label = label) {
-        MoneyText(
-            amountCents = amountCents,
-            currencyCode = currencyCode,
-            role = role,
-            style = if (emphasised) {
-                MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-            } else {
-                MaterialTheme.typography.titleMedium
-            },
-            modifier = Modifier.padding(end = 8.dp),
-            maxLines = 1,
-        )
-    }
-}
-
 /** What the current period did with the envelope, as `envelope_periods` says: nothing is summed here. */
 @Composable
 private fun PeriodSection(period: EnvelopePeriod, currencyCode: String) {
-    FormSection(title = stringResource(Res.string.envelope_detail_section_period)) {
-        FigureTile(stringResource(Res.string.envelope_detail_brought), period.openingCents, currencyCode, MoneyRole.Balance)
-        FigureTile(stringResource(Res.string.envelope_detail_assigned), period.assignedCents, currencyCode, MoneyRole.Flow)
-        FigureTile(stringResource(Res.string.envelope_detail_activity), period.activityCents, currencyCode, MoneyRole.Flow)
-        FigureTile(stringResource(Res.string.envelope_detail_left), period.closingCents, currencyCode, MoneyRole.Balance, emphasised = true)
-    }
+    StatCard(
+        title = stringResource(Res.string.envelope_detail_section_period),
+        currencyCode = currencyCode,
+        rows = listOf(
+            StatRow(stringResource(Res.string.envelope_detail_brought), period.openingCents, MoneyRole.Balance),
+            StatRow(stringResource(Res.string.envelope_detail_assigned), period.assignedCents, MoneyRole.Flow),
+            StatRow(stringResource(Res.string.envelope_detail_activity), period.activityCents, MoneyRole.Flow),
+            StatRow(stringResource(Res.string.envelope_detail_left), period.closingCents, MoneyRole.Balance, emphasised = true),
+        ),
+    )
 }
 
 /** What is left once the commitments to the end of the period are paid (`envelope_outlook_current`). */
 @Composable
 private fun OutlookSection(outlook: EnvelopeOutlook, currencyCode: String, languageTag: String) {
-    FormSection(title = stringResource(Res.string.envelope_detail_section_free)) {
-        FigureTile(stringResource(Res.string.envelope_detail_committed), -outlook.committedCents, currencyCode, MoneyRole.Flow)
-        FigureTile(stringResource(Res.string.envelope_detail_free), outlook.freeCents, currencyCode, MoneyRole.Balance, emphasised = true)
-        if (outlook.shortfallCents > 0) {
-            Text(
-                text = stringResource(Res.string.envelope_detail_shortfall, formatMoney(outlook.shortfallCents, currencyCode, languageTag)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalMoneyColors.current.negative,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
-    }
+    StatCard(
+        title = stringResource(Res.string.envelope_detail_section_free),
+        currencyCode = currencyCode,
+        rows = listOf(
+            StatRow(stringResource(Res.string.envelope_detail_committed), -outlook.committedCents, MoneyRole.Flow),
+            StatRow(stringResource(Res.string.envelope_detail_free), outlook.freeCents, MoneyRole.Balance, emphasised = true),
+        ),
+        warning = if (outlook.shortfallCents > 0) {
+            stringResource(Res.string.envelope_detail_shortfall, formatMoney(outlook.shortfallCents, currencyCode, languageTag))
+        } else {
+            null
+        },
+    )
 }
 
 @Composable
