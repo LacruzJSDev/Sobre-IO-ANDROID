@@ -7,7 +7,7 @@ enum class ProgressState {
     /** Monthly: [EnvelopeProgress.currentCents] is what is left of [EnvelopeProgress.goalCents] this period. */
     Remaining,
 
-    /** Bills: reserved so far of the cycle amount. */
+    /** Bills: reserved so far of the amount of the next payment only. */
     Reserving,
 
     /** Bills: every payment due this period is registered. */
@@ -30,12 +30,14 @@ data class EnvelopeProgress(
     val state: ProgressState,
     val currentCents: Long,
     val goalCents: Long,
-    /** Bills: the earliest unresolved due date. */
+    /** Bills: the due date of the payment the bar follows (the earliest unresolved one). */
     val nextDue: LocalDate? = null,
     /** Bills in [ProgressState.Paid]: the date of the latest payment of the period. */
     val paidOn: LocalDate? = null,
     /** Due dates nobody has registered or skipped yet, pointing at this envelope. */
     val pending: Int = 0,
+    /** Bills: the due date of the payment after [nextDue] (or after the paid ones), null when there is none. */
+    val followingDue: LocalDate? = null,
 ) {
     /** Fill of the bar, 0..1: a display clamp of the two database figures, not a balance computation. */
     val fraction: Float

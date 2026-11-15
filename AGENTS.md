@@ -98,7 +98,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   (colour + envelope icon), name, "Target X a month" (only when it has no bar) and the holder ("Common" or the member) when the
   group has several members, a 5 dp rounded progress bar (track = soft container) and one muted line, then the balance. The bar
   and line come from `EnvelopeProgress` (`domain/model`): remaining fills in ink "N left of M this month"; reserving fills in the
-  inflow colour "Reserved N of M · <next due>"; paid is a full inflow bar and "Paid on <date>" in inflow; contributing fills in
+  inflow colour and follows the NEXT payment only (D-46): line 1 "N of M reserved", line 2 "Payment on <date> · then <date>"
+  (`followingDue`; dates short, with the year only when it is not the current one, `formatShortDate`), both one line with
+  ellipsis; paid is a full inflow bar and one line "✓ Paid on <date>" in inflow plus "· next <date>"; contributing fills in
   inflow "Contributed N of M this month"; overspent is a full bar and "Overspent: N" in the negative colour; none draws nothing.
   `pending > 0` adds "· N to review in Group" (muted). `EnvelopeProgress.fraction` is only a 0..1 clamp of the two database figures.
   Colours come from `LocalMoneyColors` (colour-blind aware). "Total in envelopes" is fixed below the scrolling list (outside it,

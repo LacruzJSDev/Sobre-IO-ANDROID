@@ -85,4 +85,5 @@ internal fun EnvelopeProgressDto.toDomain() = EnvelopeProgress(
     nextDue = nextDue?.let(LocalDate::parse),
     paidOn = paidOn?.let(LocalDate::parse),
     pending = pending,
+    followingDue = followingDue?.let(LocalDate::parse),
 )

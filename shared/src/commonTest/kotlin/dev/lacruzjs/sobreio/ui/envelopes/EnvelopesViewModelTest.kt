@@ -50,7 +50,8 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         nextDue: LocalDate? = null,
         paidOn: LocalDate? = null,
         pending: Int = 0,
-    ) = EnvelopeProgress(id, null, state, current, goal, nextDue, paidOn, pending)
+        followingDue: LocalDate? = null,
+    ) = EnvelopeProgress(id, null, state, current, goal, nextDue, paidOn, pending, followingDue)
 
     private fun loaded(canEdit: Boolean = true): EnvelopesViewModel = viewModel.also {
         it.onEvent(EnvelopesEvent.GroupLoaded("USD", canEdit))
@@ -329,9 +330,10 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     fun progressOfEveryStateReachesTheRowsByEnvelopeId() {
         val due = LocalDate(2026, 12, 5)
         val paid = LocalDate(2026, 11, 5)
+        val later = LocalDate(2027, 3, 19)
         repository.progress = listOf(
             progress("1", ProgressState.Remaining, 25_000, 50_000),
-            progress("2", ProgressState.Reserving, 3_000, 9_000, nextDue = due, pending = 2),
+            progress("2", ProgressState.Reserving, 3_000, 9_000, nextDue = due, pending = 2, followingDue = later),
             progress("3", ProgressState.Contributing, 7_000, 5_000),
             progress("5", ProgressState.Paid, 9_000, 9_000, paidOn = paid),
             progress("6", ProgressState.Overspent, -1_500),
@@ -345,6 +347,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         assertEquals(0.5f, byId["1"]?.fraction)
         assertEquals(due, byId["2"]?.nextDue)
         assertEquals(2, byId["2"]?.pending)
+        assertEquals(later, byId["2"]?.followingDue)
         // Contributing past its goal fills the bar and no more
         assertEquals(1f, byId["3"]?.fraction)
         assertEquals(paid, byId["5"]?.paidOn)

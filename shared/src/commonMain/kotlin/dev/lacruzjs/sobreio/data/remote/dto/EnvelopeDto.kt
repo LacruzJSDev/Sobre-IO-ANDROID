@@ -36,6 +36,7 @@ internal data class EnvelopeProgressDto(
     @SerialName("next_due") val nextDue: String? = null,
     @SerialName("paid_on") val paidOn: String? = null,
     val pending: Int = 0,
+    @SerialName("following_due") val followingDue: String? = null,
 )
 
 /** The envelope columns of the `group_overview` view. */

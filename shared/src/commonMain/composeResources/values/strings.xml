@@ -585,8 +585,10 @@
     <string name="validation_funded_no_bills">Create a Bills envelope first, or turn off the reserve.</string>
     <string name="envelopes_unassigned_subtitle">Free to distribute</string>
     <string name="envelope_progress_remaining">%1$s left of %2$s this month</string>
-    <string name="envelope_progress_reserving">Reserved %1$s of %2$s · %3$s</string>
-    <string name="envelope_progress_reserving_no_date">Reserved %1$s of %2$s</string>
+    <string name="envelope_progress_reserved_of">%1$s of %2$s reserved</string>
+    <string name="envelope_progress_pays_on">Payment on %1$s</string>
+    <string name="envelope_progress_then">then %1$s</string>
+    <string name="envelope_progress_next">next %1$s</string>
     <string name="envelope_progress_paid">✓ Paid on %1$s</string>
     <string name="envelope_progress_contributing">Contributed %1$s of %2$s this month</string>
     <string name="envelope_progress_overspent">Overspent: %1$s</string>

@@ -24,4 +24,12 @@ class DateFormatTest {
     fun theDayIsReadInTheGivenTimeZone() {
         assertEquals("Nov 14, 2026", formatDate(Instant.parse("2026-11-13T23:30:00Z"), "en", TimeZone.of("Europe/Madrid")))
     }
+
+    @Test
+    fun theYearOnlyShowsWhenItIsNotTheCurrentOne() {
+        val date = kotlinx.datetime.LocalDate(2026, 3, 19)
+        assertEquals("19 mar", formatShortDate(date, "es-ES", 2026))
+        assertEquals("Mar 19", formatShortDate(date, "en", 2026))
+        assertEquals("19 mar 2026", formatShortDate(date, "es-ES", 2025))
+    }
 }

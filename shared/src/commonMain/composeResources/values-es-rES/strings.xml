@@ -584,8 +584,10 @@
     <string name="validation_funded_no_bills">Crea antes un sobre de Recibos o desactiva la reserva.</string>
     <string name="envelopes_unassigned_subtitle">Libre para repartir</string>
     <string name="envelope_progress_remaining">Quedan %1$s de %2$s este mes</string>
-    <string name="envelope_progress_reserving">Reservado %1$s de %2$s · %3$s</string>
-    <string name="envelope_progress_reserving_no_date">Reservado %1$s de %2$s</string>
+    <string name="envelope_progress_reserved_of">%1$s de %2$s reservados</string>
+    <string name="envelope_progress_pays_on">Pago el %1$s</string>
+    <string name="envelope_progress_then">después %1$s</string>
+    <string name="envelope_progress_next">siguiente %1$s</string>
     <string name="envelope_progress_paid">✓ Pagado el %1$s</string>
     <string name="envelope_progress_contributing">Aportado %1$s de %2$s este mes</string>
     <string name="envelope_progress_overspent">Gastado de más: %1$s</string>

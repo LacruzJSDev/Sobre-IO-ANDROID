@@ -96,11 +96,11 @@ class EnvelopeMapperTest {
     fun aProgressRowOfTheFunctionIsDecodedWithItsDates() {
         val dto = Json.decodeFromString<EnvelopeProgressDto>(
             """{"envelope_id":"e1","purpose":"bills","state":"reserving","current":3000,"goal":9000,""" +
-                """"next_due":"2026-12-05","paid_on":null,"pending":2}""",
+                """"next_due":"2026-12-05","paid_on":null,"pending":2,"following_due":"2027-03-19"}""",
         )
 
         assertEquals(
-            EnvelopeProgress("e1", EnvelopePurpose.Bills, ProgressState.Reserving, 3000, 9000, LocalDate(2026, 12, 5), null, 2),
+            EnvelopeProgress("e1", EnvelopePurpose.Bills, ProgressState.Reserving, 3000, 9000, LocalDate(2026, 12, 5), null, 2, LocalDate(2027, 3, 19)),
             dto.toDomain(),
         )
     }
