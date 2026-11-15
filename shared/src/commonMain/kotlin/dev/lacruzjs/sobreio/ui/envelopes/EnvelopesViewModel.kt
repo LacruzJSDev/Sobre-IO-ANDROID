@@ -51,7 +51,7 @@ class EnvelopesViewModel(
             }
             is EnvelopesEvent.AssignClicked -> openAssign(event.envelopeId)
             // Handled by the Route, which opens the form
-            is EnvelopesEvent.EditClicked -> Unit
+            is EnvelopesEvent.EditClicked, is EnvelopesEvent.OpenClicked -> Unit
             is EnvelopesEvent.DeleteClicked -> delete(event.envelopeId)
             is EnvelopesEvent.ReopenClicked -> reopen(event.envelopeId)
             EnvelopesEvent.UndoClicked -> undo.undo()

@@ -132,7 +132,7 @@ internal fun AccountSummaryTab(
 
 /** Soft rounded surface the content of a section sits on. */
 @Composable
-private fun SoftTile(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+internal fun SoftTile(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()

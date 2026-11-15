@@ -28,6 +28,8 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
 
     var funding: CommitmentFunding? = null
     var fundingResult: Result<CommitmentFunding?>? = null
+    /** Status by commitment id; an id listed here wins over [funding] (null = nothing reserved). */
+    var fundingById: Map<String, CommitmentFunding?> = emptyMap()
 
     var createdDraft: CommitmentDraft? = null
     var createdLinkedDraft: LinkedCommitmentDraft? = null
@@ -55,6 +57,7 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
 
     override suspend fun getFundingStatus(commitmentId: String): Result<CommitmentFunding?> {
         calls += "getFundingStatus($commitmentId)"
+        if (commitmentId in fundingById) return Result.success(fundingById[commitmentId])
         return fundingResult ?: Result.success(funding)
     }
 

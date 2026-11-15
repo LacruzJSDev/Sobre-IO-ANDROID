@@ -98,8 +98,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe Reopen (snackbar
   with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with Undo, FZ008
   restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as an `EntitySelect` ("Unassigned" by
-  default, each envelope with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row does
-  nothing yet (envelope detail comes later).
+  default, each envelope with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed). Tapping a row
+  opens the envelope detail (see Envelope detail below), also for "Unassigned" and the archived rows.
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
@@ -151,6 +151,28 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
   `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
   screen shows the saved name at once. The email is read-only.
+- Envelope detail (`ui/envelopedetail`, route `EnvelopeDetail(groupId, envelopeId)`, level 2; Koin params by position): opened by
+  tapping any Envelopes row, "Unassigned" and archived ones included (read only: no pencil, no commitments, name from
+  resources, inbox icon; the outlook is skipped for them too). `ScreenHeader` with the avatar, name, group subtitle and a
+  pencil (`canEditEnvelope`: owner or admin of a live group, live envelope, not Unassigned) that opens `EnvelopeForm`; the screen
+  reloads each time it is shown. One scroll: "Available" (`MoneyText` Balance, headline; under it kind, holder with several
+  members, "Target X a month"); "This period" tile from the `envelope_periods` row that holds the group's today (brought
+  forward Balance, assigned Flow, movements Flow, left Balance emphasised); "Really free" from `envelope_outlook_current`
+  (committed Flow negative, free Balance, and when `shortfall > 0` a line in `LocalMoneyColors.negative`); `GroupedColumnChart`
+  of the last 6 periods (`EnvelopePeriod.chartColumns()`: assigned and spent, each clamped at 0 because a column cannot be
+  negative, a display choice and not a balance); "Commitments that fund it" (`EnvelopeDetailRepository.getFundingCommitments`
+  lists the live commitments with a funded version pointing here, `CommitmentRepository.getFundingStatus` keeps only those
+  that reserve money for this envelope now; rows tap to `CommitmentDetail(groupId, accountId, commitmentId)`); a
+  `CollapsibleListSection` of the live `envelope_transfers` of the envelope (exact count with `count(exact)`, pages of 20,
+  newest first, origin label, "From/To <envelope>" and the day in the group time zone, signed `MoneyText` Flow; only
+  `origin = 'manual'` rows swipe Delete: hidden at once, Undo snackbar, `voided_at` written when it ends without Undo); and
+  the 5 latest movements (`MovementRepository.search` with the envelope filter) with "See all". `EnvelopeDetailRepository`
+  (`data/repository`, DTOs and mappers in `data/remote`, `FakeEnvelopeDetailRepository` in tests) wraps `envelope_balances`,
+  `envelope_periods`, `envelope_outlook_current` and `envelope_transfers`; the app only signs the moves for this envelope.
+- "See all" of an envelope pushes `EnvelopeMovements(groupId, envelopeId)` (level 3) above the detail: the same
+  `MovementsViewModel` and `MovementsPane` with `fixedEnvelopeId` (Koin params `groupId, fixedAccountId, fixedEnvelopeId`; the
+  Envelope chip is hidden and the rows show their account instead), through the shared `FixedFilterMovementsScreen` that
+  `AccountMovementsScreen` also uses. Back returns to the detail.
 - Account detail (`ui/accountdetail`, route `AccountDetail(groupId, accountId)`, level 2): opened by tapping an account row
   (swipe actions stay). Header with the account avatar and name, the group as a subtitle (`ScreenHeader(subtitle)`) and a
   pencil (owner and admin, `Group.canEdit`) that opens `AccountForm`; the screen reloads each time it is shown. Flat top
@@ -225,7 +247,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
   `account_transfers`; then the tag step (`transaction_tags` insert / delete). A tag failure keeps the movement, shows the error and
   the next Save only retries the tags. Saved pops the form and the lists reload when shown again.
-- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?)`, one screen in two places): the Movements
+- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?, fixedEnvelopeId: String?)`, one screen in three places): the Movements
   tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
@@ -316,7 +338,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules

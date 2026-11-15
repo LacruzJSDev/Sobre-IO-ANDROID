@@ -78,6 +78,21 @@ data class MovementForm(
     val accountId: String?,
 ) : NavKey
 
+/**
+ * One envelope (level 2 of the Envelopes tab), also the system "Unassigned" one, which is read only. Opened by tapping an
+ * envelope row; back goes to [Group]. The pencil opens [EnvelopeForm], "See all" opens [EnvelopeMovements] above it and a
+ * funding commitment opens [CommitmentDetail].
+ */
+@Serializable
+data class EnvelopeDetail(val groupId: String, val envelopeId: String) : NavKey
+
+/**
+ * The movements of one envelope (level 3 of the Envelopes tab), opened by "See all" in its detail: the Movements list
+ * with the envelope fixed. Back returns to the [EnvelopeDetail].
+ */
+@Serializable
+data class EnvelopeMovements(val groupId: String, val envelopeId: String) : NavKey
+
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable
 data class EnvelopeForm(val groupId: String, val envelopeId: String?) : NavKey

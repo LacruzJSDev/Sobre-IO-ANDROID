@@ -18,12 +18,14 @@ import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormRoute
 import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailRoute
 import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormRoute
+import dev.lacruzjs.sobreio.ui.envelopedetail.EnvelopeDetailRoute
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormRoute
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
 import dev.lacruzjs.sobreio.ui.movements.AccountMovementsRoute
+import dev.lacruzjs.sobreio.ui.movements.EnvelopeMovementsRoute
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
@@ -71,6 +73,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
                     onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
+                    onOpenEnvelope = { envelopeId -> backStack.add(EnvelopeDetail(key.groupId, envelopeId)) },
                     onOpenMovementForm = { movementId, source ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
                     },
@@ -98,6 +101,28 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onBack = { backStack.popToPrevious() },
                     onOpenMovementForm = { movementId, source, accountId ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, accountId))
+                    },
+                )
+            }
+            entry<EnvelopeDetail> { key ->
+                EnvelopeDetailRoute(
+                    groupId = key.groupId,
+                    envelopeId = key.envelopeId,
+                    onBack = { backStack.popToPrevious() },
+                    onEdit = { backStack.add(EnvelopeForm(key.groupId, key.envelopeId)) },
+                    onSeeAllMovements = { backStack.add(EnvelopeMovements(key.groupId, key.envelopeId)) },
+                    onOpenCommitment = { accountId, commitmentId ->
+                        backStack.add(CommitmentDetail(key.groupId, accountId, commitmentId))
+                    },
+                )
+            }
+            entry<EnvelopeMovements> { key ->
+                EnvelopeMovementsRoute(
+                    groupId = key.groupId,
+                    envelopeId = key.envelopeId,
+                    onBack = { backStack.popToPrevious() },
+                    onOpenMovementForm = { movementId, source ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
                     },
                 )
             }

@@ -47,9 +47,10 @@ class MovementsViewModelTest : MainDispatcherTest() {
     private val accounts = FakeAccountRepository(listOf(main, savings))
     private val members = FakeMemberRepository(listOf(ana, luis))
 
-    private fun viewModel(fixedAccountId: String? = null) = MovementsViewModel(
+    private fun viewModel(fixedAccountId: String? = null, fixedEnvelopeId: String? = null) = MovementsViewModel(
         groupId = "g1",
         fixedAccountId = fixedAccountId,
+        fixedEnvelopeId = fixedEnvelopeId,
         movements = ledger,
         groups = groups,
         accounts = accounts,
@@ -58,8 +59,8 @@ class MovementsViewModelTest : MainDispatcherTest() {
         tags = FakeTagRepository(),
     )
 
-    private fun loaded(fixedAccountId: String? = null): MovementsViewModel =
-        viewModel(fixedAccountId).also { it.onEvent(MovementsEvent.Refresh) }
+    private fun loaded(fixedAccountId: String? = null, fixedEnvelopeId: String? = null): MovementsViewModel =
+        viewModel(fixedAccountId, fixedEnvelopeId).also { it.onEvent(MovementsEvent.Refresh) }
 
     @Test
     fun refreshLoadsTheFirstPageWithItsTotalAndTheNames() {
@@ -75,6 +76,23 @@ class MovementsViewModelTest : MainDispatcherTest() {
         assertEquals(listOf("Main", "Savings"), state.accounts.map { it.name })
         assertEquals(2, state.members.size)
         assertEquals(SearchCallOf(MovementsViewModel.PAGE_SIZE, 0, true), ledger.searches.last().let { SearchCallOf(it.limit, it.offset, it.withTotal) })
+    }
+
+    @Test
+    fun anEnvelopeFixedByTheRouteIsAlwaysInTheFilter() {
+        val viewModel = loaded(fixedEnvelopeId = "e1")
+
+        assertEquals("e1", ledger.searches.last().filter.envelopeId)
+        assertEquals("e1", viewModel.state.value.fixedEnvelopeId)
+        assertFalse(viewModel.state.value.hasActiveFilters)
+
+        viewModel.onEvent(MovementsEvent.ChipCleared(MovementsChip.Envelope))
+        viewModel.onEvent(MovementsEvent.TypeSelected(MovementType.Income))
+        viewModel.onEvent(MovementsEvent.ClearAllFilters)
+
+        assertEquals("e1", ledger.searches.last().filter.envelopeId)
+        assertEquals("e1", viewModel.state.value.filter.envelopeId)
+        assertFalse(viewModel.state.value.hasActiveFilters)
     }
 
     private data class SearchCallOf(val limit: Int, val offset: Int, val withTotal: Boolean)

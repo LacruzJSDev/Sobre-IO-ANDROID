@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.envelopes
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,7 +63,7 @@ import org.jetbrains.compose.resources.stringResource
  * A compact total, then "Unassigned" as the first envelope (no swipe: it cannot be edited or deleted), the envelopes in
  * two sections, spending and saving, and a collapsed "Archived" section at the end. Each live row swipes left: Assign
  * for every member, Edit and Delete for owners and admins; archived rows swipe Reopen (owners and admins). One row is
- * open at a time. Tapping a row does nothing yet: the envelope detail is a later screen.
+ * open at a time. Tapping any row ("Unassigned" and the archived ones included) opens the envelope detail.
  */
 @Composable
 internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> Unit) {
@@ -100,8 +101,7 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
                     onOpenChange = { open ->
                         if (open) openEnvelopeId = envelope.id else if (openEnvelopeId == envelope.id) openEnvelopeId = null
                     },
-                    // The detail screen does not exist yet
-                    onClick = {},
+                    onClick = { onEvent(EnvelopesEvent.OpenClicked(envelope.id)) },
                 ) {
                     EnvelopeRow(envelope, state, languageTag)
                 }
@@ -122,7 +122,13 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
             }
         }
         if (state.unassigned != null) {
-            item(key = "unassigned") { UnassignedRow(state.unassignedCents, state.currencyCode, languageTag) }
+            item(key = "unassigned") {
+                UnassignedRow(
+                    balanceCents = state.unassignedCents,
+                    currencyCode = state.currencyCode,
+                    onClick = { onEvent(EnvelopesEvent.OpenClicked(state.unassigned.id)) },
+                )
+            }
         }
         if (state.envelopes.isEmpty() && state.archivedEnvelopes.isEmpty()) {
             item(key = "empty") {
@@ -161,11 +167,11 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
                             onOpenChange = { open ->
                                 if (open) openEnvelopeId = envelope.id else if (openEnvelopeId == envelope.id) openEnvelopeId = null
                             },
-                            onClick = {},
+                            onClick = { onEvent(EnvelopesEvent.OpenClicked(envelope.id)) },
                             content = row,
                         )
                     } else {
-                        row()
+                        Box(modifier = Modifier.clickable(role = Role.Button) { onEvent(EnvelopesEvent.OpenClicked(envelope.id)) }) { row() }
                     }
                 }
             }
@@ -197,9 +203,12 @@ private fun EnvelopesTotal(state: EnvelopesUiState, languageTag: String) {
 
 /** "Unassigned" as one more envelope, the first, drawn exactly like the others (it only lacks the swipe actions). */
 @Composable
-private fun UnassignedRow(balanceCents: Long, currencyCode: String, languageTag: String) {
+private fun UnassignedRow(balanceCents: Long, currencyCode: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val name = stringResource(Res.string.envelopes_unassigned)

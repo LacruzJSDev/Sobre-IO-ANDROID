@@ -25,7 +25,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * The group's ledger: the Movements tab ([fixedAccountId] null) or the level 3 list of one account. Filters and the
+ * The group's ledger: the Movements tab ([fixedAccountId] and [fixedEnvelopeId] null) or the level 3 list of one account or
+ * one envelope. Filters and the
  * search text live here, so they last while the screen does and are not saved on disk. The database filters, orders and
  * pages (`search_movements`); this class chooses what to ask, joins names and hides a row while its delete waits for the
  * snackbar. [searchDebounceMillis] is how long typing must pause before the database is asked.
@@ -33,6 +34,7 @@ import kotlin.math.abs
 class MovementsViewModel(
     private val groupId: String,
     private val fixedAccountId: String?,
+    private val fixedEnvelopeId: String?,
     private val movements: MovementRepository,
     private val groups: GroupRepository,
     private val accounts: AccountRepository,
@@ -43,7 +45,11 @@ class MovementsViewModel(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        MovementsUiState(fixedAccountId = fixedAccountId, filter = MovementFilter(accountId = fixedAccountId)),
+        MovementsUiState(
+            fixedAccountId = fixedAccountId,
+            fixedEnvelopeId = fixedEnvelopeId,
+            filter = MovementFilter(accountId = fixedAccountId, envelopeId = fixedEnvelopeId),
+        ),
     )
     val state: StateFlow<MovementsUiState> = _state.asStateFlow()
 
@@ -76,7 +82,7 @@ class MovementsViewModel(
             is MovementsEvent.ChipClicked -> _state.update { it.copy(sheet = event.chip.sheet()) }
             is MovementsEvent.ChipCleared -> clearChip(event.chip)
             MovementsEvent.ClearAllFilters -> applyFilter(
-                MovementFilter(accountId = fixedAccountId, query = _state.value.filter.query),
+                MovementFilter(accountId = fixedAccountId, envelopeId = fixedEnvelopeId, query = _state.value.filter.query),
                 datePreset = null,
             )
             MovementsEvent.SheetDismissed -> _state.update { it.copy(sheet = MovementsSheet.None) }
@@ -194,7 +200,7 @@ class MovementsViewModel(
         val filter = _state.value.filter
         when (chip) {
             MovementsChip.Account -> applyFilter(filter.copy(accountId = fixedAccountId))
-            MovementsChip.Envelope -> applyFilter(filter.copy(envelopeId = null))
+            MovementsChip.Envelope -> applyFilter(filter.copy(envelopeId = fixedEnvelopeId))
             MovementsChip.Type -> applyFilter(filter.copy(type = null))
             MovementsChip.Dates -> applyFilter(filter.copy(from = null, to = null), datePreset = null)
             MovementsChip.Tags -> applyFilter(filter.copy(tagIds = emptySet()))
