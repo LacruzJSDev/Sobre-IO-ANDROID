@@ -93,7 +93,8 @@ fun MovementFormRoute(
     accountId: String?,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MovementFormViewModel = koinViewModel { parametersOf(groupId, movementId, source, accountId) },
+    prefill: MovementPrefill? = null,
+    viewModel: MovementFormViewModel = koinViewModel { parametersOf(groupId, movementId, source, accountId, prefill) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     if (state.saved) {

@@ -3,6 +3,8 @@ package dev.lacruzjs.sobreio.data.repository
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountDraft
 import dev.lacruzjs.sobreio.domain.model.AccountsSummary
+import dev.lacruzjs.sobreio.domain.model.BalancePoint
+import kotlinx.datetime.LocalDate
 
 /** The accounts of a group. Failures are [dev.lacruzjs.sobreio.domain.error.AppError]s. */
 interface AccountRepository {
@@ -15,6 +17,12 @@ interface AccountRepository {
 
     /** Total, money inside the envelopes and money outside them, in cents, as the database computes them. */
     suspend fun getSummary(groupId: String): Result<AccountsSummary>
+
+    /**
+     * `group_balance_series`: the total balance of all the live accounts of the group at up to [points] evenly spaced
+     * days from [from] to [to] (the last one is [to]), oldest first. The database sums; nothing is summed here.
+     */
+    suspend fun getBalanceSeries(groupId: String, from: LocalDate, to: LocalDate, points: Int = 60): Result<List<BalancePoint>>
 
     /**
      * Creates an account with every field and records [openingBalanceCents] (negative for debt, or 0) as an adjustment,

@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.data.repository
 import dev.lacruzjs.sobreio.data.remote.dto.AccountDto
 import dev.lacruzjs.sobreio.data.remote.dto.AccountStyleDto
 import dev.lacruzjs.sobreio.data.remote.dto.AccountsOverviewDto
+import dev.lacruzjs.sobreio.data.remote.dto.BalancePointDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.mapper.toSummary
@@ -11,6 +12,8 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountDraft
 import dev.lacruzjs.sobreio.domain.model.AccountsSummary
+import dev.lacruzjs.sobreio.domain.model.BalancePoint
+import kotlinx.datetime.LocalDate
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -52,6 +55,19 @@ class SupabaseAccountRepository(client: SupabaseClient) : AccountRepository {
             .decodeSingleOrNull<AccountsOverviewDto>()
             .toSummary()
     }
+
+    override suspend fun getBalanceSeries(groupId: String, from: LocalDate, to: LocalDate, points: Int): Result<List<BalancePoint>> =
+        safeCall {
+            postgrest.rpc(
+                "group_balance_series",
+                buildJsonObject {
+                    put("p_group_id", groupId)
+                    put("p_from", from.toString())
+                    put("p_to", to.toString())
+                    put("p_points", points)
+                },
+            ).decodeList<BalancePointDto>().map { it.toDomain() }
+        }
 
     override suspend fun createAccount(
         groupId: String,

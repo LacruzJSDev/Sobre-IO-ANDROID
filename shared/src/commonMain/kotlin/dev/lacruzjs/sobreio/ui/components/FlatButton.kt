@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -15,7 +16,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * The one button every variant is built on: full width, the app's corner radius, no elevation, and a spinner instead of
- * the text while [isLoading] (clicks are ignored then). Use [PrimaryButton], [SecondaryButton] or [DestructiveButton].
+ * the text while [isLoading] (clicks are ignored then); [compact] makes it a small button for rows. Use [PrimaryButton], [SecondaryButton] or [DestructiveButton].
  */
 @Composable
 internal fun FlatButton(
@@ -26,12 +27,14 @@ internal fun FlatButton(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     enabled: Boolean = true,
+    compact: Boolean = false,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
-        modifier = modifier.fillMaxWidth().heightIn(min = 52.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = if (compact) 36.dp else 52.dp),
         shape = MaterialTheme.shapes.medium,
+        contentPadding = if (compact) PaddingValues(horizontal = 12.dp, vertical = 4.dp) else ButtonDefaults.ContentPadding,
         elevation = null,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
@@ -44,7 +47,7 @@ internal fun FlatButton(
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = contentColor)
         } else {
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
+            Text(text = text, style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
         }
     }
 }

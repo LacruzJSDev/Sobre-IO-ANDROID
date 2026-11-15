@@ -4,6 +4,8 @@ import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountDraft
 import dev.lacruzjs.sobreio.domain.model.AccountsSummary
+import dev.lacruzjs.sobreio.domain.model.BalancePoint
+import kotlinx.datetime.LocalDate
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
 class FakeAccountRepository(var accounts: List<Account> = emptyList()) : AccountRepository {
@@ -33,6 +35,20 @@ class FakeAccountRepository(var accounts: List<Account> = emptyList()) : Account
     override suspend fun getSummary(groupId: String): Result<AccountsSummary> {
         calls += "getSummary($groupId)"
         return summaryResult ?: Result.success(summary)
+    }
+
+    var balanceSeries = emptyList<BalancePoint>()
+    var balanceSeriesResult: Result<List<BalancePoint>>? = null
+
+    /** What the last series read asked for. */
+    var seriesRange: Pair<LocalDate, LocalDate>? = null
+    var seriesPoints: Int? = null
+
+    override suspend fun getBalanceSeries(groupId: String, from: LocalDate, to: LocalDate, points: Int): Result<List<BalancePoint>> {
+        calls += "getBalanceSeries($groupId, $from, $to)"
+        seriesRange = from to to
+        seriesPoints = points
+        return balanceSeriesResult ?: Result.success(balanceSeries)
     }
 
     override suspend fun createAccount(

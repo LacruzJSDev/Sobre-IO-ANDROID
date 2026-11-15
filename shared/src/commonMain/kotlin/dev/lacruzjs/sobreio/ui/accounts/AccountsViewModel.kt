@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.accounts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.model.Account
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
 import kotlin.time.Clock
 
 /** The accounts tab of one group. Currency and role come from the group the Route has already loaded. */
@@ -23,6 +26,7 @@ class AccountsViewModel(
     private val groupId: String,
     private val accounts: AccountRepository,
     private val members: MemberRepository,
+    private val detail: AccountDetailRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountsUiState())
@@ -79,9 +83,18 @@ class AccountsViewModel(
                     )
                 }
             }
+            loadBalanceSeries()
             // Only needed to name holders; without them the rows simply show no holder
             members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         }
+    }
+
+    /** The hero card's chart: the group's total balance over the last three months. Secondary: a failure just leaves it out. */
+    private suspend fun loadBalanceSeries() {
+        val today = detail.getToday(groupId).getOrNull() ?: return
+        val from = today.minus(CHART_MONTHS, DateTimeUnit.MONTH)
+        accounts.getBalanceSeries(groupId, from, today, CHART_POINTS)
+            .onSuccess { series -> _state.update { it.copy(balanceSeries = series.sortedBy { p -> p.day }) } }
     }
 
     private fun List<Account>.sortedByName() = sortedBy { it.name.lowercase() }
@@ -162,5 +175,10 @@ class AccountsViewModel(
                 }
                 .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
+    }
+
+    private companion object {
+        const val CHART_MONTHS = 3
+        const val CHART_POINTS = 60
     }
 }

@@ -4,8 +4,11 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
 import dev.lacruzjs.sobreio.domain.model.AccountsSummary
+import dev.lacruzjs.sobreio.domain.model.BalancePoint
+import kotlinx.datetime.LocalDate
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
+import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -27,7 +30,8 @@ class AccountsViewModelTest : MainDispatcherTest() {
     private val repository = FakeAccountRepository(listOf(bank, cash))
         .also { it.summary = AccountsSummary(totalCents = 105_000, inEnvelopesCents = 105_000, outsideCents = 0) }
     private val memberRepository = FakeMemberRepository()
-    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository) }
+    private val detail = FakeAccountDetailRepository()
+    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository, detail) }
 
     private fun loaded(canEdit: Boolean = true): AccountsViewModel = viewModel.also {
         it.onEvent(AccountsEvent.GroupLoaded("USD", canEdit))
@@ -213,5 +217,36 @@ class AccountsViewModelTest : MainDispatcherTest() {
         assertTrue(viewModel.state.value.hasSeveralMembers)
         assertEquals("Marta", viewModel.state.value.holderName(shared))
         assertNull(viewModel.state.value.holderName(cash))
+    }
+
+    @Test
+    fun theHeroChartReadsTheGroupSeriesOfTheLastThreeMonths() {
+        val series = listOf(BalancePoint(LocalDate(2026, 11, 14), 105_000), BalancePoint(LocalDate(2026, 8, 14), 90_000))
+        repository.balanceSeries = series
+        loaded()
+
+        // Today is 2026-11-14 in the fake: three months back, about 60 points, oldest first
+        assertEquals(LocalDate(2026, 8, 14) to LocalDate(2026, 11, 14), repository.seriesRange)
+        assertEquals(60, repository.seriesPoints)
+        assertEquals(series.reversed(), viewModel.state.value.balanceSeries)
+    }
+
+    @Test
+    fun aFailedSeriesLeavesTheChartOutWithoutBreakingTheTab() {
+        repository.balanceSeriesResult = Result.failure(AppError.Network)
+        loaded()
+
+        assertTrue(viewModel.state.value.balanceSeries.isEmpty())
+        assertNull(viewModel.state.value.error)
+        assertEquals(listOf(bank, cash), viewModel.state.value.accounts)
+    }
+
+    @Test
+    fun noSeriesWhenTodayCannotBeRead() {
+        detail.todayResult = Result.failure(AppError.Network)
+        loaded()
+
+        assertTrue(viewModel.state.value.balanceSeries.isEmpty())
+        assertNull(repository.seriesRange)
     }
 }

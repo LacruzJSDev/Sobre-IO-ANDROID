@@ -1,6 +1,8 @@
 package dev.lacruzjs.sobreio.ui.group
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +22,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
@@ -42,7 +46,7 @@ import dev.lacruzjs.sobreio.generated.resources.tab_accounts_empty
 import dev.lacruzjs.sobreio.generated.resources.tab_envelopes
 import dev.lacruzjs.sobreio.generated.resources.tab_envelopes_empty
 import dev.lacruzjs.sobreio.generated.resources.tab_group
-import dev.lacruzjs.sobreio.generated.resources.tab_group_empty
+import dev.lacruzjs.sobreio.generated.resources.tab_group_badge
 import dev.lacruzjs.sobreio.generated.resources.tab_movements
 import dev.lacruzjs.sobreio.generated.resources.tab_movements_empty
 import dev.lacruzjs.sobreio.ui.accounts.AccountsEvent
@@ -61,6 +65,11 @@ import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesViewModel
 import dev.lacruzjs.sobreio.ui.error.messageRes
+import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryEvent
+import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryPane
+import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
+import dev.lacruzjs.sobreio.domain.model.GroupWarning
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.ui.movements.MovementsEvent
 import dev.lacruzjs.sobreio.ui.movements.MovementsHeaderActions
@@ -81,16 +90,19 @@ fun GroupRoute(
     onOpenGroups: () -> Unit,
     onGroupGone: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenReview: () -> Unit,
     onOpenAccountForm: (accountId: String?) -> Unit,
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     onOpenEnvelope: (envelopeId: String) -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?) -> Unit,
+    onOpenTransferForm: (TransferSuggestion) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
     envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
     movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null, null) },
+    summaryViewModel: GroupSummaryViewModel = koinViewModel { parametersOf(groupId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
@@ -100,15 +112,22 @@ fun GroupRoute(
     // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
     val envelopesState by envelopesViewModel.state.collectAsStateWithLifecycle()
     val movementsState by movementsViewModel.state.collectAsStateWithLifecycle()
+    val summaryState by summaryViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.group) {
         state.group?.let {
             accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit))
             envelopesViewModel.onEvent(EnvelopesEvent.GroupLoaded(it.currencyCode, it.canEdit))
+            // Any member may review a due date, but not in an archived group or one pending deletion
+            summaryViewModel.onEvent(GroupSummaryEvent.GroupLoaded(it.currencyCode, !it.isArchived && !it.isPendingDeletion))
         }
     }
 
     // Back from the group settings: the group may have been renamed, archived or left
-    LaunchedEffect(Unit) { viewModel.onEvent(GroupEvent.Refresh) }
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(GroupEvent.Refresh)
+        // The badge of the Group tab counts the due dates to review, whichever tab is open
+        summaryViewModel.onEvent(GroupSummaryEvent.Refresh)
+    }
 
     if (state.navigateBack) {
         LaunchedEffect(Unit) {
@@ -118,16 +137,39 @@ fun GroupRoute(
     }
 
     GroupScreen(
-        state = state.copy(selectedTab = GroupTab.entries[selectedIndex]),
+        state = state.copy(selectedTab = GroupTab.entries[selectedIndex], pendingCount = summaryState.pendingCount),
         onEvent = { event ->
             when (event) {
                 GroupEvent.MenuClicked -> onOpenGroups()
                 GroupEvent.SettingsClicked -> onOpenSettings()
-                is GroupEvent.TabSelected -> selectedIndex = event.tab.ordinal
+                is GroupEvent.TabSelected -> {
+                    selectedIndex = event.tab.ordinal
+                    // Shown again each time the tab is selected, so it reads the due dates again
+                    if (event.tab == GroupTab.Group) summaryViewModel.onEvent(GroupSummaryEvent.Refresh)
+                }
                 else -> viewModel.onEvent(event)
             }
         },
         modifier = modifier,
+        groupContent = {
+            GroupSummaryPane(
+                state = summaryState,
+                onEvent = { event ->
+                    when (event) {
+                        is GroupSummaryEvent.WarningClicked -> when (val warning = event.warning) {
+                            is GroupWarning.EnvelopeOverspent -> onOpenEnvelope(warning.envelopeId)
+                            is GroupWarning.AccountShortfallOn -> onOpenAccount(warning.accountId)
+                            is GroupWarning.CommitmentsShortfall -> selectedIndex = GroupTab.Envelopes.ordinal
+                        }
+                        is GroupSummaryEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
+                        GroupSummaryEvent.ReviewClicked -> onOpenReview()
+                        is GroupSummaryEvent.SpendingClicked -> onOpenEnvelope(event.envelopeId)
+                        GroupSummaryEvent.SeeAllEnvelopesClicked -> selectedIndex = GroupTab.Envelopes.ordinal
+                        else -> summaryViewModel.onEvent(event)
+                    }
+                },
+            )
+        },
         accountsAction = {
             if (accountsState.canEdit) {
                 AddIconButton(
@@ -215,6 +257,7 @@ fun GroupScreen(
     state: GroupUiState,
     onEvent: (GroupEvent) -> Unit,
     modifier: Modifier = Modifier,
+    groupContent: @Composable () -> Unit = {},
     accountsAction: @Composable () -> Unit = {},
     accountsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_accounts_empty)) },
     envelopesAction: @Composable () -> Unit = {},
@@ -266,7 +309,22 @@ fun GroupScreen(
                 item(
                     selected = tab == state.selectedTab,
                     onClick = { onEvent(GroupEvent.TabSelected(tab)) },
-                    icon = { Icon(painter = painterResource(tab.icon()), contentDescription = null) },
+                    icon = {
+                        if (tab == GroupTab.Group && state.pendingCount > 0) {
+                            val badgeText = stringResource(Res.string.tab_group_badge, state.pendingCount)
+                            BadgedBox(
+                                badge = {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    ) { Text(state.pendingCount.toString()) }
+                                },
+                                modifier = Modifier.semantics { contentDescription = badgeText },
+                            ) { Icon(painter = painterResource(tab.icon()), contentDescription = null) }
+                        } else {
+                            Icon(painter = painterResource(tab.icon()), contentDescription = null)
+                        }
+                    },
                     label = { Text(stringResource(tab.label())) },
                     colors = itemColors,
                 )
@@ -300,7 +358,7 @@ fun GroupScreen(
                     state.selectedTab == GroupTab.Accounts -> accountsContent()
                     state.selectedTab == GroupTab.Envelopes -> envelopesContent()
                     state.selectedTab == GroupTab.Movements -> movementsContent()
-                    else -> EmptyState(message = stringResource(state.selectedTab.emptyMessage()))
+                    else -> groupContent()
                 }
             }
         }
@@ -347,13 +405,6 @@ private fun GroupTab.label(): StringResource = when (this) {
     GroupTab.Accounts -> Res.string.tab_accounts
     GroupTab.Envelopes -> Res.string.tab_envelopes
     GroupTab.Movements -> Res.string.tab_movements
-}
-
-private fun GroupTab.emptyMessage(): StringResource = when (this) {
-    GroupTab.Group -> Res.string.tab_group_empty
-    GroupTab.Accounts -> Res.string.tab_accounts_empty
-    GroupTab.Envelopes -> Res.string.tab_envelopes_empty
-    GroupTab.Movements -> Res.string.tab_movements_empty
 }
 
 @PreviewLightDark

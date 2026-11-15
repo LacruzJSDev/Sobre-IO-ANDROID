@@ -32,8 +32,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
   full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
-  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes and Movements work, Group is still an empty
-  state). Root navigation follows the session (`SessionViewModel`).
+  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes, Movements and Group all work). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
   page above Groups: its header has a menu button (`MenuButton`, three lines), never a back arrow, and system back or the
@@ -75,7 +74,13 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   deletion (`cancel_group_purge`); `getGroup` still hides groups pending deletion. `Group.canEdit` is false for archived
   and pending groups, so Accounts and Envelopes become read only.
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter, `MemberRepository` for holder names): on
-  top the total and, when some accounts are outside the envelopes, two small figures "In envelopes" / "Outside envelopes"
+  top a `HeroCard` (see Rules): "Total in accounts" and the big total (`HeroFigure`) and, when some accounts are outside the
+  envelopes, two figures "In envelopes" / "Outside envelopes" (85 % labels, white `MoneyText` Plain with `ink`) and a thin
+  `HeroSplitBar` of their proportion (`envelopeSplitFraction`: a display ratio of absolute values, hidden when outside is 0);
+  between the two, in the empty middle, a past-only line chart of `group_balance_series` for the last 3 months (about 60 points,
+  `AccountRepository.getBalanceSeries`, today from `AccountDetailRepository.getToday`; it reuses `FreeProjectionChart` with every
+  point in the past so there is no dashed projection; 56 dp like the Group card's, hero foreground colour, below-zero part in
+  `negativeOnContainer`; a failed read leaves it out, the card keeps its height)
   (`group_overview.accounts_total`, `in_envelopes_total`, `outside_total`, never summed in the app). Then the live accounts in two sections,
   "In envelopes" and "Outside envelopes" (empty ones hidden; the "In envelopes" title only shows when there is an outside
   section): `EntityAvatar` (colour + account icon, the initial when there is no icon), name, kind label (+ " · holder", or
@@ -109,6 +114,54 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Undo, FZ008 restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
   Tapping a row opens the envelope detail.
+- Group tab (`ui/groupsummary`, `GroupSummaryViewModel(groupId)` with `GroupSummaryRepository`, `AccountDetailRepository`,
+  `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`): read only, it counts the due dates to review and opens the review
+  screen. Top to bottom: (1) the `HeroCard` (see Rules): a row "Really
+  free today" and "Day X of Y" (period day, a display count), the big `free_today` figure (`HeroFigure`: always white, a
+  "Below zero" chip when negative), a compact 56 dp `FreeProjectionChart` (`ui/components/charts`, paper line, step-after,
+  solid up to today and dashed after, the part below zero in `LocalMoneyColors.negative`, end dot) of `group_free_projection`, a row
+  "Projected on <period end>" with `free_projected` (`titleLarge`) and, right, a translucent chip with the database figure that
+  explains the difference (`GroupSummaryUiState.projectionNote`, nothing is subtracted in the app): `committed_shortfall` ("-X for
+  commitments"), else `pending_out` ("-X in contributions"), else `pending_income` ("+X of expected income"), none when all are 0;
+  when the projection goes below zero after today, a line "Will drop to X on <day>" in the negative colour (`lowestPoint`: the
+  smallest row of the database, a selection, in `HeroColors.negativeOnContainer`); a `HeroSplitBar` of days elapsed over days in the period (`periodProgress`, a display ratio).
+  (2) The review card, always visible: with nothing pending a check icon and "All caught up: nothing to review"; otherwise "N to
+  review", the oldest due date muted and ONE `PrimaryButton` "Review" that opens `GroupReview(groupId)`. N counts
+  `pending_occurrences` without the receiving half of a contribution (`group_transfer_in`, the contributor registers it, FZ018). The Group
+  tab icon carries a `BadgedBox` ink badge with the same count (hidden at 0, label "N to review"); `GroupRoute` refreshes it when the
+  shell is shown, when the tab is selected and when coming back from the review. (3) "Warnings" card (hidden when empty, tappable rows
+  with a warning icon in the negative colour and a chevron): envelopes in `envelope_progress` state `overspent` (opens the envelope
+  detail), accounts with `account_forecast.shortfall > 0` (date from `account_projection` with `shortfallDate`, opens the account
+  detail) and `committed_shortfall > 0` (selects the Envelopes tab). Under each account warning, one muted line per suggestion of
+  `transfer_plan` (`GroupSummaryRepository.getTransferPlan`; `GroupWarning.AccountShortfallOn.hints` as `TransferHint`): "Move N from
+  <account> before <date>" plus "· enters the distribution" (donor outside the envelopes, receiver inside) or "· leaves the
+  distribution" when it crosses the boundary (`BoundaryCrossing`), or "No other account can cover N" when the plan row has no source;
+  each coverable line has a compact "Transfer" button (members who may record) that sends `TransferClicked`, which the Route turns
+  into `MovementForm` with `prefillKind = Transfer`, from, to and amount (`MovementPrefill`, date = today); the user reviews and
+  saves, nothing is written from the tab. A failed plan read just leaves the suggestions out. (4) "Where this period's money went": a bar per envelope that
+  spent in the current period (`SupabaseGroupSummaryRepository.getEnvelopeSpending`: `envelope_periods` rows of `period_start`
+  with `activity < 0`, value = -activity), biggest first (ties by name), top 6 (`MAX_SPENDING_BARS`), name left and `MoneyText` Flow
+  right, bar length = value / biggest (`spendingFraction`, a display ratio) in the outflow (ink) colour; a bar opens the envelope
+  detail and "See all envelopes" selects the Envelopes tab; hidden when nothing was spent. (5) "In and out by period":
+  `GroupedColumnChart` of `group_period_flows` (last 6 periods, `PeriodFlow`, inflow and outflow colours; internal account transfers are
+  not counted by the database). (6) "Next due items": a `LazyRow` of small cards (weekday and day, name, `MoneyText` Flow signed by
+  `DueOccurrence.signedCents`) from `upcoming_occurrences` between tomorrow and the period end; one muted card "Nothing until the
+  end of the period" when there are none. The secondary reads (projection, flows, spending, upcoming, warnings) fail alone: the
+  card is left out, never the tab. Everything comes from the database; the app only signs, joins names, picks rows and sorts.
+- Group review (`ui/groupreview`, route `GroupReview(groupId)`, level 2 of the Group tab, `GroupReviewViewModel(groupId)` with
+  `GroupRepository`, `GroupSummaryRepository`, `AccountDetailRepository`, `AccountRepository`, `EnvelopeRepository`; `GroupReviewScreen`,
+  `ConfirmSheet`): the ONLY place where pending occurrences are reviewed. `ScreenHeader` with back arrow, title "To review" and the
+  group as subtitle. One `SoftTile` per `pending_occurrences` row (kind-icon avatar in ink, name, "<account> - was due on <date>", `MoneyText`
+  Flow signed by `DueOccurrence.signedCents`) with compact "Skip" (`SecondaryButton(compact)`) and "Confirm" buttons for any member
+  of a live group (archived or pending-deletion groups are read only: no buttons). Confirm opens `ConfirmSheet` (`FlatBottomSheet`):
+  `AmountField` with the expected amount, `DateFormTile` (due date, or today when it is later; `maxDate` = group today), and, for an
+  expense whose envelope (not Unassigned) on an account inside the envelopes has less than the amount, the movement form's cover note and
+  optional "Also cover from" `EntitySelect` (`p_cover` = that envelope's full balance). `confirm_occurrence` returns the created fact;
+  the row goes and an Undo snackbar "<name> registered" voids that fact (`transactions` / `account_transfers` `voided_at`,
+  `void_group_transfer` for a contribution), after which the database frees the due date. Skip hides the row at once, shows "<name>
+  skipped" and writes `skip_occurrence` only when the snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing
+  the row back meanwhile; the back arrow and `onCleared` make a waiting skip final). With nothing left it shows "All caught up: nothing
+  to review" and a button back to the group. `FlatButton`, `PrimaryButton` and `SecondaryButton` take `compact` for small row buttons.
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
@@ -234,7 +287,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   embedded, newest first; the ViewModel appends the next page on `LoadMoreOccurrences` (ignored while loading or when all is loaded; a failure keeps the rows and shows a retry in the section); rows: due date, the registered amount signed for the account and the movement's date when it differs,
   or "Skipped"); "Changes" (a `CollapsibleListSection`, folded unless there is a single version; the versions newest first: "From <date>" and "until <date>" with the day before `effective_to`, amount,
   frequency, the account when it differs from the previous version, the envelope of an expense). It has no pending, confirm or skip
-  actions: pending occurrences are reviewed only in the Group tab.
+  actions: pending occurrences are reviewed only in the Group review screen, reached from the Group tab.
 - Commitment form (`ui/commitmentform`, route `CommitmentForm(groupId, accountId, commitmentId?)`, level 3, Koin params by position):
   avatar with the kind icon + name; "Commitment" (type: expandable chips when creating, read only when editing; amount), "Money" (every choice of an account, envelope or group is an `EntitySelect`: account (locked when creating),
   destination account for a transfer, envelope for an expense, hidden with a note when the account is outside the envelopes so the
@@ -250,7 +303,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
-- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?)`, `MovementFormViewModel` with those
+- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?, prefillKind?, prefillFromAccountId?, prefillToAccountId?, prefillAmountCents?)`, `MovementFormViewModel` with those
   four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
   locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
   and income: Account `EntitySelect` (default: the fixed account, else the last one used in this group, stored per user and group in
@@ -307,10 +360,19 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Hero card (`ui/components/HeroCard.kt`, tokens in `ui/theme/HeroColors.kt`): the main figure of a tab (Group: really free money;
+  Accounts: total in accounts) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
+  Group tab's content decides it) dark card with `SobreioShapes.large` that spreads its content top to bottom; `HeroLabel` is the
+  card's text at 85 % alpha; `HeroFigure` draws the big figure through `MoneyText(Plain, ink = onHeroContainer)`, so it is ALWAYS
+  white, and a negative one gets a "Below zero" chip (`showsBelowZeroChip`; light background, text in the LIGHT palette's negative
+  colour so it contrasts); any other figure on the card is a `MoneyText` Plain with `ink = onHeroContainer`; `HeroSplitBar` draws a
+  display ratio. Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
+  (`LocalHeroColors`, `heroColors(dark, colorBlindSafe)`): light `#0C0C0C` / paper; dark `#2D2D2A` / `#F4F4F4` (`primary` is near-white
+  in dark mode, so it is not used); `negativeOnContainer` is the dark palette's negative for lines and text drawn on the card.
 - Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
   `LocalMoneyColors`, chosen by dark/light and the colour-blind preference (`moneyColors(dark, colorBlindSafe)`); `moneyColorFor(role,
   amount, colors, ink)` is the pure rule behind `ui/components/MoneyText` (Flow: positive inflow with "+", otherwise outflow;
-  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink). The destructive red (`error`) never changes. The preference
+  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink; `ink` overrides that colour, paper text on the dark hero card). The destructive red (`error`) never changes. The preference
   lives in `AppPreferencesStore` (`data/local`, `SettingsAppPreferencesStore`, per device); `App` observes it and the Profile screen
   has the "Accessibility" switch. Option lists (`EntityOption.balance`: `MoneyAmount`) show balances as `MoneyText`.
 - Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
@@ -358,7 +420,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (summary), `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules

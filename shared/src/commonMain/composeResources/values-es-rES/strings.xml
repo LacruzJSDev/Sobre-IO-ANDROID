@@ -92,7 +92,6 @@
     <string name="tab_accounts">Cuentas</string>
     <string name="tab_envelopes">Sobres</string>
     <string name="tab_movements">Movimientos</string>
-    <string name="tab_group_empty">Aquí aparecerá el resumen del grupo.</string>
     <string name="tab_accounts_empty">Todavía no hay cuentas.</string>
     <string name="tab_envelopes_empty">Aquí aparecerán los sobres.</string>
     <string name="tab_movements_empty">Aquí aparecerán los movimientos.</string>
@@ -118,7 +117,8 @@
     <string name="coming_soon">Próximamente</string>
 
     <!-- Accounts tab -->
-    <string name="accounts_total">Total</string>
+    <string name="accounts_total">Total en cuentas</string>
+    <string name="hero_below_zero">Por debajo de cero</string>
     <string name="accounts_empty_editor">Todavía no hay cuentas. Crea la primera con el botón +.</string>
     <string name="account_deleted">%1$s eliminada</string>
     <string name="edit_account_title">Editar cuenta</string>
@@ -562,6 +562,8 @@
     <string name="transfer_origin_commitment">Reserva de «%1$s»</string>
     <string name="transfer_origin_commitment_plain">Reserva de compromiso</string>
     <string name="transfer_origin_cover">Cobertura</string>
+    <string name="transfer_origin_release">Liberado de «%1$s»</string>
+    <string name="transfer_origin_release_plain">Reserva de compromiso liberada</string>
     <string name="transfer_from">Desde %1$s</string>
     <string name="transfer_to">A %1$s</string>
     <string name="transfer_deleted">Asignación de %1$s eliminada</string>
@@ -593,4 +595,39 @@
     <string name="envelope_progress_overspent">Gastado de más: %1$s</string>
     <string name="envelope_progress_pending">%1$d por revisar en Grupo</string>
     <string name="commitment_paid_this_period">Pagado este periodo</string>
+
+    <string name="group_summary_free_today">Libre de verdad hoy</string>
+    <string name="group_summary_due_subtitle">%1$s · venció el %2$s</string>
+    <string name="action_skip">Saltar</string>
+    <string name="group_summary_confirm_title">Registrar %1$s</string>
+    <string name="occurrence_recorded">%1$s registrado</string>
+    <string name="occurrence_skipped">%1$s saltado</string>
+    <string name="group_summary_warnings_title">Avisos</string>
+    <string name="warning_envelope_overspent">%1$s: gastado de más %2$s</string>
+    <string name="transfer_hint_move">Mueve %1$s desde %2$s antes del %3$s</string>
+    <string name="transfer_hint_enters">· entra en el reparto</string>
+    <string name="transfer_hint_leaves">· sale del reparto</string>
+    <string name="transfer_hint_uncovered">No hay otra cuenta que pueda cubrir %1$s</string>
+    <string name="transfer_action">Transferir</string>
+    <string name="warning_account_shortfall">%1$s bajará a %2$s el %3$s</string>
+    <string name="warning_commitments_shortfall">Faltan %1$s para los compromisos de este periodo</string>
+    <string name="group_summary_upcoming_empty">Nada hasta fin de periodo</string>
+    <string name="tab_group_badge">%1$d por revisar</string>
+    <string name="group_hero_period_day">Día %1$d de %2$d</string>
+    <string name="group_hero_projected_on">Previsto el %1$s</string>
+    <string name="group_hero_note_commitments">−%1$s por compromisos</string>
+    <string name="group_hero_note_contributions">−%1$s en aportaciones</string>
+    <string name="group_hero_note_income">+%1$s de ingresos previstos</string>
+    <string name="group_hero_drops">Bajará a %1$s el %2$s</string>
+    <string name="accounts_hero_chart_description">Saldo total del %1$s al %2$s: %3$s entonces, %4$s hoy</string>
+    <string name="group_hero_chart_description">Dinero libre de verdad del %1$s al %2$s: %3$s hoy, %4$s al final</string>
+    <string name="group_review_title">Por revisar</string>
+    <string name="group_review_count">%1$d por revisar</string>
+    <string name="group_review_oldest">La más antigua, del %1$s</string>
+    <string name="group_review_open">Revisar</string>
+    <string name="group_review_empty">Todo al día: no hay nada por revisar</string>
+    <string name="group_review_back">Volver al grupo</string>
+    <string name="group_summary_spending_title">En qué se ha ido este periodo</string>
+    <string name="group_summary_spending_all">Ver todos los sobres</string>
+    <string name="group_summary_flows_title">Entradas y salidas por periodo</string>
 </resources>

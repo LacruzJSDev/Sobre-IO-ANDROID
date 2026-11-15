@@ -34,7 +34,7 @@ data class EnvelopeOutlook(
 )
 
 /** Where a move between envelopes came from (`envelope_transfer_origin_enum`). Only [Manual] ones can be deleted. */
-enum class TransferOrigin { Manual, Target, Commitment, Cover }
+enum class TransferOrigin { Manual, Target, Commitment, Cover, Release }
 
 /**
  * A live row of `envelope_transfers`: [amountCents] is positive and moves money from [fromEnvelopeId] to [toEnvelopeId].

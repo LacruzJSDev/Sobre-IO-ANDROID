@@ -84,6 +84,8 @@ import dev.lacruzjs.sobreio.generated.resources.transfer_origin_commitment
 import dev.lacruzjs.sobreio.generated.resources.transfer_origin_commitment_plain
 import dev.lacruzjs.sobreio.generated.resources.transfer_origin_cover
 import dev.lacruzjs.sobreio.generated.resources.transfer_origin_manual
+import dev.lacruzjs.sobreio.generated.resources.transfer_origin_release
+import dev.lacruzjs.sobreio.generated.resources.transfer_origin_release_plain
 import dev.lacruzjs.sobreio.generated.resources.transfer_origin_target
 import dev.lacruzjs.sobreio.generated.resources.transfer_to
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
@@ -434,6 +436,9 @@ private fun TransferItem(row: TransferRow, currencyCode: String, languageTag: St
             ?.let { stringResource(Res.string.transfer_origin_commitment, it) }
             ?: stringResource(Res.string.transfer_origin_commitment_plain)
         TransferOrigin.Cover -> stringResource(Res.string.transfer_origin_cover)
+        TransferOrigin.Release -> transfer.commitmentName
+            ?.let { stringResource(Res.string.transfer_origin_release, it) }
+            ?: stringResource(Res.string.transfer_origin_release_plain)
     }
     val other = if (row.otherIsUnassigned) stringResource(Res.string.envelopes_unassigned) else row.otherName
     val direction = other?.let {

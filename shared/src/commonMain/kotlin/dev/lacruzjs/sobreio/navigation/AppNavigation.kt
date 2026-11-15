@@ -22,11 +22,14 @@ import dev.lacruzjs.sobreio.ui.envelopedetail.EnvelopeDetailRoute
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormRoute
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
+import dev.lacruzjs.sobreio.ui.groupreview.GroupReviewRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
 import dev.lacruzjs.sobreio.ui.movements.AccountMovementsRoute
 import dev.lacruzjs.sobreio.ui.movements.EnvelopeMovementsRoute
+import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
+import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
@@ -70,6 +73,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenGroups = { backStack.showOnlyGroups() },
                     onGroupGone = { backStack.showOnlyGroups() },
                     onOpenSettings = { backStack.add(GroupSettings(key.groupId)) },
+                    onOpenReview = { backStack.add(GroupReview(key.groupId)) },
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
                     onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
@@ -77,7 +81,24 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenMovementForm = { movementId, source ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
                     },
+                    onOpenTransferForm = { suggestion ->
+                        backStack.add(
+                            MovementForm(
+                                groupId = key.groupId,
+                                movementId = null,
+                                source = null,
+                                accountId = null,
+                                prefillKind = EntryKind.Transfer.name,
+                                prefillFromAccountId = suggestion.fromAccountId,
+                                prefillToAccountId = suggestion.toAccountId,
+                                prefillAmountCents = suggestion.amountCents,
+                            ),
+                        )
+                    },
                 )
+            }
+            entry<GroupReview> { key ->
+                GroupReviewRoute(groupId = key.groupId, onBack = { backStack.popToPrevious() })
             }
             entry<AccountDetail> { key ->
                 AccountDetailRoute(
@@ -132,6 +153,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     movementId = key.movementId,
                     source = key.source,
                     accountId = key.accountId,
+                    prefill = MovementPrefill.of(key.prefillKind, key.prefillFromAccountId, key.prefillToAccountId, key.prefillAmountCents),
                     onClose = { backStack.popToPrevious() },
                 )
             }
