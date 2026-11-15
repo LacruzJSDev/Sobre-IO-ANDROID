@@ -24,6 +24,7 @@ import dev.lacruzjs.sobreio.generated.resources.error_fz018_linked_commitment
 import dev.lacruzjs.sobreio.generated.resources.error_fz019_cover
 import dev.lacruzjs.sobreio.generated.resources.error_fz020_purge
 import dev.lacruzjs.sobreio.generated.resources.error_fz021_envelope_type
+import dev.lacruzjs.sobreio.generated.resources.error_fz022_tag_merge
 import dev.lacruzjs.sobreio.generated.resources.error_invalid_code
 import dev.lacruzjs.sobreio.generated.resources.error_invalid_credentials
 import dev.lacruzjs.sobreio.generated.resources.error_network
@@ -68,6 +69,7 @@ private fun businessRuleMessageRes(code: String): StringResource = when (code) {
     "FZ019" -> Res.string.error_fz019_cover
     "FZ020" -> Res.string.error_fz020_purge
     "FZ021" -> Res.string.error_fz021_envelope_type
+    "FZ022" -> Res.string.error_fz022_tag_merge
     // FZ004 and FZ010 are reserved and never raised
     else -> Res.string.error_unknown
 }

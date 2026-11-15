@@ -25,6 +25,7 @@ import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
 import dev.lacruzjs.sobreio.ui.groupreview.GroupReviewRoute
 import dev.lacruzjs.sobreio.ui.groups.GroupsRoute
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsRoute
+import dev.lacruzjs.sobreio.ui.tags.TagsRoute
 import dev.lacruzjs.sobreio.ui.movements.AccountMovementsRoute
 import dev.lacruzjs.sobreio.ui.movements.EnvelopeMovementsRoute
 import dev.lacruzjs.sobreio.domain.model.EntryKind
@@ -163,7 +164,11 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onBack = { backStack.popToPrevious() },
                     onBackToGroups = { backStack.showOnlyGroups() },
                     onEditGroup = { backStack.add(GroupForm(key.groupId)) },
+                    onOpenTags = { backStack.add(Tags(key.groupId)) },
                 )
+            }
+            entry<Tags> { key ->
+                TagsRoute(groupId = key.groupId, onBack = { backStack.popToPrevious() })
             }
             entry<GroupForm> { key ->
                 GroupFormRoute(

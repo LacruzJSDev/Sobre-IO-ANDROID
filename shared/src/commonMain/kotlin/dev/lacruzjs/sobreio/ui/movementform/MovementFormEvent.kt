@@ -19,10 +19,10 @@ sealed interface MovementFormEvent {
     data class DateChanged(val date: LocalDate) : MovementFormEvent
     data class NotesChanged(val value: String) : MovementFormEvent
     data class TagToggled(val id: String) : MovementFormEvent
-    data object NewTagClicked : MovementFormEvent
-    data class NewTagNameChanged(val value: String) : MovementFormEvent
-    data object NewTagConfirmed : MovementFormEvent
-    data object NewTagDismissed : MovementFormEvent
+    /** The search text of the tag picker. */
+    data class TagQueryChanged(val value: String) : MovementFormEvent
+    /** The picker's "Create" row: makes a tag named like the search text and selects it. */
+    data object TagCreateClicked : MovementFormEvent
     data object SaveClicked : MovementFormEvent
     data object Retry : MovementFormEvent
     data object NavigationHandled : MovementFormEvent

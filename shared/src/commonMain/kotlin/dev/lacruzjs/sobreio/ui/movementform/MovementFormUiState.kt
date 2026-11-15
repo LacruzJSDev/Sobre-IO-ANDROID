@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import dev.lacruzjs.sobreio.domain.TagPickerOptions
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.EntryKind
@@ -7,11 +8,10 @@ import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.Tag
+import dev.lacruzjs.sobreio.domain.tagPickerOptions
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
-
-const val MAX_TAG_NAME_LENGTH = 50
 
 data class MovementFormUiState(
     val isEditing: Boolean = false,
@@ -60,12 +60,18 @@ data class MovementFormUiState(
 
     val tags: List<Tag> = emptyList(),
     val selectedTagIds: Set<String> = emptySet(),
-    val newTagOpen: Boolean = false,
-    val newTagName: String = "",
-    val newTagError: StringResource? = null,
-    val newTagFailure: AppError? = null,
+    /** What the user typed in the tag picker's search field. */
+    val tagQuery: String = "",
+    val tagError: StringResource? = null,
+    val tagFailure: AppError? = null,
     val isCreatingTag: Boolean = false,
 ) {
+    /** The tags the movement carries, in the order of [tags]. */
+    val selectedTags: List<Tag> get() = tags.filter { it.id in selectedTagIds }
+
+    /** Rows, suggestion and "Create" row of the tag picker for the current search text. */
+    val tagPicker: TagPickerOptions get() = tagPickerOptions(tags, tagQuery)
+
     val selectedAccount: Account? get() = accounts.firstOrNull { it.id == accountId }
 
     /** An account not chosen yet is assumed to be inside the envelopes, so the envelope tile shows. */

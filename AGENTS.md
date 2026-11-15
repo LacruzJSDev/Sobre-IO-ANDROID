@@ -303,6 +303,24 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
+- Tags (decision D-49 in the DB repo; `ui/tags`, route `Tags(groupId)`, level 3 of the Group tab, `TagsViewModel(groupId)` with
+  `TagRepository` and `GroupRepository`; `TagsScreen`, `TagSheet`, `MergeSheet`): opened by the "Manage" button of the
+  group settings' "Tags" section (`GroupSettingsUiState.tagCount`, "N tags", a compact `SecondaryButton`, no chevron row; every
+  member sees it). Any member of a live group manages tags (`TagsUiState.canEdit`). `ScreenHeader` with back, title, group
+  subtitle and "+". Rows come from `tag_usage` (`TagRepository.getUsage`: live and archived tags with the count of live
+  movements, counted by the database): a `TagDot` (colour), name and "N movements". Live rows swipe Edit, Merge
+  (`mergeAction`, hidden with a single live tag) and Delete (archive at once, Undo unarchives); a collapsed "Archived (N)" section
+  with Reopen (a clash with a live name shows `AppError.DuplicateName`). "+" and Edit open `TagSheet` (name `FormTextField`
+  at most 50, the `TagColorPicker` swatches, Save; a duplicate name shows under the field). Merge opens `MergeSheet` ("Merge X
+  with…": an `EntitySelect` of the other live tags and a note that X will be archived), calls `merge_tags` and ends with a plain
+  notice "Tags merged" (`UndoController.notify`, no Undo: it cannot be undone). The tag palette is `ui/theme/TagColor` (10 soft
+  colours, light hex stored in `tags.color`, a deeper dark variant, names `tag_color_<key>`), separate from `EntityColor`;
+  a new tag starts on `TagColor.Default`.
+- Tag names: the database stores them trimmed with inner whitespace collapsed and keeps them unique among live tags ignoring
+  case and accents. `domain/TagMatching.kt` mirrors that key (`normalizeTagKey`, `normalizeTagName`, unit tested) and drives the
+  picker through `tagPickerOptions(tags, query)`: rows whose key contains the text, a `suggestion` (the same tag, or one within one
+  edit when both keys have at least 4 letters) and `createName` (null when the key matches a live tag exactly, or the name
+  is over 50 characters).
 - Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?, prefillKind?, prefillFromAccountId?, prefillToAccountId?, prefillAmountCents?)`, `MovementFormViewModel` with those
   four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
   locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
@@ -314,7 +332,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   takes only what is needed. Editing a higher expense shows a note that nothing is covered. Transfer: From / To (different), a
   "To another group" switch on create (destination group of the same currency + its account, `create_group_transfer`, both envelopes
   Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
-  expense and income, Tags as toggle chips plus "+ New" (a small sheet; duplicate name shows the error). Writes go through
+  expense and income, Tags: an expandable multi-select tile (`TagPicker`) with a search field, a "Did you mean X?" line, a first
+  "Create <text>" row (`TagRepository.createTag` with the default colour, selected at once) and the live tags with a colour dot and
+  a check; the chosen ones show as removable chips under the tile. Writes go through
   `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
   of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
@@ -420,7 +440,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules

@@ -66,6 +66,9 @@ import dev.lacruzjs.sobreio.generated.resources.invitations_empty
 import dev.lacruzjs.sobreio.generated.resources.member_former
 import dev.lacruzjs.sobreio.generated.resources.settings_section_accepted
 import dev.lacruzjs.sobreio.generated.resources.settings_section_pending
+import dev.lacruzjs.sobreio.generated.resources.settings_section_tags
+import dev.lacruzjs.sobreio.generated.resources.settings_tags_count
+import dev.lacruzjs.sobreio.generated.resources.action_manage
 import dev.lacruzjs.sobreio.generated.resources.member_name_you
 import dev.lacruzjs.sobreio.generated.resources.settings_section_invitations
 import dev.lacruzjs.sobreio.generated.resources.settings_section_members
@@ -75,6 +78,7 @@ import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
+import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.changeRoleAction
 import dev.lacruzjs.sobreio.ui.components.removeMemberAction
@@ -85,6 +89,7 @@ import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -96,6 +101,7 @@ fun GroupSettingsRoute(
     onBack: () -> Unit,
     onBackToGroups: () -> Unit,
     onEditGroup: () -> Unit,
+    onOpenTags: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupSettingsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
@@ -117,6 +123,7 @@ fun GroupSettingsRoute(
             when (event) {
                 GroupSettingsEvent.BackClicked -> onBack()
                 GroupSettingsEvent.EditClicked -> onEditGroup()
+                GroupSettingsEvent.TagsClicked -> onOpenTags()
                 else -> viewModel.onEvent(event)
             }
         },
@@ -226,6 +233,8 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
             }
         }
 
+        item(key = "tags") { TagsSection(state.tagCount) { onEvent(GroupSettingsEvent.TagsClicked) } }
+
         if (state.canInvite) {
             item(key = "invitations-title") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -285,6 +294,26 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(start = 8.dp, top = 20.dp, bottom = 4.dp),
     )
+}
+
+/** Every member sees how many tags the group has and opens the Tags screen with a compact button, no chevron row. */
+@Composable
+private fun TagsSection(count: Int?, onManage: () -> Unit) {
+    Column {
+        SectionTitle(stringResource(Res.string.settings_section_tags))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = count?.let { pluralStringResource(Res.plurals.settings_tags_count, it, it) }.orEmpty(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SecondaryButton(text = stringResource(Res.string.action_manage), onClick = onManage, compact = true)
+        }
+    }
 }
 
 @Composable

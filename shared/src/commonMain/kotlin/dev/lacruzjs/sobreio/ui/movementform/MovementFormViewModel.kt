@@ -10,6 +10,7 @@ import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.TagRepository
+import dev.lacruzjs.sobreio.domain.MAX_TAG_NAME_LENGTH
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
@@ -32,7 +33,9 @@ import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
 import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
+import dev.lacruzjs.sobreio.domain.normalizeTagName
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
+import dev.lacruzjs.sobreio.ui.theme.TagColor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -100,12 +103,8 @@ class MovementFormViewModel(
             is MovementFormEvent.TagToggled -> edit {
                 it.copy(selectedTagIds = if (event.id in it.selectedTagIds) it.selectedTagIds - event.id else it.selectedTagIds + event.id)
             }
-            MovementFormEvent.NewTagClicked ->
-                _state.update { it.copy(newTagOpen = true, newTagName = "", newTagError = null, newTagFailure = null) }
-            is MovementFormEvent.NewTagNameChanged ->
-                _state.update { it.copy(newTagName = event.value, newTagError = null, newTagFailure = null) }
-            MovementFormEvent.NewTagConfirmed -> createTag()
-            MovementFormEvent.NewTagDismissed -> _state.update { it.copy(newTagOpen = false) }
+            is MovementFormEvent.TagQueryChanged -> _state.update { it.copy(tagQuery = event.value, tagError = null, tagFailure = null) }
+            MovementFormEvent.TagCreateClicked -> createTag()
             MovementFormEvent.SaveClicked -> save()
             MovementFormEvent.Retry -> load()
             MovementFormEvent.NavigationHandled -> _state.update { it.copy(saved = false) }
@@ -179,39 +178,44 @@ class MovementFormViewModel(
 
     // Tags ---------------------------------------------------------------------------------------------------------
 
+    /**
+     * The picker's "Create" row: a tag named like the search text, with the palette's first colour, selected at once.
+     * The picker only offers it when no live tag has that name (ignoring case and accents); if the database still says
+     * the name is taken, the error shows under the search field.
+     */
     private fun createTag() {
         val current = _state.value
         if (current.isCreatingTag) return
-        val name = current.newTagName.trim()
+        val name = normalizeTagName(current.tagQuery)
         val error = when {
             name.isEmpty() -> Res.string.validation_required
             name.length > MAX_TAG_NAME_LENGTH -> Res.string.validation_tag_name_too_long
             else -> null
         }
         if (error != null) {
-            _state.update { it.copy(newTagError = error) }
+            _state.update { it.copy(tagError = error) }
             return
         }
-        _state.update { it.copy(isCreatingTag = true, newTagError = null, newTagFailure = null) }
+        _state.update { it.copy(isCreatingTag = true, tagError = null, tagFailure = null) }
         viewModelScope.launch {
-            tags.createTag(groupId, name)
+            tags.createTag(groupId, name, TagColor.Default.hex)
                 .onSuccess { tag ->
                     _state.update {
                         it.copy(
                             isCreatingTag = false,
-                            newTagOpen = false,
+                            tagQuery = "",
                             tags = (it.tags + tag).sortedBy { t -> t.name.lowercase() },
                             selectedTagIds = it.selectedTagIds + tag.id,
                         )
                     }
                 }
                 .onFailure { e ->
-                    val error = e.asAppError()
+                    val failure = e.asAppError()
                     _state.update {
-                        if (error == AppError.DuplicateName) {
-                            it.copy(isCreatingTag = false, newTagError = Res.string.error_duplicate_name)
+                        if (failure == AppError.DuplicateName) {
+                            it.copy(isCreatingTag = false, tagError = Res.string.error_duplicate_name)
                         } else {
-                            it.copy(isCreatingTag = false, newTagFailure = error)
+                            it.copy(isCreatingTag = false, tagFailure = failure)
                         }
                     }
                 }

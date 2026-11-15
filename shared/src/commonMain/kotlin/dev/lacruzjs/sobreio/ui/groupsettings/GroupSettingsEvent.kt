@@ -15,6 +15,9 @@ sealed interface GroupSettingsEvent {
     /** Details: the "Edit" button. Handled by the Route, which opens the group form. */
     data object EditClicked : GroupSettingsEvent
 
+    /** Tags section: the "Manage" button. Handled by the Route, which opens the Tags screen. */
+    data object TagsClicked : GroupSettingsEvent
+
     /** Members (owner only): swipe actions of another member's row. */
     data class RoleClicked(val userId: String) : GroupSettingsEvent
     data class RoleSelected(val role: GroupRole) : GroupSettingsEvent

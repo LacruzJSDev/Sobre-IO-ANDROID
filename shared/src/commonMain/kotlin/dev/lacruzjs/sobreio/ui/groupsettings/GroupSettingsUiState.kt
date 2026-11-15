@@ -19,6 +19,8 @@ data class GroupSettingsUiState(
     val pendingInvitations: List<Invitation> = emptyList(),
     /** Accepted invitations: who joined and when. Read only; only loaded for owners and admins. */
     val acceptedInvitations: List<Invitation> = emptyList(),
+    /** How many live tags the group has, for the Tags section; null until they load or when they fail to. */
+    val tagCount: Int? = null,
     val isLoading: Boolean = true,
     /** Failure of loading the group. */
     val error: AppError? = null,

@@ -3,7 +3,6 @@ package dev.lacruzjs.sobreio.ui.movementform
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,7 +30,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_create
 import dev.lacruzjs.sobreio.generated.resources.action_new_movement
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.amount_placeholder
@@ -47,7 +45,6 @@ import dev.lacruzjs.sobreio.generated.resources.field_envelope
 import dev.lacruzjs.sobreio.generated.resources.field_from
 import dev.lacruzjs.sobreio.generated.resources.field_notes
 import dev.lacruzjs.sobreio.generated.resources.field_other_group
-import dev.lacruzjs.sobreio.generated.resources.field_tag_name
 import dev.lacruzjs.sobreio.generated.resources.field_to
 import dev.lacruzjs.sobreio.generated.resources.filter_tags
 import dev.lacruzjs.sobreio.generated.resources.form_section_details
@@ -61,13 +58,10 @@ import dev.lacruzjs.sobreio.generated.resources.movement_kind_income
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_transfer
 import dev.lacruzjs.sobreio.generated.resources.movement_no_groups_note
 import dev.lacruzjs.sobreio.generated.resources.movement_outside_note
-import dev.lacruzjs.sobreio.generated.resources.movement_tag_new
-import dev.lacruzjs.sobreio.generated.resources.movement_tag_new_title
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
@@ -75,7 +69,6 @@ import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.LargeAmountField
-import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
@@ -116,7 +109,7 @@ fun MovementFormRoute(
 }
 
 /** Which expandable select of the form is open; one at a time keeps the form short. */
-private enum class OpenSelect { None, Account, Envelope, Cover, ToAccount, DestGroup, DestAccount }
+private enum class OpenSelect { None, Account, Envelope, Cover, ToAccount, DestGroup, DestAccount, Tags }
 
 /**
  * Same layout as the other forms: the kind row and the big amount, then Money (account and envelope, or from and to),
@@ -233,27 +226,17 @@ fun MovementFormScreen(
 
                 if (!state.isTransfer) {
                     FormSection(title = stringResource(Res.string.filter_tags)) {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.tags.forEach { tag ->
-                                FormChip(
-                                    label = tag.name,
-                                    selected = tag.id in state.selectedTagIds,
-                                    enabled = enabled,
-                                    onClick = { onEvent(MovementFormEvent.TagToggled(tag.id)) },
-                                )
-                            }
-                            FormChip(
-                                label = stringResource(Res.string.movement_tag_new),
-                                selected = false,
-                                enabled = enabled,
-                                onClick = { onEvent(MovementFormEvent.NewTagClicked) },
-                            )
-                        }
+                        TagPicker(
+                            state = state,
+                            expanded = open == OpenSelect.Tags,
+                            onToggle = { toggle(OpenSelect.Tags) },
+                            onEvent = onEvent,
+                            enabled = enabled,
+                        )
                     }
                 }
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
 
-                if (state.newTagOpen) NewTagSheet(state, onEvent)
             }
         }
     }
@@ -362,32 +345,6 @@ private fun TransferTiles(
             error = state.toAccountError,
         )
         if (state.passesThroughUnassigned) FormNote(stringResource(Res.string.movement_boundary_note))
-    }
-}
-
-/** Short one-step sheet to create a tag, which is selected at once. */
-@Composable
-private fun NewTagSheet(state: MovementFormUiState, onEvent: (MovementFormEvent) -> Unit) {
-    FlatBottomSheet(
-        title = stringResource(Res.string.movement_tag_new_title),
-        onDismiss = { onEvent(MovementFormEvent.NewTagDismissed) },
-    ) {
-        FormTextField(
-            value = state.newTagName,
-            onValueChange = { onEvent(MovementFormEvent.NewTagNameChanged(it)) },
-            label = stringResource(Res.string.field_tag_name),
-            errorRes = state.newTagError,
-            enabled = !state.isCreatingTag,
-            imeAction = ImeAction.Done,
-            onImeAction = { onEvent(MovementFormEvent.NewTagConfirmed) },
-        )
-        ErrorText(state.newTagFailure, modifier = Modifier.fillMaxWidth())
-        PrimaryButton(
-            text = stringResource(Res.string.action_create),
-            onClick = { onEvent(MovementFormEvent.NewTagConfirmed) },
-            isLoading = state.isCreatingTag,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 

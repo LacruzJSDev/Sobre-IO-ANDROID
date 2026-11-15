@@ -3,11 +3,13 @@ package dev.lacruzjs.sobreio.data.remote.mapper
 import dev.lacruzjs.sobreio.data.remote.dto.MovementSearchDto
 import dev.lacruzjs.sobreio.data.remote.dto.PeriodDto
 import dev.lacruzjs.sobreio.data.remote.dto.TagDto
+import dev.lacruzjs.sobreio.data.remote.dto.TagUsageDto
 import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.PeriodRange
 import dev.lacruzjs.sobreio.domain.model.Tag
+import dev.lacruzjs.sobreio.domain.model.TagUsage
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -32,6 +34,8 @@ internal fun MovementSearchDto.toDomain() = Movement(
 )
 
 internal fun TagDto.toDomain() = Tag(id = id, groupId = groupId, name = name, color = color)
+
+internal fun TagUsageDto.toDomain() = TagUsage(id = tagId, name = name, color = color, archivedAt = archivedAt, movements = movements)
 
 internal fun PeriodDto.toDomain() = PeriodRange(LocalDate.parse(startDate), LocalDate.parse(endDate))
 
