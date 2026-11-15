@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.generated.resources.movement_no_tags
 import dev.lacruzjs.sobreio.generated.resources.movement_tags_more
 import dev.lacruzjs.sobreio.generated.resources.movement_row_aside
 import dev.lacruzjs.sobreio.ui.components.TagDot
@@ -364,9 +365,9 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
                 it,
             )
         }
-        // The envelope is the screen's own, or the default one: naming it adds nothing
+        // On an envelope's own list it would repeat on every row
         state.fixedEnvelopeId != null -> null
-        envelope == null || envelope.kind == EnvelopeKind.System -> null
+        envelope == null || envelope.kind == EnvelopeKind.System -> stringResource(Res.string.envelopes_unassigned)
         else -> envelope.name
     }
     val tags = movement.tagIds.mapNotNull { id -> state.tags.firstOrNull { it.id == id } }
@@ -382,14 +383,14 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
             color = EntityColor.fromHex(account?.color),
         )
         Column(modifier = Modifier.weight(1f).padding(start = 16.dp, end = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     // Takes what is left, never pushing the envelope out
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
                 )
                 if (aside != null) {
                     Text(
@@ -398,7 +399,7 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 4.dp).widthIn(max = 130.dp),
+                        modifier = Modifier.padding(start = 4.dp).widthIn(max = 130.dp).alignByBaseline(),
                     )
                 }
             }
@@ -418,7 +419,7 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
 /** Up to this many tags fit on line 2; with more, one fewer is shown and a "+N" chip says how many are left. */
 private const val MAX_ROW_TAGS = 3
 
-/** Line 2 of a movement: its tags as small chips, or the same empty height so the rows never shift. */
+/** Line 2 of a movement: its tags as small chips, or "No tags", always at the same height so rows never shift. */
 @Composable
 private fun MovementTags(tags: List<Tag>) {
     Row(
@@ -445,6 +446,13 @@ private fun MovementTags(tags: List<Tag>) {
                     modifier = Modifier.widthIn(max = 90.dp),
                 )
             }
+        }
+        if (tags.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.movement_no_tags),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         if (tags.size > shown.size) {
             Text(

@@ -359,9 +359,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   and search text live in the ViewModel (not saved on disk). The list is grouped by day (`groupByDay`, pure: "Today · 14 Nov",
   "Yesterday · 13 Nov", then "Fri 12 Nov"), 50 per page with load-more near the end and a progress row, and its own empty
   states (no movements, no results with "Clear filters"). Row (`MovementRow`): the ACCOUNT's avatar (colour + account icon), line 1 the notes or the kind label, cut
-  (weight without fill) to leave room for "· <envelope>" next to them (max 130 dp; not shown for Unassigned, which is the
-  default, nor on an envelope's own list; a transfer shows "To/From <account>" there), line 2 ALWAYS reserved (22 dp) for
-  the tags as small chips with their colour dot (`MovementTags`: up to 3, or 2 and "+N"), so rows keep one height; the amount
+  (weight without fill) to leave room for "· <envelope>" next to them, baseline aligned (max 130 dp; "Unassigned" by name too;
+  not on an envelope's own list; a transfer shows "To/From <account>" there), line 2 ALWAYS filled (22 dp): the tags as small
+  chips with their colour dot (`MovementTags`: up to 3, or 2 and "+N") or a muted "No tags", so rows keep one height; the amount
   on the right (unsigned for a transfer in the group ledger). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
   `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs have no swipe
   (they are voided as a pair with `void_group_transfer`, not offered yet); edit comes with the form.

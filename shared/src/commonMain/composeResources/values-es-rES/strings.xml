@@ -674,4 +674,5 @@
     </plurals>
     <string name="movement_row_aside">· %1$s</string>
     <string name="movement_tags_more">+%1$d</string>
+    <string name="movement_no_tags">Sin etiquetas</string>
 </resources>
