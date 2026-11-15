@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.accounts
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
+import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
@@ -17,6 +18,8 @@ data class AccountsUiState(
     val inEnvelopesCents: Long = 0,
     /** Money in the accounts outside the envelopes, as the database computes it. */
     val outsideCents: Long = 0,
+    /** `group_balance_series`: the group's total balance over the last three months, oldest first; empty until it loads. */
+    val balanceSeries: List<BalancePoint> = emptyList(),
     /** The active members: holder names are shown only when there are several. */
     val members: List<Member> = emptyList(),
     /** Set by [AccountsEvent.GroupLoaded]; money is formatted with it. */

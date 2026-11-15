@@ -10,6 +10,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
 import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import kotlinx.datetime.LocalDate
 
 /** Calls are recorded in [calls]; set the `*Result` fields to script failures. */
@@ -34,6 +35,8 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     var freeProjection = emptyList<FreePoint>()
     var periodFlows = emptyList<PeriodFlow>()
     var spending = emptyList<EnvelopeSpending>()
+    var transferPlan = emptyList<TransferSuggestion>()
+    var transferPlanResult: Result<List<TransferSuggestion>>? = null
 
     var outlookResult: Result<GroupOutlook>? = null
     var projectionResult: Result<List<FreePoint>>? = null
@@ -73,6 +76,11 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     override suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>> {
         calls += "getFreeProjection($groupId)"
         return projectionResult ?: Result.success(freeProjection)
+    }
+
+    override suspend fun getTransferPlan(groupId: String): Result<List<TransferSuggestion>> {
+        calls += "getTransferPlan($groupId)"
+        return transferPlanResult ?: Result.success(transferPlan)
     }
 
     override suspend fun getPeriodFlows(groupId: String, periods: Int): Result<List<PeriodFlow>> {

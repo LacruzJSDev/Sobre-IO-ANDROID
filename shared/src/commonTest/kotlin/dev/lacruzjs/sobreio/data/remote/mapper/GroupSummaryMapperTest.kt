@@ -5,6 +5,7 @@ import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeSpendingDto
 import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
 import dev.lacruzjs.sobreio.data.remote.dto.FreePointDto
 import dev.lacruzjs.sobreio.data.remote.dto.GroupOutlookDto
+import dev.lacruzjs.sobreio.data.remote.dto.TransferPlanDto
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -72,5 +73,19 @@ class GroupSummaryMapperTest {
 
         assertEquals("e1", spending.envelopeId)
         assertEquals(12_050, spending.spentCents)
+    }
+
+    @Test
+    fun transferPlanRowsKeepTheSourceTheAmountAndTheBoundary() {
+        val covered = TransferPlanDto("a2", "a1", 2_000, "2026-11-22", true).toDomain()
+        val uncovered = TransferPlanDto(null, "a1", 500, "2026-11-22", false).toDomain()
+
+        assertEquals("a2", covered.fromAccountId)
+        assertEquals("a1", covered.toAccountId)
+        assertEquals(2_000, covered.amountCents)
+        assertEquals(LocalDate(2026, 11, 22), covered.neededBy)
+        assertTrue(covered.crossesBoundary)
+        assertEquals(null, uncovered.fromAccountId)
+        assertFalse(uncovered.crossesBoundary)
     }
 }

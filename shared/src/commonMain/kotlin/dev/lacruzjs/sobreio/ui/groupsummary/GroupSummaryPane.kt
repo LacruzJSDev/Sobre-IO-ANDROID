@@ -1,6 +1,17 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
 import androidx.compose.foundation.background
+import dev.lacruzjs.sobreio.ui.components.SecondaryButton
+import dev.lacruzjs.sobreio.generated.resources.transfer_hint_uncovered
+import dev.lacruzjs.sobreio.generated.resources.transfer_hint_move
+import dev.lacruzjs.sobreio.generated.resources.transfer_hint_leaves
+import dev.lacruzjs.sobreio.generated.resources.transfer_hint_enters
+import dev.lacruzjs.sobreio.generated.resources.transfer_action
+import dev.lacruzjs.sobreio.domain.model.TransferHint
+import dev.lacruzjs.sobreio.domain.model.BoundaryCrossing
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -306,24 +317,86 @@ private fun WarningsCard(state: GroupSummaryUiState, languageTag: String, onEven
                     formatMoney(warning.cents, state.currencyCode, languageTag),
                 )
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(role = Role.Button) { onEvent(GroupSummaryEvent.WarningClicked(warning)) },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Warning,
-                    contentDescription = null,
-                    tint = LocalMoneyColors.current.negative,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                Icon(
-                    imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) { onEvent(GroupSummaryEvent.WarningClicked(warning)) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = null,
+                        tint = LocalMoneyColors.current.negative,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Icon(
+                        imageVector = Icons.Filled.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (warning is GroupWarning.AccountShortfallOn) {
+                    warning.hints.forEach { hint -> TransferHintRow(hint, state, languageTag, onEvent) }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One suggestion of `transfer_plan` under its account's warning: "Move N from X before D" (muted note when it crosses the
+ * envelope boundary) and a compact "Transfer" button that opens the movement form already filled; with no source account
+ * it only says that nothing can cover the amount. The button is for members who may record, in a live group.
+ */
+@Composable
+private fun TransferHintRow(
+    hint: TransferHint,
+    state: GroupSummaryUiState,
+    languageTag: String,
+    onEvent: (GroupSummaryEvent) -> Unit,
+) {
+    val suggestion = hint.suggestion
+    val amount = formatMoney(suggestion.amountCents, state.currencyCode, languageTag)
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 32.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        val fromName = hint.fromName
+        if (fromName == null) {
+            Text(
+                text = stringResource(Res.string.transfer_hint_uncovered, amount),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            val move = stringResource(Res.string.transfer_hint_move, amount, fromName, formatDate(suggestion.neededBy, languageTag))
+            val note = when (hint.crossing) {
+                BoundaryCrossing.Enters -> stringResource(Res.string.transfer_hint_enters)
+                BoundaryCrossing.Leaves -> stringResource(Res.string.transfer_hint_leaves)
+                null -> null
+            }
+            Text(
+                text = buildAnnotatedString {
+                    append(move)
+                    if (note != null) {
+                        append(" ")
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) { append(note) }
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            if (state.canRecord) {
+                SecondaryButton(
+                    text = stringResource(Res.string.transfer_action),
+                    onClick = { onEvent(GroupSummaryEvent.TransferClicked(suggestion)) },
+                    compact = true,
+                    modifier = Modifier.width(112.dp),
                 )
             }
         }

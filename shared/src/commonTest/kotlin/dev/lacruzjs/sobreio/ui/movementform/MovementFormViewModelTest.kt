@@ -64,8 +64,8 @@ class MovementFormViewModelTest : MainDispatcherTest() {
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
     private val last = FakeLastAccountStore()
 
-    private fun vm(movementId: String? = null, source: String? = null, fixed: String? = null) =
-        MovementFormViewModel("g1", movementId, source, fixed, form, groups, accounts, envelopes, tags, detail, auth, last)
+    private fun vm(movementId: String? = null, source: String? = null, fixed: String? = null, prefill: MovementPrefill? = null) =
+        MovementFormViewModel("g1", movementId, source, fixed, prefill, form, groups, accounts, envelopes, tags, detail, auth, last)
 
     private fun MovementFormViewModel.type(amount: String) = onEvent(MovementFormEvent.AmountChanged(amount))
 
@@ -202,6 +202,43 @@ class MovementFormViewModelTest : MainDispatcherTest() {
         vm.onEvent(MovementFormEvent.EnvelopeSelected("broke"))
 
         assertNull(vm.state.value.coverEnvelopeId)
+    }
+
+    @Test
+    fun aTransferPrefillOpensTheFormFilledAsATransferDatedToday() {
+        val s = vm(prefill = MovementPrefill(EntryKind.Transfer, "acc2", "acc", 12_550)).state.value
+
+        assertFalse(s.isLoading)
+        assertEquals(EntryKind.Transfer, s.kind)
+        assertEquals("acc2", s.accountId)
+        assertEquals("acc", s.toAccountId)
+        assertEquals("125.50", s.amount)
+        assertEquals(today, s.date)
+        assertFalse(s.isEditing)
+    }
+
+    @Test
+    fun aPrefillNeverPicksTheSameAccountTwiceOrAnArchivedOne() {
+        val s = vm(prefill = MovementPrefill(EntryKind.Transfer, "acc", "acc", 1_000)).state.value
+
+        assertEquals("acc", s.accountId)
+        assertNull(s.toAccountId)
+    }
+
+    @Test
+    fun aPrefillIsIgnoredWhenEditing() {
+        form.transaction = storedExpense()
+        val s = vm("tx1", "Transaction", prefill = MovementPrefill(EntryKind.Transfer, "acc2", "acc", 5_000)).state.value
+
+        assertEquals(EntryKind.Expense, s.kind)
+        assertNull(s.toAccountId)
+    }
+
+    @Test
+    fun theRouteFieldsBecomeAPrefillOnlyWithAKnownKind() {
+        assertEquals(MovementPrefill(EntryKind.Transfer, "a", "b", 5), MovementPrefill.of("Transfer", "a", "b", 5))
+        assertNull(MovementPrefill.of(null, "a", "b", 5))
+        assertNull(MovementPrefill.of("Nonsense", "a", "b", 5))
     }
 
     @Test

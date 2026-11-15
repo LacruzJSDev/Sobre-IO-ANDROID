@@ -58,9 +58,45 @@ data class AccountShortfall(val accountId: String, val shortfallCents: Long, val
 /** What `confirm_occurrence` created: [id] is a transaction, an account transfer or a group transfer link, by [kind]. */
 data class ConfirmedFact(val id: String, val kind: CommitmentKind)
 
+/**
+ * A row of `transfer_plan`: move [amountCents] from [fromAccountId] to [toAccountId] before [neededBy], so the receiver
+ * does not go below zero. A null [fromAccountId] is the part nobody can cover. [crossesBoundary] means the two accounts are
+ * on different sides of the envelope boundary.
+ */
+data class TransferSuggestion(
+    val fromAccountId: String?,
+    val toAccountId: String,
+    val amountCents: Long,
+    val neededBy: LocalDate,
+    val crossesBoundary: Boolean,
+)
+
+/** Which way a transfer that crosses the envelope boundary moves the money. */
+enum class BoundaryCrossing {
+    /** From an account outside the envelopes into one inside them: the money enters the distribution. */
+    Enters,
+
+    /** From an account inside the envelopes to one outside them: the money leaves the distribution. */
+    Leaves,
+}
+
+/** A suggestion of the plan as a warning line shows it: with the source account's name and the crossing direction. */
+data class TransferHint(
+    val suggestion: TransferSuggestion,
+    val fromName: String?,
+    val crossing: BoundaryCrossing?,
+)
+
 /** A line of the Group tab's warnings card; tapping it opens [target]. */
 sealed interface GroupWarning {
     data class EnvelopeOverspent(val envelopeId: String, val name: String, val overspentCents: Long) : GroupWarning
-    data class AccountShortfallOn(val accountId: String, val name: String, val lowestCents: Long, val date: LocalDate) : GroupWarning
+    data class AccountShortfallOn(
+        val accountId: String,
+        val name: String,
+        val lowestCents: Long,
+        val date: LocalDate,
+        /** What `transfer_plan` suggests to cover this account, one line each; empty when it has no suggestion. */
+        val hints: List<TransferHint> = emptyList(),
+    ) : GroupWarning
     data class CommitmentsShortfall(val cents: Long) : GroupWarning
 }

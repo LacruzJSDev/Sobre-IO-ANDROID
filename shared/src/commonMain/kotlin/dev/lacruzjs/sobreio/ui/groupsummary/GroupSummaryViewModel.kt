@@ -9,12 +9,15 @@ import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountShortfall
+import dev.lacruzjs.sobreio.domain.model.BoundaryCrossing
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.GroupWarning
 import dev.lacruzjs.sobreio.domain.model.ProgressState
+import dev.lacruzjs.sobreio.domain.model.TransferHint
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.model.shortfallDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -57,6 +60,7 @@ class GroupSummaryViewModel(
             is GroupSummaryEvent.WarningClicked,
             is GroupSummaryEvent.SpendingClicked,
             GroupSummaryEvent.SeeAllEnvelopesClicked,
+            is GroupSummaryEvent.TransferClicked,
             -> Unit
         }
     }
@@ -74,9 +78,10 @@ class GroupSummaryViewModel(
                 val shortfallsD = async { summary.getShortfalls(groupId) }
                 val projectionD = async { summary.getFreeProjection(groupId) }
                 val flowsD = async { summary.getPeriodFlows(groupId, FLOW_PERIODS) }
+                val planD = async { summary.getTransferPlan(groupId) }
                 Reads(
                     todayD.await(), outlookD.await(), pendingD.await(), accountsD.await(), envelopesD.await(),
-                    progressD.await(), shortfallsD.await(), projectionD.await(), flowsD.await(),
+                    progressD.await(), shortfallsD.await(), projectionD.await(), flowsD.await(), planD.await(),
                 )
             }
             val failure = reads.today.exceptionOrNull() ?: reads.outlook.exceptionOrNull() ?: reads.pending.exceptionOrNull()
@@ -103,7 +108,7 @@ class GroupSummaryViewModel(
                 .mapNotNull { row -> envelopeList.firstOrNull { it.id == row.envelopeId }?.let { SpendingBar(it, row.spentCents) } }
                 .sortedWith(compareByDescending<SpendingBar> { it.spentCents }.thenBy { it.envelope.name.lowercase() })
                 .take(GroupSummaryUiState.MAX_SPENDING_BARS)
-            val warnings = buildWarnings(outlook, accountList, envelopeList, reads.progress.getOrDefault(emptyList()), reads.shortfalls.getOrDefault(emptyList()))
+            val warnings = buildWarnings(outlook, accountList, envelopeList, reads.progress.getOrDefault(emptyList()), reads.shortfalls.getOrDefault(emptyList()), reads.plan.getOrDefault(emptyList()))
             _state.update {
                 it.copy(
                     outlook = outlook,
@@ -128,6 +133,7 @@ class GroupSummaryViewModel(
         envelopeList: List<Envelope>,
         progress: List<EnvelopeProgress>,
         shortfalls: List<AccountShortfall>,
+        plan: List<TransferSuggestion>,
     ): List<GroupWarning> = buildList {
         progress
             .filter { it.state == ProgressState.Overspent }
@@ -137,7 +143,19 @@ class GroupSummaryViewModel(
         shortfalls.forEach { shortfall ->
             val account = accountList.firstOrNull { it.id == shortfall.accountId } ?: return@forEach
             val date = detail.getProjection(account.id).getOrNull()?.let { shortfallDate(it, shortfall.lowestCents) }
-            add(GroupWarning.AccountShortfallOn(account.id, account.name, shortfall.lowestCents, date ?: outlook.periodEnd))
+            val hints = plan.filter { it.toAccountId == account.id }.map { suggestion ->
+                val from = suggestion.fromAccountId?.let { id -> accountList.firstOrNull { it.id == id } }
+                TransferHint(
+                    suggestion = suggestion,
+                    fromName = from?.name,
+                    crossing = when {
+                        !suggestion.crossesBoundary || from == null -> null
+                        account.inEnvelopes -> BoundaryCrossing.Enters
+                        else -> BoundaryCrossing.Leaves
+                    },
+                )
+            }
+            add(GroupWarning.AccountShortfallOn(account.id, account.name, shortfall.lowestCents, date ?: outlook.periodEnd, hints))
         }
         if (outlook.committedShortfallCents > 0) add(GroupWarning.CommitmentsShortfall(outlook.committedShortfallCents))
     }
@@ -152,6 +170,7 @@ class GroupSummaryViewModel(
         val shortfalls: Result<List<AccountShortfall>>,
         val projection: Result<List<dev.lacruzjs.sobreio.domain.model.FreePoint>>,
         val flows: Result<List<dev.lacruzjs.sobreio.domain.model.PeriodFlow>>,
+        val plan: Result<List<TransferSuggestion>>,
     )
 
     private companion object {

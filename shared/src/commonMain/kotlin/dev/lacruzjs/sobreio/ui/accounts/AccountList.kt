@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.accounts_in_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_outside_envelopes_title
+import dev.lacruzjs.sobreio.generated.resources.accounts_hero_chart_description
 import dev.lacruzjs.sobreio.generated.resources.accounts_total
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
@@ -44,6 +46,9 @@ import dev.lacruzjs.sobreio.ui.components.HeroFigure
 import dev.lacruzjs.sobreio.ui.components.HeroLabel
 import dev.lacruzjs.sobreio.ui.components.HeroSplitBar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.components.charts.FreeProjectionChart
+import dev.lacruzjs.sobreio.ui.components.charts.LineChartPoint
+import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.theme.LocalHeroColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -157,11 +162,33 @@ private fun SectionTitle(text: String) {
  */
 @Composable
 private fun AccountsHero(state: AccountsUiState) {
-    val ink = LocalHeroColors.current.onContainer
+    val hero = LocalHeroColors.current
+    val ink = hero.onContainer
+    val languageTag = Locale.current.toLanguageTag()
     HeroCard(modifier = Modifier.padding(bottom = 8.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             HeroLabel(stringResource(Res.string.accounts_total))
             HeroFigure(amountCents = state.totalCents, currencyCode = state.currencyCode)
+        }
+        if (state.balanceSeries.size > 1) {
+            val series = state.balanceSeries
+            val points = remember(series) { series.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) } }
+            // Only the past: today is its last point, so there is no dashed projection
+            FreeProjectionChart(
+                points = points,
+                todayX = points.last().x,
+                lineColor = ink,
+                negativeColor = hero.negativeOnContainer,
+                ringColor = hero.container,
+                height = 56.dp,
+                contentDescription = stringResource(
+                    Res.string.accounts_hero_chart_description,
+                    formatDayMonth(series.first().day, languageTag),
+                    formatDayMonth(series.last().day, languageTag),
+                    formatMoney(series.first().balanceCents, state.currencyCode, languageTag),
+                    formatMoney(series.last().balanceCents, state.currencyCode, languageTag),
+                ),
+            )
         }
         if (state.outsideEnvelopes.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

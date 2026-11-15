@@ -76,7 +76,11 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter, `MemberRepository` for holder names): on
   top a `HeroCard` (see Rules): "Total in accounts" and the big total (`HeroFigure`) and, when some accounts are outside the
   envelopes, two figures "In envelopes" / "Outside envelopes" (85 % labels, white `MoneyText` Plain with `ink`) and a thin
-  `HeroSplitBar` of their proportion (`envelopeSplitFraction`: a display ratio of absolute values, hidden when outside is 0)
+  `HeroSplitBar` of their proportion (`envelopeSplitFraction`: a display ratio of absolute values, hidden when outside is 0);
+  between the two, in the empty middle, a past-only line chart of `group_balance_series` for the last 3 months (about 60 points,
+  `AccountRepository.getBalanceSeries`, today from `AccountDetailRepository.getToday`; it reuses `FreeProjectionChart` with every
+  point in the past so there is no dashed projection; 56 dp like the Group card's, hero foreground colour, below-zero part in
+  `negativeOnContainer`; a failed read leaves it out, the card keeps its height)
   (`group_overview.accounts_total`, `in_envelopes_total`, `outside_total`, never summed in the app). Then the live accounts in two sections,
   "In envelopes" and "Outside envelopes" (empty ones hidden; the "In envelopes" title only shows when there is an outside
   section): `EntityAvatar` (colour + account icon, the initial when there is no icon), name, kind label (+ " · holder", or
@@ -128,7 +132,13 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   shell is shown, when the tab is selected and when coming back from the review. (3) "Warnings" card (hidden when empty, tappable rows
   with a warning icon in the negative colour and a chevron): envelopes in `envelope_progress` state `overspent` (opens the envelope
   detail), accounts with `account_forecast.shortfall > 0` (date from `account_projection` with `shortfallDate`, opens the account
-  detail) and `committed_shortfall > 0` (selects the Envelopes tab). (4) "Where this period's money went": a bar per envelope that
+  detail) and `committed_shortfall > 0` (selects the Envelopes tab). Under each account warning, one muted line per suggestion of
+  `transfer_plan` (`GroupSummaryRepository.getTransferPlan`; `GroupWarning.AccountShortfallOn.hints` as `TransferHint`): "Move N from
+  <account> before <date>" plus "· enters the distribution" (donor outside the envelopes, receiver inside) or "· leaves the
+  distribution" when it crosses the boundary (`BoundaryCrossing`), or "No other account can cover N" when the plan row has no source;
+  each coverable line has a compact "Transfer" button (members who may record) that sends `TransferClicked`, which the Route turns
+  into `MovementForm` with `prefillKind = Transfer`, from, to and amount (`MovementPrefill`, date = today); the user reviews and
+  saves, nothing is written from the tab. A failed plan read just leaves the suggestions out. (4) "Where this period's money went": a bar per envelope that
   spent in the current period (`SupabaseGroupSummaryRepository.getEnvelopeSpending`: `envelope_periods` rows of `period_start`
   with `activity < 0`, value = -activity), biggest first (ties by name), top 6 (`MAX_SPENDING_BARS`), name left and `MoneyText` Flow
   right, bar length = value / biggest (`spendingFraction`, a display ratio) in the outflow (ink) colour; a bar opens the envelope
@@ -293,7 +303,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   validation error), a note says from when the new account is charged, and choosing an account outside the envelopes clears the envelope
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
-- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?)`, `MovementFormViewModel` with those
+- Movement form (`ui/movementform`, route `MovementForm(groupId, movementId?, source?, accountId?, prefillKind?, prefillFromAccountId?, prefillToAccountId?, prefillAmountCents?)`, `MovementFormViewModel` with those
   four as Koin parameters by position): kind row Expense / Income / Transfer (no Adjustment: only "Compare with bank" makes one;
   locked when editing), then the big centred amount (`LargeAmountField`, the keypad opens by itself when creating). Expense
   and income: Account `EntitySelect` (default: the fixed account, else the last one used in this group, stored per user and group in

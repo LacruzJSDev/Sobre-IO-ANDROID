@@ -9,6 +9,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
 import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import kotlinx.datetime.LocalDate
 
 /**
@@ -32,6 +33,12 @@ interface GroupSummaryRepository {
 
     /** `group_free_projection`: the really free money day by day from today to the end of the period, one row per day. */
     suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>>
+
+    /**
+     * `transfer_plan`: the transfers between accounts that would keep every account at or above zero until the end of the
+     * period. A suggestion with no source account is the part nobody can cover. Nothing is written.
+     */
+    suspend fun getTransferPlan(groupId: String): Result<List<TransferSuggestion>>
 
     /** The last [periods] periods' money in and out of the group, oldest first (`group_period_flows`). */
     suspend fun getPeriodFlows(groupId: String, periods: Int = 6): Result<List<PeriodFlow>>

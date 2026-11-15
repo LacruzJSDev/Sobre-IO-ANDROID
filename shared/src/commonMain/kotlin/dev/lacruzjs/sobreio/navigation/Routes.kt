@@ -76,6 +76,10 @@ data class CommitmentForm(val groupId: String, val accountId: String, val commit
  * Create (`movementId` null) or edit a movement, as a full screen. [source] is the [dev.lacruzjs.sobreio.domain.model.MovementSource]
  * name of the row being edited; [accountId] preselects the account when creating from an account's list. Opened by the "+"
  * of the Movements tab and of an account's movements, and by the Edit swipe action of a row.
+ *
+ * The `prefill*` fields are optional and only apply when creating: the form opens with that kind ([prefillKind] is an
+ * [dev.lacruzjs.sobreio.domain.model.EntryKind] name), source and destination account and amount already chosen (the Group
+ * tab's transfer suggestions). The user reviews and saves; nothing is written until then.
  */
 @Serializable
 data class MovementForm(
@@ -83,6 +87,10 @@ data class MovementForm(
     val movementId: String?,
     val source: String?,
     val accountId: String?,
+    val prefillKind: String? = null,
+    val prefillFromAccountId: String? = null,
+    val prefillToAccountId: String? = null,
+    val prefillAmountCents: Long? = null,
 ) : NavKey
 
 /**

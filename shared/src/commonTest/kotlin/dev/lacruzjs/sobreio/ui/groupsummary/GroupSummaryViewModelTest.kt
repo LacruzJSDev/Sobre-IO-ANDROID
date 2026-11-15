@@ -15,6 +15,9 @@ import dev.lacruzjs.sobreio.domain.model.GroupWarning
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
 import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
+import dev.lacruzjs.sobreio.domain.model.BoundaryCrossing
+import dev.lacruzjs.sobreio.domain.model.TransferHint
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
@@ -296,6 +299,86 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
             ),
             viewModel.state.value.warnings,
         )
+    }
+
+    private val savings = Account("a2", "g1", "Savings", AccountKind.Savings, inEnvelopes = false, balanceCents = 900_000)
+    private val cash = Account("a3", "g1", "Cash", AccountKind.Cash, inEnvelopes = true, balanceCents = 100_000)
+
+    private fun shortfallOnChecking() {
+        accounts.accounts = listOf(checking, savings, cash)
+        summary.shortfalls = listOf(AccountShortfall("a1", 5_000, -5_000))
+        detail.projection = listOf(
+            ProjectionPoint(LocalDate(2026, 11, 14), 1_000, 0),
+            ProjectionPoint(LocalDate(2026, 11, 22), -5_000, -6_000),
+        )
+    }
+
+    @Test
+    fun anAccountWarningCarriesTheSuggestionsOfThePlanForThatAccountOnly() {
+        shortfallOnChecking()
+        val fromCash = TransferSuggestion("a3", "a1", 3_000, LocalDate(2026, 11, 22), crossesBoundary = false)
+        val fromSavings = TransferSuggestion("a2", "a1", 2_000, LocalDate(2026, 11, 22), crossesBoundary = true)
+        val other = TransferSuggestion("a2", "a3", 9_000, LocalDate(2026, 11, 20), crossesBoundary = true)
+        summary.transferPlan = listOf(fromCash, fromSavings, other)
+        loaded()
+
+        val warning = viewModel.state.value.warnings.filterIsInstance<GroupWarning.AccountShortfallOn>().single()
+        assertEquals(
+            listOf(
+                TransferHint(fromCash, "Cash", null),
+                // The receiver is inside the envelopes and the donor outside: the money enters the distribution
+                TransferHint(fromSavings, "Savings", BoundaryCrossing.Enters),
+            ),
+            warning.hints,
+        )
+    }
+
+    @Test
+    fun aTransferOutOfTheEnvelopesLeavesTheDistribution() {
+        accounts.accounts = listOf(checking.copy(inEnvelopes = false), cash)
+        summary.shortfalls = listOf(AccountShortfall("a1", 5_000, -5_000))
+        val suggestion = TransferSuggestion("a3", "a1", 5_000, LocalDate(2026, 11, 22), crossesBoundary = true)
+        summary.transferPlan = listOf(suggestion)
+        loaded()
+
+        val warning = viewModel.state.value.warnings.filterIsInstance<GroupWarning.AccountShortfallOn>().single()
+        assertEquals(listOf(TransferHint(suggestion, "Cash", BoundaryCrossing.Leaves)), warning.hints)
+    }
+
+    @Test
+    fun theUncoveredPartHasNoSourceAccount() {
+        shortfallOnChecking()
+        val missing = TransferSuggestion(null, "a1", 1_500, LocalDate(2026, 11, 22), crossesBoundary = false)
+        summary.transferPlan = listOf(missing)
+        loaded()
+
+        val warning = viewModel.state.value.warnings.filterIsInstance<GroupWarning.AccountShortfallOn>().single()
+        assertEquals(listOf(TransferHint(missing, null, null)), warning.hints)
+    }
+
+    @Test
+    fun aFailedPlanLeavesTheWarningWithoutSuggestions() {
+        shortfallOnChecking()
+        summary.transferPlanResult = Result.failure(AppError.Network)
+        loaded()
+
+        val warning = viewModel.state.value.warnings.filterIsInstance<GroupWarning.AccountShortfallOn>().single()
+        assertTrue(warning.hints.isEmpty())
+        assertNull(viewModel.state.value.error)
+    }
+
+    @Test
+    fun theTransferButtonIsHandledByTheRouteAndWritesNothing() {
+        shortfallOnChecking()
+        val suggestion = TransferSuggestion("a3", "a1", 3_000, LocalDate(2026, 11, 22), crossesBoundary = false)
+        summary.transferPlan = listOf(suggestion)
+        loaded()
+        val before = viewModel.state.value
+
+        viewModel.onEvent(GroupSummaryEvent.TransferClicked(suggestion))
+
+        assertEquals(before, viewModel.state.value)
+        assertTrue(summary.calls.none { it.startsWith("confirm") || it.startsWith("skip") || it.startsWith("void") })
     }
 
     @Test

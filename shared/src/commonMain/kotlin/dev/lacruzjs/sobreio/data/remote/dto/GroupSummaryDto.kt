@@ -42,3 +42,13 @@ internal data class EnvelopeSpendingDto(
     @SerialName("envelope_id") val envelopeId: String,
     val activity: Long = 0,
 )
+
+/** A row of `transfer_plan`. */
+@Serializable
+internal data class TransferPlanDto(
+    @SerialName("from_account_id") val fromAccountId: String? = null,
+    @SerialName("to_account_id") val toAccountId: String,
+    val amount: Long = 0,
+    @SerialName("needed_by") val neededBy: String,
+    @SerialName("crosses_boundary") val crossesBoundary: Boolean = false,
+)

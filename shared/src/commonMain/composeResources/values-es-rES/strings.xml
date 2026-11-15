@@ -604,6 +604,11 @@
     <string name="occurrence_skipped">%1$s saltado</string>
     <string name="group_summary_warnings_title">Avisos</string>
     <string name="warning_envelope_overspent">%1$s: gastado de más %2$s</string>
+    <string name="transfer_hint_move">Mueve %1$s desde %2$s antes del %3$s</string>
+    <string name="transfer_hint_enters">· entra en el reparto</string>
+    <string name="transfer_hint_leaves">· sale del reparto</string>
+    <string name="transfer_hint_uncovered">No hay otra cuenta que pueda cubrir %1$s</string>
+    <string name="transfer_action">Transferir</string>
     <string name="warning_account_shortfall">%1$s bajará a %2$s el %3$s</string>
     <string name="warning_commitments_shortfall">Faltan %1$s para los compromisos de este periodo</string>
     <string name="group_summary_upcoming_empty">Nada hasta fin de periodo</string>
@@ -614,6 +619,7 @@
     <string name="group_hero_note_contributions">−%1$s en aportaciones</string>
     <string name="group_hero_note_income">+%1$s de ingresos previstos</string>
     <string name="group_hero_drops">Bajará a %1$s el %2$s</string>
+    <string name="accounts_hero_chart_description">Saldo total del %1$s al %2$s: %3$s entonces, %4$s hoy</string>
     <string name="group_hero_chart_description">Dinero libre de verdad del %1$s al %2$s: %3$s hoy, %4$s al final</string>
     <string name="group_review_title">Por revisar</string>
     <string name="group_review_count">%1$d por revisar</string>

@@ -20,6 +20,7 @@ import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsViewModel
 import dev.lacruzjs.sobreio.ui.groupreview.GroupReviewViewModel
 import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormViewModel
+import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
 import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
@@ -127,7 +128,7 @@ val uiModule = module {
             envelopes = get(),
         )
     }
-    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }
+    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get()) }
     viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get()) }
     viewModel { params ->
         EnvelopeDetailViewModel(
@@ -161,6 +162,7 @@ val uiModule = module {
             movementId = params.get<String?>(1),
             source = params.get<String?>(2),
             fixedAccountId = params.get<String?>(3),
+            prefill = params.get<MovementPrefill?>(4),
             form = get(),
             groups = get(),
             accounts = get(),

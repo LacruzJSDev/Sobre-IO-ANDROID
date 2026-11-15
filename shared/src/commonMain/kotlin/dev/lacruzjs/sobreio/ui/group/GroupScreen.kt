@@ -69,6 +69,7 @@ import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryEvent
 import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryPane
 import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
 import dev.lacruzjs.sobreio.domain.model.GroupWarning
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.ui.movements.MovementsEvent
 import dev.lacruzjs.sobreio.ui.movements.MovementsHeaderActions
@@ -95,6 +96,7 @@ fun GroupRoute(
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     onOpenEnvelope: (envelopeId: String) -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?) -> Unit,
+    onOpenTransferForm: (TransferSuggestion) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
     accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
@@ -159,6 +161,7 @@ fun GroupRoute(
                             is GroupWarning.AccountShortfallOn -> onOpenAccount(warning.accountId)
                             is GroupWarning.CommitmentsShortfall -> selectedIndex = GroupTab.Envelopes.ordinal
                         }
+                        is GroupSummaryEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
                         GroupSummaryEvent.ReviewClicked -> onOpenReview()
                         is GroupSummaryEvent.SpendingClicked -> onOpenEnvelope(event.envelopeId)
                         GroupSummaryEvent.SeeAllEnvelopesClicked -> selectedIndex = GroupTab.Envelopes.ordinal

@@ -6,6 +6,7 @@ import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
 import dev.lacruzjs.sobreio.data.remote.dto.FreePointDto
 import dev.lacruzjs.sobreio.data.remote.dto.GroupOutlookDto
 import dev.lacruzjs.sobreio.data.remote.dto.PeriodFlowDto
+import dev.lacruzjs.sobreio.data.remote.dto.TransferPlanDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toCoverJson
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.mapper.toShortfalls
@@ -20,6 +21,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeSpending
 import dev.lacruzjs.sobreio.domain.model.FreePoint
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -70,6 +72,12 @@ class SupabaseGroupSummaryRepository(client: SupabaseClient) : GroupSummaryRepos
     override suspend fun getFreeProjection(groupId: String): Result<List<FreePoint>> = safeCall {
         postgrest.rpc("group_free_projection", buildJsonObject { put("p_group_id", groupId) })
             .decodeList<FreePointDto>()
+            .map { it.toDomain() }
+    }
+
+    override suspend fun getTransferPlan(groupId: String): Result<List<TransferSuggestion>> = safeCall {
+        postgrest.rpc("transfer_plan", buildJsonObject { put("p_group_id", groupId) })
+            .decodeList<TransferPlanDto>()
             .map { it.toDomain() }
     }
 

@@ -45,7 +45,8 @@ import kotlinx.datetime.LocalDate
 /**
  * The create and edit form of a movement. [movementId] null creates; otherwise [source] (a
  * [MovementSource] name) says whether it is a transaction or an account transfer. [fixedAccountId] preselects the account
- * when the form is opened from an account's list.
+ * when the form is opened from an account's list; [prefill] opens a new movement with the kind, accounts and amount already
+ * chosen (the Group tab's transfer suggestions).
  *
  * Creating calls the database functions (cover included); editing is a plain update validated by the database guards.
  * Tags are written after the movement in their own step: if that step fails the movement stays, the error is shown and a
@@ -56,6 +57,7 @@ class MovementFormViewModel(
     private val movementId: String?,
     private val source: String?,
     private val fixedAccountId: String?,
+    private val prefill: MovementPrefill?,
     private val form: MovementFormRepository,
     private val groups: GroupRepository,
     private val accounts: AccountRepository,
@@ -257,7 +259,7 @@ class MovementFormViewModel(
                 val userId = auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
                 val preselected = listOfNotNull(fixedAccountId, lastAccount.get(userId, groupId))
                     .firstOrNull { id -> liveAccounts.any { it.id == id } }
-                _state.update { base.copy(accountId = preselected) }
+                _state.update { applyPrefill(base.copy(accountId = preselected)) }
                 return@launch
             }
             when (source) {
@@ -266,6 +268,21 @@ class MovementFormViewModel(
                 else -> loadFailed(AppError.NotFound)
             }
         }
+    }
+
+    /** Only accounts that are live choices are taken; the date stays the group's today. */
+    private fun applyPrefill(base: MovementFormUiState): MovementFormUiState {
+        val p = prefill ?: return base
+        val live = base.accounts.map { it.id }.toSet()
+        val from = p.fromAccountId?.takeIf { it in live }
+        val to = p.toAccountId?.takeIf { it in live && it != from }
+        return base.copy(
+            kind = p.kind,
+            accountId = from ?: base.accountId.takeIf { p.fromAccountId == null },
+            toAccountId = if (p.kind == EntryKind.Transfer) to else null,
+            envelopeId = if (p.kind == EntryKind.Income) base.unassigned?.id else null,
+            amount = p.amountCents?.toInputText().orEmpty(),
+        )
     }
 
     private suspend fun loadTransaction(
