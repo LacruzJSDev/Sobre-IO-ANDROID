@@ -228,7 +228,7 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(AccountDetailEvent.CompareClicked)
         viewModel.onEvent(AccountDetailEvent.BankBalanceChanged("1000"))
         settle()
-        viewModel.onEvent(AccountDetailEvent.BankBalanceChanged("-"))
+        viewModel.onEvent(AccountDetailEvent.BankBalanceChanged(""))
         settle()
 
         assertNull(viewModel.state.value.compare?.result)
@@ -240,10 +240,25 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
     fun aBankBalanceCanBeNegative() {
         loaded()
         viewModel.onEvent(AccountDetailEvent.CompareClicked)
-        viewModel.onEvent(AccountDetailEvent.BankBalanceChanged("-20"))
+        viewModel.onEvent(AccountDetailEvent.BankBalanceChanged("20"))
+        viewModel.onEvent(AccountDetailEvent.BankSignChanged(true))
         settle()
 
         assertTrue("compareWithBank(-2000)" in detail.calls)
+        assertTrue(viewModel.state.value.compare!!.bankIsNegative)
+    }
+
+    @Test
+    fun changingTheSignComparesAgain() {
+        loaded()
+        viewModel.onEvent(AccountDetailEvent.CompareClicked)
+        assertFalse(viewModel.state.value.compare!!.bankIsNegative)
+        viewModel.onEvent(AccountDetailEvent.BankBalanceChanged("20"))
+        settle()
+        viewModel.onEvent(AccountDetailEvent.BankSignChanged(true))
+        settle()
+
+        assertEquals(listOf("compareWithBank(2000)", "compareWithBank(-2000)"), detail.calls.filter { it.startsWith("compareWithBank") })
     }
 
     @Test

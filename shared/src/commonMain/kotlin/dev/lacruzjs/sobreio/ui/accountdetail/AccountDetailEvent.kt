@@ -20,6 +20,7 @@ sealed interface AccountDetailEvent {
     data object CompareClicked : AccountDetailEvent
     data object CompareDismissed : AccountDetailEvent
     data class BankBalanceChanged(val value: String) : AccountDetailEvent
+    data class BankSignChanged(val negative: Boolean) : AccountDetailEvent
     data object AdjustClicked : AccountDetailEvent
 
     data object UndoClicked : AccountDetailEvent

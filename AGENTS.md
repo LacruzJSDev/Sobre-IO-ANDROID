@@ -253,8 +253,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
-  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField(allowNegative)`, debounced
-  `compare_with_bank`) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
+  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField` plus the "In credit / Debt" chips, `CompareState.bankIsNegative`, default Debt when the
+  account balance is negative; debounced `compare_with_bank`, re-run when the sign changes) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
   snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
   `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
   `account_period_flows`, `upcoming_occurrences` (filtered to the account and signed in `UpcomingDto.toUpcomingFor`, the
@@ -490,8 +490,14 @@ plus `movementform` (the new / edit movement form).
 - Funded commitments only point to Recibos (Bills) envelopes; the envelope type decides its fields and its progress bar (D-46).
   The app never decides progress: it draws what `envelope_progress` returns.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
-  money amount an `AmountField` (numeric pad with decimal separator; `allowNegative` adds a "±" button because the pad
-  has no minus key). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
+  money amount an `AmountField` (numeric pad with decimal separator). The input components (`FormTextField`,
+  `AmountField`, `LargeAmountField`, `PasswordField`) own a `TextFieldState` kept in step with the outside String by
+  `rememberSyncedTextFieldState` / `TextSync` (`ui/components/TextSync.kt`): never hold the text in a value-based field
+  fed from a `StateFlow`, the late round trip makes the cursor jump. Screens and ViewModels keep `value` / `onValueChange(String)`.
+  Amounts are always typed positive (`AmountField` rejects "-"); a real negative balance is chosen with the "In credit /
+  Debt" chips (`BalanceSignChips`): the account form's opening balance (`openingBalanceIsDebt`, Debt by default for a
+  credit card until the user taps a chip) and Compare with bank; the ViewModel applies the sign. The 6-digit codes use
+  `digitsOnly(maxLength)`. Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
   avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many

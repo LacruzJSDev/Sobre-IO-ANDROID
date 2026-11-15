@@ -34,6 +34,7 @@ import dev.lacruzjs.sobreio.generated.resources.action_new_account
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.edit_account_title
 import dev.lacruzjs.sobreio.generated.resources.field_account_kind
+import dev.lacruzjs.sobreio.generated.resources.field_balance_sign
 import dev.lacruzjs.sobreio.generated.resources.field_account_name
 import dev.lacruzjs.sobreio.generated.resources.field_holder
 import dev.lacruzjs.sobreio.generated.resources.field_in_envelopes
@@ -47,6 +48,8 @@ import dev.lacruzjs.sobreio.ui.components.ColorFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
+import dev.lacruzjs.sobreio.ui.components.BalanceSignChips
+import dev.lacruzjs.sobreio.ui.components.ChipFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
@@ -220,14 +223,19 @@ fun AccountFormScreen(
                         )
                     }
                     if (!isEditing) {
-                        // Numeric keypad; a debt (credit card) is entered with the ± button, as the pad has no minus key
+                        ChipFormTile(label = stringResource(Res.string.field_balance_sign)) {
+                            BalanceSignChips(
+                                isDebt = state.openingBalanceIsDebt,
+                                enabled = !state.isSubmitting,
+                                onChange = { onEvent(AccountFormEvent.OpeningBalanceSignChanged(it)) },
+                            )
+                        }
                         AmountField(
                             value = state.openingBalance,
                             onValueChange = { onEvent(AccountFormEvent.OpeningBalanceChanged(it)) },
                             label = stringResource(Res.string.field_opening_balance),
                             errorRes = state.openingBalanceError,
                             enabled = !state.isSubmitting,
-                            allowNegative = true,
                         )
                         FormNote(stringResource(Res.string.opening_balance_hint))
                     }

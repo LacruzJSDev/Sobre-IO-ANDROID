@@ -26,6 +26,7 @@ import dev.lacruzjs.sobreio.generated.resources.compare_difference
 import dev.lacruzjs.sobreio.generated.resources.compare_matches
 import dev.lacruzjs.sobreio.generated.resources.field_bank_balance
 import dev.lacruzjs.sobreio.ui.components.AmountField
+import dev.lacruzjs.sobreio.ui.components.BalanceSignChips
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.MoneyText
@@ -55,13 +56,19 @@ internal fun CompareSheet(
         FormTile(label = stringResource(Res.string.compare_app_balance)) {
             FigureText(appBalanceCents, currencyCode)
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BalanceSignChips(
+                isDebt = compare.bankIsNegative,
+                enabled = !compare.isAdjusting,
+                onChange = { onEvent(AccountDetailEvent.BankSignChanged(it)) },
+            )
+        }
         AmountField(
             value = compare.bankInput,
             onValueChange = { onEvent(AccountDetailEvent.BankBalanceChanged(it)) },
             label = stringResource(Res.string.field_bank_balance),
             errorRes = compare.inputError,
             enabled = !compare.isAdjusting,
-            allowNegative = true,
         )
         // Reserved from the start, so the sheet does not jump when the answer arrives
         val result = compare.result

@@ -24,6 +24,7 @@ import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -73,12 +74,19 @@ class AccountDetailViewModel(
             }
             AccountDetailEvent.Retry -> load(showSpinner = true)
             is AccountDetailEvent.RangeSelected -> selectRange(event.range)
-            AccountDetailEvent.CompareClicked -> _state.update { it.copy(compare = CompareState()) }
+            AccountDetailEvent.CompareClicked -> _state.update {
+                // A debt on the account suggests a debt on the bank's side too
+                it.copy(compare = CompareState(bankIsNegative = (it.account?.balanceCents ?: 0L) < 0L))
+            }
             AccountDetailEvent.CompareDismissed -> {
                 compareJob?.cancel()
                 _state.update { it.copy(compare = null) }
             }
-            is AccountDetailEvent.BankBalanceChanged -> bankBalanceChanged(event.value)
+            is AccountDetailEvent.BankBalanceChanged -> bankBalanceChanged(event.value, _state.value.compare?.bankIsNegative ?: false)
+            is AccountDetailEvent.BankSignChanged -> {
+                val compare = _state.value.compare ?: return
+                bankBalanceChanged(compare.bankInput, event.negative)
+            }
             AccountDetailEvent.AdjustClicked -> adjust()
             AccountDetailEvent.UndoClicked -> undo.undo()
             AccountDetailEvent.UndoExpired -> undo.commit()
@@ -213,13 +221,13 @@ class AccountDetailViewModel(
         }
     }
 
-    private fun bankBalanceChanged(text: String) {
-        val compare = _state.value.compare ?: return
+    private fun bankBalanceChanged(text: String, negative: Boolean) {
+        val compare = _state.value.compare?.copy(bankIsNegative = negative) ?: return
         compareJob?.cancel()
-        val cents = parseMoneyInput(text)
+        val cents = parseMoneyInput(text)?.let { if (negative) -abs(it) else abs(it) }
         when {
-            // Nothing to compare yet; a lone minus sign is the start of a negative balance, not a mistake
-            text.isBlank() || text.trim() == "-" ->
+            // Nothing to compare yet
+            text.isBlank() ->
                 setCompare(compare.copy(bankInput = text, result = null, isComparing = false, inputError = null, error = null))
             cents == null ->
                 setCompare(compare.copy(bankInput = text, result = null, isComparing = false, inputError = Res.string.validation_amount_invalid, error = null))

@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
+import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +41,10 @@ data class AccountFormUiState(
     /** Text of the opening balance field (create only). */
     val openingBalance: String = "",
     val openingBalanceError: StringResource? = null,
+    /** The opening balance is a debt: the positive amount typed is sent negative. */
+    val openingBalanceIsDebt: Boolean = false,
+    /** The user picked the sign themselves: the kind no longer decides it. */
+    val openingBalanceSignChosen: Boolean = false,
     /** The active members: they are the holders to choose from. */
     val members: List<Member> = emptyList(),
     /** Editing: the account is being read. */
@@ -66,6 +71,7 @@ sealed interface AccountFormEvent {
     data class HolderSelected(val userId: String?) : AccountFormEvent
     data class InEnvelopesChanged(val value: Boolean) : AccountFormEvent
     data class OpeningBalanceChanged(val value: String) : AccountFormEvent
+    data class OpeningBalanceSignChanged(val isDebt: Boolean) : AccountFormEvent
     data object SaveClicked : AccountFormEvent
     data object Retry : AccountFormEvent
     data object NavigationHandled : AccountFormEvent
@@ -97,7 +103,13 @@ class AccountFormViewModel(
     fun onEvent(event: AccountFormEvent) {
         when (event) {
             is AccountFormEvent.NameChanged -> _state.update { it.copy(name = event.value, nameError = null, submitError = null) }
-            is AccountFormEvent.KindSelected -> _state.update { it.copy(kind = event.kind) }
+            is AccountFormEvent.KindSelected -> _state.update {
+                // A credit card starts as a debt, until the user picks the sign themselves
+                it.copy(
+                    kind = event.kind,
+                    openingBalanceIsDebt = if (it.openingBalanceSignChosen) it.openingBalanceIsDebt else event.kind == AccountKind.CreditCard,
+                )
+            }
             is AccountFormEvent.ColorSelected -> _state.update { it.copy(color = event.hex) }
             is AccountFormEvent.IconSelected -> _state.update { it.copy(icon = event.key) }
             is AccountFormEvent.HolderSelected -> _state.update { it.copy(ownerUserId = event.userId) }
@@ -105,6 +117,8 @@ class AccountFormViewModel(
                 _state.update { it.copy(inEnvelopes = event.value, scopeError = null, submitError = null) }
             is AccountFormEvent.OpeningBalanceChanged ->
                 _state.update { it.copy(openingBalance = event.value, openingBalanceError = null, submitError = null) }
+            is AccountFormEvent.OpeningBalanceSignChanged ->
+                _state.update { it.copy(openingBalanceIsDebt = event.isDebt, openingBalanceSignChosen = true, submitError = null) }
             AccountFormEvent.SaveClicked -> save()
             AccountFormEvent.Retry -> accountId?.let { load(it) }
             AccountFormEvent.NavigationHandled -> _state.update { it.copy(saved = false) }
@@ -152,7 +166,7 @@ class AccountFormViewModel(
         val name = current.name.trim()
         val nameError = validateName(name)
         val editing = accountId != null
-        val openingBalance = if (editing) 0L else parseMoneyInput(current.openingBalance)
+        val openingBalance = if (editing) 0L else parseMoneyInput(current.openingBalance)?.let { if (current.openingBalanceIsDebt) -abs(it) else abs(it) }
         val balanceError = if (openingBalance == null) Res.string.validation_amount_invalid else null
         if (nameError != null || balanceError != null) {
             _state.update { it.copy(nameError = nameError, openingBalanceError = balanceError) }
