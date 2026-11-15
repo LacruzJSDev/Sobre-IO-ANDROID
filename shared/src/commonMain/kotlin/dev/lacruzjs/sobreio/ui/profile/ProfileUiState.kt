@@ -16,6 +16,8 @@ data class ProfileUiState(
     val saveError: AppError? = null,
     /** The last save went through; cleared as soon as the name is edited again. */
     val saved: Boolean = false,
+    /** Money is shown in blue and orange instead of green and red. */
+    val colorBlindSafe: Boolean = false,
 ) {
     /** The name differs from the saved one, so there is something to save. */
     val isDirty: Boolean get() = name.trim() != user?.displayName.orEmpty()

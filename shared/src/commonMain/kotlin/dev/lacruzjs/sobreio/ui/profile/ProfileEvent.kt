@@ -6,4 +6,5 @@ sealed interface ProfileEvent {
 
     data class NameChanged(val value: String) : ProfileEvent
     data object SaveClicked : ProfileEvent
+    data class ColorBlindSafeChanged(val enabled: Boolean) : ProfileEvent
 }

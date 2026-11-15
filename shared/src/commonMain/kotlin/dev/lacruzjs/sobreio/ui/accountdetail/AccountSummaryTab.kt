@@ -87,8 +87,9 @@ import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.format.formatMonthShort
 import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
-import dev.lacruzjs.sobreio.ui.theme.chartIn
-import dev.lacruzjs.sobreio.ui.theme.chartOut
+import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
+import dev.lacruzjs.sobreio.ui.components.MoneyText
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
@@ -146,8 +147,10 @@ private fun SoftTile(modifier: Modifier = Modifier, content: @Composable ColumnS
 @Composable
 private fun BalanceSection(account: Account, state: AccountDetailUiState, languageTag: String) {
     FormSection(title = stringResource(Res.string.detail_section_balance)) {
-        Text(
-            text = formatMoney(account.balanceCents, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = account.balanceCents,
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(horizontal = 4.dp),
         )
@@ -266,9 +269,9 @@ private fun ForecastSection(
     languageTag: String,
 ) {
     FormSection(title = stringResource(Res.string.detail_section_forecast)) {
-        ForecastTile(stringResource(Res.string.forecast_scheduled_in), formatMoney(scheduledIn, state.currencyCode, languageTag))
-        ForecastTile(stringResource(Res.string.forecast_scheduled_out), formatMoney(scheduledOut, state.currencyCode, languageTag))
-        ForecastTile(stringResource(Res.string.forecast_projected_end), formatMoney(projectedEnd, state.currencyCode, languageTag))
+        ForecastTile(stringResource(Res.string.forecast_scheduled_in), scheduledIn, state.currencyCode, MoneyRole.Flow)
+        ForecastTile(stringResource(Res.string.forecast_scheduled_out), -scheduledOut, state.currencyCode, MoneyRole.Flow)
+        ForecastTile(stringResource(Res.string.forecast_projected_end), projectedEnd, state.currencyCode, MoneyRole.Balance)
         if (shortfall > 0) {
             val date = state.shortfallDate ?: state.periodEnd ?: state.today
             Row(
@@ -302,10 +305,12 @@ private fun ForecastSection(
 }
 
 @Composable
-private fun ForecastTile(label: String, value: String) {
+private fun ForecastTile(label: String, amountCents: Long, currencyCode: String, role: MoneyRole) {
     FormTile(label = label) {
-        Text(
-            text = value,
+        MoneyText(
+            amountCents = amountCents,
+            currencyCode = currencyCode,
+            role = role,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(end = 8.dp),
             maxLines = 1,
@@ -330,8 +335,8 @@ private fun FlowsSection(state: AccountDetailUiState, languageTag: String) {
             }.joinToString(" ")
             GroupedColumnChart(
                 series = listOf(
-                    ColumnSeries(stringResource(Res.string.chart_legend_in), MaterialTheme.colorScheme.chartIn),
-                    ColumnSeries(stringResource(Res.string.chart_legend_out), MaterialTheme.colorScheme.chartOut),
+                    ColumnSeries(stringResource(Res.string.chart_legend_in), LocalMoneyColors.current.inflow),
+                    ColumnSeries(stringResource(Res.string.chart_legend_out), LocalMoneyColors.current.outflow),
                 ),
                 groups = groups,
                 formatY = { compactAmount(it, languageTag) },
@@ -356,8 +361,10 @@ private fun UpcomingSection(state: AccountDetailUiState, languageTag: String) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Text(
-                        text = formatSignedMoney(item.amountCents, state.currencyCode, languageTag),
+                    MoneyText(
+                        amountCents = item.amountCents,
+                        currencyCode = state.currencyCode,
+                        role = MoneyRole.Flow,
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.End,
                         maxLines = 1,
@@ -417,8 +424,10 @@ private fun MovementRow(row: MovementRowState, currencyCode: String, languageTag
             }
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = formatSignedMoney(movement.amountCents, currencyCode, languageTag),
+            MoneyText(
+                amountCents = movement.amountCents,
+                currencyCode = currencyCode,
+                role = MoneyRole.Flow,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
             )

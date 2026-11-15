@@ -2,8 +2,10 @@ package dev.lacruzjs.sobreio.di
 
 import com.russhwolf.settings.Settings
 import dev.lacruzjs.sobreio.data.local.LastAccountStore
+import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.data.local.SettingsLastAccountStore
+import dev.lacruzjs.sobreio.data.local.SettingsAppPreferencesStore
 import dev.lacruzjs.sobreio.data.local.SettingsLastGroupStore
 import dev.lacruzjs.sobreio.data.remote.buildSupabaseClient
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -43,4 +45,5 @@ val dataModule = module {
     single<TagRepository> { SupabaseTagRepository(get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }
     single<LastAccountStore> { SettingsLastAccountStore(Settings()) }
+    single<AppPreferencesStore> { SettingsAppPreferencesStore(Settings()) }
 }

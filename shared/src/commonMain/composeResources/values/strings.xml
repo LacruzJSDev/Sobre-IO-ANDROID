@@ -294,6 +294,9 @@
     <!-- Profile -->
     <string name="field_display_name">Name</string>
     <string name="profile_name_saved">Name saved.</string>
+    <string name="profile_accessibility_section">Accessibility</string>
+    <string name="profile_color_blind_label">Colour-blind friendly colours</string>
+    <string name="profile_color_blind_note">Money coming in is shown in blue and negative balances in orange, instead of green and red.</string>
     <string name="action_archive">Archive</string>
     <string name="settings_section_pending">Pending</string>
     <string name="settings_section_accepted">Accepted</string>

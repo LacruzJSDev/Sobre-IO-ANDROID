@@ -255,9 +255,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   and tooltip on touch or drag) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,
   formatValue, contentDescription)` (columns up to 24 dp, 4 dp rounded free end, 2 dp gap, legend above, tooltip per group).
   Shared: `ChartTooltip`, `ChartLegend`, `chartTouch`, and the pure maths in `ChartMath.kt` (`niceTicks`, `compactAmount`,
-  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours `colorScheme.chartIn` and `chartOut`
-  (`ui/theme/ChartColors.kt`; blue and orange pairs for light and dark, never the `error` red); the balance line uses
-  `primary`. Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+  `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
+  `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
+  `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
@@ -265,6 +265,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
+  `LocalMoneyColors`, chosen by dark/light and the colour-blind preference (`moneyColors(dark, colorBlindSafe)`); `moneyColorFor(role,
+  amount, colors, ink)` is the pure rule behind `ui/components/MoneyText` (Flow: positive inflow with "+", otherwise outflow;
+  Transfer: neutral; Balance: ink, `negative` below zero; Plain: ink). The destructive red (`error`) never changes. The preference
+  lives in `AppPreferencesStore` (`data/local`, `SettingsAppPreferencesStore`, per device); `App` observes it and the Profile screen
+  has the "Accessibility" switch. Option lists (`EntityOption.balance`: `MoneyAmount`) show balances as `MoneyText`.
 - Theme in `ui/theme` (one `LightPaper`/`DarkPaper` background for `background`, `surface` and the lower containers;
   `LightSoft`/`DarkSoft` for higher containers, chips and secondary buttons; `LightRed`/`DarkRed` for `error`; colours as
   in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
@@ -334,6 +340,9 @@ plus `movementform` (the new / edit movement form).
 - Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ020` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
+- Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a
+  hand-picked colour. Inflow green / outflow ink / transfer muted / negative balance red; the colour-blind preference
+  swaps green to blue and red to orange. Amounts inside a sentence stay plain `formatMoney` text.
 - Amounts are `Long` cents everywhere; format them only in the UI with `formatMoney(…, languageTag)`, passing the
   language tag of the current configuration (`1.298,15 €` in Spanish, `€1,298.15` in English).
 - The app is bilingual. Every user-visible string is a resource with the same key in `composeResources/values/strings.xml` (English,

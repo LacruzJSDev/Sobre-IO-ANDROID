@@ -87,7 +87,9 @@ import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.components.deleteAction
 import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.components.iconFor
+import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatMoney
@@ -395,8 +397,10 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
                 )
             }
         }
-        Text(
-            text = formatMoney(amount, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = amount,
+            currencyCode = state.currencyCode,
+            role = if (ledgerTransfer) MoneyRole.Transfer else MoneyRole.Flow,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,

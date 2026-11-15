@@ -37,6 +37,8 @@ import dev.lacruzjs.sobreio.generated.resources.commitment_starts_on
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.deleteAction
@@ -160,8 +162,10 @@ private fun CommitmentRowContent(row: CommitmentRow, currencyCode: String, langu
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(
-            text = formatSignedMoney(row.signedCents, currencyCode, languageTag),
+        MoneyText(
+            amountCents = row.signedCents,
+            currencyCode = currencyCode,
+            role = MoneyRole.Flow,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,

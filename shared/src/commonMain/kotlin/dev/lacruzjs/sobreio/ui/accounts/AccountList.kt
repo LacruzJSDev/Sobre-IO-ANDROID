@@ -38,6 +38,8 @@ import dev.lacruzjs.sobreio.generated.resources.accounts_total
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
@@ -151,24 +153,26 @@ private fun AccountsSummaryBlock(state: AccountsUiState, languageTag: String) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = formatMoney(state.totalCents, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = state.totalCents,
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.headlineMedium,
         )
         if (state.outsideEnvelopes.isNotEmpty()) {
             Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                SmallFigure(stringResource(Res.string.accounts_in_envelopes_title), formatMoney(state.inEnvelopesCents, state.currencyCode, languageTag))
-                SmallFigure(stringResource(Res.string.accounts_outside_envelopes_title), formatMoney(state.outsideCents, state.currencyCode, languageTag))
+                SmallFigure(stringResource(Res.string.accounts_in_envelopes_title), state.inEnvelopesCents, state.currencyCode)
+                SmallFigure(stringResource(Res.string.accounts_outside_envelopes_title), state.outsideCents, state.currencyCode)
             }
         }
     }
 }
 
 @Composable
-private fun SmallFigure(label: String, value: String) {
+private fun SmallFigure(label: String, amountCents: Long, currencyCode: String) {
     Column {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.titleMedium)
+        MoneyText(amountCents, currencyCode, MoneyRole.Balance, style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -205,8 +209,10 @@ private fun AccountRow(account: Account, state: AccountsUiState, languageTag: St
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(
-            text = formatMoney(account.balanceCents, state.currencyCode, languageTag),
+        MoneyText(
+            amountCents = account.balanceCents,
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.End,
             maxLines = 1,

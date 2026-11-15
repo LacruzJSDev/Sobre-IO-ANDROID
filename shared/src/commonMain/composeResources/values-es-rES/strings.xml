@@ -293,6 +293,9 @@
     <!-- Profile -->
     <string name="field_display_name">Nombre</string>
     <string name="profile_name_saved">Nombre guardado.</string>
+    <string name="profile_accessibility_section">Accesibilidad</string>
+    <string name="profile_color_blind_label">Colores para daltonismo</string>
+    <string name="profile_color_blind_note">Las entradas se muestran en azul y los saldos negativos en naranja, en vez de verde y rojo.</string>
     <string name="action_archive">Archivar</string>
     <string name="settings_section_pending">Pendientes</string>
     <string name="settings_section_accepted">Aceptadas</string>

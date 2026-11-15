@@ -173,12 +173,14 @@ fun LargeAmountField(
     errorRes: StringResource? = null,
     enabled: Boolean = true,
     focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
+    /** The colour of the typed amount (the placeholder stays muted): the money colour of the kind of movement. */
+    amountColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
 ) {
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val style = MaterialTheme.typography.displaySmall.copy(
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = amountColor,
     )
     androidx.compose.foundation.layout.Column(
         modifier = modifier.fillMaxWidth(),

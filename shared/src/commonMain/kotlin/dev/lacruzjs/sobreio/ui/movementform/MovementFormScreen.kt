@@ -76,6 +76,8 @@ import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.components.LargeAmountField
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
+import dev.lacruzjs.sobreio.ui.components.MoneyAmount
+import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
@@ -148,13 +150,16 @@ fun MovementFormScreen(
                 val enabled = !state.isSubmitting
                 val money = { cents: Long -> formatMoney(cents, state.currencyCode, languageTag) }
                 val unassignedName = stringResource(Res.string.envelopes_unassigned)
-                val accountOptions = state.accounts.map { it.toEntityOption(money(it.balanceCents)) }
+                val accountOptions = state.accounts.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
 
                 val amountFocus = remember { FocusRequester() }
                 // Creating opens the keypad by itself: the amount is the first thing to type
                 LaunchedEffect(state.isEditing) { if (!state.isEditing) runCatching { amountFocus.requestFocus() } }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     listOf(
                         EntryKind.Expense to Res.string.movement_kind_expense,
                         EntryKind.Income to Res.string.movement_kind_income,
@@ -178,6 +183,13 @@ fun MovementFormScreen(
                     errorRes = state.amountError,
                     enabled = enabled,
                     focusRequester = amountFocus,
+                    amountColor = with(LocalMoneyColors.current) {
+                        when (state.kind) {
+                            EntryKind.Income -> inflow
+                            EntryKind.Expense -> outflow
+                            EntryKind.Transfer -> neutral
+                        }
+                    },
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
 
@@ -260,9 +272,9 @@ private fun EnvelopeTiles(
     // "Unassigned" is the first option, with its real id: no envelope chosen is a null selection, not "Unassigned"
     val unassigned = state.unassigned
     val options = listOfNotNull(
-        unassigned?.let { EntityOption(it.id, unassignedName, Icons.Filled.Inbox, trailing = money(it.balanceCents)) },
+        unassigned?.let { EntityOption(it.id, unassignedName, Icons.Filled.Inbox, balance = MoneyAmount(it.balanceCents, state.currencyCode)) },
     ) + state.envelopes.filter { it.kind != EnvelopeKind.System }.sortedBy { it.name.lowercase() }
-        .map { it.toEntityOption(money(it.balanceCents)) }
+        .map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) }
     EntitySelect(
         label = stringResource(Res.string.field_envelope),
         options = options,
@@ -280,7 +292,7 @@ private fun EnvelopeTiles(
             EntitySelect(
                 label = stringResource(Res.string.field_cover_also),
                 options = listOf(EntityOption(null, stringResource(Res.string.movement_cover_none))) +
-                    state.coverCandidates.map { it.toEntityOption(money(it.balanceCents)) },
+                    state.coverCandidates.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) },
                 selectedId = state.coverEnvelopeId,
                 onSelect = { onEvent(MovementFormEvent.CoverSelected(it)) },
                 expanded = open == OpenSelect.Cover,

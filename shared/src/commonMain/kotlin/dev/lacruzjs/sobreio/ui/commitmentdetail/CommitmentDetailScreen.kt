@@ -65,6 +65,8 @@ import dev.lacruzjs.sobreio.ui.components.CollapsibleListSection
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.FormInfoTile
+import dev.lacruzjs.sobreio.ui.components.MoneyText
+import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -170,17 +172,25 @@ private fun DetailContent(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val amount = formatSignedMoney(state.signedCents, state.currencyCode, languageTag)
-        val summary = listOfNotNull(
-            amount,
+        val rest = listOfNotNull(
             frequencyText(version, languageTag),
             if (state.isArchived) stringResource(Res.string.group_archived_label) else null,
-        ).reduce { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
-        Text(
-            text = summary,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
+        ).reduceOrNull { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
+        Row(modifier = Modifier.padding(horizontal = 4.dp)) {
+            MoneyText(
+                amountCents = state.signedCents,
+                currencyCode = state.currencyCode,
+                role = MoneyRole.Flow,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            // The separator comes from the same "a · b" resource, with nothing before it
+            if (rest != null) {
+                Text(
+                    text = stringResource(Res.string.row_subtitle, "", rest),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+        }
 
         state.funding?.let { FundingBlock(it, state.fundingEnvelopeName, state.currencyCode, languageTag) }
 
@@ -252,8 +262,10 @@ private fun OccurrenceItem(row: OccurrenceRow, currencyCode: String, languageTag
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Text(
-                    text = formatSignedMoney(row.signedCents, currencyCode, languageTag),
+                MoneyText(
+                    amountCents = row.signedCents,
+                    currencyCode = currencyCode,
+                    role = MoneyRole.Flow,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.End,
                 )
@@ -293,8 +305,10 @@ private fun VersionItem(row: VersionRow, currencyCode: String, languageTag: Stri
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = range, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            Text(
-                text = formatSignedMoney(row.signedCents, currencyCode, languageTag),
+            MoneyText(
+                amountCents = row.signedCents,
+                currencyCode = currencyCode,
+                role = MoneyRole.Flow,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.End,
             )

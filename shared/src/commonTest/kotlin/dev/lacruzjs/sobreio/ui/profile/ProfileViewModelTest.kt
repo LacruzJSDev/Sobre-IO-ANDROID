@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.ui.profile
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.User
+import dev.lacruzjs.sobreio.fake.FakeAppPreferencesStore
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
@@ -18,7 +19,8 @@ class ProfileViewModelTest : MainDispatcherTest() {
     private val user = User("1", "ana@example.com", "Ana")
     private val auth = FakeAuthRepository(AuthState.SignedIn(user))
     // Lazy: init launches a coroutine, which needs Main replaced first
-    private val viewModel by lazy { ProfileViewModel(auth) }
+    private val preferences = FakeAppPreferencesStore()
+    private val viewModel by lazy { ProfileViewModel(auth, preferences) }
 
     @Test
     fun showsTheSignedInUserAndFillsTheNameField() {
@@ -78,5 +80,16 @@ class ProfileViewModelTest : MainDispatcherTest() {
         assertEquals("Ana", viewModel.state.value.user?.displayName)
         assertFalse(viewModel.state.value.saved)
         assertFalse(viewModel.state.value.isSaving)
+    }
+
+    @Test
+    fun colourBlindToggleIsReadFromAndWrittenToTheStore() {
+        assertFalse(viewModel.state.value.colorBlindSafe)
+        viewModel.onEvent(ProfileEvent.ColorBlindSafeChanged(true))
+        assertTrue(preferences.colorBlindSafe.value)
+        assertTrue(viewModel.state.value.colorBlindSafe)
+        viewModel.onEvent(ProfileEvent.ColorBlindSafeChanged(false))
+        assertFalse(preferences.colorBlindSafe.value)
+        assertFalse(viewModel.state.value.colorBlindSafe)
     }
 }
