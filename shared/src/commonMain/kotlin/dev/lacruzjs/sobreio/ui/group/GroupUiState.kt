@@ -13,4 +13,6 @@ data class GroupUiState(
     val navigateBack: Boolean = false,
     /** The "coming soon" sheet of the "+" in the Accounts, Envelopes and Movements headers is open. */
     val newItemSheetOpen: Boolean = false,
+    /** Due dates waiting for review: the badge of the Group tab (hidden at 0). Set by the Route from the summary ViewModel. */
+    val pendingCount: Int = 0,
 )

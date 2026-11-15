@@ -17,6 +17,7 @@ import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormViewModel
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormViewModel
 import dev.lacruzjs.sobreio.ui.groups.GroupsViewModel
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsViewModel
+import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormViewModel
 import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
@@ -104,6 +105,15 @@ val uiModule = module {
             accounts = get(),
             envelopes = get(),
             detail = get(),
+        )
+    }
+    viewModel { params ->
+        GroupSummaryViewModel(
+            groupId = params.get(),
+            summary = get(),
+            detail = get(),
+            accounts = get(),
+            envelopes = get(),
         )
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get()) }

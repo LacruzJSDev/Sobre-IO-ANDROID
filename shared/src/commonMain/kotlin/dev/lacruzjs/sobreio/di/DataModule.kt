@@ -15,6 +15,8 @@ import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeDetailRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
+import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseGroupSummaryRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.data.repository.MovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.MovementRepository
@@ -37,6 +39,7 @@ val dataModule = module {
     single { buildSupabaseClient() }
     single<AuthRepository> { SupabaseAuthRepository(get()) }
     single<GroupRepository> { SupabaseGroupRepository(get()) }
+    single<GroupSummaryRepository> { SupabaseGroupSummaryRepository(get()) }
     single<AccountRepository> { SupabaseAccountRepository(get()) }
     single<AccountDetailRepository> { SupabaseAccountDetailRepository(get()) }
     single<CommitmentRepository> { SupabaseCommitmentRepository(get()) }

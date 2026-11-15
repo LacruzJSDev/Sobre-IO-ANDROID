@@ -32,8 +32,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
   full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
-  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes and Movements work, Group is still an empty
-  state). Root navigation follows the session (`SessionViewModel`).
+  Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes, Movements and Group all work). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
   page above Groups: its header has a menu button (`MenuButton`, three lines), never a back arrow, and system back or the
@@ -109,6 +108,27 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Undo, FZ008 restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
   Tapping a row opens the envelope detail.
+- Group tab (`ui/groupsummary`, `GroupSummaryViewModel(groupId)` with `GroupSummaryRepository`, `AccountDetailRepository`,
+  `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`, `ConfirmSheet`): the ONLY place where pending occurrences are reviewed.
+  Hero "Really free today" (`group_outlook_current.free_today`, `MoneyText` Balance, large) with a muted "Projected at period end: X ·
+  1 nov - 30 nov" (`free_projected`, period dates). "To review - N" card (hidden at 0): `pending_occurrences` rows (kind-icon avatar in
+  ink, name, "<account> - was due on <date>", `MoneyText` Flow signed by `DueOccurrence.signedCents`: income and incoming contribution
+  positive, the rest negative) with compact "Skip" (`SecondaryButton(compact)`) and "Confirm" buttons for any member of a live group
+  (archived or pending-deletion groups are read only). The receiving half of a contribution (`group_transfer_in`) is left out: the
+  contributor registers it (FZ018). Confirm opens `ConfirmSheet` (`FlatBottomSheet`): `AmountField` with the expected amount, `DateFormTile`
+  (due date, or today when it is later; `maxDate` = group today), and, for an expense whose envelope (not Unassigned) on an account inside
+  the envelopes has less than the amount, the movement form's cover note and optional "Also cover from" `EntitySelect`
+  (`p_cover` = that envelope's full balance). `confirm_occurrence` returns the created fact; the row goes and an Undo snackbar
+  "<name> registered" voids that fact (`transactions` / `account_transfers` `voided_at`, `void_group_transfer` for a contribution), after
+  which the database frees the due date. Skip hides the row at once, shows "<name> skipped" and writes `skip_occurrence` only when the
+  snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing the row back meanwhile). "Warnings" card (hidden when
+  empty, tappable rows with a warning icon in the negative money colour and a chevron): envelopes in `envelope_progress` state
+  `overspent` (opens the envelope detail), accounts with `account_forecast.shortfall > 0` (date from `account_projection` with
+  `shortfallDate`, opens the account detail) and `committed_shortfall > 0` (selects the Envelopes tab). "Next due items"
+  `CollapsibleListSection` with the count: `upcoming_occurrences` from tomorrow to the period end, read only. The Group tab icon carries a
+  `BadgedBox` ink badge with the pending count (hidden at 0, accessible label "N to review"); `GroupRoute` refreshes it when the shell
+  is shown and when the tab is selected, and each confirm or skip refreshes it. Everything comes from the database; the app only signs
+  and joins names. `FlatButton`, `PrimaryButton` and `SecondaryButton` take `compact` for small row buttons.
 - Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
   the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
   again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes

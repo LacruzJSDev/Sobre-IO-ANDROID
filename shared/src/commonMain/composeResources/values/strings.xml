@@ -93,7 +93,6 @@
     <string name="tab_accounts">Accounts</string>
     <string name="tab_envelopes">Envelopes</string>
     <string name="tab_movements">Movements</string>
-    <string name="tab_group_empty">The group summary will appear here.</string>
     <string name="tab_accounts_empty">There are no accounts yet.</string>
     <string name="tab_envelopes_empty">Envelopes will appear here.</string>
     <string name="tab_movements_empty">Movements will appear here.</string>
@@ -594,4 +593,20 @@
     <string name="envelope_progress_overspent">Overspent: %1$s</string>
     <string name="envelope_progress_pending">%1$d to review in Group</string>
     <string name="commitment_paid_this_period">Paid this period</string>
+
+    <string name="group_summary_free_today">Really free today</string>
+    <string name="group_summary_projected">Projected at period end: %1$s · %2$s</string>
+    <string name="group_summary_period_range">%1$s – %2$s</string>
+    <string name="group_summary_review_title">To review · %1$d</string>
+    <string name="group_summary_due_subtitle">%1$s · was due on %2$s</string>
+    <string name="action_skip">Skip</string>
+    <string name="group_summary_confirm_title">Register %1$s</string>
+    <string name="occurrence_recorded">%1$s registered</string>
+    <string name="occurrence_skipped">%1$s skipped</string>
+    <string name="group_summary_warnings_title">Warnings</string>
+    <string name="warning_envelope_overspent">%1$s: overspent by %2$s</string>
+    <string name="warning_account_shortfall">%1$s will drop to %2$s on %3$s</string>
+    <string name="warning_commitments_shortfall">%1$s missing for this period\'s commitments</string>
+    <string name="group_summary_upcoming_empty">Nothing else is due this period.</string>
+    <string name="tab_group_badge">%1$d to review</string>
 </resources>

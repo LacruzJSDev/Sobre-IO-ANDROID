@@ -92,7 +92,6 @@
     <string name="tab_accounts">Cuentas</string>
     <string name="tab_envelopes">Sobres</string>
     <string name="tab_movements">Movimientos</string>
-    <string name="tab_group_empty">Aquí aparecerá el resumen del grupo.</string>
     <string name="tab_accounts_empty">Todavía no hay cuentas.</string>
     <string name="tab_envelopes_empty">Aquí aparecerán los sobres.</string>
     <string name="tab_movements_empty">Aquí aparecerán los movimientos.</string>
@@ -593,4 +592,20 @@
     <string name="envelope_progress_overspent">Gastado de más: %1$s</string>
     <string name="envelope_progress_pending">%1$d por revisar en Grupo</string>
     <string name="commitment_paid_this_period">Pagado este periodo</string>
+
+    <string name="group_summary_free_today">Libre de verdad hoy</string>
+    <string name="group_summary_projected">Previsto a fin de periodo: %1$s · %2$s</string>
+    <string name="group_summary_period_range">%1$s – %2$s</string>
+    <string name="group_summary_review_title">Por revisar · %1$d</string>
+    <string name="group_summary_due_subtitle">%1$s · venció el %2$s</string>
+    <string name="action_skip">Saltar</string>
+    <string name="group_summary_confirm_title">Registrar %1$s</string>
+    <string name="occurrence_recorded">%1$s registrado</string>
+    <string name="occurrence_skipped">%1$s saltado</string>
+    <string name="group_summary_warnings_title">Avisos</string>
+    <string name="warning_envelope_overspent">%1$s: gastado de más %2$s</string>
+    <string name="warning_account_shortfall">%1$s bajará a %2$s el %3$s</string>
+    <string name="warning_commitments_shortfall">Faltan %1$s para los compromisos de este periodo</string>
+    <string name="group_summary_upcoming_empty">No vence nada más en este periodo.</string>
+    <string name="tab_group_badge">%1$d por revisar</string>
 </resources>

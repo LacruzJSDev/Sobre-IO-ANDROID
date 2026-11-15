@@ -12,6 +12,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     enabled: Boolean = true,
+    compact: Boolean = false,
 ) {
     FlatButton(
         text = text,
@@ -21,5 +22,6 @@ fun PrimaryButton(
         modifier = modifier,
         isLoading = isLoading,
         enabled = enabled,
+        compact = compact,
     )
 }
