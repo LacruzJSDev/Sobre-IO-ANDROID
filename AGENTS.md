@@ -304,9 +304,11 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   and funding (expense); the new `accountId` travels in `change_commitment` with "Apply from". Creating and contributions keep it fixed.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.
 - Tags (decision D-49 in the DB repo; `ui/tags`, route `Tags(groupId)`, level 3 of the Group tab, `TagsViewModel(groupId)` with
-  `TagRepository` and `GroupRepository`; `TagsScreen`, `TagSheet`, `MergeSheet`): opened by the "Manage" button of the
-  group settings' "Tags" section (`GroupSettingsUiState.tagCount`, "N tags", a compact `SecondaryButton`, no chevron row; every
-  member sees it). Any member of a live group manages tags (`TagsUiState.canEdit`). `ScreenHeader` with back, title, group
+  `TagRepository` and `GroupRepository`; `TagsScreen`, `TagSheet`, `MergeSheet`): opened from the group settings'
+  "Tags" section: its title carries the count ("Tags · N") and a pencil, and a soft card previews the tags themselves as
+  coloured chips (up to 8, then "+N more"; `GroupSettingsUiState.tags`); the card and the pencil open the screen. With no tags
+  the title stands alone with a "+" (any member of a live group, `canManageTags`) that opens it with the create sheet
+  (`Tags(groupId, startWithCreate = true)`) and a line explains what tags are for; every member sees the section. Any member of a live group manages tags (`TagsUiState.canEdit`). `ScreenHeader` with back, title, group
   subtitle and "+". Rows come from `tag_usage` (`TagRepository.getUsage`: live and archived tags with the count of live
   movements, counted by the database): a `TagDot` (colour), name and "N movements". Live rows swipe Edit, Merge
   (`mergeAction`, hidden with a single live tag) and Delete (archive at once, Undo unarchives); a collapsed "Archived (N)" section

@@ -1,6 +1,12 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.draw.clip
+import dev.lacruzjs.sobreio.domain.model.Tag
+import dev.lacruzjs.sobreio.ui.components.TagDot
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,8 +73,11 @@ import dev.lacruzjs.sobreio.generated.resources.member_former
 import dev.lacruzjs.sobreio.generated.resources.settings_section_accepted
 import dev.lacruzjs.sobreio.generated.resources.settings_section_pending
 import dev.lacruzjs.sobreio.generated.resources.settings_section_tags
-import dev.lacruzjs.sobreio.generated.resources.settings_tags_count
-import dev.lacruzjs.sobreio.generated.resources.action_manage
+import dev.lacruzjs.sobreio.generated.resources.settings_tags_title_count
+import dev.lacruzjs.sobreio.generated.resources.settings_tags_empty
+import dev.lacruzjs.sobreio.generated.resources.settings_tags_more
+import dev.lacruzjs.sobreio.generated.resources.action_new_tag
+import dev.lacruzjs.sobreio.generated.resources.action_manage_tags
 import dev.lacruzjs.sobreio.generated.resources.member_name_you
 import dev.lacruzjs.sobreio.generated.resources.settings_section_invitations
 import dev.lacruzjs.sobreio.generated.resources.settings_section_members
@@ -89,7 +98,6 @@ import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -101,7 +109,8 @@ fun GroupSettingsRoute(
     onBack: () -> Unit,
     onBackToGroups: () -> Unit,
     onEditGroup: () -> Unit,
-    onOpenTags: () -> Unit,
+    /** Opens the Tags screen; true opens it with the create sheet (the "+" of an empty section). */
+    onOpenTags: (startWithCreate: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupSettingsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
@@ -123,7 +132,8 @@ fun GroupSettingsRoute(
             when (event) {
                 GroupSettingsEvent.BackClicked -> onBack()
                 GroupSettingsEvent.EditClicked -> onEditGroup()
-                GroupSettingsEvent.TagsClicked -> onOpenTags()
+                GroupSettingsEvent.TagsClicked -> onOpenTags(false)
+                GroupSettingsEvent.NewTagClicked -> onOpenTags(true)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -233,7 +243,7 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
             }
         }
 
-        item(key = "tags") { TagsSection(state.tagCount) { onEvent(GroupSettingsEvent.TagsClicked) } }
+        item(key = "tags") { TagsSection(state.tags, state.canManageTags, onEvent) }
 
         if (state.canInvite) {
             item(key = "invitations-title") {
@@ -296,23 +306,85 @@ private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Every member sees how many tags the group has and opens the Tags screen with a compact button, no chevron row. */
+/**
+ * The tags themselves are the content: the title carries the count and the action (a pencil, or a "+" when there are
+ * none yet, like the Invitations "+"), and a soft card previews the tags as coloured chips. Tapping the card or the
+ * pencil opens the Tags screen; the "+" opens it with the create sheet. Nothing shows until the tags load.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TagsSection(count: Int?, onManage: () -> Unit) {
+private fun TagsSection(tags: List<Tag>?, canManage: Boolean, onEvent: (GroupSettingsEvent) -> Unit) {
+    if (tags == null) return
     Column {
-        SectionTitle(stringResource(Res.string.settings_section_tags))
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = count?.let { pluralStringResource(Res.plurals.settings_tags_count, it, it) }.orEmpty(),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val title = stringResource(Res.string.settings_section_tags)
+            SectionTitle(
+                text = if (tags.isEmpty()) title else stringResource(Res.string.settings_tags_title_count, title, tags.size),
+                modifier = Modifier.weight(1f),
             )
-            SecondaryButton(text = stringResource(Res.string.action_manage), onClick = onManage, compact = true)
+            if (tags.isEmpty()) {
+                if (canManage) {
+                    AddIconButton(
+                        contentDescription = stringResource(Res.string.action_new_tag),
+                        onClick = { onEvent(GroupSettingsEvent.NewTagClicked) },
+                    )
+                }
+            } else {
+                IconActionButton(
+                    icon = Icons.Filled.Edit,
+                    label = stringResource(Res.string.action_manage_tags),
+                    onClick = { onEvent(GroupSettingsEvent.TagsClicked) },
+                )
+            }
         }
+        if (tags.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.settings_tags_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        } else {
+            val shown = tags.take(MAX_TAG_PREVIEW)
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .clickable(role = Role.Button) { onEvent(GroupSettingsEvent.TagsClicked) }
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                shown.forEach { tag -> TagPreviewChip(tag.name, tag.color) }
+                if (tags.size > shown.size) {
+                    TagPreviewChip(stringResource(Res.string.settings_tags_more, tags.size - shown.size), color = null, muted = true)
+                }
+            }
+        }
+    }
+}
+
+/** Up to this many tags are previewed; the rest are summed up in a "+N more" chip. */
+private const val MAX_TAG_PREVIEW = 8
+
+@Composable
+private fun TagPreviewChip(text: String, color: String?, muted: Boolean = false) {
+    Row(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (!muted) TagDot(color, size = 9.dp)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
     }
 }
 

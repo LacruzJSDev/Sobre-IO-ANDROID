@@ -640,11 +640,6 @@
     <string name="tag_color_stone">Piedra</string>
     <string name="tags_title">Etiquetas</string>
     <string name="settings_section_tags">Etiquetas</string>
-    <plurals name="settings_tags_count">
-        <item quantity="one">%1$d etiqueta</item>
-        <item quantity="other">%1$d etiquetas</item>
-    </plurals>
-    <string name="action_manage">Gestionar</string>
     <plurals name="tags_movements_count">
         <item quantity="one">%1$d movimiento</item>
         <item quantity="other">%1$d movimientos</item>
@@ -668,4 +663,13 @@
     <string name="tag_picker_suggestion">¿Quisiste decir «%1$s»?</string>
     <string name="tag_picker_empty">Aún no hay etiquetas. Escribe un nombre para crear una.</string>
     <string name="tag_remove">Quitar %1$s</string>
+    <string name="settings_tags_title_count">%1$s · %2$d</string>
+    <string name="settings_tags_empty">Agrupa movimientos por tema, como «viaje» o «regalos».</string>
+    <string name="settings_tags_more">+%1$d más</string>
+    <string name="action_manage_tags">Gestionar etiquetas</string>
+    <string name="action_new_tag">Nueva etiqueta</string>
+    <plurals name="settings_tags_count">
+        <item quantity="one">%1$d etiqueta</item>
+        <item quantity="other">%1$d etiquetas</item>
+    </plurals>
 </resources>

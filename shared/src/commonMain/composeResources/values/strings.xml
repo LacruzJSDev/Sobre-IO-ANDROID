@@ -641,11 +641,6 @@
     <string name="tag_color_stone">Stone</string>
     <string name="tags_title">Tags</string>
     <string name="settings_section_tags">Tags</string>
-    <plurals name="settings_tags_count">
-        <item quantity="one">%1$d tag</item>
-        <item quantity="other">%1$d tags</item>
-    </plurals>
-    <string name="action_manage">Manage</string>
     <plurals name="tags_movements_count">
         <item quantity="one">%1$d movement</item>
         <item quantity="other">%1$d movements</item>
@@ -669,4 +664,13 @@
     <string name="tag_picker_suggestion">Did you mean “%1$s”?</string>
     <string name="tag_picker_empty">No tags yet. Type a name to create one.</string>
     <string name="tag_remove">Remove %1$s</string>
+    <string name="settings_tags_title_count">%1$s · %2$d</string>
+    <string name="settings_tags_empty">Group movements by topic, such as “trip” or “gifts”.</string>
+    <string name="settings_tags_more">+%1$d more</string>
+    <string name="action_manage_tags">Manage tags</string>
+    <string name="action_new_tag">New tag</string>
+    <plurals name="settings_tags_count">
+        <item quantity="one">%1$d tag</item>
+        <item quantity="other">%1$d tags</item>
+    </plurals>
 </resources>

@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
 
+import dev.lacruzjs.sobreio.domain.model.Tag
+
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
@@ -19,8 +21,8 @@ data class GroupSettingsUiState(
     val pendingInvitations: List<Invitation> = emptyList(),
     /** Accepted invitations: who joined and when. Read only; only loaded for owners and admins. */
     val acceptedInvitations: List<Invitation> = emptyList(),
-    /** How many live tags the group has, for the Tags section; null until they load or when they fail to. */
-    val tagCount: Int? = null,
+    /** The group's live tags, shown as chips in the Tags section; null until they load or when they fail to. */
+    val tags: List<Tag>? = null,
     val isLoading: Boolean = true,
     /** Failure of loading the group. */
     val error: AppError? = null,
@@ -43,6 +45,12 @@ data class GroupSettingsUiState(
     /** Owner or admin of a live group: edit the details and invite. */
     val canEditDetails: Boolean get() = group?.canEdit == true
     val canInvite: Boolean get() = canEditDetails
+
+    /** How many live tags the group has, for the section title; null until they load. */
+    val tagCount: Int? get() = tags?.size
+
+    /** Any member of a live group can create and manage tags. */
+    val canManageTags: Boolean get() = group?.let { !it.isArchived && !it.isPendingDeletion } == true
 
     /** Owner of a live group: change roles and remove members. */
     val canManageMembers: Boolean get() = group?.let { it.isOwner && it.canEdit } == true

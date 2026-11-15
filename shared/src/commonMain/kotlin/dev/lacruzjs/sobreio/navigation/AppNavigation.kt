@@ -164,11 +164,11 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onBack = { backStack.popToPrevious() },
                     onBackToGroups = { backStack.showOnlyGroups() },
                     onEditGroup = { backStack.add(GroupForm(key.groupId)) },
-                    onOpenTags = { backStack.add(Tags(key.groupId)) },
+                    onOpenTags = { create -> backStack.add(Tags(key.groupId, startWithCreate = create)) },
                 )
             }
             entry<Tags> { key ->
-                TagsRoute(groupId = key.groupId, onBack = { backStack.popToPrevious() })
+                TagsRoute(groupId = key.groupId, startWithCreate = key.startWithCreate, onBack = { backStack.popToPrevious() })
             }
             entry<GroupForm> { key ->
                 GroupFormRoute(

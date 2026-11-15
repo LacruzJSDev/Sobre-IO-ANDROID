@@ -53,8 +53,16 @@ class GroupSettingsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun theTagSectionShowsTheNumberOfLiveTags() {
-        assertEquals(2, viewModel().state.value.tagCount)
+    fun theTagSectionPreviewsTheLiveTagsByName() {
+        val state = viewModel().state.value
+
+        assertEquals(listOf("Home", "Trip"), state.tags?.map { it.name })
+        assertEquals(2, state.tagCount)
+    }
+
+    @Test
+    fun anyMemberOfALiveGroupCanManageTags() {
+        assertEquals(true, viewModel(GroupRole.Member).state.value.canManageTags)
     }
 
     @Test

@@ -70,10 +70,20 @@ import org.koin.core.parameter.parametersOf
 fun TagsRoute(
     groupId: String,
     onBack: () -> Unit,
+    /** Opened from the "+" of an empty Tags section: the create sheet opens once the group has loaded. */
+    startWithCreate: Boolean = false,
     modifier: Modifier = Modifier,
     viewModel: TagsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Saved so rotating or coming back does not open the sheet again
+    var createRequested by rememberSaveable { mutableStateOf(startWithCreate) }
+    LaunchedEffect(createRequested, state.canEdit) {
+        if (createRequested && state.canEdit) {
+            viewModel.onEvent(TagsEvent.AddClicked)
+            createRequested = false
+        }
+    }
     TagsScreen(
         state = state,
         onEvent = { event ->

@@ -73,7 +73,7 @@ class GroupSettingsViewModel(
             GroupSettingsEvent.UndoClicked -> undo.undo()
             GroupSettingsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which owns the back stack
-            GroupSettingsEvent.BackClicked, GroupSettingsEvent.EditClicked, GroupSettingsEvent.TagsClicked -> Unit
+            GroupSettingsEvent.BackClicked, GroupSettingsEvent.EditClicked, GroupSettingsEvent.TagsClicked, GroupSettingsEvent.NewTagClicked -> Unit
         }
     }
 
@@ -89,8 +89,10 @@ class GroupSettingsViewModel(
             groups.getGroup(groupId)
                 .onSuccess { group ->
                     _state.update { it.copy(group = group, currentUserId = userId, isLoading = false) }
-                    // Only the count of the Tags section: without it the section just shows its button
-                    tags.getTags(groupId).onSuccess { list -> _state.update { it.copy(tagCount = list.size) } }
+                    // The Tags section previews the tags themselves; without them it only shows its title
+                    tags.getTags(groupId).onSuccess { list ->
+                        _state.update { it.copy(tags = list.sortedBy { tag -> tag.name.lowercase() }) }
+                    }
                     members.getMembers(groupId)
                         .onSuccess { list -> _state.update { it.copy(members = list) } }
                         .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
