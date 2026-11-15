@@ -135,7 +135,6 @@
     <string name="error_duplicate_name">Ese nombre ya está en uso.</string>
 
     <!-- Envelopes tab -->
-    <string name="envelopes_total">Total en sobres</string>
     <string name="envelopes_unassigned">Sin asignar</string>
     <string name="envelope_target_per_month">Objetivo %1$s al mes</string>
     <string name="envelopes_empty_editor">Todavía no hay sobres. Crea el primero con el botón +.</string>
@@ -584,7 +583,6 @@
     <string name="commitment_funded_no_bills_note">Aún no tienes ningún sobre de Recibos. Crea uno primero para poder reservar dinero para este compromiso.</string>
     <string name="validation_funded_needs_bills">Elige un sobre de Recibos o desactiva la reserva.</string>
     <string name="validation_funded_no_bills">Crea antes un sobre de Recibos o desactiva la reserva.</string>
-    <string name="envelopes_unassigned_subtitle">Libre para repartir</string>
     <string name="envelope_progress_remaining">Quedan %1$s de %2$s este mes</string>
     <string name="envelope_progress_reserved_of">%1$s de %2$s reservados</string>
     <string name="envelope_progress_pays_on">Pago el %1$s</string>
@@ -677,4 +675,17 @@
     <string name="movement_row_aside">· %1$s</string>
     <string name="movement_tags_more">+%1$d</string>
     <string name="movement_no_tags">Sin etiquetas</string>
+    <string name="envelopes_hero_free">Libre para repartir</string>
+    <string name="envelopes_hero_in_envelopes">En sobres</string>
+    <string name="envelopes_hero_later_covered">Apartado %1$s para pagos de más adelante · lo cubre %2$s el %3$s</string>
+    <string name="envelopes_hero_later_uncovered">Apartado %1$s para pagos de más adelante · ningún ingreso previsto lo cubre</string>
+    <string name="envelopes_hero_covered">Lo cubre %1$s el %2$s</string>
+    <string name="envelopes_hero_short">Has apartado %1$s más de lo que tienes</string>
+    <string name="envelopes_hero_to_assign">Dinero que aún no está en ningún sobre</string>
+    <string name="envelopes_hero_all_assigned">Todo el dinero está en sobres</string>
+    <string name="envelopes_hero_due">Este periodo</string>
+    <string name="envelopes_hero_later">Más adelante</string>
+    <string name="envelopes_hero_other">Resto</string>
+    <string name="envelopes_hero_overspent">Gastado de más</string>
+    <string name="envelopes_hero_open">Abrir Sin asignar</string>
 </resources>

@@ -136,7 +136,6 @@
     <string name="error_duplicate_name">That name is already in use.</string>
 
     <!-- Envelopes tab -->
-    <string name="envelopes_total">Total in envelopes</string>
     <string name="envelopes_unassigned">Unassigned</string>
     <string name="envelope_target_per_month">Target %1$s a month</string>
     <string name="envelopes_empty_editor">No envelopes yet. Create the first one with the + button.</string>
@@ -585,7 +584,6 @@
     <string name="commitment_funded_no_bills_note">You don\'t have a Bills envelope yet. Create one first to set money aside for this commitment.</string>
     <string name="validation_funded_needs_bills">Choose a Bills envelope or turn off the reserve.</string>
     <string name="validation_funded_no_bills">Create a Bills envelope first, or turn off the reserve.</string>
-    <string name="envelopes_unassigned_subtitle">Free to distribute</string>
     <string name="envelope_progress_remaining">%1$s left of %2$s this month</string>
     <string name="envelope_progress_reserved_of">%1$s of %2$s reserved</string>
     <string name="envelope_progress_pays_on">Payment on %1$s</string>
@@ -678,4 +676,17 @@
     <string name="movement_row_aside">· %1$s</string>
     <string name="movement_tags_more">+%1$d</string>
     <string name="movement_no_tags">No tags</string>
+    <string name="envelopes_hero_free">Free to distribute</string>
+    <string name="envelopes_hero_in_envelopes">In envelopes</string>
+    <string name="envelopes_hero_later_covered">%1$s set aside for later payments · %2$s covers it on %3$s</string>
+    <string name="envelopes_hero_later_uncovered">%1$s set aside for later payments · no expected income covers it</string>
+    <string name="envelopes_hero_covered">%1$s covers it on %2$s</string>
+    <string name="envelopes_hero_short">You set aside %1$s more than you have</string>
+    <string name="envelopes_hero_to_assign">Money that is not in any envelope yet</string>
+    <string name="envelopes_hero_all_assigned">All the money is in envelopes</string>
+    <string name="envelopes_hero_due">This period</string>
+    <string name="envelopes_hero_later">Later</string>
+    <string name="envelopes_hero_other">The rest</string>
+    <string name="envelopes_hero_overspent">Overspent</string>
+    <string name="envelopes_hero_open">Open Unassigned</string>
 </resources>

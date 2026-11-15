@@ -34,7 +34,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     private val food = Envelope("2", "g1", "food", EnvelopeKind.Spending, 20_000, 5_000, purpose = EnvelopePurpose.Monthly)
     private val trip = Envelope("3", "g1", "Trip", EnvelopeKind.Saving, 0, 80_000, purpose = EnvelopePurpose.Savings)
     private val repository = FakeEnvelopeRepository(listOf(unassigned, trip, rent, food))
-        .also { it.summary = EnvelopeSummary(totalCents = 125_000, unassignedCents = 30_000) }
+        .also { it.summary = EnvelopeSummary(unassignedCents = 30_000, inEnvelopesTotalCents = 125_000) }
     private val memberRepository = FakeMemberRepository()
     private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z", purpose = EnvelopePurpose.Savings)
     private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository) }
@@ -82,8 +82,8 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         assertEquals(unassigned, state.unassigned)
         assertEquals(listOf(food, rent), state.section(EnvelopePurpose.Monthly))
         assertEquals(listOf(trip), state.section(EnvelopePurpose.Savings))
-        assertEquals(125_000, state.totalCents)
-        assertEquals(30_000, state.unassignedCents)
+        assertEquals(125_000, state.summary?.inEnvelopesTotalCents)
+        assertEquals(30_000, state.summary?.unassignedCents)
         assertEquals("USD", state.currencyCode)
         assertFalse(state.isLoading)
     }
@@ -224,7 +224,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         val state = viewModel.state.value
         assertEquals("0", state.unassigned?.id)
         assertTrue(state.envelopes.none { it.kind == EnvelopeKind.System })
-        assertEquals(30_000, state.unassignedCents)
+        assertEquals(30_000, state.summary?.unassignedCents)
     }
 
     @Test
@@ -369,13 +369,14 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun theFixedTotalIsTheDatabaseFigureAndSurvivesARefresh() {
+    fun theHeroFiguresAreTheDatabaseOnesAndSurviveARefresh() {
         loaded()
-        assertEquals(125_000L, viewModel.state.value.totalCents)
+        assertEquals(125_000L, viewModel.state.value.summary?.inEnvelopesTotalCents)
 
-        repository.summary = EnvelopeSummary(totalCents = 99_000, unassignedCents = 1_000)
+        repository.summary = EnvelopeSummary(unassignedCents = 1_000, inEnvelopesTotalCents = 99_000, overspentCents = 500)
         viewModel.onEvent(EnvelopesEvent.Refresh)
-        assertEquals(99_000L, viewModel.state.value.totalCents)
-        assertEquals(1_000L, viewModel.state.value.unassignedCents)
+        assertEquals(99_000L, viewModel.state.value.summary?.inEnvelopesTotalCents)
+        assertEquals(1_000L, viewModel.state.value.summary?.unassignedCents)
+        assertEquals(500L, viewModel.state.value.summary?.overspentCents)
     }
 }

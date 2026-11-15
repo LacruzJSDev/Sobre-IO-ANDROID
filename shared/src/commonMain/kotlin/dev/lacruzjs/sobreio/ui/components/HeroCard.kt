@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -55,10 +57,18 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
 
 /** A label on a hero card: the card's text colour at 85 % alpha. */
 @Composable
-fun HeroLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.labelMedium) {
+fun HeroLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.labelMedium,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+) {
     Text(
         text = text,
         style = style,
+        maxLines = maxLines,
+        overflow = overflow,
         color = MaterialTheme.colorScheme.onHeroContainer.copy(alpha = HeroLabelAlpha),
         modifier = modifier,
     )
@@ -116,5 +126,37 @@ fun HeroSplitBar(fraction: Float, modifier: Modifier = Modifier, height: Dp = 4.
     val ink = MaterialTheme.colorScheme.onHeroContainer
     Box(modifier = modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(50)).background(ink.copy(alpha = 0.2f))) {
         Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(ink))
+    }
+}
+
+/** The alphas of the segments of a [HeroSegmentBar] and of the legend dots that name them, darkest first. */
+val HeroSegmentAlphas: List<Float> = listOf(1f, 0.55f, 0.28f)
+
+/**
+ * A thin bar on a hero card split in segments side by side, each in the card's text colour at the alpha of its position
+ * in [HeroSegmentAlphas]. [fractions] are display ratios (0..1) of the same total; empty ones are skipped and the others
+ * are 2 dp apart. The whole bar has rounded ends over a faint track.
+ */
+@Composable
+fun HeroSegmentBar(fractions: List<Float>, modifier: Modifier = Modifier, height: Dp = 6.dp) {
+    val ink = MaterialTheme.colorScheme.onHeroContainer
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(50))
+            .background(ink.copy(alpha = 0.12f)),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        fractions.forEachIndexed { index, fraction ->
+            if (fraction > 0f) {
+                Box(
+                    modifier = Modifier
+                        .weight(fraction)
+                        .fillMaxHeight()
+                        .background(ink.copy(alpha = HeroSegmentAlphas.getOrElse(index) { HeroSegmentAlphas.last() })),
+                )
+            }
+        }
     }
 }

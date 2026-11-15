@@ -39,9 +39,15 @@ internal data class EnvelopeProgressDto(
     @SerialName("following_due") val followingDue: String? = null,
 )
 
-/** The envelope columns of the `group_overview` view. */
+/** The only row of the `envelopes_summary` function. */
 @Serializable
-internal data class EnvelopesOverviewDto(
-    @SerialName("in_envelopes_total") val inEnvelopesTotal: Long? = null,
-    @SerialName("unassigned_balance") val unassignedBalance: Long? = null,
+internal data class EnvelopesSummaryDto(
+    val unassigned: Long = 0,
+    @SerialName("in_envelopes_total") val inEnvelopesTotal: Long = 0,
+    @SerialName("due_this_period") val dueThisPeriod: Long = 0,
+    @SerialName("reserved_later") val reservedLater: Long = 0,
+    @SerialName("other_assigned") val otherAssigned: Long = 0,
+    val overspent: Long = 0,
+    @SerialName("covered_on") val coveredOn: String? = null,
+    @SerialName("covered_by") val coveredBy: String? = null,
 )

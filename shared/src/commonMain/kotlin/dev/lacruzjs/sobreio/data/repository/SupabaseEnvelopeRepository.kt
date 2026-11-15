@@ -3,7 +3,7 @@ package dev.lacruzjs.sobreio.data.repository
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeProgressDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
-import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesSummaryDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDbValue
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.mapper.toSummary
@@ -26,7 +26,7 @@ import kotlin.time.Clock
 
 /**
  * Row level security decides who may write: owners and admins manage envelopes, any member assigns money. Reads come
- * from the `envelope_balances` and `group_overview` views.
+ * from the `envelope_balances` view and the `envelopes_summary` function.
  */
 class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
 
@@ -59,9 +59,9 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
     }
 
     override suspend fun getSummary(groupId: String): Result<EnvelopeSummary> = safeCall {
-        postgrest.from(OVERVIEW_VIEW)
-            .select(Columns.list("in_envelopes_total", "unassigned_balance")) { filter { eq("group_id", groupId) } }
-            .decodeSingleOrNull<EnvelopesOverviewDto>()
+        postgrest.rpc("envelopes_summary", buildJsonObject { put("p_group_id", groupId) })
+            .decodeList<EnvelopesSummaryDto>()
+            .firstOrNull()
             .toSummary()
     }
 
@@ -139,6 +139,5 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
         const val TABLE = "envelopes"
         const val TRANSFERS_TABLE = "envelope_transfers"
         const val BALANCES_VIEW = "envelope_balances"
-        const val OVERVIEW_VIEW = "group_overview"
     }
 }

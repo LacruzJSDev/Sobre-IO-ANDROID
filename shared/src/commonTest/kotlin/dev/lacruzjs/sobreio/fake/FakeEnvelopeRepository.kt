@@ -17,7 +17,7 @@ class FakeEnvelopeRepository(var envelopes: List<Envelope> = emptyList()) : Enve
 
     var materializeResult: Result<Unit> = Result.success(Unit)
     var envelopesResult: Result<List<Envelope>>? = null
-    var summary = EnvelopeSummary(totalCents = 0, unassignedCents = 0)
+    var summary = EnvelopeSummary()
     var summaryResult: Result<EnvelopeSummary>? = null
     var progress: List<EnvelopeProgress> = emptyList()
     var progressResult: Result<List<EnvelopeProgress>>? = null

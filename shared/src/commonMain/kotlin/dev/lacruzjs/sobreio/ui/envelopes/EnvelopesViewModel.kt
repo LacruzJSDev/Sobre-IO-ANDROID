@@ -92,8 +92,7 @@ class EnvelopesViewModel(
                         archivedEnvelopes = archived.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
                         unassigned = live.firstOrNull { e -> e.kind == EnvelopeKind.System },
                         progress = progress,
-                        totalCents = figures.totalCents,
-                        unassignedCents = figures.unassignedCents,
+                        summary = figures,
                         isLoading = false,
                         error = null,
                     )

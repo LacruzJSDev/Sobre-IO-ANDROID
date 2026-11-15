@@ -95,10 +95,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail.
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
-  `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), `group_overview` (`in_envelopes_total`,
-  `unassigned_balance`, never summed in the app), `envelope_progress` (failure ignored: rows just have no bar) and the members are
-  read. "Unassigned" is the first item, in its own soft card (inbox icon, name from resources by kind `System`, never the
-  database name; amount in `titleLarge`, subtitle "Free to distribute"; no swipe). The envelopes follow in sections by type
+  `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), the `envelopes_summary(p_group_id)` RPC
+  (one row, `EnvelopeSummary`: `unassigned`, `in_envelopes_total`, `due_this_period`, `reserved_later`, `other_assigned`,
+  `overspent`, `covered_on`, `covered_by`; never summed or derived in the app), `envelope_progress` (failure ignored: rows just have no bar)
+  and the members are read. The first item is the `EnvelopesHero` (`HeroCard`, see Rules; the whole card opens the Unassigned
+  detail): "Free to distribute" and, right, "In envelopes" with `in_envelopes_total`; the big `unassigned` figure (`HeroFigure`, "Below
+  zero" chip when negative); one sentence that explains it (`envelopesHeroLine`, a pure choice among the figures: negative with
+  money set aside for later and a `covered_on`/`covered_by` income, the same without income, covered only, or "You set aside X more
+  than you have"; positive "Money that is not in any envelope yet"; zero "All the money is in envelopes"; dates through
+  `formatShortDate`); a `HeroSegmentBar` of this period / later / the rest (`heroSegmentFractions`, a display ratio) and a legend of
+  the non-zero ones plus "Overspent" (`overspent`, in `negativeOnContainer`). "Unassigned" has no row. The envelopes follow in
+  sections by type
   (`EnvelopePurpose`: Monthly spending, Bills, Savings, Free, ordered by name, empty ones hidden). Each row: `EntityAvatar`
   (colour + envelope icon), name, "Target X a month" (only when it has no bar) and the holder ("Common" or the member) when the
   group has several members, a 5 dp rounded progress bar (track = soft container) and one muted line, then the balance. The bar
@@ -108,8 +115,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   ellipsis; paid is a full inflow bar and one line "✓ Paid on <date>" in inflow plus "· next <date>"; contributing fills in
   inflow "Contributed N of M this month"; overspent is a full bar and "Overspent: N" in the negative colour; none draws nothing.
   `pending > 0` adds "· N to review in Group" (muted). `EnvelopeProgress.fraction` is only a 0..1 clamp of the two database figures.
-  Colours come from `LocalMoneyColors` (colour-blind aware). "Total in envelopes" is fixed below the scrolling list (outside it,
-  no divider). `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe
+  Colours come from `LocalMoneyColors` (colour-blind aware). `external` is filtered out in the mapper. A collapsed "Archived (N)" section at the end; owner and admin swipe
   Reopen (snackbar with Undo). Owner and admin see the "+" (full-screen envelope form) and swipe Edit and Delete (archive with
   Undo, FZ008 restores the row). Any member swipes "Assign" on live rows: a sheet with an amount and the source as chips
   ("Unassigned" by default, each with its balance), which inserts into `envelope_transfers` (no Undo, overdrawing is allowed).
@@ -384,12 +390,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
 - Hero card (`ui/components/HeroCard.kt`, tokens in `ui/theme/HeroColors.kt`): the main figure of a tab (Group: really free money;
-  Accounts: total in accounts) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
+  Accounts: total in accounts; Envelopes: free to distribute, i.e. Unassigned) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
   Group tab's content decides it) dark card with `SobreioShapes.large` that spreads its content top to bottom; `HeroLabel` is the
   card's text at 85 % alpha; `HeroFigure` draws the big figure through `MoneyText(Plain, ink = onHeroContainer)`, so it is ALWAYS
   white, and a negative one gets a "Below zero" chip (`showsBelowZeroChip`; light background, text in the LIGHT palette's negative
   colour so it contrasts); any other figure on the card is a `MoneyText` Plain with `ink = onHeroContainer`; `HeroSplitBar` draws a
-  display ratio. Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
+  display ratio and `HeroSegmentBar` several (alphas `HeroSegmentAlphas`). Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
   (`LocalHeroColors`, `heroColors(dark, colorBlindSafe)`): light `#0C0C0C` / paper; dark `#2D2D2A` / `#F4F4F4` (`primary` is near-white
   in dark mode, so it is not used); `negativeOnContainer` is the dark palette's negative for lines and text drawn on the card.
 - Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through
