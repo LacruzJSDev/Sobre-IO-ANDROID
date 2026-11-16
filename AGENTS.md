@@ -419,9 +419,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   forms, no sheet) and `EntitySelect` (see Rules; the holder is "Joint"/"Common" plus one option per member, hidden with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
   with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
   (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
-- Adaptive layout (tablet and foldable): `AppNavigation` passes `sceneStrategies = listOf(rememberListDetailSceneStrategy<NavKey>(),
+- Adaptive layout (tablet and foldable): `AppNavigation` passes `sceneStrategies = listOf(SplitWhenDetailOpen(rememberListDetailSceneStrategy<NavKey>()),
   SinglePaneSceneStrategy())` (`org.jetbrains.compose.material3.adaptive:adaptive-navigation3` 1.3, experimental opt-in) to `NavDisplay`.
-  Entry metadata: `listPane()` (+ `preferredPaneSize(420 dp)`, no detail placeholder, so a lone list takes the full width) for
+  Entry metadata: `listPane()` (+ `preferredPaneSize(420 dp)`, plus `listPaneMarker`; `SplitWhenDetailOpen` (`navigation/SplitWhenDetailOpen.kt`) returns no scene while a list is on top, because the library alone draws a list with an empty detail pane beside it, so a lone list takes the full width) for
   `Group` and `Groups` (`Groups` also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane()` for
   `AccountDetail`, `EnvelopeDetail`, `GroupSettings`, `GroupReview` and `Profile`; `extraPane()` for `CommitmentDetail`,
   `AccountMovements`, `EnvelopeMovements` and `Tags`. Forms and `TimeZonePicker` have no pane metadata (full-screen scenes).

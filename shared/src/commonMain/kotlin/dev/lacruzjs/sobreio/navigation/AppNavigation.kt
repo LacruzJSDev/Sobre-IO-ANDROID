@@ -65,7 +65,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // and medium windows the strategy shows one pane, so it yields to the single pane default and nothing changes
     val listDetail = rememberListDetailSceneStrategy<NavKey>()
     // Panes of the list-detail scene. The list takes the full width while nothing is open (no detail placeholder)
-    val listPane = ListDetailSceneStrategy.listPane() + ListDetailSceneStrategy.preferredPaneSize(width = ListPaneWidth)
+    val listPane = ListDetailSceneStrategy.listPane() + ListDetailSceneStrategy.preferredPaneSize(width = ListPaneWidth) + listPaneMarker
     val detailPane = ListDetailSceneStrategy.detailPane()
     val extraPane = ListDetailSceneStrategy.extraPane()
 
@@ -73,7 +73,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popToPrevious() },
-        sceneStrategies = listOf(listDetail, SinglePaneSceneStrategy()),
+        sceneStrategies = listOf(SplitWhenDetailOpen(listDetail), SinglePaneSceneStrategy()),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
