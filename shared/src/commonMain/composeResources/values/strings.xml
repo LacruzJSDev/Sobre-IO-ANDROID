@@ -709,7 +709,7 @@
     <string name="delete_account_leave_note">Your movements stay in these groups, signed as “Deleted user”.</string>
     <string name="delete_account_no_groups">You do not belong to any group.</string>
     <string name="delete_account_final_note">Your email and sign-in are removed. This cannot be undone.</string>
-    <string name="delete_account_confirm_label">I understand this cannot be undone</string>
+    <string name="delete_account_confirm_label">I understand this is final</string>
     <string name="delete_account_action">Delete my account</string>
     <string name="error_fz023_account_blocked">You are the only owner of a group with more members: name another owner before deleting your account.</string>
 </resources>
