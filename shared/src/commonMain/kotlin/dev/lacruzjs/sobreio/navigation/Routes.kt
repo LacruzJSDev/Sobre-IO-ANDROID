@@ -122,3 +122,7 @@ data class TimeZonePicker(val current: String) : NavKey
 
 @Serializable
 data object Profile : NavKey
+
+/** Delete the signed-in user's account: what happens to each group and the final button. Opened from [Profile]. */
+@Serializable
+data object DeleteAccount : NavKey

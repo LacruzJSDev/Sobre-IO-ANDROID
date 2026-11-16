@@ -40,6 +40,7 @@ import dev.lacruzjs.sobreio.ui.movements.EnvelopeMovementsRoute
 import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
 import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
+import dev.lacruzjs.sobreio.ui.deleteaccount.DeleteAccountRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
@@ -240,8 +241,22 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
+<<<<<<< HEAD
             entry<Profile>(metadata = detailPane) {
                 ProfileRoute(onBack = { backStack.popToPrevious() })
+=======
+            entry<Profile> {
+                ProfileRoute(
+                    onBack = { backStack.popToPrevious() },
+                    onDeleteAccount = { backStack.add(DeleteAccount) },
+                )
+            }
+            entry<DeleteAccount> {
+                DeleteAccountRoute(
+                    onBack = { backStack.popToPrevious() },
+                    onOpenGroupSettings = { groupId -> backStack.add(GroupSettings(groupId)) },
+                )
+>>>>>>> 2093e12 (feat(ui): delete account from Profile)
             }
         },
     )
