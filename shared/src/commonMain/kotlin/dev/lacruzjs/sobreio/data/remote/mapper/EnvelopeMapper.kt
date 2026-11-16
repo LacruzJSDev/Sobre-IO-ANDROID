@@ -3,7 +3,7 @@ package dev.lacruzjs.sobreio.data.remote.mapper
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeProgressDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
-import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesSummaryDto
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
@@ -44,10 +44,20 @@ internal fun EnvelopeKind.toDbValue(): String = when (this) {
     EnvelopeKind.Saving -> "saving"
 }
 
-internal fun EnvelopesOverviewDto?.toSummary(): EnvelopeSummary = EnvelopeSummary(
-    totalCents = this?.inEnvelopesTotal ?: 0L,
-    unassignedCents = this?.unassignedBalance ?: 0L,
-)
+internal fun EnvelopesSummaryDto?.toSummary(): EnvelopeSummary = if (this == null) {
+    EnvelopeSummary()
+} else {
+    EnvelopeSummary(
+        unassignedCents = unassigned,
+        inEnvelopesTotalCents = inEnvelopesTotal,
+        dueThisPeriodCents = dueThisPeriod,
+        reservedLaterCents = reservedLater,
+        otherAssignedCents = otherAssigned,
+        overspentCents = overspent,
+        coveredOn = coveredOn?.let(LocalDate::parse),
+        coveringIncomeCents = coveringIncome,
+    )
+}
 
 /** Null for the system envelope and for a type added by a newer database. */
 internal fun String?.toEnvelopePurpose(): EnvelopePurpose? = when (this) {

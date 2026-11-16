@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
+import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
@@ -27,10 +28,8 @@ data class EnvelopesUiState(
      * read: the rows then show no bar.
      */
     val progress: Map<String, EnvelopeProgress> = emptyMap(),
-    /** Money inside the envelopes, as the database computes it. */
-    val totalCents: Long = 0,
-    /** Balance of "Unassigned", as the database computes it: money still to assign. */
-    val unassignedCents: Long = 0,
+    /** The figures of the hero card, as the database computes them; null until the first load ends. */
+    val summary: EnvelopeSummary? = null,
     /** Set by [EnvelopesEvent.GroupLoaded]; money is formatted with it. */
     val currencyCode: String = "EUR",
     /** Owner or admin: they can create, edit and delete. Any member can assign. */

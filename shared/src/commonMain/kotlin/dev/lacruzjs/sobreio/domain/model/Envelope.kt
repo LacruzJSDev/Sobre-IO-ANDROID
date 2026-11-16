@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.domain.model
 
+import kotlinx.datetime.LocalDate
+
 /**
  * What an envelope is. [System] is the "Unassigned" envelope every group has, immutable; the database also has an
  * `external` kind that the app never shows, so it is not modelled.
@@ -66,10 +68,22 @@ data class EnvelopeDraft(
     val kind: EnvelopeKind get() = purpose.kind
 }
 
-/** The figures of the Envelopes header, as the database computes them (`group_overview`). */
+/** The figures of the Envelopes hero card, as the database computes them (`envelopes_summary`). */
 data class EnvelopeSummary(
-    /** Money inside the visible envelopes. */
-    val totalCents: Long,
-    /** Balance of the "Unassigned" envelope: money still to assign. */
-    val unassignedCents: Long,
+    /** Balance of the "Unassigned" envelope: money still to assign (negative when more is set aside than there is). */
+    val unassignedCents: Long = 0,
+    /** Money in the accounts inside the envelopes. */
+    val inEnvelopesTotalCents: Long = 0,
+    /** Envelope money kept for payments due up to the end of the current period. */
+    val dueThisPeriodCents: Long = 0,
+    /** Money in Bills envelopes set aside for payments after this period. */
+    val reservedLaterCents: Long = 0,
+    /** The rest of the positive envelope money. */
+    val otherAssignedCents: Long = 0,
+    /** Sum of the envelopes below zero, as a positive number. */
+    val overspentCents: Long = 0,
+    /** Only when unassigned is negative: the day the first pending income brings it back to zero or more. */
+    val coveredOn: LocalDate? = null,
+    /** The sum of the expected incomes into Unassigned until [coveredOn]; null together with it. */
+    val coveringIncomeCents: Long? = null,
 )

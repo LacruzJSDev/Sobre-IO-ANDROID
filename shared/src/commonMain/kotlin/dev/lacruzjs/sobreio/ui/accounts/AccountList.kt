@@ -37,6 +37,10 @@ import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.accounts_in_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_outside_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_hero_chart_description
+import dev.lacruzjs.sobreio.generated.resources.accounts_hero_count
+import dev.lacruzjs.sobreio.generated.resources.accounts_hero_last_months
+import dev.lacruzjs.sobreio.generated.resources.accounts_hero_outside
+import dev.lacruzjs.sobreio.generated.resources.accounts_hero_shared
 import dev.lacruzjs.sobreio.generated.resources.accounts_total
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
@@ -44,7 +48,6 @@ import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.HeroCard
 import dev.lacruzjs.sobreio.ui.components.HeroFigure
 import dev.lacruzjs.sobreio.ui.components.HeroLabel
-import dev.lacruzjs.sobreio.ui.components.HeroSplitBar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.charts.FreeProjectionChart
 import dev.lacruzjs.sobreio.ui.components.charts.LineChartPoint
@@ -60,8 +63,8 @@ import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.components.reopenAction
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.abs
 
 /**
  * The summary, the accounts in two sections (in the envelopes and outside them) and, at the end, a collapsed
@@ -157,20 +160,25 @@ private fun SectionTitle(text: String) {
 }
 
 /**
- * The hero card of the tab: the total in accounts and, when some accounts are outside the envelopes, how it splits
- * between inside and outside with a thin bar (hidden when nothing is outside).
+ * The hero card of the tab: the total in accounts with, when the chart is shown, its period on the right; the chart of
+ * the last 3 months; and, when some accounts are outside the envelopes, a footer with the two database figures and the
+ * accounts behind each.
  */
 @Composable
 private fun AccountsHero(state: AccountsUiState) {
     val hero = LocalHeroColors.current
     val ink = hero.onContainer
     val languageTag = Locale.current.toLanguageTag()
+    val showChart = state.balanceSeries.size > 1
     HeroCard(modifier = Modifier.padding(bottom = 8.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            HeroLabel(stringResource(Res.string.accounts_total))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                HeroLabel(stringResource(Res.string.accounts_total), modifier = Modifier.weight(1f))
+                if (showChart) HeroLabel(stringResource(Res.string.accounts_hero_last_months))
+            }
             HeroFigure(amountCents = state.totalCents, currencyCode = state.currencyCode)
         }
-        if (state.balanceSeries.size > 1) {
+        if (showChart) {
             val series = state.balanceSeries
             val points = remember(series) { series.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) } }
             // Only the past: today is its last point, so there is no dashed projection
@@ -191,34 +199,59 @@ private fun AccountsHero(state: AccountsUiState) {
             )
         }
         if (state.outsideEnvelopes.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    HeroFigureLine(stringResource(Res.string.accounts_in_envelopes_title), state.inEnvelopesCents, state.currencyCode, ink)
-                    HeroFigureLine(stringResource(Res.string.accounts_outside_envelopes_title), state.outsideCents, state.currencyCode, ink)
-                }
-                envelopeSplitFraction(state.inEnvelopesCents, state.outsideCents)?.let { HeroSplitBar(it) }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                HeroFooterColumn(
+                    label = stringResource(Res.string.accounts_hero_shared),
+                    amountCents = state.inEnvelopesCents,
+                    currencyCode = state.currencyCode,
+                    ink = ink,
+                    accounts = state.inEnvelopes,
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.weight(1f),
+                )
+                HeroFooterColumn(
+                    label = stringResource(Res.string.accounts_hero_outside),
+                    amountCents = state.outsideCents,
+                    currencyCode = state.currencyCode,
+                    ink = ink,
+                    accounts = state.outsideEnvelopes,
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
 }
 
+/** A label, its database figure and a muted line naming the accounts: the name when it is one, otherwise their count. */
 @Composable
-private fun HeroFigureLine(label: String, amountCents: Long, currencyCode: String, ink: Color) {
-    Column {
-        HeroLabel(label)
-        MoneyText(amountCents, currencyCode, MoneyRole.Plain, style = MaterialTheme.typography.titleMedium, ink = ink)
+private fun HeroFooterColumn(
+    label: String,
+    amountCents: Long,
+    currencyCode: String,
+    ink: Color,
+    accounts: List<Account>,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
+        HeroLabel(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        MoneyText(amountCents, currencyCode, MoneyRole.Plain, style = MaterialTheme.typography.titleMedium, maxLines = 1, ink = ink)
+        val naming = when (accounts.size) {
+            0 -> null
+            1 -> accounts.first().name
+            else -> pluralStringResource(Res.plurals.accounts_hero_count, accounts.size, accounts.size)
+        }
+        if (naming != null) {
+            HeroLabel(
+                text = naming,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                alpha = 0.6f,
+            )
+        }
     }
-}
-
-/**
- * The share of the total that sits in the envelopes, for the hero's split bar: a display ratio of the two database
- * figures (their absolute values, so an overdrawn side still gets its share), null when nothing is outside the envelopes.
- */
-internal fun envelopeSplitFraction(inEnvelopesCents: Long, outsideCents: Long): Float? {
-    if (outsideCents == 0L) return null
-    val inside = abs(inEnvelopesCents).toDouble()
-    val outside = abs(outsideCents).toDouble()
-    return (inside / (inside + outside)).toFloat()
 }
 
 @Composable

@@ -3,7 +3,7 @@ package dev.lacruzjs.sobreio.data.remote.mapper
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeProgressDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeStyleDto
-import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesOverviewDto
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopesSummaryDto
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
@@ -56,9 +56,16 @@ class EnvelopeMapperTest {
     }
 
     @Test
-    fun summaryComesFromTheOverviewAndDefaultsToZero() {
-        assertEquals(EnvelopeSummary(900, 100), EnvelopesOverviewDto(900, 100).toSummary())
-        assertEquals(EnvelopeSummary(0, 0), (null as EnvelopesOverviewDto?).toSummary())
+    fun summaryComesFromTheFunctionAndDefaultsToZero() {
+        val dto = EnvelopesSummaryDto(
+            unassigned = -100, inEnvelopesTotal = 900, dueThisPeriod = 500, reservedLater = 300, otherAssigned = 200,
+            overspent = 50, coveredOn = "2026-11-28", coveringIncome = 4500,
+        )
+        assertEquals(
+            EnvelopeSummary(-100, 900, 500, 300, 200, 50, LocalDate(2026, 11, 28), 4500),
+            dto.toSummary(),
+        )
+        assertEquals(EnvelopeSummary(), (null as EnvelopesSummaryDto?).toSummary())
     }
 
     @Test

@@ -36,8 +36,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,8 +61,6 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_target_per_month
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_editor
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_member
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned_subtitle
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
 import dev.lacruzjs.sobreio.generated.resources.holder_common
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
@@ -84,11 +80,11 @@ import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * "Unassigned" in its own soft card at the top (no swipe: it cannot be edited or deleted), the envelopes in sections by
+ * The hero card at the top (it opens "Unassigned", which cannot be edited or deleted), the envelopes in sections by
  * type (monthly spending, bills, savings, free), each row with its progress bar and line, and a collapsed "Archived"
  * section at the end. Each live row swipes left: Assign for every member, Edit and Delete for owners and admins; archived
  * rows swipe Reopen (owners and admins). One row is open at a time. Tapping any row ("Unassigned" and the archived ones
- * included) opens the envelope detail. The total is not part of the list: the pane keeps it fixed below it.
+ * included) opens the envelope detail.
  */
 @Composable
 internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> Unit) {
@@ -138,18 +134,18 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        if (state.unassigned != null && state.summary != null) {
+            item(key = "hero") {
+                EnvelopesHero(
+                    state = state,
+                    onClick = { onEvent(EnvelopesEvent.OpenClicked(state.unassigned.id)) },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+        }
         if (state.actionError != null) {
             item(key = "action-error") {
                 ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
-            }
-        }
-        if (state.unassigned != null) {
-            item(key = "unassigned") {
-                UnassignedCard(
-                    balanceCents = state.unassignedCents,
-                    currencyCode = state.currencyCode,
-                    onClick = { onEvent(EnvelopesEvent.OpenClicked(state.unassigned.id)) },
-                )
             }
         }
         if (state.envelopes.isEmpty() && state.archivedEnvelopes.isEmpty()) {
@@ -197,50 +193,6 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
                 }
             }
         }
-    }
-}
-
-/**
- * "Unassigned" in its own soft card: the money still to distribute is the figure that matters most, so its amount is a
- * size bigger than the rows' and the subtitle says what it is for.
- */
-@Composable
-private fun UnassignedCard(balanceCents: Long, currencyCode: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val name = stringResource(Res.string.envelopes_unassigned)
-        EntityAvatar(name = name, icon = Icons.Filled.Inbox, color = null)
-        Column(modifier = Modifier.weight(1f).padding(start = 16.dp, end = 12.dp)) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = stringResource(Res.string.envelopes_unassigned_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        MoneyText(
-            amountCents = balanceCents,
-            currencyCode = currencyCode,
-            role = MoneyRole.Balance,
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-        )
     }
 }
 

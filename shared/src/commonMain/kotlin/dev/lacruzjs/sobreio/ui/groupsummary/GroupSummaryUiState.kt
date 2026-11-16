@@ -57,25 +57,12 @@ data class GroupSummaryUiState(
     /** The oldest due date waiting for review (the list comes oldest first, but the state does not rely on it). */
     val oldestPendingDate: LocalDate? get() = pending.minOfOrNull { it.dueDate }
 
-    /** Day of the period today is (1-based) and how many days it has; null until the outlook and today are known. */
-    val periodDay: Int?
+    /** Days from today to the end of the period (0 on its last day): a display count; null until both are known. */
+    val daysLeft: Int?
         get() {
-            val start = outlook?.periodStart ?: return null
+            val end = outlook?.periodEnd ?: return null
             val day = today ?: return null
-            return start.daysUntil(day) + 1
-        }
-    val periodLength: Int?
-        get() {
-            val period = outlook ?: return null
-            return period.periodStart.daysUntil(period.periodEnd) + 1
-        }
-
-    /** Days elapsed over days in the period, 0..1: only a display ratio for the thin bar. */
-    val periodProgress: Float
-        get() {
-            val day = periodDay ?: return 0f
-            val length = periodLength?.takeIf { it > 0 } ?: return 0f
-            return (day.toFloat() / length).coerceIn(0f, 1f)
+            return day.daysUntil(end).coerceAtLeast(0)
         }
 
     /**

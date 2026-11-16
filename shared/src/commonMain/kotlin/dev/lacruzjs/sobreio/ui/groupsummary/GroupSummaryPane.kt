@@ -72,7 +72,8 @@ import dev.lacruzjs.sobreio.generated.resources.group_hero_drops
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_commitments
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_contributions
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_income
-import dev.lacruzjs.sobreio.generated.resources.group_hero_period_day
+import dev.lacruzjs.sobreio.generated.resources.group_hero_days_left
+import dev.lacruzjs.sobreio.generated.resources.group_hero_last_day
 import dev.lacruzjs.sobreio.generated.resources.group_hero_projected_on
 import dev.lacruzjs.sobreio.generated.resources.group_review_count
 import dev.lacruzjs.sobreio.generated.resources.group_review_empty
@@ -94,7 +95,6 @@ import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.HeroCard
 import dev.lacruzjs.sobreio.ui.components.HeroFigure
 import dev.lacruzjs.sobreio.ui.components.HeroLabel
-import dev.lacruzjs.sobreio.ui.components.HeroSplitBar
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
@@ -112,6 +112,7 @@ import dev.lacruzjs.sobreio.ui.format.formatWeekdayDayMonth
 import dev.lacruzjs.sobreio.ui.theme.LocalHeroColors
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -169,10 +170,14 @@ private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languag
     HeroCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             HeroLabel(text = stringResource(Res.string.group_summary_free_today), modifier = Modifier.weight(1f))
-            val day = state.periodDay
-            val length = state.periodLength
-            if (day != null && length != null) {
-                HeroLabel(text = stringResource(Res.string.group_hero_period_day, day, length))
+            state.daysLeft?.let { left ->
+                HeroLabel(
+                    text = if (left == 0) {
+                        stringResource(Res.string.group_hero_last_day)
+                    } else {
+                        pluralStringResource(Res.plurals.group_hero_days_left, left, left)
+                    },
+                )
             }
         }
         HeroFigure(amountCents = outlook.freeTodayCents, currencyCode = state.currencyCode)
@@ -209,25 +214,27 @@ private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languag
                 )
             }
             state.projectionNote?.let { note ->
-                val amount = formatMoney(note.cents, state.currencyCode, languageTag)
-                val text = when (note.kind) {
-                    ProjectionNoteKind.Commitments -> stringResource(Res.string.group_hero_note_commitments, amount)
-                    ProjectionNoteKind.Contributions -> stringResource(Res.string.group_hero_note_contributions, amount)
-                    ProjectionNoteKind.Income -> stringResource(Res.string.group_hero_note_income, amount)
+                Column(horizontalAlignment = Alignment.End) {
+                    HeroLabel(
+                        text = stringResource(
+                            when (note.kind) {
+                                ProjectionNoteKind.Commitments -> Res.string.group_hero_note_commitments
+                                ProjectionNoteKind.Contributions -> Res.string.group_hero_note_contributions
+                                ProjectionNoteKind.Income -> Res.string.group_hero_note_income
+                            },
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    MoneyText(
+                        amountCents = note.cents,
+                        currencyCode = state.currencyCode,
+                        role = MoneyRole.Plain,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        ink = paper,
+                    )
                 }
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = paper,
-                    textAlign = TextAlign.End,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .widthIn(max = 168.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(paper.copy(alpha = 0.14f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                )
             }
         }
         state.lowestPoint?.let { lowest ->
@@ -241,8 +248,6 @@ private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languag
                 color = hero.negativeOnContainer,
             )
         }
-        // Days elapsed over days in the period: a display ratio, not a figure
-        HeroSplitBar(fraction = state.periodProgress)
     }
 }
 
