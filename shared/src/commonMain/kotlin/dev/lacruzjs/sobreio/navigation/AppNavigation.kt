@@ -13,6 +13,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.defaultPopTransitionSpec
+import androidx.navigation3.scene.Scene
+import androidx.compose.animation.AnimatedContentTransitionScope
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormRoute
@@ -61,7 +64,9 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             rememberViewModelStoreNavEntryDecorator(),
         ),
         entryProvider = entryProvider {
-            entry<Groups> {
+            // Groups replaces the stack, so NavDisplay sees a forward move; it sits "behind" a group in the user's mind
+            // (the menu button), so it arrives with the platform's back animation instead
+            entry<Groups>(metadata = NavDisplay.transitionSpec { defaultPopTransitionSpec<NavKey>().invoke(this as AnimatedContentTransitionScope<Scene<NavKey>>) }) {
                 GroupsRoute(
                     onOpenGroup = { groupId -> backStack.openGroup(groupId) },
                     onOpenProfile = { backStack.add(Profile) },
