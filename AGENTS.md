@@ -74,10 +74,11 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   deletion (`cancel_group_purge`); `getGroup` still hides groups pending deletion. `Group.canEdit` is false for archived
   and pending groups, so Accounts and Envelopes become read only.
 - Accounts tab (`ui/accounts`, `AccountsViewModel` with the group id as Koin parameter, `MemberRepository` for holder names): on
-  top a `HeroCard` (see Rules): "Total in accounts" and the big total (`HeroFigure`) and, when some accounts are outside the
-  envelopes, two figures "In envelopes" / "Outside envelopes" (85 % labels, white `MoneyText` Plain with `ink`) and a thin
-  `HeroSplitBar` of their proportion (`envelopeSplitFraction`: a display ratio of absolute values, hidden when outside is 0);
-  between the two, in the empty middle, a past-only line chart of `group_balance_series` for the last 3 months (about 60 points,
+  top a `HeroCard` (see Rules): "Total in accounts" and the big total (`HeroFigure`) (with "Last 3 months" on the right of the label
+  while the chart is shown); no bars. When some accounts are outside the envelopes a footer of two columns: left "Shared into
+  envelopes" with `in_envelopes_total` and a muted caption (`HeroLabel` `alpha` 0.6) naming the accounts (the name when it is one,
+  otherwise "N accounts"), right-aligned "Outside the envelopes" with `outside_total` and the same caption (no footer when nothing
+  is outside); between the two, in the empty middle, a past-only line chart of `group_balance_series` for the last 3 months (about 60 points,
   `AccountRepository.getBalanceSeries`, today from `AccountDetailRepository.getToday`; it reuses `FreeProjectionChart` with every
   point in the past so there is no dashed projection; 56 dp like the Group card's, hero foreground colour, below-zero part in
   `negativeOnContainer`; a failed read leaves it out, the card keeps its height)
@@ -97,14 +98,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
   `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), the `envelopes_summary(p_group_id)` RPC
   (one row, `EnvelopeSummary`: `unassigned`, `in_envelopes_total`, `due_this_period`, `reserved_later`, `other_assigned`,
-  `overspent`, `covered_on`, `covered_by`; never summed or derived in the app), `envelope_progress` (failure ignored: rows just have no bar)
+  `overspent`, `covered_on`, `covering_income` (the sum of the expected incomes into Unassigned until `covered_on`); never summed or derived in the app), `envelope_progress` (failure ignored: rows just have no bar)
   and the members are read. The first item is the `EnvelopesHero` (`HeroCard`, see Rules; the whole card opens the Unassigned
-  detail): "Free to distribute" and, right, "In envelopes" with `in_envelopes_total`; the big `unassigned` figure (`HeroFigure`, "Below
-  zero" chip when negative); one sentence that explains it (`envelopesHeroLine`, a pure choice among the figures: negative with
-  money set aside for later and a `covered_on`/`covered_by` income, the same without income, covered only, or "You set aside X more
-  than you have"; positive "Money that is not in any envelope yet"; zero "All the money is in envelopes"; dates through
-  `formatShortDate`); a `HeroSegmentBar` of this period / later / the rest (`heroSegmentFractions`, a display ratio) and a legend of
-  the non-zero ones plus "Overspent" (`overspent`, in `negativeOnContainer`). "Unassigned" has no row. The envelopes follow in
+  detail): "Free to distribute" and the big `unassigned` figure (`HeroFigure`, "Below zero" chip when negative); in the middle
+  the sum that gives it, rows of label and `MoneyText` Plain (`titleSmall`) of database figures: "In your accounts"
+  (`in_envelopes_total`), then only when above 0 "Payments this period" (`due_this_period`), "Set aside for later"
+  (`reserved_later`) and "Rest of the envelopes" (`other_assigned`) shown with a display minus, and "Envelopes below zero"
+  (`overspent`) with a display plus; the footer is one line chosen by `envelopesHeroLine` (pure): negative and covered "+X of
+  expected income covers it on <date>" (`covering_income`, `covered_on`, calendar icon), negative and not covered "No expected
+  income covers it" (info icon), positive "Money that is not in any envelope yet", zero "All the money is in envelopes". No bars. "Unassigned" has no row. The envelopes follow in
   sections by type
   (`EnvelopePurpose`: Monthly spending, Bills, Savings, Free, ordered by name, empty ones hidden). Each row: `EntityAvatar`
   (colour + envelope icon), name, "Target X a month" (only when it has no bar) and the holder ("Common" or the member) when the
@@ -123,14 +125,14 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Group tab (`ui/groupsummary`, `GroupSummaryViewModel(groupId)` with `GroupSummaryRepository`, `AccountDetailRepository`,
   `AccountRepository`, `EnvelopeRepository`; `GroupSummaryPane`): read only, it counts the due dates to review and opens the review
   screen. Top to bottom: (1) the `HeroCard` (see Rules): a row "Really
-  free today" and "Day X of Y" (period day, a display count), the big `free_today` figure (`HeroFigure`: always white, a
+  free today" and "N days left" / "Last day of the period" (`GroupSummaryUiState.daysLeft`, a display count, plural `group_hero_days_left`), the big `free_today` figure (`HeroFigure`: always white, a
   "Below zero" chip when negative), a compact 56 dp `FreeProjectionChart` (`ui/components/charts`, paper line, step-after,
   solid up to today and dashed after, the part below zero in `LocalMoneyColors.negative`, end dot) of `group_free_projection`, a row
-  "Projected on <period end>" with `free_projected` (`titleLarge`) and, right, a translucent chip with the database figure that
-  explains the difference (`GroupSummaryUiState.projectionNote`, nothing is subtracted in the app): `committed_shortfall` ("-X for
-  commitments"), else `pending_out` ("-X in contributions"), else `pending_income` ("+X of expected income"), none when all are 0;
+  "Projected on <period end>" with `free_projected` (`titleLarge`) and, right-aligned, a label and figure (`MoneyText` Plain, `titleMedium`) with the database figure that
+  explains the difference (`GroupSummaryUiState.projectionNote`, nothing is subtracted in the app): `committed_shortfall` ("For
+  commitments"), else `pending_out` ("In contributions"), else `pending_income` ("Expected income"), none when all are 0;
   when the projection goes below zero after today, a line "Will drop to X on <day>" in the negative colour (`lowestPoint`: the
-  smallest row of the database, a selection, in `HeroColors.negativeOnContainer`); a `HeroSplitBar` of days elapsed over days in the period (`periodProgress`, a display ratio).
+  smallest row of the database, a selection, in `HeroColors.negativeOnContainer`). No bars.
   (2) The review card, always visible: with nothing pending a check icon and "All caught up: nothing to review"; otherwise "N to
   review", the oldest due date muted and ONE `PrimaryButton` "Review" that opens `GroupReview(groupId)`. N counts
   `pending_occurrences` without the receiving half of a contribution (`group_transfer_in`, the contributor registers it, FZ018). The Group
@@ -394,8 +396,9 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Group tab's content decides it) dark card with `SobreioShapes.large` that spreads its content top to bottom; `HeroLabel` is the
   card's text at 85 % alpha; `HeroFigure` draws the big figure through `MoneyText(Plain, ink = onHeroContainer)`, so it is ALWAYS
   white, and a negative one gets a "Below zero" chip (`showsBelowZeroChip`; light background, text in the LIGHT palette's negative
-  colour so it contrasts); any other figure on the card is a `MoneyText` Plain with `ink = onHeroContainer`; `HeroSplitBar` draws a
-  display ratio and `HeroSegmentBar` several (alphas `HeroSegmentAlphas`). Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
+  colour so it contrasts); any other figure on the card is a `MoneyText` Plain with `ink = onHeroContainer`; the cards have no bars: label and figure on top,
+  how it is made in the middle, a footer of `HeroLabel` (labelMedium) above `MoneyText` Plain (`titleMedium`) pairs (the Group projected
+  figure is `titleLarge`); `HeroLabel(alpha)` gives muted captions. Tokens: `MaterialTheme.colorScheme.heroContainer` / `onHeroContainer`, from `HeroColors` provided by `SobreioTheme`
   (`LocalHeroColors`, `heroColors(dark, colorBlindSafe)`): light `#0C0C0C` / paper; dark `#2D2D2A` / `#F4F4F4` (`primary` is near-white
   in dark mode, so it is not used); `negativeOnContainer` is the dark palette's negative for lines and text drawn on the card.
 - Money colours (`ui/theme/MoneyColors.kt`): `MoneyColors(inflow, outflow, neutral, negative)` provided by `SobreioTheme` through

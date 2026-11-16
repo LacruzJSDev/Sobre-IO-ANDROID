@@ -67,22 +67,18 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun theHeroKnowsTheDayOfThePeriodAndItsProgress() {
+    fun theHeroCountsTheDaysLeftInThePeriod() {
         loaded()
 
-        val state = viewModel.state.value
-        assertEquals(14, state.periodDay)
-        assertEquals(30, state.periodLength)
-        assertEquals(14f / 30f, state.periodProgress)
+        assertEquals(16, viewModel.state.value.daysLeft)
     }
 
     @Test
-    fun periodProgressIsFullOnTheLastDay() {
+    fun noDaysAreLeftOnTheLastDay() {
         detail.today = LocalDate(2026, 11, 30)
         loaded()
 
-        assertEquals(30, viewModel.state.value.periodDay)
-        assertEquals(1f, viewModel.state.value.periodProgress)
+        assertEquals(0, viewModel.state.value.daysLeft)
     }
 
     @Test

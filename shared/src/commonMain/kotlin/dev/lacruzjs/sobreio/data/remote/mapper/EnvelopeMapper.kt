@@ -55,7 +55,7 @@ internal fun EnvelopesSummaryDto?.toSummary(): EnvelopeSummary = if (this == nul
         otherAssignedCents = otherAssigned,
         overspentCents = overspent,
         coveredOn = coveredOn?.let(LocalDate::parse),
-        coveredBy = coveredBy,
+        coveringIncomeCents = coveringIncome,
     )
 }
 

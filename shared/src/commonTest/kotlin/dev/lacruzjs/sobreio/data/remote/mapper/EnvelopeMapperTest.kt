@@ -59,10 +59,10 @@ class EnvelopeMapperTest {
     fun summaryComesFromTheFunctionAndDefaultsToZero() {
         val dto = EnvelopesSummaryDto(
             unassigned = -100, inEnvelopesTotal = 900, dueThisPeriod = 500, reservedLater = 300, otherAssigned = 200,
-            overspent = 50, coveredOn = "2026-11-28", coveredBy = "Payroll",
+            overspent = 50, coveredOn = "2026-11-28", coveringIncome = 4500,
         )
         assertEquals(
-            EnvelopeSummary(-100, 900, 500, 300, 200, 50, LocalDate(2026, 11, 28), "Payroll"),
+            EnvelopeSummary(-100, 900, 500, 300, 200, 50, LocalDate(2026, 11, 28), 4500),
             dto.toSummary(),
         )
         assertEquals(EnvelopeSummary(), (null as EnvelopesSummaryDto?).toSummary())

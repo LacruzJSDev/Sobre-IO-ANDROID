@@ -612,11 +612,10 @@
     <string name="warning_commitments_shortfall">%1$s missing for this period\'s commitments</string>
     <string name="group_summary_upcoming_empty">Nothing until the end of the period</string>
     <string name="tab_group_badge">%1$d to review</string>
-    <string name="group_hero_period_day">Day %1$d of %2$d</string>
     <string name="group_hero_projected_on">Projected on %1$s</string>
-    <string name="group_hero_note_commitments">−%1$s for commitments</string>
-    <string name="group_hero_note_contributions">−%1$s in contributions</string>
-    <string name="group_hero_note_income">+%1$s of expected income</string>
+    <string name="group_hero_note_commitments">For commitments</string>
+    <string name="group_hero_note_contributions">In contributions</string>
+    <string name="group_hero_note_income">Expected income</string>
     <string name="group_hero_drops">Will drop to %1$s on %2$s</string>
     <string name="accounts_hero_chart_description">Total balance from %1$s to %2$s: %3$s then, %4$s today</string>
     <string name="group_hero_chart_description">Really free money from %1$s to %2$s: %3$s today, %4$s at the end</string>
@@ -677,16 +676,26 @@
     <string name="movement_tags_more">+%1$d</string>
     <string name="movement_no_tags">No tags</string>
     <string name="envelopes_hero_free">Free to distribute</string>
-    <string name="envelopes_hero_in_envelopes">In envelopes</string>
-    <string name="envelopes_hero_later_covered">%1$s set aside for later payments · %2$s covers it on %3$s</string>
-    <string name="envelopes_hero_later_uncovered">%1$s set aside for later payments · no expected income covers it</string>
-    <string name="envelopes_hero_covered">%1$s covers it on %2$s</string>
-    <string name="envelopes_hero_short">You set aside %1$s more than you have</string>
     <string name="envelopes_hero_to_assign">Money that is not in any envelope yet</string>
     <string name="envelopes_hero_all_assigned">All the money is in envelopes</string>
-    <string name="envelopes_hero_due">This period</string>
-    <string name="envelopes_hero_later">Later</string>
-    <string name="envelopes_hero_other">The rest</string>
-    <string name="envelopes_hero_overspent">Overspent</string>
     <string name="envelopes_hero_open">Open Unassigned</string>
+    <plurals name="group_hero_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <string name="group_hero_last_day">Last day of the period</string>
+    <string name="envelopes_hero_row_accounts">In your accounts</string>
+    <string name="envelopes_hero_row_due">Payments this period</string>
+    <string name="envelopes_hero_row_later">Set aside for later</string>
+    <string name="envelopes_hero_row_other">Rest of the envelopes</string>
+    <string name="envelopes_hero_row_overspent">Envelopes below zero</string>
+    <string name="envelopes_hero_covered">+%1$s of expected income covers it on %2$s</string>
+    <string name="envelopes_hero_uncovered">No expected income covers it</string>
+    <string name="accounts_hero_last_months">Last 3 months</string>
+    <string name="accounts_hero_shared">Shared into envelopes</string>
+    <string name="accounts_hero_outside">Outside the envelopes</string>
+    <plurals name="accounts_hero_count">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
+    </plurals>
 </resources>

@@ -2,13 +2,10 @@ package dev.lacruzjs.sobreio.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.hero_below_zero
@@ -39,7 +35,8 @@ val HeroCardHeight = 232.dp
 /**
  * The card that holds the main figure of a tab (Group: the really free money; Accounts: the total in accounts): the
  * dark `heroContainer` with `onHeroContainer` text, [HeroCardHeight] high, `SobreioShapes.large` corners. The content
- * is spread from top to bottom. Use [HeroLabel] for labels, [HeroFigure] for the big figure and [HeroSplitBar] for ratios.
+ * is spread from top to bottom. Every card answers one question: label and big figure on top, how it is made in the middle, and a footer with what
+ * happens next. Use [HeroLabel] for labels (and footer captions), [HeroFigure] for the big figure; there are no bars.
  */
 @Composable
 fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
@@ -55,7 +52,7 @@ fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     )
 }
 
-/** A label on a hero card: the card's text colour at 85 % alpha. */
+/** A label on a hero card: the card's text colour at 85 % alpha (60 % for a muted caption, through [alpha]). */
 @Composable
 fun HeroLabel(
     text: String,
@@ -63,13 +60,14 @@ fun HeroLabel(
     style: TextStyle = MaterialTheme.typography.labelMedium,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    alpha: Float = HeroLabelAlpha,
 ) {
     Text(
         text = text,
         style = style,
         maxLines = maxLines,
         overflow = overflow,
-        color = MaterialTheme.colorScheme.onHeroContainer.copy(alpha = HeroLabelAlpha),
+        color = MaterialTheme.colorScheme.onHeroContainer.copy(alpha = alpha),
         modifier = modifier,
     )
 }
@@ -113,50 +111,6 @@ fun HeroFigure(
                     .background(colors.chipContainer)
                     .padding(horizontal = 10.dp, vertical = 3.dp),
             )
-        }
-    }
-}
-
-/**
- * A thin two-part bar on a hero card: [fraction] (0..1) is filled in the card's text colour over a faint track. A display
- * ratio of two database figures, never a figure itself.
- */
-@Composable
-fun HeroSplitBar(fraction: Float, modifier: Modifier = Modifier, height: Dp = 4.dp) {
-    val ink = MaterialTheme.colorScheme.onHeroContainer
-    Box(modifier = modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(50)).background(ink.copy(alpha = 0.2f))) {
-        Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(ink))
-    }
-}
-
-/** The alphas of the segments of a [HeroSegmentBar] and of the legend dots that name them, darkest first. */
-val HeroSegmentAlphas: List<Float> = listOf(1f, 0.55f, 0.28f)
-
-/**
- * A thin bar on a hero card split in segments side by side, each in the card's text colour at the alpha of its position
- * in [HeroSegmentAlphas]. [fractions] are display ratios (0..1) of the same total; empty ones are skipped and the others
- * are 2 dp apart. The whole bar has rounded ends over a faint track.
- */
-@Composable
-fun HeroSegmentBar(fractions: List<Float>, modifier: Modifier = Modifier, height: Dp = 6.dp) {
-    val ink = MaterialTheme.colorScheme.onHeroContainer
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(50))
-            .background(ink.copy(alpha = 0.12f)),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        fractions.forEachIndexed { index, fraction ->
-            if (fraction > 0f) {
-                Box(
-                    modifier = Modifier
-                        .weight(fraction)
-                        .fillMaxHeight()
-                        .background(ink.copy(alpha = HeroSegmentAlphas.getOrElse(index) { HeroSegmentAlphas.last() })),
-                )
-            }
         }
     }
 }

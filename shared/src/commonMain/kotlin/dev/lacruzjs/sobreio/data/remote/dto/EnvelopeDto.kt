@@ -49,5 +49,5 @@ internal data class EnvelopesSummaryDto(
     @SerialName("other_assigned") val otherAssigned: Long = 0,
     val overspent: Long = 0,
     @SerialName("covered_on") val coveredOn: String? = null,
-    @SerialName("covered_by") val coveredBy: String? = null,
+    @SerialName("covering_income") val coveringIncome: Long? = null,
 )

@@ -84,6 +84,6 @@ data class EnvelopeSummary(
     val overspentCents: Long = 0,
     /** Only when unassigned is negative: the day the first pending income brings it back to zero or more. */
     val coveredOn: LocalDate? = null,
-    /** The name of that income. */
-    val coveredBy: String? = null,
+    /** The sum of the expected incomes into Unassigned until [coveredOn]; null together with it. */
+    val coveringIncomeCents: Long? = null,
 )

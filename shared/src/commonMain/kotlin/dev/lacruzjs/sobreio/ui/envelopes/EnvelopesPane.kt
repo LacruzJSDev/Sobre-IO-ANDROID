@@ -92,7 +92,7 @@ private fun EnvelopesPanePreview() {
                     otherAssignedCents = 22050,
                     overspentCents = 3000,
                     coveredOn = LocalDate(2026, 11, 28),
-                    coveredBy = "Nómina",
+                    coveringIncomeCents = 45000,
                 ),
                 isLoading = false,
                 canEdit = true,

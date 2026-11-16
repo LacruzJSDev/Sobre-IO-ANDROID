@@ -611,11 +611,10 @@
     <string name="warning_commitments_shortfall">Faltan %1$s para los compromisos de este periodo</string>
     <string name="group_summary_upcoming_empty">Nada hasta fin de periodo</string>
     <string name="tab_group_badge">%1$d por revisar</string>
-    <string name="group_hero_period_day">Día %1$d de %2$d</string>
     <string name="group_hero_projected_on">Previsto el %1$s</string>
-    <string name="group_hero_note_commitments">−%1$s por compromisos</string>
-    <string name="group_hero_note_contributions">−%1$s en aportaciones</string>
-    <string name="group_hero_note_income">+%1$s de ingresos previstos</string>
+    <string name="group_hero_note_commitments">Para compromisos</string>
+    <string name="group_hero_note_contributions">En aportaciones</string>
+    <string name="group_hero_note_income">Ingresos previstos</string>
     <string name="group_hero_drops">Bajará a %1$s el %2$s</string>
     <string name="accounts_hero_chart_description">Saldo total del %1$s al %2$s: %3$s entonces, %4$s hoy</string>
     <string name="group_hero_chart_description">Dinero libre de verdad del %1$s al %2$s: %3$s hoy, %4$s al final</string>
@@ -676,16 +675,26 @@
     <string name="movement_tags_more">+%1$d</string>
     <string name="movement_no_tags">Sin etiquetas</string>
     <string name="envelopes_hero_free">Libre para repartir</string>
-    <string name="envelopes_hero_in_envelopes">En sobres</string>
-    <string name="envelopes_hero_later_covered">Apartado %1$s para pagos de más adelante · lo cubre %2$s el %3$s</string>
-    <string name="envelopes_hero_later_uncovered">Apartado %1$s para pagos de más adelante · ningún ingreso previsto lo cubre</string>
-    <string name="envelopes_hero_covered">Lo cubre %1$s el %2$s</string>
-    <string name="envelopes_hero_short">Has apartado %1$s más de lo que tienes</string>
     <string name="envelopes_hero_to_assign">Dinero que aún no está en ningún sobre</string>
     <string name="envelopes_hero_all_assigned">Todo el dinero está en sobres</string>
-    <string name="envelopes_hero_due">Este periodo</string>
-    <string name="envelopes_hero_later">Más adelante</string>
-    <string name="envelopes_hero_other">Resto</string>
-    <string name="envelopes_hero_overspent">Gastado de más</string>
     <string name="envelopes_hero_open">Abrir Sin asignar</string>
+    <plurals name="group_hero_days_left">
+        <item quantity="one">Queda %1$d día</item>
+        <item quantity="other">Quedan %1$d días</item>
+    </plurals>
+    <string name="group_hero_last_day">Último día del periodo</string>
+    <string name="envelopes_hero_row_accounts">Tienes en las cuentas</string>
+    <string name="envelopes_hero_row_due">Pagos de este periodo</string>
+    <string name="envelopes_hero_row_later">Apartado para más adelante</string>
+    <string name="envelopes_hero_row_other">Resto de los sobres</string>
+    <string name="envelopes_hero_row_overspent">Sobres en negativo</string>
+    <string name="envelopes_hero_covered">+%1$s de ingresos previstos lo cubren el %2$s</string>
+    <string name="envelopes_hero_uncovered">Ningún ingreso previsto lo cubre</string>
+    <string name="accounts_hero_last_months">Últimos 3 meses</string>
+    <string name="accounts_hero_shared">Se reparte en sobres</string>
+    <string name="accounts_hero_outside">Fuera de los sobres</string>
+    <plurals name="accounts_hero_count">
+        <item quantity="one">%1$d cuenta</item>
+        <item quantity="other">%1$d cuentas</item>
+    </plurals>
 </resources>
