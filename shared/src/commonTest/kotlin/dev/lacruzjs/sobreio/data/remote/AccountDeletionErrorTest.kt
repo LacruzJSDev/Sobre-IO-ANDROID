@@ -11,10 +11,10 @@ import kotlin.test.assertNull
 class AccountDeletionErrorTest {
 
     @Test
-    fun fz022FromTheFunctionIsTheBlockedRuleNotTheTagMerge() {
+    fun fz023FromTheFunctionIsTheBlockedRule() {
         assertEquals(
-            AppError.BusinessRule(ErrorMapper.ACCOUNT_BLOCKED_CODE),
-            ErrorMapper.fromFunctionBody("""{"code":"FZ022","message":"blocked"}"""),
+            AppError.BusinessRule("FZ023"),
+            ErrorMapper.fromFunctionBody("""{"code":"FZ023","message":"blocked"}"""),
         )
     }
 

@@ -245,9 +245,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   (`signOut(SignOutScope.LOCAL)`: the user no longer exists, so the server cannot revoke it); the session-driven root then shows the
   sign-in screens. Function errors: the function answers `{"code","message"}`; a `RestException` is mapped by
   `ErrorMapper.fromFunctionBody` (reads `code` from `RestException.description`, else from the response body) with the same rules as
-  RPC codes (`auth_delete_failed` and unreadable bodies are `Unknown`, retry is safe). The function's `FZ022` ("a group blocks it")
-  collides with the database's `FZ022` (invalid tag merge, D-49), so it is mapped to `AppError.BusinessRule(ErrorMapper.ACCOUNT_BLOCKED_CODE)`
-  with its own message.
+  RPC codes (`auth_delete_failed` and unreadable bodies are `Unknown`, retry is safe); `FZ023` ("a group blocks it") has its own message.
 - Envelope detail (`ui/envelopedetail`, route `EnvelopeDetail(groupId, envelopeId)`, level 2; Koin params by position): opened by
   tapping any Envelopes row, "Unassigned" and archived ones included (read only: no pencil, no commitments, name from
   resources, inbox icon; the outlook is skipped for them too). `ScreenHeader` with the avatar, name, group subtitle and a
@@ -523,7 +521,7 @@ plus `movementform` (the new / edit movement form).
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ022` become
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ023` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
 - Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a

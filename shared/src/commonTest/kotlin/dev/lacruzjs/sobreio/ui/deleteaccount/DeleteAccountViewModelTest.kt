@@ -83,13 +83,13 @@ class DeleteAccountViewModelTest : MainDispatcherTest() {
 
     @Test
     fun businessRuleFailureIsShownAndThePreviewIsReadAgain() {
-        repository.deleteResult = Result.failure(AppError.BusinessRule("FZ022:delete-account"))
+        repository.deleteResult = Result.failure(AppError.BusinessRule("FZ023"))
         val vm = viewModel()
         vm.onEvent(DeleteAccountEvent.ConfirmChanged(true))
         val before = repository.previewCalls
         vm.onEvent(DeleteAccountEvent.DeleteClicked)
 
-        assertEquals(AppError.BusinessRule("FZ022:delete-account"), vm.state.value.deleteError)
+        assertEquals(AppError.BusinessRule("FZ023"), vm.state.value.deleteError)
         assertEquals(before + 1, repository.previewCalls)
         assertFalse(vm.state.value.isDeleting)
     }

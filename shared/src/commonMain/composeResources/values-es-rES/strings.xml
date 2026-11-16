@@ -710,5 +710,5 @@
     <string name="delete_account_final_note">Se eliminan tu email y tu acceso. No se puede deshacer.</string>
     <string name="delete_account_confirm_label">Entiendo que no se puede deshacer</string>
     <string name="delete_account_action">Eliminar mi cuenta</string>
-    <string name="error_account_blocked">Eres el único owner de un grupo con más miembros: nombra otro owner antes de darte de baja.</string>
+    <string name="error_fz023_account_blocked">Eres el único owner de un grupo con más miembros: nombra otro owner antes de darte de baja.</string>
 </resources>
