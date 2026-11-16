@@ -31,6 +31,8 @@ fun FlatBottomSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp,
+        // Material's default (640 dp) already keeps the sheet from stretching edge to edge on tablets; stated so it stays
+        sheetMaxWidth = ContentWidth.Form,
     ) {
         Column(
             modifier = Modifier

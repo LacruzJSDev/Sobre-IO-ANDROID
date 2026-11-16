@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.commitmentdetail
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -117,7 +118,7 @@ fun CommitmentDetailScreen(
 ) {
     val version = state.version
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = state.name,
                 subtitle = state.accountName.takeIf { it.isNotEmpty() },

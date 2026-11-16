@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.navigation
 
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +18,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
 import androidx.navigation3.scene.Scene
+import androidx.navigation3.scene.SinglePaneSceneStrategy
+import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedContentTransitionScope
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
@@ -44,6 +49,7 @@ import org.koin.compose.koinInject
  * so is Groups: the group's menu button replaces the stack with Groups, and picking a group replaces it with that group,
  * so back never moves between them.
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     val lastGroupStore: LastGroupStore = koinInject()
@@ -55,10 +61,19 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // entries, because the form's ViewModel stays alive underneath the picker: the form applies it once and clears it.
     var pickedTimeZone by rememberSaveable { mutableStateOf<String?>(null) }
 
+    // List-detail: on a wide window the group (or Groups) is the list pane and its detail screens open beside it. On compact
+    // and medium windows the strategy shows one pane, so it yields to the single pane default and nothing changes
+    val listDetail = rememberListDetailSceneStrategy<NavKey>()
+    // Panes of the list-detail scene. The list takes the full width while nothing is open (no detail placeholder)
+    val listPane = ListDetailSceneStrategy.listPane() + ListDetailSceneStrategy.preferredPaneSize(width = ListPaneWidth)
+    val detailPane = ListDetailSceneStrategy.detailPane()
+    val extraPane = ListDetailSceneStrategy.extraPane()
+
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popToPrevious() },
+        sceneStrategies = listOf(listDetail, SinglePaneSceneStrategy()),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -66,24 +81,24 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
         entryProvider = entryProvider {
             // Groups replaces the stack, so NavDisplay sees a forward move; it sits "behind" a group in the user's mind
             // (the menu button), so it arrives with the platform's back animation instead
-            entry<Groups>(metadata = NavDisplay.transitionSpec { defaultPopTransitionSpec<NavKey>().invoke(this as AnimatedContentTransitionScope<Scene<NavKey>>) }) {
+            entry<Groups>(metadata = listPane + NavDisplay.transitionSpec { defaultPopTransitionSpec<NavKey>().invoke(this as AnimatedContentTransitionScope<Scene<NavKey>>) }) {
                 GroupsRoute(
                     onOpenGroup = { groupId -> backStack.openGroup(groupId) },
-                    onOpenProfile = { backStack.add(Profile) },
+                    onOpenProfile = { backStack.openDetail(Profile) },
                     onNewGroup = { backStack.add(GroupForm(null)) },
                 )
             }
-            entry<Group> { key ->
+            entry<Group>(metadata = listPane) { key ->
                 GroupRoute(
                     groupId = key.groupId,
                     onOpenGroups = { backStack.showOnlyGroups() },
                     onGroupGone = { backStack.showOnlyGroups() },
-                    onOpenSettings = { backStack.add(GroupSettings(key.groupId)) },
-                    onOpenReview = { backStack.add(GroupReview(key.groupId)) },
+                    onOpenSettings = { backStack.openDetail(GroupSettings(key.groupId)) },
+                    onOpenReview = { backStack.openDetail(GroupReview(key.groupId)) },
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },
-                    onOpenAccount = { accountId -> backStack.add(AccountDetail(key.groupId, accountId)) },
+                    onOpenAccount = { accountId -> backStack.openDetail(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
-                    onOpenEnvelope = { envelopeId -> backStack.add(EnvelopeDetail(key.groupId, envelopeId)) },
+                    onOpenEnvelope = { envelopeId -> backStack.openDetail(EnvelopeDetail(key.groupId, envelopeId)) },
                     onOpenMovementForm = { movementId, source ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
                     },
@@ -103,10 +118,10 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
-            entry<GroupReview> { key ->
+            entry<GroupReview>(metadata = detailPane) { key ->
                 GroupReviewRoute(groupId = key.groupId, onBack = { backStack.popToPrevious() })
             }
-            entry<AccountDetail> { key ->
+            entry<AccountDetail>(metadata = detailPane) { key ->
                 AccountDetailRoute(
                     groupId = key.groupId,
                     accountId = key.accountId,
@@ -121,7 +136,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onSeeAllMovements = { backStack.add(AccountMovements(key.groupId, key.accountId)) },
                 )
             }
-            entry<AccountMovements> { key ->
+            entry<AccountMovements>(metadata = extraPane) { key ->
                 AccountMovementsRoute(
                     groupId = key.groupId,
                     accountId = key.accountId,
@@ -131,7 +146,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
-            entry<EnvelopeDetail> { key ->
+            entry<EnvelopeDetail>(metadata = detailPane) { key ->
                 EnvelopeDetailRoute(
                     groupId = key.groupId,
                     envelopeId = key.envelopeId,
@@ -143,7 +158,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
-            entry<EnvelopeMovements> { key ->
+            entry<EnvelopeMovements>(metadata = extraPane) { key ->
                 EnvelopeMovementsRoute(
                     groupId = key.groupId,
                     envelopeId = key.envelopeId,
@@ -163,7 +178,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onClose = { backStack.popToPrevious() },
                 )
             }
-            entry<GroupSettings> { key ->
+            entry<GroupSettings>(metadata = detailPane) { key ->
                 GroupSettingsRoute(
                     groupId = key.groupId,
                     onBack = { backStack.popToPrevious() },
@@ -172,7 +187,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenTags = { create -> backStack.add(Tags(key.groupId, startWithCreate = create)) },
                 )
             }
-            entry<Tags> { key ->
+            entry<Tags>(metadata = extraPane) { key ->
                 TagsRoute(groupId = key.groupId, startWithCreate = key.startWithCreate, onBack = { backStack.popToPrevious() })
             }
             entry<GroupForm> { key ->
@@ -191,7 +206,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
             entry<AccountForm> { key ->
                 AccountFormRoute(groupId = key.groupId, accountId = key.accountId, onClose = { backStack.popToPrevious() })
             }
-            entry<CommitmentDetail> { key ->
+            entry<CommitmentDetail>(metadata = extraPane) { key ->
                 CommitmentDetailRoute(
                     groupId = key.groupId,
                     accountId = key.accountId,
@@ -221,9 +236,12 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
-            entry<Profile> {
+            entry<Profile>(metadata = detailPane) {
                 ProfileRoute(onBack = { backStack.popToPrevious() })
             }
         },
     )
 }
+
+/** Width asked for the list pane (Group or Groups) when a detail is open beside it. */
+private val ListPaneWidth = 420.dp

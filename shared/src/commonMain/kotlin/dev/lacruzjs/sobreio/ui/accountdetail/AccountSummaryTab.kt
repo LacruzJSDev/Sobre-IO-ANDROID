@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -103,26 +107,50 @@ internal fun AccountSummaryTab(
 ) {
     val account = state.account ?: return
     val languageTag = Locale.current.toLanguageTag()
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .widthIn(max = 640.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
-            BalanceSection(account, state, languageTag)
-            BalanceChartSection(state, languageTag, onEvent)
-            state.forecast?.let { ForecastSection(state, it.scheduledInCents, it.scheduledOutCents, it.projectedEndCents, it.shortfallCents, languageTag) }
-            if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
-            if (state.upcoming.isNotEmpty()) UpcomingSection(state, languageTag)
-            LatestMovementsSection(state, languageTag, onEvent)
-            SecondaryButton(
-                text = stringResource(Res.string.action_compare_bank),
-                onClick = { onEvent(AccountDetailEvent.CompareClicked) },
-            )
+    // The pane's own width decides the layout, not the window's
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val twoColumns = maxWidth >= ContentWidth.TwoColumnsMinPane
+        val scroll = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .contentMaxWidth(if (twoColumns) ContentWidth.TwoColumns else ContentWidth.List)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+        val spacing = Arrangement.spacedBy(12.dp)
+        if (twoColumns) {
+            Column(modifier = scroll, verticalArrangement = spacing) {
+                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    // The account itself on the left; what happens around it on the right
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
+                        BalanceSection(account, state, languageTag)
+                        BalanceChartSection(state, languageTag, onEvent)
+                        state.forecast?.let { ForecastSection(state, it.scheduledInCents, it.scheduledOutCents, it.projectedEndCents, it.shortfallCents, languageTag) }
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
+                        if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
+                        if (state.upcoming.isNotEmpty()) UpcomingSection(state, languageTag)
+                        LatestMovementsSection(state, languageTag, onEvent)
+                        SecondaryButton(
+                            text = stringResource(Res.string.action_compare_bank),
+                            onClick = { onEvent(AccountDetailEvent.CompareClicked) },
+                        )
+                    }
+                }
+            }
+        } else {
+            Column(modifier = scroll, verticalArrangement = spacing) {
+                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
+                BalanceSection(account, state, languageTag)
+                BalanceChartSection(state, languageTag, onEvent)
+                state.forecast?.let { ForecastSection(state, it.scheduledInCents, it.scheduledOutCents, it.projectedEndCents, it.shortfallCents, languageTag) }
+                if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
+                if (state.upcoming.isNotEmpty()) UpcomingSection(state, languageTag)
+                LatestMovementsSection(state, languageTag, onEvent)
+                SecondaryButton(
+                    text = stringResource(Res.string.action_compare_bank),
+                    onClick = { onEvent(AccountDetailEvent.CompareClicked) },
+                )
+            }
         }
     }
 }

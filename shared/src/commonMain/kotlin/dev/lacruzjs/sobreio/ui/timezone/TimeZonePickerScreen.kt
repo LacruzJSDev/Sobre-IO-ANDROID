@@ -1,4 +1,6 @@
 package dev.lacruzjs.sobreio.ui.timezone
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -70,7 +72,7 @@ fun TimeZonePickerRoute(current: String, onBack: () -> Unit, onPicked: (String) 
     LaunchedEffect(Unit) { focus.requestFocus() }
 
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.Form)) {
             ScreenHeader(title = stringResource(Res.string.field_time_zone), onBack = onBack)
             FormTextField(
                 value = query,

@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groups
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,7 +80,7 @@ fun GroupsScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = stringResource(Res.string.groups_title),
                 actions = {

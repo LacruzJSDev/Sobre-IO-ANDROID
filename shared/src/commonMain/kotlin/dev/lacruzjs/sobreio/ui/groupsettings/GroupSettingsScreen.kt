@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -149,7 +150,7 @@ fun GroupSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = stringResource(Res.string.group_settings_title),
                 onBack = { onEvent(GroupSettingsEvent.BackClicked) },

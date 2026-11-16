@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -238,23 +242,44 @@ private fun DetailContent(
     languageTag: String,
     onEvent: (EnvelopeDetailEvent) -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .widthIn(max = 640.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
-            AvailableSection(envelope, state, languageTag)
-            state.period?.let { PeriodSection(it, state.currencyCode) }
-            state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
-            if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
-            if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
-            TransfersSection(state, languageTag, onEvent)
-            LatestMovementsSection(state, languageTag, onEvent)
+    // The pane's own width decides the layout, not the window's
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val twoColumns = maxWidth >= ContentWidth.TwoColumnsMinPane
+        val scroll = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .contentMaxWidth(if (twoColumns) ContentWidth.TwoColumns else ContentWidth.List)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+        val spacing = Arrangement.spacedBy(12.dp)
+        if (twoColumns) {
+            Column(modifier = scroll, verticalArrangement = spacing) {
+                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    // The envelope's figures on the left; its history and what funds it on the right
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
+                        AvailableSection(envelope, state, languageTag)
+                        state.period?.let { PeriodSection(it, state.currencyCode) }
+                        state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
+                        if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
+                        if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
+                        TransfersSection(state, languageTag, onEvent)
+                        LatestMovementsSection(state, languageTag, onEvent)
+                    }
+                }
+            }
+        } else {
+            Column(modifier = scroll, verticalArrangement = spacing) {
+                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
+                AvailableSection(envelope, state, languageTag)
+                state.period?.let { PeriodSection(it, state.currencyCode) }
+                state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
+                if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
+                if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
+                TransfersSection(state, languageTag, onEvent)
+                LatestMovementsSection(state, languageTag, onEvent)
+            }
         }
     }
 }

@@ -419,6 +419,23 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   forms, no sheet) and `EntitySelect` (see Rules; the holder is "Joint"/"Common" plus one option per member, hidden with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`
   with `profiles!inner(display_name)`, current members only). Icon, section and colour names are string resources
   (`icon_<key>`, `icon_section_<id>`, `color_<key>`).
+- Adaptive layout (tablet and foldable): `AppNavigation` passes `sceneStrategies = listOf(rememberListDetailSceneStrategy<NavKey>(),
+  SinglePaneSceneStrategy())` (`org.jetbrains.compose.material3.adaptive:adaptive-navigation3` 1.3, experimental opt-in) to `NavDisplay`.
+  Entry metadata: `listPane()` (+ `preferredPaneSize(420 dp)`, no detail placeholder, so a lone list takes the full width) for
+  `Group` and `Groups` (`Groups` also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane()` for
+  `AccountDetail`, `EnvelopeDetail`, `GroupSettings`, `GroupReview` and `Profile`; `extraPane()` for `CommitmentDetail`,
+  `AccountMovements`, `EnvelopeMovements` and `Tags`. Forms and `TimeZonePicker` have no pane metadata (full-screen scenes).
+  Window classes: compact < 600 dp, medium 600-840, expanded >= 840. The strategy shows two panes only from expanded, so phones and
+  medium windows behave as before and the back stack rules do not change. `MutableList<NavKey>.openDetail(key)` (next to
+  `openGroup` in `InitialBackStack.kt`, unit tested; `NavKey.isPaneDetail()` lists the pane keys) replaces any detail or extra
+  pane on top instead of stacking, and is what the Group route's open-account/envelope/settings/review and Groups' profile use.
+  Content width, by the pane's own width: `ui/components/ContentWidth.kt` (`ContentWidth.Form` 640, `List` 720, `TwoColumns` 1120,
+  `TwoColumnsMinPane` 840 dp and `Modifier.contentMaxWidth(max)`, which centres and caps while the `Surface` keeps the full width).
+  Applied once on the root column of `FormScaffold`, the group shell (List, or TwoColumns on the Group tab), Groups, group settings,
+  review, tags, movements lists, commitment detail, profile and the time zone picker. With `BoxWithConstraints`, a pane of 840 dp or more shows
+  two columns: Group tab (left: hero, review, warnings; right: where the money went, in and out, next due items), account detail
+  Summary (left: balance, chart, forecast; right: in/out, next due, latest movements, compare) and envelope detail (left: available,
+  this period, really free; right: chart, commitments, transfers, latest movements). `FlatBottomSheet` sets `sheetMaxWidth` to 640 dp.
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local
   networking (`NSAllowsLocalNetworking`).
@@ -532,7 +549,7 @@ plus `movementform` (the new / edit movement form).
   delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,
   restore))`; `commit` runs when the snackbar ends, another destructive action starts, the screen is shown again or the
   ViewModel is cleared; failures restore the row and show the error. The screen shows `UndoMessage` with `UndoSnackbarHost`.
-- Adaptive layout uses `NavigationSuiteScaffold` and `ListDetailPaneScaffold`; check phone, tablet and foldable previews or emulators.
+- Adaptive layout uses `NavigationSuiteScaffold` and the Navigation 3 `ListDetailSceneStrategy` (see "Adaptive layout" in Current state); decide widths by the pane's own width (`BoxWithConstraints`, `contentMaxWidth`), never the window's; check phone, tablet and foldable previews or emulators.
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;
   the secret / service_role key never appears in this repository.

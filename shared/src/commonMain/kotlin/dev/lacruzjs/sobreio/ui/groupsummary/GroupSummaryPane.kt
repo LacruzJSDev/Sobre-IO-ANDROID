@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+
 import androidx.compose.foundation.background
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.generated.resources.transfer_hint_uncovered
@@ -144,17 +147,38 @@ fun GroupSummaryPane(
 @Composable
 private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, onEvent: (GroupSummaryEvent) -> Unit) {
     val languageTag = Locale.current.toLanguageTag()
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
-        GroupHero(state, outlook, languageTag)
-        ReviewCard(state, languageTag, onEvent)
-        if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
-        if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
-        if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
-        UpcomingSection(state, languageTag)
+    // The pane's own width decides, not the window's: beside a detail the pane is narrow and stays one column
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val twoColumns = maxWidth >= ContentWidth.TwoColumnsMinPane
+        val scroll = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)
+        if (twoColumns) {
+            Column(modifier = scroll, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // What needs attention now on the left; the period's figures on the right
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        GroupHero(state, outlook, languageTag)
+                        ReviewCard(state, languageTag, onEvent)
+                        if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
+                        if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
+                        UpcomingSection(state, languageTag)
+                    }
+                }
+            }
+        } else {
+            Column(modifier = scroll, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
+                GroupHero(state, outlook, languageTag)
+                ReviewCard(state, languageTag, onEvent)
+                if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
+                if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
+                if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
+                UpcomingSection(state, languageTag)
+            }
+        }
     }
 }
 

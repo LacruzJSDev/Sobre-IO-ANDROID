@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.tags
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -107,7 +108,7 @@ fun TagsScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = stringResource(Res.string.tags_title),
                 subtitle = state.group?.name,
