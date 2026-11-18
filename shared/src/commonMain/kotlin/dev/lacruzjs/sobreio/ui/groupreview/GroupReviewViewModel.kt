@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -58,6 +59,11 @@ class GroupReviewViewModel(
     /** Skipped due dates whose skip is still waiting for the snackbar: a reload must not bring them back. */
     private val hiddenKeys = mutableSetOf<String>()
 
+    init {
+        // Painted from the cache before the first frame when it was seen recently
+        load()
+    }
+
     fun onEvent(event: GroupReviewEvent) {
         when (event) {
             GroupReviewEvent.Refresh -> {
@@ -88,39 +94,41 @@ class GroupReviewViewModel(
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            val reads = coroutineScope {
-                val groupD = async { groups.getGroup(groupId) }
-                val todayD = async { detail.getToday(groupId) }
-                val pendingD = async { summary.getPending(groupId) }
-                val accountsD = async { accounts.getAccounts(groupId) }
-                val envelopesD = async { envelopes.getEnvelopes(groupId) }
-                Reads(groupD.await(), todayD.await(), pendingD.await(), accountsD.await(), envelopesD.await())
-            }
-            val failure = reads.group.exceptionOrNull() ?: reads.today.exceptionOrNull() ?: reads.pending.exceptionOrNull()
-                ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
-            if (failure != null) {
-                _state.update {
-                    if (!hasLoaded) it.copy(isLoading = false, error = failure.asAppError())
-                    else it.copy(isLoading = false, actionError = failure.asAppError())
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val reads = coroutineScope {
+                    val groupD = async { groups.getGroup(groupId) }
+                    val todayD = async { detail.getToday(groupId) }
+                    val pendingD = async { summary.getPending(groupId) }
+                    val accountsD = async { accounts.getAccounts(groupId) }
+                    val envelopesD = async { envelopes.getEnvelopes(groupId) }
+                    Reads(groupD.await(), todayD.await(), pendingD.await(), accountsD.await(), envelopesD.await())
                 }
-                return@launch
-            }
-            val group = reads.group.getOrThrow()
-            val day = reads.today.getOrThrow()
-            today = day
-            hasLoaded = true
-            _state.update {
-                it.copy(
-                    groupName = group.name,
-                    currencyCode = group.currencyCode,
-                    canRecord = !group.isArchived && !group.isPendingDeletion,
-                    today = day,
-                    pending = reads.pending.getOrThrow().filter { o -> o.isReviewable && o.key !in hiddenKeys },
-                    accounts = reads.accounts.getOrThrow(),
-                    envelopes = reads.envelopes.getOrThrow(),
-                    isLoading = false,
-                    error = null,
-                )
+                val failure = reads.group.exceptionOrNull() ?: reads.today.exceptionOrNull() ?: reads.pending.exceptionOrNull()
+                    ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
+                if (failure != null) {
+                    _state.update {
+                        if (!hasLoaded) it.copy(isLoading = false, error = failure.asAppError())
+                        else it.copy(isLoading = false, actionError = failure.asAppError())
+                    }
+                    return@revalidate
+                }
+                val group = reads.group.getOrThrow()
+                val day = reads.today.getOrThrow()
+                today = day
+                hasLoaded = true
+                _state.update {
+                    it.copy(
+                        groupName = group.name,
+                        currencyCode = group.currencyCode,
+                        canRecord = !group.isArchived && !group.isPendingDeletion,
+                        today = day,
+                        pending = reads.pending.getOrThrow().filter { o -> o.isReviewable && o.key !in hiddenKeys },
+                        accounts = reads.accounts.getOrThrow(),
+                        envelopes = reads.envelopes.getOrThrow(),
+                        isLoading = false,
+                        error = null,
+                    )
+                }
             }
         }
     }

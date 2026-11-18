@@ -59,6 +59,7 @@ import dev.lacruzjs.sobreio.generated.resources.movement_kind_income
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_transfer
 import dev.lacruzjs.sobreio.generated.resources.movement_no_groups_note
 import dev.lacruzjs.sobreio.generated.resources.movement_outside_note
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
@@ -131,9 +132,7 @@ fun MovementFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(MovementFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

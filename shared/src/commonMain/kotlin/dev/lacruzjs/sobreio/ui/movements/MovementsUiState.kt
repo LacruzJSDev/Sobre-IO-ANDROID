@@ -41,6 +41,8 @@ data class MovementsUiState(
     val hasMore: Boolean = false,
     /** True while the first page of the current filter loads. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with rows on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
     /** Failure of loading the first page. */

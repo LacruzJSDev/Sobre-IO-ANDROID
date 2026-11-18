@@ -17,6 +17,7 @@ import dev.lacruzjs.sobreio.generated.resources.movement_deleted
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,50 +123,74 @@ class MovementsViewModel(
 
     // Loading ------------------------------------------------------------------------------------------------------
 
+    init {
+        // Painted from the cache before the first frame when the ledger was seen recently; read when it was not
+        loadAll()
+    }
+
+    private var loadJob: Job? = null
+
+    private fun setRefreshing(refreshing: Boolean) = _state.update { it.copy(isRefreshing = refreshing) }
+
     /** The group, the names the rows and chips need, the date presets and the first page. */
     private fun loadAll() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             // A delete made final as the previous screen closed is written before reading
             PendingUndoCommits.await()
-            groups.getGroup(groupId)
-                .onSuccess { group ->
-                    _state.update {
-                        it.copy(groupName = group.name, currencyCode = group.currencyCode, canEdit = group.canEdit)
-                    }
-                }
-                .onFailure { e ->
-                    _state.update { it.copy(isLoading = false, error = e.asAppError()) }
-                    return@launch
-                }
-            // Names and options only decorate the list: without them rows show less, they do not fail
-            accounts.getAccounts(groupId).onSuccess { list -> _state.update { it.copy(accounts = list) } }
-            envelopes.getEnvelopes(groupId).onSuccess { list -> _state.update { it.copy(envelopes = list) } }
-            members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
-            tags.getTags(groupId).onSuccess { list -> _state.update { it.copy(tags = list) } }
-            movements.getDateContext(groupId).onSuccess { context -> _state.update { it.copy(dateContext = context) } }
-            reloadPage()
+            revalidate(::setRefreshing) { readAll() }
         }
     }
 
-    /** Reads the first page again for the current filter; the rows on screen stay until the answer arrives. */
+    private suspend fun readAll() {
+        groups.getGroup(groupId)
+            .onSuccess { group ->
+                _state.update {
+                    it.copy(groupName = group.name, currencyCode = group.currencyCode, canEdit = group.canEdit)
+                }
+            }
+            .onFailure { e ->
+                _state.update {
+                    if (it.isLoading) it.copy(isLoading = false, error = e.asAppError()) else it.copy(actionError = e.asAppError())
+                }
+                return
+            }
+        // Names and options only decorate the list: without them rows show less, they do not fail
+        accounts.getAccounts(groupId).onSuccess { list -> _state.update { it.copy(accounts = list) } }
+        envelopes.getEnvelopes(groupId).onSuccess { list -> _state.update { it.copy(envelopes = list) } }
+        members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
+        tags.getTags(groupId).onSuccess { list -> _state.update { it.copy(tags = list) } }
+        movements.getDateContext(groupId).onSuccess { context -> _state.update { it.copy(dateContext = context) } }
+        readFirstPage(++generation)
+    }
+
+    /**
+     * Reads the first page again for the current filter. The rows on screen stay, with the thin bar, until the answer
+     * arrives; a filter seen in the last 30 s answers at once from the cache.
+     */
     private fun reloadPage() {
         val request = ++generation
-        _state.update { it.copy(isLoading = true, error = null, isLoadingMore = false, loadMoreFailed = false) }
+        _state.update { it.copy(error = null, isLoadingMore = false, loadMoreFailed = false, isRefreshing = true) }
         viewModelScope.launch {
-            movements.search(groupId, _state.value.filter, PAGE_SIZE, 0, withTotal = true)
-                .onSuccess { page ->
-                    if (request != generation) return@onSuccess
-                    fetched = page.items.size
-                    serverTotal = page.total
-                    _state.update {
-                        it.copy(items = page.items, hasMore = fetched < serverTotal, isLoading = false, error = null)
-                    }
-                }
-                .onFailure { e ->
-                    if (request != generation) return@onFailure
-                    _state.update { it.copy(isLoading = false, error = e.asAppError()) }
-                }
+            revalidate(onRefreshing = {}) { readFirstPage(request) }
+            if (request == generation) setRefreshing(false)
         }
+    }
+
+    private suspend fun readFirstPage(request: Int) {
+        movements.search(groupId, _state.value.filter, PAGE_SIZE, 0, withTotal = true)
+            .onSuccess { page ->
+                if (request != generation) return@onSuccess
+                fetched = page.items.size
+                serverTotal = page.total
+                _state.update {
+                    it.copy(items = page.items, hasMore = fetched < serverTotal, isLoading = false, error = null)
+                }
+            }
+            .onFailure { e ->
+                if (request != generation) return@onFailure
+                _state.update { it.copy(isLoading = false, error = e.asAppError()) }
+            }
     }
 
     private fun loadMore() {

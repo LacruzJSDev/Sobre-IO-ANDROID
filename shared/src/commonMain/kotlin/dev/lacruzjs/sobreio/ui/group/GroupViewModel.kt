@@ -8,6 +8,7 @@ import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,40 +47,37 @@ class GroupViewModel(
         }
     }
 
-    /** Reads the group again without the spinner: its settings may have changed it. Skipped until it first loaded. */
+    /** Reads the group again (its settings may have changed it): the cached one stays on screen meanwhile. */
     private fun refresh() {
         if (_state.value.group == null) return
-        viewModelScope.launch {
-            val userId = auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
-            groups.getGroup(groupId)
-                .onSuccess { group -> _state.update { it.copy(group = group) } }
-                .onFailure { e ->
-                    if (e.asAppError() == AppError.NotFound) {
-                        lastGroup.clear(userId)
-                        _state.update { it.copy(navigateBack = true) }
-                    }
-                }
-        }
+        load()
     }
 
     private fun load() {
-        _state.update { it.copy(isLoading = true, error = null) }
+        _state.update { it.copy(isLoading = it.group == null, error = null) }
         viewModelScope.launch {
             val userId = auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
-            groups.getGroup(groupId)
-                .onSuccess { group ->
-                    lastGroup.set(userId, groupId)
-                    _state.update { it.copy(group = group, isLoading = false) }
-                }
-                .onFailure { e ->
-                    val error = e.asAppError()
-                    if (error == AppError.NotFound) {
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read(userId) }
+        }
+    }
+
+    private suspend fun read(userId: String) {
+        groups.getGroup(groupId)
+            .onSuccess { group ->
+                lastGroup.set(userId, groupId)
+                _state.update { it.copy(group = group, isLoading = false, error = null) }
+            }
+            .onFailure { e ->
+                val error = e.asAppError()
+                when {
+                    error == AppError.NotFound -> {
                         lastGroup.clear(userId)
                         _state.update { it.copy(isLoading = false, navigateBack = true) }
-                    } else {
-                        _state.update { it.copy(isLoading = false, error = error) }
                     }
+                    // A failed refresh keeps the group on screen; the tabs report their own failures
+                    _state.value.group != null -> Unit
+                    else -> _state.update { it.copy(isLoading = false, error = error) }
                 }
-        }
+            }
     }
 }

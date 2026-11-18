@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import dev.lacruzjs.sobreio.generated.resources.form_section_appearance
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
 import dev.lacruzjs.sobreio.generated.resources.opening_balance_hint
 import dev.lacruzjs.sobreio.ui.accounts.labelRes
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.ColorFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -122,9 +122,7 @@ fun AccountFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(AccountFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

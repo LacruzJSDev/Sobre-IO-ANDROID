@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groups
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.layout.Box
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,6 +82,7 @@ fun GroupsScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.groups_title),
                 actions = {
                     AddIconButton(
@@ -98,7 +99,7 @@ fun GroupsScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             ) {
                 when {
-                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.isLoading -> ListSkeleton(withHero = false)
                     state.groups.isEmpty() && state.archivedGroups.isEmpty() && state.error != null -> EmptyState(
                         message = stringResource(state.error.messageRes()),
                     ) {

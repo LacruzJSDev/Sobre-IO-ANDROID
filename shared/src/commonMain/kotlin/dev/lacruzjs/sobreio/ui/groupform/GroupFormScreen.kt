@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +40,7 @@ import dev.lacruzjs.sobreio.generated.resources.period_day_next
 import dev.lacruzjs.sobreio.generated.resources.period_day_previous
 import dev.lacruzjs.sobreio.generated.resources.period_day_value
 import dev.lacruzjs.sobreio.generated.resources.period_start_day_note
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormSection
@@ -132,9 +132,7 @@ fun GroupFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(GroupFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

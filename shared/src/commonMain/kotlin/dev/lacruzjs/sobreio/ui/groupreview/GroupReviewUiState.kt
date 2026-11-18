@@ -29,6 +29,8 @@ data class GroupReviewUiState(
     val canRecord: Boolean = false,
     /** True until the first load ends; later refreshes keep showing the content. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     /** Due dates to review, oldest first; the ones the user just confirmed or skipped are already gone. */
     val pending: List<DueOccurrence> = emptyList(),

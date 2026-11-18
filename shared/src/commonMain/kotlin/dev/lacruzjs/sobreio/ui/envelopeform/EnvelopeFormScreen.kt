@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -42,6 +41,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_monthly_contribution
 import dev.lacruzjs.sobreio.generated.resources.field_envelope_start_next_period
 import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note
 import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note_off
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.components.ColorFormTile
@@ -120,9 +120,7 @@ fun EnvelopeFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(EnvelopeFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

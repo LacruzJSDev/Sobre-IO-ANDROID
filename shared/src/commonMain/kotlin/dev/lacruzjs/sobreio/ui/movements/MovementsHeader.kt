@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.components.RefreshBar
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -46,11 +48,25 @@ fun MovementsHeaderActions(onSearch: () -> Unit, onNew: () -> Unit) {
  * clears the text. Typing is debounced by the ViewModel.
  */
 @Composable
-fun MovementsSearchHeader(text: String, onTextChange: (String) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun MovementsSearchHeader(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        SearchRow(text, onTextChange, onClose)
+        RefreshBar(visible = isRefreshing, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun SearchRow(text: String, onTextChange: (String) -> Unit, onClose: () -> Unit) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
             .heightIn(min = 64.dp)

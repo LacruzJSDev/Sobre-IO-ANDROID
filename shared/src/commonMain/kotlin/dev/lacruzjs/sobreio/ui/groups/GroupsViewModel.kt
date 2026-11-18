@@ -18,6 +18,7 @@ import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +41,11 @@ class GroupsViewModel(
         onMessage = { message -> _state.update { it.copy(undoMessage = message) } },
         onError = { error -> _state.update { it.copy(actionError = error) } },
     )
+
+    init {
+        // Painted from the cache before the first frame when the list was seen recently
+        load()
+    }
 
     fun onEvent(event: GroupsEvent) {
         when (event) {
@@ -73,11 +79,16 @@ class GroupsViewModel(
 
     private fun load() {
         viewModelScope.launch {
-            // A delete made final as the previous screen closed is written before reading
-            PendingUndoCommits.await()
-            groups.getGroups()
-                .onSuccess { list -> _state.update { it.withGroups(list) } }
-                .onFailure { e -> _state.update { it.copy(isLoading = false, error = e.asAppError()) } }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                // A delete made final as the previous screen closed is written before reading
+                PendingUndoCommits.await()
+                groups.getGroups()
+                    .onSuccess { list -> _state.update { it.withGroups(list) } }
+                    .onFailure { e ->
+                        // A failed refresh keeps the list on screen and says so
+                        _state.update { if (it.isLoading) it.copy(isLoading = false, error = e.asAppError()) else it.copy(actionError = e.asAppError()) }
+                    }
+            }
         }
     }
 

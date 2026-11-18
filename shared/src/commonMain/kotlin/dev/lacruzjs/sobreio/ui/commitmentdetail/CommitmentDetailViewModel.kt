@@ -16,6 +16,8 @@ import dev.lacruzjs.sobreio.domain.model.OccurrenceStatus
 import dev.lacruzjs.sobreio.ui.commitments.CommitmentSection
 import dev.lacruzjs.sobreio.ui.commitments.sectionOf
 import dev.lacruzjs.sobreio.ui.commitments.signedAmount
+import dev.lacruzjs.sobreio.ui.loading.revalidate
+import dev.lacruzjs.sobreio.ui.loading.stopIfCachePass
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +49,11 @@ class CommitmentDetailViewModel(
     private var loadMoreJob: Job? = null
     private var hasLoaded = false
 
+    init {
+        // Painted from the cache before the first frame when the commitment was seen recently
+        load(showSpinner = false)
+    }
+
     fun onEvent(event: CommitmentDetailEvent) {
         when (event) {
             CommitmentDetailEvent.Refresh -> load(showSpinner = !hasLoaded)
@@ -62,6 +69,12 @@ class CommitmentDetailViewModel(
         loadMoreJob?.cancel()
         if (showSpinner) _state.update { it.copy(isLoading = true, error = null) }
         loadJob = viewModelScope.launch {
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read() }
+        }
+    }
+
+    private suspend fun read() {
+        run {
             val groupResult = groups.getGroup(groupId)
             val todayResult = detail.getToday(groupId)
             val commitmentResult = commitments.getCommitment(commitmentId)
@@ -69,16 +82,19 @@ class CommitmentDetailViewModel(
             val failure = groupResult.exceptionOrNull() ?: todayResult.exceptionOrNull()
                 ?: commitmentResult.exceptionOrNull() ?: occurrencesResult.exceptionOrNull()
             if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
-                return@launch
+                // A refresh that fails keeps what is on screen; only a first load turns into the error state
+                if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
+                return
             }
             val group = groupResult.getOrThrow()
             val today = todayResult.getOrThrow()
             val commitment = commitmentResult.getOrThrow()
             val version = commitment.versionFor(accountId, today) ?: commitment.currentVersion(today)
             if (version == null) {
+                // A stale copy may lack the latest version: only the database says there is none
+                stopIfCachePass()
                 _state.update { it.copy(isLoading = false, error = AppError.NotFound) }
-                return@launch
+                return
             }
             // Names are optional: a row without one just leaves the line out
             val accountNames = accounts.getAccounts(groupId).getOrDefault(emptyList()).associate { it.id to it.name }

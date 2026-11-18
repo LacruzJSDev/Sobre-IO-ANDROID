@@ -13,6 +13,8 @@ import dev.lacruzjs.sobreio.generated.resources.account_reopened
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,34 +64,50 @@ class AccountsViewModel(
         undo.commitDetached()
     }
 
+    private var loadJob: Job? = null
+
+    init {
+        // Painted from the cache before the first frame when the group was seen recently; read when it was not
+        load()
+    }
+
     private fun load() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             // A delete made final as the previous screen closed is written before reading
             PendingUndoCommits.await()
-            val list = accounts.getAccounts(groupId)
-            val summary = accounts.getSummary(groupId)
-            val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()
-            if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
-            } else {
-                val (archived, live) = list.getOrThrow().partition { it.isArchived }
-                val figures = summary.getOrThrow()
-                _state.update {
-                    it.copy(
-                        accounts = live.sortedByName(),
-                        archivedAccounts = archived.sortedByName(),
-                        totalCents = figures.totalCents,
-                        inEnvelopesCents = figures.inEnvelopesCents,
-                        outsideCents = figures.outsideCents,
-                        isLoading = false,
-                        error = null,
-                    )
-                }
-            }
-            loadBalanceSeries()
-            // Only needed to name holders; without them the rows simply show no holder
-            members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read() }
         }
+    }
+
+    private suspend fun read() {
+        val list = accounts.getAccounts(groupId)
+        val summary = accounts.getSummary(groupId)
+        val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()
+        if (failure != null) {
+            // With figures on screen a failed refresh keeps them and says so above the list
+            _state.update {
+                if (it.isLoading) it.copy(isLoading = false, error = failure.asAppError())
+                else it.copy(actionError = failure.asAppError())
+            }
+            return
+        }
+        val (archived, live) = list.getOrThrow().partition { it.isArchived }
+        val figures = summary.getOrThrow()
+        _state.update {
+            it.copy(
+                accounts = live.sortedByName(),
+                archivedAccounts = archived.sortedByName(),
+                totalCents = figures.totalCents,
+                inEnvelopesCents = figures.inEnvelopesCents,
+                outsideCents = figures.outsideCents,
+                isLoading = false,
+                error = null,
+            )
+        }
+        loadBalanceSeries()
+        // Only needed to name holders; without them the rows simply show no holder
+        members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
     }
 
     /** The hero card's chart: the group's total balance over the last three months. Secondary: a failure just leaves it out. */

@@ -23,6 +23,8 @@ import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
+import dev.lacruzjs.sobreio.ui.loading.stopIfCachePass
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -67,6 +69,11 @@ class AccountDetailViewModel(
     private var seriesJob: Job? = null
     private var compareJob: Job? = null
     private var hasLoaded = false
+
+    init {
+        // Painted from the cache before the first frame when the account was seen recently
+        load(showSpinner = false)
+    }
 
     fun onEvent(event: AccountDetailEvent) {
         when (event) {
@@ -115,11 +122,13 @@ class AccountDetailViewModel(
         loadJob = viewModelScope.launch {
             // A delete made final as the previous screen closed is written before reading
             PendingUndoCommits.await()
-            val failure = loadAll()
-            if (failure != null) {
-                // A refresh that fails keeps what is on screen; only a first load turns into the error state
-                if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
-                else _state.update { it.copy(actionError = failure) }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val failure = loadAll()
+                if (failure != null) {
+                    // A refresh that fails keeps what is on screen; only a first load turns into the error state
+                    if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
+                    else _state.update { it.copy(actionError = failure) }
+                }
             }
         }
     }
@@ -131,7 +140,12 @@ class AccountDetailViewModel(
         (groupResult.exceptionOrNull() ?: accountsResult.exceptionOrNull())?.let { return it.asAppError() }
         val group = groupResult.getOrThrow()
         val allAccounts = accountsResult.getOrThrow()
-        val account = allAccounts.firstOrNull { it.id == accountId } ?: return AppError.NotFound
+        val account = allAccounts.firstOrNull { it.id == accountId }
+        if (account == null) {
+            // A stale list may simply not have it yet: only the database says it is gone
+            stopIfCachePass()
+            return AppError.NotFound
+        }
         val today = detail.getToday(groupId).getOrElse { return it.asAppError() }
         val range = _state.value.range
         val from = today.minus(range.months, DateTimeUnit.MONTH)

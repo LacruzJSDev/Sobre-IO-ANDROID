@@ -20,6 +20,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
 import dev.lacruzjs.sobreio.ui.theme.TagColor
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -81,16 +82,18 @@ class TagsViewModel(
     private fun load() {
         _state.update { it.copy(isLoading = it.group == null, error = null) }
         viewModelScope.launch {
-            val group = groups.getGroup(groupId)
-            val usage = tags.getUsage(groupId)
-            val failure = group.exceptionOrNull() ?: usage.exceptionOrNull()
-            if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
-                return@launch
-            }
-            val (archived, live) = usage.getOrThrow().partition { it.isArchived }
-            _state.update {
-                it.copy(group = group.getOrThrow(), tags = live.sortedByName(), archivedTags = archived.sortedByName(), isLoading = false)
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val group = groups.getGroup(groupId)
+                val usage = tags.getUsage(groupId)
+                val failure = group.exceptionOrNull() ?: usage.exceptionOrNull()
+                if (failure != null) {
+                    _state.update { if (it.isLoading) it.copy(isLoading = false, error = failure.asAppError()) else it.copy(actionError = failure.asAppError()) }
+                    return@revalidate
+                }
+                val (archived, live) = usage.getOrThrow().partition { it.isArchived }
+                _state.update {
+                    it.copy(group = group.getOrThrow(), tags = live.sortedByName(), archivedTags = archived.sortedByName(), isLoading = false)
+                }
             }
         }
     }

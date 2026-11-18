@@ -61,6 +61,8 @@ data class AccountCommitmentsUiState(
     val canEdit: Boolean = false,
     /** True until the first load ends; later refreshes keep showing the list. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the list on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     /** Failure of deleting, reopening or undoing, shown above the list. */
     val actionError: AppError? = null,

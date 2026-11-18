@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.generated.resources.member_removed
 import dev.lacruzjs.sobreio.generated.resources.role_changed
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,43 +86,45 @@ class GroupSettingsViewModel(
     private fun load() {
         _state.update { it.copy(isLoading = it.group == null, error = null) }
         viewModelScope.launch {
-            val userId = currentUserId()
-            groups.getGroup(groupId)
-                .onSuccess { group ->
-                    _state.update { it.copy(group = group, currentUserId = userId, isLoading = false) }
-                    // The Tags section previews the tags themselves; without them it only shows its title
-                    tags.getTags(groupId).onSuccess { list ->
-                        _state.update { it.copy(tags = list.sortedBy { tag -> tag.name.lowercase() }) }
-                    }
-                    members.getMembers(groupId)
-                        .onSuccess { list -> _state.update { it.copy(members = list) } }
-                        .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
-                    if (group.canEdit) {
-                        groups.getInvitations(groupId)
-                            .onSuccess { list ->
-                                val now = clock.now()
-                                _state.update {
-                                    it.copy(
-                                        pendingInvitations = list.filter { i ->
-                                            i.status == InvitationStatus.Pending && !i.isExpired(now)
-                                        },
-                                        acceptedInvitations = list.filter { i -> i.status == InvitationStatus.Accepted },
-                                    )
-                                }
-                            }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val userId = currentUserId()
+                groups.getGroup(groupId)
+                    .onSuccess { group ->
+                        _state.update { it.copy(group = group, currentUserId = userId, isLoading = false) }
+                        // The Tags section previews the tags themselves; without them it only shows its title
+                        tags.getTags(groupId).onSuccess { list ->
+                            _state.update { it.copy(tags = list.sortedBy { tag -> tag.name.lowercase() }) }
+                        }
+                        members.getMembers(groupId)
+                            .onSuccess { list -> _state.update { it.copy(members = list) } }
                             .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
-                    } else {
-                        _state.update { it.copy(pendingInvitations = emptyList(), acceptedInvitations = emptyList()) }
+                        if (group.canEdit) {
+                            groups.getInvitations(groupId)
+                                .onSuccess { list ->
+                                    val now = clock.now()
+                                    _state.update {
+                                        it.copy(
+                                            pendingInvitations = list.filter { i ->
+                                                i.status == InvitationStatus.Pending && !i.isExpired(now)
+                                            },
+                                            acceptedInvitations = list.filter { i -> i.status == InvitationStatus.Accepted },
+                                        )
+                                    }
+                                }
+                                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
+                        } else {
+                            _state.update { it.copy(pendingInvitations = emptyList(), acceptedInvitations = emptyList()) }
+                        }
                     }
-                }
-                .onFailure { e ->
-                    val error = e.asAppError()
-                    if (error == AppError.NotFound) {
-                        _state.update { it.copy(isLoading = false, navigateToGroups = true) }
-                    } else {
-                        _state.update { it.copy(isLoading = false, error = error) }
+                    .onFailure { e ->
+                        val error = e.asAppError()
+                        if (error == AppError.NotFound) {
+                            _state.update { it.copy(isLoading = false, navigateToGroups = true) }
+                        } else {
+                            _state.update { if (it.group == null) it.copy(isLoading = false, error = error) else it.copy(actionError = error) }
+                        }
                     }
-                }
+            }
         }
     }
 

@@ -35,8 +35,10 @@ data class EnvelopesUiState(
     val currencyCode: String = "EUR",
     /** Owner or admin: they can create, edit and delete. Any member can assign. */
     val canEdit: Boolean = false,
-    /** True until the first load ends; later refreshes keep showing the list. */
+    /** True until the first load ends (a skeleton); later refreshes keep showing the list. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the list on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     /** Failure of loading. */
     val error: AppError? = null,
     val sheet: EnvelopesSheet = EnvelopesSheet.None,

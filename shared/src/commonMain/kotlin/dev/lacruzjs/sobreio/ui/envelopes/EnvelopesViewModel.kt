@@ -19,6 +19,8 @@ import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,40 +76,55 @@ class EnvelopesViewModel(
         undo.commitDetached()
     }
 
+    private var loadJob: Job? = null
+
+    init {
+        // Painted from the cache before the first frame when the group was seen recently; read when it was not
+        load()
+    }
+
     private fun load() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             // A delete made final as the previous screen closed is written before reading
             PendingUndoCommits.await()
-            // A new target becomes an assignment of the current period; a failure here must not stop the list
-            envelopes.materializeThroughToday(groupId)
-            val list = envelopes.getEnvelopes(groupId)
-            val summary = envelopes.getSummary(groupId)
-            // Only draws the bars: without it the rows simply have none
-            val progress = envelopes.getProgress(groupId).getOrDefault(emptyList()).associateBy { it.envelopeId }
-            val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()
-            if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
-            } else {
-                val all = list.getOrThrow()
-                val figures = summary.getOrThrow()
-                val (archived, live) = all.partition { e -> e.isArchived }
-                _state.update {
-                    it.copy(
-                        envelopes = live.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
-                        archivedEnvelopes = archived.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
-                        unassigned = live.firstOrNull { e -> e.kind == EnvelopeKind.System },
-                        progress = progress,
-                        summary = figures,
-                        isLoading = false,
-                        error = null,
-                    )
-                }
-            }
-            // Only needed to name holders; without them the rows simply show no holder
-            members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
-            // Only tells which targets start in a later period (D-53); without it the rows show their bar as usual
-            dates.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read() }
         }
+    }
+
+    private suspend fun read() {
+        // A new target becomes an assignment of the current period; a failure here must not stop the list
+        envelopes.materializeThroughToday(groupId)
+        val list = envelopes.getEnvelopes(groupId)
+        val summary = envelopes.getSummary(groupId)
+        val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()
+        if (failure != null) {
+            // With figures on screen a failed refresh keeps them and says so above the list
+            _state.update {
+                if (it.isLoading) it.copy(isLoading = false, error = failure.asAppError())
+                else it.copy(actionError = failure.asAppError())
+            }
+            return
+        }
+        val all = list.getOrThrow()
+        val figures = summary.getOrThrow()
+        val (archived, live) = all.partition { e -> e.isArchived }
+        _state.update {
+            it.copy(
+                envelopes = live.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
+                archivedEnvelopes = archived.filter { e -> e.kind != EnvelopeKind.System }.sortedByName(),
+                unassigned = live.firstOrNull { e -> e.kind == EnvelopeKind.System },
+                summary = figures,
+                isLoading = false,
+                error = null,
+            )
+        }
+        // Only draws the bars: without it the rows simply have none
+        envelopes.getProgress(groupId).onSuccess { list -> _state.update { it.copy(progress = list.associateBy { p -> p.envelopeId }) } }
+        // Only needed to name holders; without them the rows simply show no holder
+        members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
+        // Only tells which targets start in a later period (D-53); without it the rows show their bar as usual
+        dates.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
     }
 
     private fun List<Envelope>.sortedByName() = sortedBy { it.name.lowercase() }

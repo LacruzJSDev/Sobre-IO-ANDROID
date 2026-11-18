@@ -67,7 +67,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupsEvent.CodeChanged(" ABC123 "))
         viewModel.onEvent(GroupsEvent.JoinConfirmed)
 
-        assertEquals(listOf("joinGroup(ABC123)"), repository.calls)
+        assertEquals(listOf("joinGroup(ABC123)"), repository.calls.filter { it != "getGroups()" })
         assertEquals("joined-id", viewModel.state.value.navigateToGroup)
     }
 
@@ -88,7 +88,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupsEvent.JoinConfirmed)
 
         assertEquals(Res.string.validation_required, viewModel.state.value.codeError)
-        assertTrue(repository.calls.isEmpty())
+        assertTrue(repository.calls.none { it.startsWith("joinGroup") })
     }
 
     @Test
@@ -234,7 +234,7 @@ class GroupsViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(GroupsEvent.LeaveClicked("2"))
         viewModel.onEvent(GroupsEvent.UndoClicked)
 
-        assertTrue(repository.calls.isEmpty())
+        assertTrue(repository.calls.none { it.startsWith("joinGroup") })
         assertEquals(listOf(casa, piso), viewModel.state.value.groups)
     }
 

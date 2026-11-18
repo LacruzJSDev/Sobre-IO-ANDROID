@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
@@ -54,6 +53,7 @@ import dev.lacruzjs.sobreio.ui.commitments.AccountCommitmentsViewModel
 import dev.lacruzjs.sobreio.ui.commitments.CommitmentsEvent
 import dev.lacruzjs.sobreio.ui.commitments.CommitmentsPane
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
+import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
@@ -103,7 +103,8 @@ fun AccountDetailRoute(
     CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
 
     AccountDetailScreen(
-        state = state,
+        // The thin bar under the header covers the Commitments tab's reads too
+        state = state.copy(isRefreshing = state.isRefreshing || commitmentsState.isRefreshing),
         selectedTab = AccountDetailTab.entries[tabIndex],
         onEvent = { event ->
             when (event) {
@@ -156,6 +157,7 @@ fun AccountDetailScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = account?.name.orEmpty(),
                 subtitle = state.groupName.takeIf { it.isNotEmpty() },
                 onBack = { onEvent(AccountDetailEvent.BackClicked) },
@@ -184,9 +186,7 @@ fun AccountDetailScreen(
             )
             Column(modifier = Modifier.weight(1f).navigationBarsPadding()) {
                 when {
-                    state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    state.isLoading -> DetailSkeleton()
                     state.error != null || account == null -> EmptyState(
                         message = stringResource((state.error ?: AppError.NotFound).messageRes()),
                     ) {

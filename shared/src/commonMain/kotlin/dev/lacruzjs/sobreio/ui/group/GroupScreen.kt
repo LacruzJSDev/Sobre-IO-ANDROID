@@ -6,7 +6,6 @@ import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +67,7 @@ import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.components.MenuButton
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
 import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
@@ -152,8 +152,20 @@ fun GroupRoute(
         }
     }
 
+    val selectedTab = GroupTab.entries[selectedIndex]
+    // The thin bar under the header follows the tab on screen
+    val tabRefreshing = when (selectedTab) {
+        GroupTab.Group -> summaryState.isRefreshing
+        GroupTab.Accounts -> accountsState.isRefreshing
+        GroupTab.Envelopes -> envelopesState.isRefreshing
+        GroupTab.Movements -> movementsState.isRefreshing
+    }
     GroupScreen(
-        state = state.copy(selectedTab = GroupTab.entries[selectedIndex], pendingCount = summaryState.pendingCount),
+        state = state.copy(
+            selectedTab = selectedTab,
+            pendingCount = summaryState.pendingCount,
+            isRefreshing = state.isRefreshing || tabRefreshing,
+        ),
         onEvent = { event ->
             when (event) {
                 GroupEvent.MenuClicked -> onOpenGroups()
@@ -249,6 +261,7 @@ fun GroupRoute(
                     text = movementsState.searchText,
                     onTextChange = { movementsViewModel.onEvent(MovementsEvent.SearchChanged(it)) },
                     onClose = { movementsViewModel.onEvent(MovementsEvent.SearchClosed) },
+                    isRefreshing = movementsState.isRefreshing,
                 )
             }
         } else {
@@ -374,11 +387,10 @@ fun GroupScreen(
                         )
                     },
                     actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction, movementsAction) },
+                    isRefreshing = state.isRefreshing,
                 )
                 when {
-                    state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    state.isLoading -> ListSkeleton()
                     state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                         TextButton(onClick = { onEvent(GroupEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
                     }

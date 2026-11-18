@@ -100,10 +100,12 @@ internal fun FixedFilterMovementsScreen(
                     text = state.searchText,
                     onTextChange = { onEvent(MovementsEvent.SearchChanged(it)) },
                     onClose = { onEvent(MovementsEvent.SearchClosed) },
+                    isRefreshing = state.isRefreshing,
                 )
             } else {
                 ScreenHeader(
                     title = title,
+                    isRefreshing = state.isRefreshing,
                     subtitle = state.groupName.takeIf { it.isNotEmpty() },
                     onBack = onBack,
                     leading = leading,

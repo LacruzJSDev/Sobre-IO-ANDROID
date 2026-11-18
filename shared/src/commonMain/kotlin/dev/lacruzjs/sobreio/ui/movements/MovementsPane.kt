@@ -84,6 +84,7 @@ import dev.lacruzjs.sobreio.generated.resources.movements_empty_filtered
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.components.EmptyState
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.EntityMultiPickerSheet
 import dev.lacruzjs.sobreio.ui.components.EntityOption
@@ -126,8 +127,7 @@ fun MovementsPane(
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         ) {
             when {
-                state.isLoading && state.items.isEmpty() ->
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                state.isLoading && state.items.isEmpty() -> ListSkeleton(withHero = false, rows = 8)
                 state.error != null && state.items.isEmpty() -> EmptyState(message = stringResource(state.error.messageRes())) {
                     TextButton(onClick = { onEvent(MovementsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                 }
