@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.domain.model.FundingCommitment
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -58,6 +59,11 @@ class EnvelopeDetailViewModel(
     private var zone: TimeZone = TimeZone.UTC
     private var envelopeList: List<Envelope> = emptyList()
 
+    init {
+        // Painted from the cache before the first frame when the envelope was seen recently
+        load(showSpinner = false)
+    }
+
     fun onEvent(event: EnvelopeDetailEvent) {
         when (event) {
             EnvelopeDetailEvent.Refresh -> load(showSpinner = !hasLoaded)
@@ -80,11 +86,13 @@ class EnvelopeDetailViewModel(
         loadJob = viewModelScope.launch {
             // A delete made final as the moves screen closed is written before reading
             PendingUndoCommits.await()
-            val failure = loadAll()
-            if (failure != null) {
-                // A refresh that fails keeps what is on screen; only a first load turns into the error state
-                if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
-                else _state.update { it.copy(actionError = failure) }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val failure = loadAll()
+                if (failure != null) {
+                    // A refresh that fails keeps what is on screen; only a first load turns into the error state
+                    if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
+                    else _state.update { it.copy(actionError = failure) }
+                }
             }
         }
     }

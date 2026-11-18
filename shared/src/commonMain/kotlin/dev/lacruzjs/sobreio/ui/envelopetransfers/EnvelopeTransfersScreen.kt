@@ -51,6 +51,7 @@ import dev.lacruzjs.sobreio.generated.resources.envelope_transfer_unknown_envelo
 import dev.lacruzjs.sobreio.generated.resources.envelope_transfers_route
 import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
@@ -128,6 +129,7 @@ fun EnvelopeTransfersScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.envelope_detail_section_transfers),
                 // One envelope's moves name the envelope; the whole group's name the group
                 subtitle = when {
@@ -152,7 +154,7 @@ fun EnvelopeTransfersScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             ) {
                 when {
-                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.isLoading -> ListSkeleton(withHero = false)
                     state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                         TextButton(onClick = { onEvent(EnvelopeTransfersEvent.Retry) }) {
                             Text(stringResource(Res.string.action_retry))

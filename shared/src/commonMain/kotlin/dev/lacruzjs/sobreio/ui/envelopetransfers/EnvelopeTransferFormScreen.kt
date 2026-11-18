@@ -3,7 +3,6 @@ package dev.lacruzjs.sobreio.ui.envelopetransfers
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +30,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_from
 import dev.lacruzjs.sobreio.generated.resources.field_notes
 import dev.lacruzjs.sobreio.generated.resources.field_to
 import dev.lacruzjs.sobreio.generated.resources.form_section_envelope_transfer
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -93,9 +93,7 @@ fun EnvelopeTransferFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(EnvelopeTransferFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

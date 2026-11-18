@@ -55,6 +55,8 @@ data class CommitmentDetailUiState(
     /** Versions, newest first. */
     val versions: List<VersionRow> = emptyList(),
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
 ) {
     val hasMoreOccurrences: Boolean get() = occurrences.size < occurrencesTotal

@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.tags
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.clickable
@@ -20,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -110,6 +110,7 @@ fun TagsScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.tags_title),
                 subtitle = state.group?.name,
                 onBack = { onEvent(TagsEvent.BackClicked) },
@@ -129,7 +130,7 @@ fun TagsScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             ) {
                 when {
-                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.isLoading -> ListSkeleton(withHero = false)
                     state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                         TextButton(onClick = { onEvent(TagsEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
                     }

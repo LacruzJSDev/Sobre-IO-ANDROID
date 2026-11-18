@@ -15,6 +15,7 @@ import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -44,6 +45,8 @@ data class GroupTransferRow(
 data class EnvelopeTransfersUiState(
     /** True until the first load ends; later refreshes keep showing the list. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     val groupName: String = "",
     /** The envelope the list is limited to (opened from its detail), or null for the whole group. */
@@ -115,6 +118,11 @@ class EnvelopeTransfersViewModel(
     private var zone: TimeZone = TimeZone.UTC
     private var envelopeById: Map<String, Envelope> = emptyMap()
 
+    init {
+        // Painted from the cache before the first frame when it was seen recently
+        load(showSpinner = false)
+    }
+
     fun onEvent(event: EnvelopeTransfersEvent) {
         when (event) {
             EnvelopeTransfersEvent.Refresh -> {
@@ -144,10 +152,12 @@ class EnvelopeTransfersViewModel(
         loadJob?.cancel()
         loadMoreJob?.cancel()
         loadJob = viewModelScope.launch {
-            val failure = loadAll()
-            if (failure != null) {
-                if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
-                else _state.update { it.copy(actionError = failure) }
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
+                val failure = loadAll()
+                if (failure != null) {
+                    if (!hasLoaded) _state.update { it.copy(isLoading = false, error = failure) }
+                    else _state.update { it.copy(actionError = failure) }
+                }
             }
         }
     }

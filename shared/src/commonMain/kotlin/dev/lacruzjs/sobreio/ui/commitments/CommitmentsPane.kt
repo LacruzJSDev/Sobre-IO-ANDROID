@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,6 +23,7 @@ import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.commitments_empty
 import dev.lacruzjs.sobreio.generated.resources.commitments_empty_editor
 import dev.lacruzjs.sobreio.ui.components.EmptyState
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
@@ -49,7 +49,7 @@ fun CommitmentsPane(
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         ) {
             when {
-                state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                state.isLoading -> ListSkeleton(withHero = false)
                 state.isEmpty && state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                     TextButton(onClick = { onEvent(CommitmentsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                 }

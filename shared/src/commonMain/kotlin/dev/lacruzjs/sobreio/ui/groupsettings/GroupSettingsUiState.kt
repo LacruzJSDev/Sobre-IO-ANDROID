@@ -24,6 +24,8 @@ data class GroupSettingsUiState(
     /** The group's live tags, shown as chips in the Tags section; null until they load or when they fail to. */
     val tags: List<Tag>? = null,
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     /** Failure of loading the group. */
     val error: AppError? = null,
     val sheet: GroupSettingsSheet = GroupSettingsSheet.None,

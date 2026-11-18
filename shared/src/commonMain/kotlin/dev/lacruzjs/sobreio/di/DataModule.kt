@@ -1,6 +1,20 @@
 package dev.lacruzjs.sobreio.di
 
 import com.russhwolf.settings.Settings
+import dev.lacruzjs.sobreio.data.cache.QueryCache
+import dev.lacruzjs.sobreio.data.cache.CachedAccountRepository
+import dev.lacruzjs.sobreio.data.cache.CachedAccountDetailRepository
+import dev.lacruzjs.sobreio.data.cache.CachedBankImportRepository
+import dev.lacruzjs.sobreio.data.cache.CachedCommitmentRepository
+import dev.lacruzjs.sobreio.data.cache.CachedEnvelopeRepository
+import dev.lacruzjs.sobreio.data.cache.CachedEnvelopeDetailRepository
+import dev.lacruzjs.sobreio.data.cache.CachedEnvelopeTransferRepository
+import dev.lacruzjs.sobreio.data.cache.CachedGroupRepository
+import dev.lacruzjs.sobreio.data.cache.CachedGroupSummaryRepository
+import dev.lacruzjs.sobreio.data.cache.CachedMemberRepository
+import dev.lacruzjs.sobreio.data.cache.CachedMovementRepository
+import dev.lacruzjs.sobreio.data.cache.CachedMovementFormRepository
+import dev.lacruzjs.sobreio.data.cache.CachedTagRepository
 import dev.lacruzjs.sobreio.data.local.LastAccountStore
 import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.data.local.BankFormatStore
@@ -44,22 +58,23 @@ import org.koin.dsl.module
 
 val dataModule = module {
     // Created on first use, so the app still starts when local.properties has no key yet
-    single { buildSupabaseClient() }
+    single { QueryCache() }
+    single { buildSupabaseClient(get()) }
     single<AuthRepository> { SupabaseAuthRepository(get()) }
-    single<GroupRepository> { SupabaseGroupRepository(get()) }
-    single<GroupSummaryRepository> { SupabaseGroupSummaryRepository(get()) }
-    single<AccountRepository> { SupabaseAccountRepository(get()) }
-    single<AccountDetailRepository> { SupabaseAccountDetailRepository(get()) }
-    single<CommitmentRepository> { SupabaseCommitmentRepository(get()) }
-    single<EnvelopeRepository> { SupabaseEnvelopeRepository(get()) }
-    single<EnvelopeDetailRepository> { SupabaseEnvelopeDetailRepository(get()) }
-    single<EnvelopeTransferRepository> { SupabaseEnvelopeTransferRepository(get()) }
-    single<MemberRepository> { SupabaseMemberRepository(get()) }
-    single<MovementRepository> { SupabaseMovementRepository(get()) }
-    single<MovementFormRepository> { SupabaseMovementFormRepository(get()) }
+    single<GroupRepository> { CachedGroupRepository(SupabaseGroupRepository(get()), get()) }
+    single<GroupSummaryRepository> { CachedGroupSummaryRepository(SupabaseGroupSummaryRepository(get()), get()) }
+    single<AccountRepository> { CachedAccountRepository(SupabaseAccountRepository(get()), get()) }
+    single<AccountDetailRepository> { CachedAccountDetailRepository(SupabaseAccountDetailRepository(get()), get()) }
+    single<CommitmentRepository> { CachedCommitmentRepository(SupabaseCommitmentRepository(get()), get()) }
+    single<EnvelopeRepository> { CachedEnvelopeRepository(SupabaseEnvelopeRepository(get()), get()) }
+    single<EnvelopeDetailRepository> { CachedEnvelopeDetailRepository(SupabaseEnvelopeDetailRepository(get()), get()) }
+    single<EnvelopeTransferRepository> { CachedEnvelopeTransferRepository(SupabaseEnvelopeTransferRepository(get()), get()) }
+    single<MemberRepository> { CachedMemberRepository(SupabaseMemberRepository(get()), get()) }
+    single<MovementRepository> { CachedMovementRepository(SupabaseMovementRepository(get()), get()) }
+    single<MovementFormRepository> { CachedMovementFormRepository(SupabaseMovementFormRepository(get()), get()) }
     single<AccountDeletionRepository> { SupabaseAccountDeletionRepository(get(), get(), get()) }
-    single<TagRepository> { SupabaseTagRepository(get()) }
-    single<BankImportRepository> { SupabaseBankImportRepository(get()) }
+    single<TagRepository> { CachedTagRepository(SupabaseTagRepository(get()), get()) }
+    single<BankImportRepository> { CachedBankImportRepository(SupabaseBankImportRepository(get()), get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }
     single<LastAccountStore> { SettingsLastAccountStore(Settings()) }
     single<AppPreferencesStore> { SettingsAppPreferencesStore(Settings()) }

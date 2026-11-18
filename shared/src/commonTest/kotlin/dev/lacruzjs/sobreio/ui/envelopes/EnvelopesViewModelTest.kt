@@ -64,7 +64,9 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     fun refreshMaterializesTargetsBeforeReading() {
         loaded()
 
-        assertEquals(listOf("materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)", "getProgress(g1)"), repository.calls)
+        // Every load (the one from init and the one when the tab shows) materializes first
+        assertEquals(listOf("materialize(g1)", "getEnvelopes(g1)", "getSummary(g1)", "getProgress(g1)"), repository.calls.take(4))
+        assertEquals(repository.calls.take(4), repository.calls.drop(4))
     }
 
     @Test

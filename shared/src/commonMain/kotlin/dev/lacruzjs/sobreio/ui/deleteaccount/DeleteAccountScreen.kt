@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,6 +50,7 @@ import dev.lacruzjs.sobreio.generated.resources.delete_account_leave_note
 import dev.lacruzjs.sobreio.generated.resources.delete_account_leave_title
 import dev.lacruzjs.sobreio.generated.resources.delete_account_no_groups
 import dev.lacruzjs.sobreio.generated.resources.delete_account_title
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.DestructiveButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
@@ -113,7 +113,7 @@ fun DeleteAccountScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)),
             ) {
                 when {
-                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.isLoading -> ListSkeleton(withHero = false, rows = 3)
                     state.items == null -> EmptyState(
                         message = stringResource((state.loadError ?: return@Box).messageRes()),
                     ) {

@@ -20,6 +20,7 @@ import dev.lacruzjs.sobreio.domain.model.TransferHint
 import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.model.shortfallDate
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -66,67 +67,76 @@ class GroupSummaryViewModel(
         }
     }
 
+    init {
+        // Painted from the cache before the first frame when the group was seen recently; read when it was not
+        load()
+    }
+
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             // A delete made final as the previous screen closed is written before reading
             PendingUndoCommits.await()
-            val reads = coroutineScope {
-                val todayD = async { detail.getToday(groupId) }
-                val outlookD = async { summary.getOutlook(groupId) }
-                val pendingD = async { summary.getPending(groupId) }
-                val accountsD = async { accounts.getAccounts(groupId) }
-                val envelopesD = async { envelopes.getEnvelopes(groupId) }
-                val progressD = async { envelopes.getProgress(groupId) }
-                val shortfallsD = async { summary.getShortfalls(groupId) }
-                val projectionD = async { summary.getFreeProjection(groupId) }
-                val flowsD = async { summary.getPeriodFlows(groupId, FLOW_PERIODS) }
-                val planD = async { summary.getTransferPlan(groupId) }
-                Reads(
-                    todayD.await(), outlookD.await(), pendingD.await(), accountsD.await(), envelopesD.await(),
-                    progressD.await(), shortfallsD.await(), projectionD.await(), flowsD.await(), planD.await(),
-                )
-            }
-            val failure = reads.today.exceptionOrNull() ?: reads.outlook.exceptionOrNull() ?: reads.pending.exceptionOrNull()
-                ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
-            if (failure != null) {
-                _state.update {
-                    if (it.outlook == null) it.copy(isLoading = false, error = failure.asAppError())
-                    else it.copy(isLoading = false, actionError = failure.asAppError())
-                }
-                return@launch
-            }
-            val day = reads.today.getOrThrow()
-            val outlook = reads.outlook.getOrThrow()
-            val accountList = reads.accounts.getOrThrow()
-            val envelopeList = reads.envelopes.getOrThrow()
-            // Everything below is secondary: a failure leaves that card out instead of the whole tab
-            val upcomingFrom = day.plus(1, DateTimeUnit.DAY)
-            val upcoming = if (upcomingFrom > outlook.periodEnd) {
-                emptyList()
-            } else {
-                summary.getUpcoming(groupId, upcomingFrom, outlook.periodEnd).getOrDefault(emptyList())
-            }
-            val spending = summary.getEnvelopeSpending(groupId, outlook.periodStart).getOrDefault(emptyList())
-                .mapNotNull { row -> envelopeList.firstOrNull { it.id == row.envelopeId }?.let { SpendingBar(it, row.spentCents) } }
-                .sortedWith(compareByDescending<SpendingBar> { it.spentCents }.thenBy { it.envelope.name.lowercase() })
-                .take(GroupSummaryUiState.MAX_SPENDING_BARS)
-            val warnings = buildWarnings(outlook, accountList, envelopeList, reads.progress.getOrDefault(emptyList()), reads.shortfalls.getOrDefault(emptyList()), reads.plan.getOrDefault(emptyList()))
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read() }
+        }
+    }
+
+    private suspend fun read() {
+        val reads = coroutineScope {
+            val todayD = async { detail.getToday(groupId) }
+            val outlookD = async { summary.getOutlook(groupId) }
+            val pendingD = async { summary.getPending(groupId) }
+            val accountsD = async { accounts.getAccounts(groupId) }
+            val envelopesD = async { envelopes.getEnvelopes(groupId) }
+            val progressD = async { envelopes.getProgress(groupId) }
+            val shortfallsD = async { summary.getShortfalls(groupId) }
+            val projectionD = async { summary.getFreeProjection(groupId) }
+            val flowsD = async { summary.getPeriodFlows(groupId, FLOW_PERIODS) }
+            val planD = async { summary.getTransferPlan(groupId) }
+            Reads(
+                todayD.await(), outlookD.await(), pendingD.await(), accountsD.await(), envelopesD.await(),
+                progressD.await(), shortfallsD.await(), projectionD.await(), flowsD.await(), planD.await(),
+            )
+        }
+        val failure = reads.today.exceptionOrNull() ?: reads.outlook.exceptionOrNull() ?: reads.pending.exceptionOrNull()
+            ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
+        if (failure != null) {
             _state.update {
-                it.copy(
-                    outlook = outlook,
-                    today = day,
-                    freeProjection = reads.projection.getOrDefault(emptyList()).sortedBy { p -> p.day },
-                    pending = reads.pending.getOrThrow().filter { o -> o.isReviewable },
-                    upcoming = upcoming,
-                    warnings = warnings,
-                    spending = spending,
-                    flows = reads.flows.getOrDefault(emptyList()),
-                    isLoading = false,
-                    error = null,
-                    actionError = null,
-                )
+                if (it.outlook == null) it.copy(isLoading = false, error = failure.asAppError())
+                else it.copy(isLoading = false, actionError = failure.asAppError())
             }
+            return
+        }
+        val day = reads.today.getOrThrow()
+        val outlook = reads.outlook.getOrThrow()
+        val accountList = reads.accounts.getOrThrow()
+        val envelopeList = reads.envelopes.getOrThrow()
+        // Everything below is secondary: a failure leaves that card out instead of the whole tab
+        val upcomingFrom = day.plus(1, DateTimeUnit.DAY)
+        val upcoming = if (upcomingFrom > outlook.periodEnd) {
+            emptyList()
+        } else {
+            summary.getUpcoming(groupId, upcomingFrom, outlook.periodEnd).getOrDefault(emptyList())
+        }
+        val spending = summary.getEnvelopeSpending(groupId, outlook.periodStart).getOrDefault(emptyList())
+            .mapNotNull { row -> envelopeList.firstOrNull { it.id == row.envelopeId }?.let { SpendingBar(it, row.spentCents) } }
+            .sortedWith(compareByDescending<SpendingBar> { it.spentCents }.thenBy { it.envelope.name.lowercase() })
+            .take(GroupSummaryUiState.MAX_SPENDING_BARS)
+        val warnings = buildWarnings(outlook, accountList, envelopeList, reads.progress.getOrDefault(emptyList()), reads.shortfalls.getOrDefault(emptyList()), reads.plan.getOrDefault(emptyList()))
+        _state.update {
+            it.copy(
+                outlook = outlook,
+                today = day,
+                freeProjection = reads.projection.getOrDefault(emptyList()).sortedBy { p -> p.day },
+                pending = reads.pending.getOrThrow().filter { o -> o.isReviewable },
+                upcoming = upcoming,
+                warnings = warnings,
+                spending = spending,
+                flows = reads.flows.getOrDefault(emptyList()),
+                isLoading = false,
+                error = null,
+                actionError = null,
+            )
         }
     }
 

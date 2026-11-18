@@ -309,9 +309,10 @@ class CommitmentDetailViewModelTest : MainDispatcherTest() {
     fun noPageIsRequestedOnceEverythingIsLoaded() {
         repository.occurrences = manyOccurrences(5)
         val vm = viewModel()
+        repository.calls.clear()
         vm.onEvent(CommitmentDetailEvent.LoadMoreOccurrences)
 
-        assertEquals(1, repository.calls.count { it.startsWith("getOccurrences") })
+        assertEquals(0, repository.calls.count { it.startsWith("getOccurrences") })
     }
 
     @Test

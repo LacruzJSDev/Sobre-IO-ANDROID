@@ -85,6 +85,7 @@ import dev.lacruzjs.sobreio.generated.resources.unit_weeks
 import dev.lacruzjs.sobreio.generated.resources.unit_years
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.commitments.labelRes
+import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
@@ -160,9 +161,7 @@ fun CommitmentFormScreen(
         modifier = modifier,
     ) {
         when {
-            state.isLoading -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            state.isLoading -> FormSkeleton()
             state.loadError != null -> {
                 ErrorText(state.loadError, modifier = Modifier.fillMaxWidth())
                 TextButton(onClick = { onEvent(CommitmentFormEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }

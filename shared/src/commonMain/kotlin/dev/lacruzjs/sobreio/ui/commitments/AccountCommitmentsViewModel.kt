@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.generated.resources.commitment_deleted
 import dev.lacruzjs.sobreio.generated.resources.commitment_reopened
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,16 +72,29 @@ class AccountCommitmentsViewModel(
         undo.commitDetached()
     }
 
+    init {
+        // Painted from the cache before the first frame when the account was seen recently
+        load()
+    }
+
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) { read() }
+        }
+    }
+
+    private suspend fun read() {
+        run {
             val groupResult = groups.getGroup(groupId)
             val todayResult = detail.getToday(groupId)
             val listResult = commitments.getAccountCommitments(accountId)
             val failure = groupResult.exceptionOrNull() ?: todayResult.exceptionOrNull() ?: listResult.exceptionOrNull()
             if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.asAppError()) }
-                return@launch
+                _state.update {
+                    if (it.isLoading) it.copy(isLoading = false, error = failure.asAppError()) else it.copy(actionError = failure.asAppError())
+                }
+                return
             }
             val group = groupResult.getOrThrow()
             val today = todayResult.getOrThrow()

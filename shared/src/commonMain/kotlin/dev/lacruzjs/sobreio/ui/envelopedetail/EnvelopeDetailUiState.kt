@@ -39,6 +39,8 @@ data class TransferRow(
 data class EnvelopeDetailUiState(
     /** True until the first load ends; later refreshes keep showing the content. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     val groupName: String = "",
     /** Set once loaded; money is formatted with it. */

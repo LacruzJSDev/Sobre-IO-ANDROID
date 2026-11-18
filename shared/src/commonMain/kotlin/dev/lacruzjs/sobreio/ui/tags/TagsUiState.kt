@@ -16,6 +16,8 @@ data class TagsUiState(
     val tags: List<TagUsage> = emptyList(),
     val archivedTags: List<TagUsage> = emptyList(),
     val isLoading: Boolean = true,
+    /** Reading again from the database with the content on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     val sheet: TagsSheet = TagsSheet.None,
     /** The tag the Edit sheet changes; null when it creates one. */

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -49,6 +50,7 @@ fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
  * Header with three zones: navigation on the left ([onBack], hidden when null), context in the centre ([title], cut
  * with an ellipsis so it never reaches the icons) and [actions] on the right. [leading] goes before the title, for
  * example a group avatar. [subtitle] is a small muted line under the title (the group's name on an account detail).
+ * [isRefreshing] draws the [RefreshBar] over the header's bottom edge, so it never moves the content.
  */
 @Composable
 fun ScreenHeader(
@@ -60,9 +62,25 @@ fun ScreenHeader(
     subtitle: String? = null,
     leading: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    isRefreshing: Boolean = false,
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        HeaderRow(title, onBack, navigation, subtitle, leading, actions)
+        RefreshBar(visible = isRefreshing, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun HeaderRow(
+    title: String,
+    onBack: (() -> Unit)?,
+    navigation: (@Composable () -> Unit)?,
+    subtitle: String?,
+    leading: @Composable () -> Unit,
+    actions: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
             .heightIn(min = 64.dp)

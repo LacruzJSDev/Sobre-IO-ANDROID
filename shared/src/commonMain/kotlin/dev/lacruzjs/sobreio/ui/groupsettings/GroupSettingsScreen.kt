@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
+import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.background
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -152,6 +152,7 @@ fun GroupSettingsScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.group_settings_title),
                 onBack = { onEvent(GroupSettingsEvent.BackClicked) },
                 actions = {
@@ -172,7 +173,7 @@ fun GroupSettingsScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             ) {
                 when {
-                    state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    state.isLoading -> DetailSkeleton()
                     state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                         TextButton(onClick = { onEvent(GroupSettingsEvent.Retry) }) {
                             Text(stringResource(Res.string.action_retry))

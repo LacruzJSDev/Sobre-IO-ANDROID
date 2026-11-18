@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupreview
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -96,6 +96,7 @@ fun GroupReviewScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.group_review_title),
                 subtitle = state.groupName.takeIf { it.isNotEmpty() },
                 onBack = { onEvent(GroupReviewEvent.BackClicked) },
@@ -108,7 +109,7 @@ fun GroupReviewScreen(
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
                 ) {
                     when {
-                        state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        state.isLoading -> ListSkeleton(withHero = false, rows = 4)
                         state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                             TextButton(onClick = { onEvent(GroupReviewEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                         }

@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -85,6 +84,7 @@ import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -168,6 +168,7 @@ fun EnvelopeDetailScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
+                isRefreshing = state.isRefreshing,
                 title = name,
                 subtitle = state.groupName.takeIf { it.isNotEmpty() },
                 onBack = { onEvent(EnvelopeDetailEvent.BackClicked) },
@@ -199,7 +200,7 @@ fun EnvelopeDetailScreen(
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
                 ) {
                     when {
-                        state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        state.isLoading -> DetailSkeleton()
                         state.error != null || envelope == null -> EmptyState(
                             message = stringResource((state.error ?: AppError.NotFound).messageRes()),
                         ) {

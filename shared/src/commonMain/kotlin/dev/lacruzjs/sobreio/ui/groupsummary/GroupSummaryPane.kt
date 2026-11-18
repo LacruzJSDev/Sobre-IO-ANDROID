@@ -44,7 +44,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -94,6 +93,7 @@ import dev.lacruzjs.sobreio.generated.resources.warning_commitments_shortfall
 import dev.lacruzjs.sobreio.generated.resources.warning_envelope_overspent
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.components.EmptyState
+import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.HeroCard
@@ -136,7 +136,7 @@ fun GroupSummaryPane(
     ) {
         val outlook = state.outlook
         when {
-            state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            state.isLoading -> ListSkeleton()
             state.error != null && outlook == null -> EmptyState(message = stringResource(state.error.messageRes())) {
                 TextButton(onClick = { onEvent(GroupSummaryEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
             }

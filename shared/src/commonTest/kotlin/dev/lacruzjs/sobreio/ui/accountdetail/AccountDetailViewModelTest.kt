@@ -118,6 +118,7 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
     fun changingTheRangeReadsTheSeriesAgainOnlyForThatRange() {
         loaded()
         detail.series = detail.series.take(1)
+        detail.calls.clear()
         viewModel.onEvent(AccountDetailEvent.RangeSelected(BalanceRange.OneYear))
 
         assertEquals(BalanceRange.OneYear, viewModel.state.value.range)
@@ -125,7 +126,7 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
         assertEquals(1, viewModel.state.value.balanceSeries.size)
         assertFalse(viewModel.state.value.isSeriesLoading)
         // The forecast was not asked for again
-        assertEquals(1, detail.calls.count { it.startsWith("getForecast") })
+        assertEquals(0, detail.calls.count { it.startsWith("getForecast") })
     }
 
     @Test

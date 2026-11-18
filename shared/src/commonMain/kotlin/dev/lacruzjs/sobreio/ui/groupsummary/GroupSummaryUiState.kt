@@ -33,6 +33,8 @@ data class GroupSummaryUiState(
     val canRecord: Boolean = false,
     /** True until the first load ends; later refreshes keep showing the content. */
     val isLoading: Boolean = true,
+    /** Reading again from the database with the figures on screen: the thin bar under the header. */
+    val isRefreshing: Boolean = false,
     val error: AppError? = null,
     val outlook: GroupOutlook? = null,
     /** The group's today. */

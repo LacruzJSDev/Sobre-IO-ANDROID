@@ -87,7 +87,7 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
         loaded()
 
         assertEquals(listOf(14, 15, 16), viewModel.state.value.freeProjection.map { it.day.day })
-        assertEquals(listOf("getFreeProjection(g1)"), summary.calls.filter { it.startsWith("getFreeProjection") })
+        assertEquals(listOf("getFreeProjection(g1)"), summary.calls.filter { it.startsWith("getFreeProjection") }.distinct())
     }
 
     @Test
