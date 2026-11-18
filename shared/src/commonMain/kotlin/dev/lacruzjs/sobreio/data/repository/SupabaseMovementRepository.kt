@@ -64,6 +64,27 @@ class SupabaseMovementRepository(client: SupabaseClient) : MovementRepository {
         if (updated.isEmpty()) throw AppError.BusinessRule("FZ016")
     }
 
+    override suspend fun voidGroupTransfer(movement: Movement): Result<Unit> = safeCall {
+        // The leg is a transaction; the link that pairs it is what the RPC voids. RLS shows the link only to members
+        // of both groups, so an empty answer is the database saying no.
+        val linkId = postgrest.from("group_transfers")
+            .select(Columns.list("id")) {
+                filter {
+                    or {
+                        eq("out_transaction_id", movement.id)
+                        eq("in_transaction_id", movement.id)
+                    }
+                }
+                limit(1)
+            }
+            .decodeList<IdDto>()
+            .firstOrNull()
+            ?.id
+            ?: throw AppError.BusinessRule("FZ016")
+        postgrest.rpc("void_group_transfer", buildJsonObject { put("p_link_id", linkId) })
+        Unit
+    }
+
     override suspend fun getDateContext(groupId: String): Result<DateContext> = safeCall {
         val today = LocalDate.parse(
             postgrest.rpc("group_today", buildJsonObject { put("p_group_id", groupId) }).decodeAs<String>(),

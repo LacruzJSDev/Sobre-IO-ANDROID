@@ -53,7 +53,8 @@ class MovementMapperTest {
         assertEquals(MovementSource.Transaction, movement.source)
         assertEquals(MovementKind.GroupTransferIn, movement.kind)
         assertTrue(movement.tagIds.isEmpty())
-        assertFalse(movement.canDelete)
+        assertTrue(movement.canDelete)
+        assertFalse(movement.canEdit)
     }
 
     @Test
