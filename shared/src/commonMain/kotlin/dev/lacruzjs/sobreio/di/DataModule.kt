@@ -8,7 +8,9 @@ import dev.lacruzjs.sobreio.data.local.SettingsLastAccountStore
 import dev.lacruzjs.sobreio.data.local.SettingsAppPreferencesStore
 import dev.lacruzjs.sobreio.data.local.SettingsLastGroupStore
 import dev.lacruzjs.sobreio.data.remote.buildSupabaseClient
+import dev.lacruzjs.sobreio.data.repository.AccountDeletionRepository
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseAccountDeletionRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
@@ -48,6 +50,7 @@ val dataModule = module {
     single<MemberRepository> { SupabaseMemberRepository(get()) }
     single<MovementRepository> { SupabaseMovementRepository(get()) }
     single<MovementFormRepository> { SupabaseMovementFormRepository(get()) }
+    single<AccountDeletionRepository> { SupabaseAccountDeletionRepository(get(), get(), get()) }
     single<TagRepository> { SupabaseTagRepository(get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }
     single<LastAccountStore> { SettingsLastAccountStore(Settings()) }

@@ -34,6 +34,7 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(CommitmentDetail::class)
             subclass(TimeZonePicker::class)
             subclass(Profile::class)
+            subclass(DeleteAccount::class)
         }
     }
 }

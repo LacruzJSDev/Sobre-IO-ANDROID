@@ -4,8 +4,13 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import io.github.jan.supabase.auth.exception.AuthErrorCode
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.exceptions.HttpRequestException
+import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import kotlinx.io.IOException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /** Turns any error from the backend into an [AppError]. Text for the user is chosen in the UI layer. */
 object ErrorMapper {
@@ -15,6 +20,8 @@ object ErrorMapper {
         // Before any generic REST handling: AuthRestException is a RestException too
         is AuthRestException -> fromAuthErrorCode(error.errorCode) ?: AppError.Unknown(error)
         is PostgrestRestException -> fromPostgrestCode(error.code) ?: AppError.Unknown(error)
+        // An Edge Function answers with a JSON body whose `code` is the same FZ code an RPC would raise
+        is RestException -> fromFunctionBody(error.description) ?: AppError.Unknown(error)
         // Ktor reports connection failures and timeouts as IOException on every platform (OkHttp, Darwin)
         is HttpRequestException, is IOException -> AppError.Network
         else -> AppError.Unknown(error)
@@ -29,6 +36,20 @@ object ErrorMapper {
         // Unique index on the name among live items of a group
         code == UNIQUE_VIOLATION -> AppError.DuplicateName
         else -> null
+    }
+
+    /**
+     * Reads the `code` of an Edge Function error body (`{"code": "FZ023", "message": ...}`) and maps it like a database
+     * code. Null when there is no body, it is not JSON or the code is not one of ours (`auth_delete_failed` and the like).
+     */
+    internal fun fromFunctionBody(body: String?): AppError? {
+        if (body.isNullOrBlank()) return null
+        val code = try {
+            (Json.parseToJsonElement(body) as? JsonObject)?.get("code")?.jsonPrimitive?.content
+        } catch (_: Exception) {
+            null
+        }
+        return fromPostgrestCode(code)
     }
 
     private const val INSUFFICIENT_PRIVILEGE = "42501"

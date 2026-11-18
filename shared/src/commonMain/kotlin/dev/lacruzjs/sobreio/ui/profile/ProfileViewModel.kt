@@ -50,7 +50,7 @@ class ProfileViewModel(
             ProfileEvent.SaveClicked -> save()
             is ProfileEvent.ColorBlindSafeChanged -> preferences.setColorBlindSafe(event.enabled)
             // Handled by the Route, which owns the back stack
-            ProfileEvent.BackClicked -> Unit
+            ProfileEvent.BackClicked, ProfileEvent.DeleteAccountClicked -> Unit
         }
     }
 
