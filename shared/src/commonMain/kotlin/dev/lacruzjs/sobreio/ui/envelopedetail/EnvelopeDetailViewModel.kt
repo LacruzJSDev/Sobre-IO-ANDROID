@@ -17,13 +17,8 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeOutlook
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
 import dev.lacruzjs.sobreio.domain.model.FundingCommitment
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
-import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
-import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
-import dev.lacruzjs.sobreio.ui.undo.UndoController
-import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -37,8 +32,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * One envelope's detail: balance, the period tile, what is really free, the chart, the commitments that fund it, the moves
- * between envelopes and the latest movements. Every figure comes from the database through [EnvelopeDetailRepository] and
+ * One envelope's detail, read only: balance, the period tile, what is really free, the chart, the commitments that fund
+ * it, the latest moves between envelopes and the latest movements (both are managed on their own screens). Every figure comes from the database through [EnvelopeDetailRepository] and
  * the existing repositories; this class only chooses what to ask, joins names and signs the moves for this envelope. The
  * system "Unassigned" envelope opens the same screen, read only.
  */
@@ -57,49 +52,24 @@ class EnvelopeDetailViewModel(
     private val _state = MutableStateFlow(EnvelopeDetailUiState())
     val state: StateFlow<EnvelopeDetailUiState> = _state.asStateFlow()
 
-    private val undo = UndoController(
-        scope = viewModelScope,
-        onMessage = { message -> _state.update { it.copy(undoMessage = message) } },
-        onError = { error -> _state.update { it.copy(actionError = error) } },
-    )
-
     private var loadJob: Job? = null
-    private var loadMoreJob: Job? = null
     private var hasLoaded = false
-
-    /** Moves already read (the hidden one included) and how many live ones the database has. */
-    private var fetched = 0
-    private var serverTotal = 0
 
     private var zone: TimeZone = TimeZone.UTC
     private var envelopeList: List<Envelope> = emptyList()
 
     fun onEvent(event: EnvelopeDetailEvent) {
         when (event) {
-            EnvelopeDetailEvent.Refresh -> {
-                // A delete still waiting for its snackbar is final before the screen is read again
-                undo.commit()
-                load(showSpinner = !hasLoaded)
-            }
+            EnvelopeDetailEvent.Refresh -> load(showSpinner = !hasLoaded)
             EnvelopeDetailEvent.Retry -> load(showSpinner = true)
-            EnvelopeDetailEvent.LoadMoreTransfers -> loadMoreTransfers()
-            is EnvelopeDetailEvent.DeleteTransferClicked -> deleteTransfer(event.transferId)
-            EnvelopeDetailEvent.UndoClicked -> undo.undo()
-            EnvelopeDetailEvent.UndoExpired -> undo.commit()
-            // The Route navigates; a delete still waiting is made final first, before the screen below reloads
-            EnvelopeDetailEvent.BackClicked -> undo.commitDetached()
             // Handled by the Route
+            EnvelopeDetailEvent.BackClicked,
             EnvelopeDetailEvent.EditClicked,
             EnvelopeDetailEvent.SeeAllClicked,
+            EnvelopeDetailEvent.TransfersClicked,
             is EnvelopeDetailEvent.CommitmentClicked,
-            is EnvelopeDetailEvent.EditTransferClicked,
             -> Unit
         }
-    }
-
-    override fun onCleared() {
-        // viewModelScope is cancelled by now; a pending action still has to be made final
-        undo.commitDetached()
     }
 
     // Loading ------------------------------------------------------------------------------------------------------
@@ -107,9 +77,8 @@ class EnvelopeDetailViewModel(
     private fun load(showSpinner: Boolean) {
         if (showSpinner) _state.update { it.copy(isLoading = true, error = null) }
         loadJob?.cancel()
-        loadMoreJob?.cancel()
         loadJob = viewModelScope.launch {
-            // A delete made final as the previous screen closed is written before reading
+            // A delete made final as the moves screen closed is written before reading
             PendingUndoCommits.await()
             val failure = loadAll()
             if (failure != null) {
@@ -134,7 +103,7 @@ class EnvelopeDetailViewModel(
         return coroutineScope {
             val periods = async { detail.getPeriods(envelopeId, CHART_PERIODS) }
             val outlook = async { if (hasOutlook) detail.getOutlook(groupId, envelopeId) else Result.success<EnvelopeOutlook?>(null) }
-            val transfers = async { detail.getTransfers(envelopeId, 0, PAGE_SIZE) }
+            val transfers = async { detail.getTransfers(envelopeId, 0, LATEST_TRANSFERS) }
             val latest = async { movements.search(groupId, MovementFilter(envelopeId = envelopeId), LATEST_MOVEMENTS, 0, false) }
             val context = async { movements.getDateContext(groupId) }
             val fundingCandidates = async {
@@ -178,8 +147,6 @@ class EnvelopeDetailViewModel(
             val periodRows = periodsResult.getOrThrow()
             zone = runCatching { TimeZone.of(group.timezone) }.getOrDefault(TimeZone.UTC)
             val page = transfersResult.getOrThrow()
-            fetched = page.items.size
-            serverTotal = page.total
 
             _state.update {
                 it.copy(
@@ -189,7 +156,6 @@ class EnvelopeDetailViewModel(
                     groupName = group.name,
                     currencyCode = group.currencyCode,
                     canEdit = group.canEdit,
-                    canWriteTransfers = !group.isArchived && !group.isPendingDeletion,
                     envelope = envelope,
                     holderName = people.firstOrNull { m -> m.userId == envelope.ownerUserId }?.displayName,
                     hasSeveralMembers = people.hasSeveralMembers(),
@@ -198,10 +164,6 @@ class EnvelopeDetailViewModel(
                     outlook = outlookResult.getOrThrow(),
                     funding = funding,
                     transfers = page.items.map { t -> t.toRow() },
-                    transfersTotal = page.total,
-                    hasMoreTransfers = fetched < serverTotal,
-                    isLoadingMoreTransfers = false,
-                    loadMoreTransfersFailed = false,
                     latestMovements = latestResult.getOrThrow().items,
                     accountNames = accountRows.associate { a -> a.id to a.name },
                     hasSeveralAccounts = accountRows.count { a -> !a.isArchived } > 1,
@@ -226,70 +188,9 @@ class EnvelopeDetailViewModel(
         )
     }
 
-    private fun loadMoreTransfers() {
-        val current = _state.value
-        if (current.isLoading || current.isLoadingMoreTransfers || !current.hasMoreTransfers) return
-        _state.update { it.copy(isLoadingMoreTransfers = true, loadMoreTransfersFailed = false) }
-        loadMoreJob = viewModelScope.launch {
-            detail.getTransfers(envelopeId, fetched, PAGE_SIZE)
-                .onSuccess { page ->
-                    fetched += page.items.size
-                    serverTotal = page.total
-                    _state.update {
-                        // An empty page ends the list even if the total said otherwise (rows voided meanwhile)
-                        val more = page.items.isNotEmpty() && fetched < serverTotal
-                        it.copy(
-                            transfers = it.transfers + page.items.map { t -> t.toRow() },
-                            hasMoreTransfers = more,
-                            isLoadingMoreTransfers = false,
-                        )
-                    }
-                }
-                .onFailure { _state.update { it.copy(isLoadingMoreTransfers = false, loadMoreTransfersFailed = true) } }
-        }
-    }
-
-    /**
-     * No confirmation: the move disappears at once and "Undo" follows. `voided_at` is written only when the snackbar ends
-     * without Undo (or when something else needs it final). Only the origins of [TransferOrigin.canVoid] have the swipe.
-     */
-    private fun deleteTransfer(transferId: String) {
-        val row = _state.value.transfers.firstOrNull { it.transfer.id == transferId && it.canDelete } ?: return
-        // Only one destructive action at a time: the previous one becomes final
-        undo.commit()
-        _state.update {
-            it.copy(transfers = it.transfers - row, transfersTotal = (it.transfersTotal - 1).coerceAtLeast(0), actionError = null)
-        }
-        undo.show(
-            UndoableAction(
-                message = Res.string.transfer_deleted,
-                argument = "",
-                amountCents = row.transfer.amountCents,
-                commit = {
-                    detail.voidTransfer(transferId).onSuccess {
-                        // The database no longer has the row, so the next page starts one row earlier
-                        fetched = (fetched - 1).coerceAtLeast(0)
-                        serverTotal = (serverTotal - 1).coerceAtLeast(0)
-                    }
-                },
-                undo = { Result.success(Unit) },
-                restore = {
-                    _state.update {
-                        it.copy(
-                            transfers = (it.transfers + row).sortedWith(
-                                compareByDescending<TransferRow> { r -> r.transfer.createdAt }.thenBy { r -> r.transfer.id },
-                            ),
-                            transfersTotal = it.transfersTotal + 1,
-                        )
-                    }
-                },
-            ),
-        )
-    }
-
     companion object {
         const val CHART_PERIODS = 6
-        const val PAGE_SIZE = 20
+        const val LATEST_TRANSFERS = 5
         const val LATEST_MOVEMENTS = 5
     }
 }

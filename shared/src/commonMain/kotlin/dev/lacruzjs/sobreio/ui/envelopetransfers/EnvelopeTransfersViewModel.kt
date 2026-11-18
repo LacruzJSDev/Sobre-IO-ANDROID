@@ -8,6 +8,7 @@ import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
+import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
@@ -45,6 +46,10 @@ data class EnvelopeTransfersUiState(
     val isLoading: Boolean = true,
     val error: AppError? = null,
     val groupName: String = "",
+    /** The envelope the list is limited to (opened from its detail), or null for the whole group. */
+    val envelopeName: String? = null,
+    /** That envelope is the system "Unassigned", whose name the UI translates. */
+    val envelopeIsUnassigned: Boolean = false,
     val currencyCode: String = "EUR",
     /** Any member of a live group may create, edit and void moves. */
     val canWrite: Boolean = false,
@@ -78,11 +83,13 @@ sealed interface EnvelopeTransfersEvent {
 }
 
 /**
- * Every live move between envelopes of a group, newest first, paged. Edit opens the form; Delete voids the move after the
- * Undo snackbar. A voided monthly target is not generated again in its period (D-53).
+ * Every live move between envelopes of a group, or of one envelope ([envelopeId], from its detail), newest first, paged.
+ * The only place where moves are managed: Edit opens the form; Delete voids the move after the Undo snackbar. A voided
+ * monthly target is not generated again in its period (D-53).
  */
 class EnvelopeTransfersViewModel(
     private val groupId: String,
+    private val envelopeId: String? = null,
     private val groups: GroupRepository,
     private val envelopes: EnvelopeRepository,
     private val transfers: EnvelopeTransferRepository,
@@ -148,7 +155,7 @@ class EnvelopeTransfersViewModel(
     private suspend fun loadAll(): AppError? = coroutineScope {
         val group = async { groups.getGroup(groupId) }
         val envelopeList = async { envelopes.getEnvelopes(groupId) }
-        val page = async { transfers.getTransfers(groupId, 0, PAGE_SIZE) }
+        val page = async { transfers.getTransfers(groupId, envelopeId, 0, PAGE_SIZE) }
         val groupResult = group.await()
         val envelopeResult = envelopeList.await()
         val pageResult = page.await()
@@ -166,6 +173,8 @@ class EnvelopeTransfersViewModel(
                 error = null,
                 actionError = null,
                 groupName = g.name,
+                envelopeName = envelopeId?.let { id -> envelopeById[id]?.name },
+                envelopeIsUnassigned = envelopeId?.let { id -> envelopeById[id]?.kind == EnvelopeKind.System } ?: false,
                 currencyCode = g.currencyCode,
                 canWrite = !g.isArchived && !g.isPendingDeletion,
                 rows = items.items.map { t -> t.toRow() },
@@ -191,7 +200,7 @@ class EnvelopeTransfersViewModel(
         if (current.isLoading || current.isLoadingMore || !current.hasMore) return
         _state.update { it.copy(isLoadingMore = true, loadMoreFailed = false) }
         loadMoreJob = viewModelScope.launch {
-            transfers.getTransfers(groupId, fetched, PAGE_SIZE)
+            transfers.getTransfers(groupId, envelopeId, fetched, PAGE_SIZE)
                 .onSuccess { page ->
                     fetched += page.items.size
                     serverTotal = page.total

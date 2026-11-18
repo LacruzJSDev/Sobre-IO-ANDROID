@@ -12,10 +12,10 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeTransferPage
 interface EnvelopeTransferRepository {
 
     /**
-     * The live moves of the group, newest first, [limit] rows from [offset], with the exact total (`count(exact)`). Moves
-     * of commitment origin carry the commitment's name.
+     * The live moves of the group, or only those from or to [envelopeId] when it is given, newest first, [limit] rows from
+     * [offset], with the exact total (`count(exact)`). Moves of commitment origin carry the commitment's name.
      */
-    suspend fun getTransfers(groupId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage>
+    suspend fun getTransfers(groupId: String, envelopeId: String?, offset: Int, limit: Int): Result<EnvelopeTransferPage>
 
     /** One live move; [dev.lacruzjs.sobreio.domain.error.AppError.NotFound] when it is voided or not visible. */
     suspend fun getTransfer(id: String): Result<EnvelopeTransfer>

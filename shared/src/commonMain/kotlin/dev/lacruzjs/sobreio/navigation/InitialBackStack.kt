@@ -37,7 +37,7 @@ fun MutableList<NavKey>.popToPrevious() {
  */
 fun NavKey.isPaneDetail(): Boolean = when (this) {
     is AccountDetail, is EnvelopeDetail, is EnvelopeTransfers, is GroupSettings, is GroupReview, Profile,
-    is CommitmentDetail, is AccountMovements, is EnvelopeMovements, is Tags,
+    is CommitmentDetail, is AccountMovements, is EnvelopeMovements, is EnvelopeTransfersOf, is Tags,
     -> true
     else -> false
 }

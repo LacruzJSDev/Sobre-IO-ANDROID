@@ -103,8 +103,9 @@ data class MovementForm(
 
 /**
  * One envelope (level 2 of the Envelopes tab), also the system "Unassigned" one, which is read only. Opened by tapping an
- * envelope row; back goes to [Group]. The pencil opens [EnvelopeForm], "See all" opens [EnvelopeMovements] above it and a
- * funding commitment opens [CommitmentDetail].
+ * envelope row; back goes to [Group]. Read only below the pencil, which opens [EnvelopeForm]: the icons of its moves and
+ * latest movements sections open [EnvelopeTransfersOf] and [EnvelopeMovements] above it, and a funding commitment opens
+ * [CommitmentDetail].
  */
 @Serializable
 data class EnvelopeDetail(val groupId: String, val envelopeId: String) : NavKey
@@ -124,11 +125,21 @@ data class EnvelopeMovements(val groupId: String, val envelopeId: String) : NavK
 data class EnvelopeTransfers(val groupId: String) : NavKey
 
 /**
- * Record (`transferId` null) or edit a move between envelopes, as a full screen. Opened from [EnvelopeTransfers] and from
- * the moves of an [EnvelopeDetail]; back returns there, which reads its list again.
+ * The moves of one envelope (level 3 of the Envelopes tab), opened by the icon of the moves section in its detail: the
+ * same screen as [EnvelopeTransfers], limited to the envelope, where they are edited and deleted (the detail only shows
+ * the latest). Back returns to the [EnvelopeDetail].
  */
 @Serializable
-data class EnvelopeTransferForm(val groupId: String, val transferId: String?) : NavKey
+data class EnvelopeTransfersOf(val groupId: String, val envelopeId: String) : NavKey
+
+/**
+ * Record (`transferId` null) or edit a move between envelopes, as a full screen, opened from [EnvelopeTransfers] or
+ * [EnvelopeTransfersOf] (a new one there starts with that envelope as the destination, [toEnvelopeId]); back returns
+ * there, which reads its list again.
+ */
+@Serializable
+data class EnvelopeTransferForm(val groupId: String, val transferId: String?, val toEnvelopeId: String? = null) : NavKey
+
 
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable

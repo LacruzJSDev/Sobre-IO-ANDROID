@@ -71,6 +71,8 @@ sealed interface EnvelopeTransferFormEvent {
 class EnvelopeTransferFormViewModel(
     private val groupId: String,
     private val transferId: String?,
+    /** A new move opened from one envelope's moves starts with that envelope as the destination. */
+    private val initialToId: String? = null,
     private val groups: GroupRepository,
     private val envelopes: EnvelopeRepository,
     private val transfers: EnvelopeTransferRepository,
@@ -130,7 +132,7 @@ class EnvelopeTransferFormViewModel(
                         amount = transfer?.amountCents?.toInputText() ?: it.amount,
                         // A new move starts from "Unassigned", like the Assign sheet
                         fromId = transfer?.fromEnvelopeId ?: it.fromId ?: unassigned?.id,
-                        toId = transfer?.toEnvelopeId ?: it.toId,
+                        toId = transfer?.toEnvelopeId ?: it.toId ?: initialToId?.takeIf { id -> choices.any { e -> e.id == id && e.id != unassigned?.id } },
                         notes = transfer?.notes ?: it.notes,
                     )
                 }

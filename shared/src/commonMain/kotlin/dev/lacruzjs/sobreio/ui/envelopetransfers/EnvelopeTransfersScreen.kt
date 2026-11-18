@@ -88,7 +88,9 @@ fun EnvelopeTransfersRoute(
     onNew: () -> Unit,
     onEdit: (transferId: String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EnvelopeTransfersViewModel = koinViewModel { parametersOf(groupId) },
+    /** Limits the list to one envelope's moves (opened from its detail); null lists the whole group. */
+    envelopeId: String? = null,
+    viewModel: EnvelopeTransfersViewModel = koinViewModel { parametersOf(groupId, envelopeId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(EnvelopeTransfersEvent.Refresh) }
@@ -127,7 +129,12 @@ fun EnvelopeTransfersScreen(
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = stringResource(Res.string.envelope_detail_section_transfers),
-                subtitle = state.groupName.takeIf { it.isNotEmpty() },
+                // One envelope's moves name the envelope; the whole group's name the group
+                subtitle = when {
+                    state.envelopeIsUnassigned -> stringResource(Res.string.envelopes_unassigned)
+                    state.envelopeName != null -> state.envelopeName
+                    else -> state.groupName.takeIf { it.isNotEmpty() }
+                },
                 onBack = { onEvent(EnvelopeTransfersEvent.BackClicked) },
                 actions = {
                     if (state.canWrite) {

@@ -356,6 +356,8 @@
     <string name="detail_section_upcoming">Next due items</string>
     <string name="detail_section_latest">Latest movements</string>
     <string name="action_see_all">See all</string>
+    <string name="action_manage_transfers">Manage moves between envelopes</string>
+    <string name="action_see_all_movements">See all movements</string>
     <string name="detail_no_movements">No movements yet.</string>
     <string name="movement_kind_income">Income</string>
     <string name="movement_kind_expense">Expense</string>

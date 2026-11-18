@@ -1,12 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import dev.lacruzjs.sobreio.ui.components.ContentWidth
-import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,24 +14,21 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -55,8 +49,9 @@ import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.action_manage_transfers
 import dev.lacruzjs.sobreio.generated.resources.action_retry
-import dev.lacruzjs.sobreio.generated.resources.action_see_all
+import dev.lacruzjs.sobreio.generated.resources.action_see_all_movements
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_assigned
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_spent
 import dev.lacruzjs.sobreio.generated.resources.detail_no_movements
@@ -82,15 +77,14 @@ import dev.lacruzjs.sobreio.generated.resources.envelope_funding_row
 import dev.lacruzjs.sobreio.generated.resources.envelope_target_per_month
 import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.holder_common
+import dev.lacruzjs.sobreio.generated.resources.ic_list
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.transfer_from
 import dev.lacruzjs.sobreio.generated.resources.transfer_to
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
-import dev.lacruzjs.sobreio.ui.components.StatCard
-import dev.lacruzjs.sobreio.ui.components.StatRow
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
-import dev.lacruzjs.sobreio.ui.components.CollapsibleListSection
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -99,17 +93,16 @@ import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
-import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
-import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
+import dev.lacruzjs.sobreio.ui.components.StatCard
+import dev.lacruzjs.sobreio.ui.components.StatRow
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
 import dev.lacruzjs.sobreio.ui.components.charts.GroupedColumnChart
 import dev.lacruzjs.sobreio.ui.components.charts.compactAmount
-import dev.lacruzjs.sobreio.ui.components.deleteAction
-import dev.lacruzjs.sobreio.ui.components.editAction
-import dev.lacruzjs.sobreio.ui.envelopetransfers.originLabel
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.envelopes.labelRes
+import dev.lacruzjs.sobreio.ui.envelopetransfers.originLabel
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatDayMonth
@@ -119,18 +112,18 @@ import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
-import dev.lacruzjs.sobreio.ui.undo.CommitUndoOnBack
-import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Level 2 of the Envelopes tab, also for "Unassigned" (read only). Holds the lambdas of the back stack: [onEdit] opens the
- * envelope form, [onSeeAllMovements] the envelope's movements, [onOpenCommitment] a funding commitment's detail and
- * [onEditTransfer] the form of a move between envelopes. It
- * reads again each time it is shown, so coming back from the form shows the new figures.
+ * Level 2 of the Envelopes tab, also for "Unassigned". Read only: nothing is edited or deleted here. Holds the lambdas of
+ * the back stack: [onEdit] opens the envelope form, [onSeeAllMovements] the envelope's movements, [onOpenTransfers] its
+ * moves between envelopes (where they are managed) and [onOpenCommitment] a funding commitment's detail. It reads again
+ * each time it is shown, so coming back from any of them shows the new figures.
  */
 @Composable
 fun EnvelopeDetailRoute(
@@ -139,27 +132,22 @@ fun EnvelopeDetailRoute(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onSeeAllMovements: () -> Unit,
+    onOpenTransfers: () -> Unit,
     onOpenCommitment: (accountId: String, commitmentId: String) -> Unit,
-    onEditTransfer: (transferId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EnvelopeDetailViewModel = koinViewModel { parametersOf(groupId, envelopeId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(EnvelopeDetailEvent.Refresh) }
-    val leave = {
-        viewModel.onEvent(EnvelopeDetailEvent.BackClicked)
-        onBack()
-    }
-    CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
     EnvelopeDetailScreen(
         state = state,
         onEvent = { event ->
             when (event) {
-                EnvelopeDetailEvent.BackClicked -> leave()
+                EnvelopeDetailEvent.BackClicked -> onBack()
                 EnvelopeDetailEvent.EditClicked -> onEdit()
                 EnvelopeDetailEvent.SeeAllClicked -> onSeeAllMovements()
+                EnvelopeDetailEvent.TransfersClicked -> onOpenTransfers()
                 is EnvelopeDetailEvent.CommitmentClicked -> onOpenCommitment(event.accountId, event.commitmentId)
-                is EnvelopeDetailEvent.EditTransferClicked -> onEditTransfer(event.transferId)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -222,17 +210,6 @@ fun EnvelopeDetailScreen(
                         else -> DetailContent(state, envelope, languageTag, onEvent)
                     }
                 }
-                // The amount of a deleted move is written here, where the language and the currency are known
-                val undoMessage = state.undoMessage?.let { message ->
-                    message.amountCents
-                        ?.let { cents -> message.copy(argument = formatMoney(cents, state.currencyCode, languageTag)) }
-                        ?: message
-                }
-                UndoSnackbarHost(
-                    message = undoMessage,
-                    onUndo = { onEvent(EnvelopeDetailEvent.UndoClicked) },
-                    onDismiss = { onEvent(EnvelopeDetailEvent.UndoExpired) },
-                )
             }
         }
     }
@@ -417,49 +394,33 @@ private fun FundingSection(state: EnvelopeDetailUiState, languageTag: String, on
     }
 }
 
-/** The live moves between envelopes, folded under a header with the exact count and paged 20 at a time. */
+/**
+ * The newest moves between envelopes, read only. The icon on the right of the title opens the envelope's moves screen,
+ * the only place where they are edited and deleted.
+ */
 @Composable
 private fun TransfersSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    // Not saved: a row is always drawn closed when its screen is composed again
-    var openId by remember { mutableStateOf<String?>(null) }
-    CollapsibleListSection(
+    FormSection(
         title = stringResource(Res.string.envelope_detail_section_transfers),
-        count = state.transfersTotal,
-        items = state.transfers,
-        emptyText = stringResource(Res.string.envelope_detail_transfers_empty),
-        itemKey = { it.transfer.id },
-        isLoadingMore = state.isLoadingMoreTransfers,
-        loadMoreFailed = state.loadMoreTransfersFailed,
-        onLoadMore = if (state.hasMoreTransfers) {
-            { onEvent(EnvelopeDetailEvent.LoadMoreTransfers) }
-        } else {
-            null
-        },
-    ) { row ->
-        // Manual moves, targets and reserves can be voided (a target is then not generated again in its period, D-53);
-        // covers and releases belong to what made them
-        val actions = if (state.canWriteTransfers) {
-            listOfNotNull(
-                if (row.canEdit) editAction { onEvent(EnvelopeDetailEvent.EditTransferClicked(row.transfer.id)) } else null,
-                if (row.canDelete) deleteAction { onEvent(EnvelopeDetailEvent.DeleteTransferClicked(row.transfer.id)) } else null,
+        action = {
+            IconActionButton(
+                icon = Icons.Filled.SwapHoriz,
+                iconSize = 24.dp,
+                label = stringResource(Res.string.action_manage_transfers),
+                onClick = { onEvent(EnvelopeDetailEvent.TransfersClicked) },
             )
-        } else {
-            emptyList()
-        }
-        if (actions.isNotEmpty()) {
-            SwipeActionsRow(
-                actions = actions,
-                isOpen = openId == row.transfer.id,
-                // A row reporting "closed" must not close another one that has just opened
-                onOpenChange = { open ->
-                    if (open) openId = row.transfer.id else if (openId == row.transfer.id) openId = null
-                },
-                onClick = { if (row.canEdit) onEvent(EnvelopeDetailEvent.EditTransferClicked(row.transfer.id)) },
-            ) {
-                TransferItem(row, state.currencyCode, languageTag)
+        },
+    ) {
+        SoftTile {
+            if (state.transfers.isEmpty()) {
+                Text(
+                    text = stringResource(Res.string.envelope_detail_transfers_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                state.transfers.forEach { TransferItem(it, state.currencyCode, languageTag) }
             }
-        } else {
-            TransferItem(row, state.currencyCode, languageTag)
         }
     }
 }
@@ -500,7 +461,17 @@ private fun TransferItem(row: TransferRow, currencyCode: String, languageTag: St
 
 @Composable
 private fun LatestMovementsSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    FormSection(title = stringResource(Res.string.detail_section_latest)) {
+    FormSection(
+        title = stringResource(Res.string.detail_section_latest),
+        action = {
+            IconActionButton(
+                icon = vectorResource(Res.drawable.ic_list),
+                iconSize = 24.dp,
+                label = stringResource(Res.string.action_see_all_movements),
+                onClick = { onEvent(EnvelopeDetailEvent.SeeAllClicked) },
+            )
+        },
+    ) {
         SoftTile {
             if (state.latestMovements.isEmpty()) {
                 Text(
@@ -510,11 +481,6 @@ private fun LatestMovementsSection(state: EnvelopeDetailUiState, languageTag: St
                 )
             } else {
                 state.latestMovements.forEach { MovementItem(it, state, languageTag) }
-            }
-        }
-        if (state.latestMovements.isNotEmpty()) {
-            TextButton(onClick = { onEvent(EnvelopeDetailEvent.SeeAllClicked) }, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.action_see_all))
             }
         }
     }
@@ -584,7 +550,6 @@ private fun EnvelopeDetailScreenPreview() {
                         40_000, null, true, LocalDate(2026, 11, 1),
                     ),
                 ),
-                transfersTotal = 1,
                 latestMovements = listOf(
                     Movement(
                         "m", MovementSource.Transaction, "a", null, "e1", dev.lacruzjs.sobreio.domain.model.MovementKind.Expense,

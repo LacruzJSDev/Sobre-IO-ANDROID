@@ -52,7 +52,9 @@ fun EnvelopeTransferFormRoute(
     transferId: String?,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: EnvelopeTransferFormViewModel = koinViewModel { parametersOf(groupId, transferId) },
+    /** A new move opened from one envelope's moves starts with that envelope as the destination. */
+    toEnvelopeId: String? = null,
+    viewModel: EnvelopeTransferFormViewModel = koinViewModel { parametersOf(groupId, transferId, toEnvelopeId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     if (state.saved) {

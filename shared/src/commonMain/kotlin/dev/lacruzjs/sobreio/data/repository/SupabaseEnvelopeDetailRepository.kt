@@ -22,8 +22,6 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.Order
-import kotlinx.serialization.Serializable
-import kotlin.time.Clock
 
 /**
  * Reads the envelope detail from the `envelope_balances`, `envelope_periods` and `envelope_outlook_current` views and the
@@ -101,20 +99,6 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
         EnvelopeTransferPage(items, (result.countOrNull() ?: (offset + items.size).toLong()).toInt())
     }
 
-    override suspend fun voidTransfer(id: String): Result<Unit> = safeCall {
-        val updated = postgrest.from(TRANSFERS_TABLE)
-            .update({ set("voided_at", Clock.System.now().toString()) }) {
-                select(Columns.list("id"))
-                filter {
-                    eq("id", id)
-                    isIn("origin", VOIDABLE_ORIGINS)
-                }
-            }
-            .decodeList<IdDto>()
-        // Row level security hides the row from an update that is not allowed: no error, no row
-        if (updated.isEmpty()) throw AppError.BusinessRule("FZ016")
-    }
-
     override suspend fun getFundingCommitments(envelopeId: String): Result<List<FundingCommitment>> = safeCall {
         val versions = postgrest.from(VERSIONS_TABLE)
             .select(Columns.list("commitment_id", "account_id", "kind", "effective_from")) {
@@ -143,9 +127,6 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
             }
         }
     }
-
-    @Serializable
-    private data class IdDto(val id: String)
 
     private companion object {
         const val BALANCES_VIEW = "envelope_balances"

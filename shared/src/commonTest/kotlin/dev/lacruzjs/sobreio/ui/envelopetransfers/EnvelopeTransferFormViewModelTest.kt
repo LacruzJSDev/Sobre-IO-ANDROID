@@ -33,7 +33,28 @@ class EnvelopeTransferFormViewModelTest : MainDispatcherTest() {
     private val manual = EnvelopeTransfer("t2", "e1", "e2", 1_250, TransferOrigin.Manual, Instant.parse("2026-11-02T08:00:00Z"), notes = "Gift")
     private val transfers = FakeEnvelopeTransferRepository(listOf(target, manual))
 
-    private fun form(transferId: String? = null) = EnvelopeTransferFormViewModel("g1", transferId, groups, envelopes, transfers)
+    private fun form(transferId: String? = null, initialToId: String? = null) = EnvelopeTransferFormViewModel(
+        groupId = "g1",
+        transferId = transferId,
+        initialToId = initialToId,
+        groups = groups,
+        envelopes = envelopes,
+        transfers = transfers,
+    )
+
+    @Test
+    fun aNewMoveFromAnEnvelopesListStartsWithThatEnvelopeAsTheDestination() {
+        val state = form(initialToId = "e2").state.value
+
+        assertEquals("u", state.fromId)
+        assertEquals("e2", state.toId)
+    }
+
+    @Test
+    fun anArchivedOrUnassignedDestinationIsNotPreselected() {
+        assertEquals(null, form(initialToId = "e3").state.value.toId)
+        assertEquals(null, form(initialToId = "u").state.value.toId)
+    }
 
     @Test
     fun aNewMoveStartsFromUnassignedAndOffersOnlyLiveEnvelopes() {
