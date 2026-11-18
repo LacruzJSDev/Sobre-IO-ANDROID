@@ -9,6 +9,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.ui.undo.UndoMessage
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 
 /** Which bottom sheet of the Envelopes tab is open. */
@@ -53,6 +54,8 @@ data class EnvelopesUiState(
     val actionError: AppError? = null,
     /** Snackbar for the last delete or reopen. */
     val undoMessage: UndoMessage? = null,
+    /** The group's today, to tell which targets start in a later period (D-53); null until read. */
+    val today: LocalDate? = null,
 ) {
     /** The non-empty sections by type, in display order: monthly spending, bills, savings, free. */
     val sections: List<Pair<EnvelopePurpose, List<Envelope>>>

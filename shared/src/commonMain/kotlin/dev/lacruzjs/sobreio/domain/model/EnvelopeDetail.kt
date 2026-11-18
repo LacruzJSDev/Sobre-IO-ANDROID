@@ -33,8 +33,25 @@ data class EnvelopeOutlook(
     val shortfallCents: Long,
 )
 
-/** Where a move between envelopes came from (`envelope_transfer_origin_enum`). Only [Manual] ones can be deleted. */
-enum class TransferOrigin { Manual, Target, Commitment, Cover, Release }
+/** Where a move between envelopes came from (`envelope_transfer_origin_enum`). */
+enum class TransferOrigin {
+    Manual, Target, Commitment, Cover, Release;
+
+    /**
+     * Manual moves, monthly targets (not generated again in their period, D-53) and commitment reserves (later periods
+     * make up for it, D-44) can be voided. A cover belongs to the expense that made it and a release to the archive.
+     */
+    val canVoid: Boolean get() = this == Manual || this == Target || this == Commitment
+
+    /**
+     * Manual moves and monthly targets can be edited while live (D-16). An automatic one keeps its envelopes: only the
+     * amount and the notes change.
+     */
+    val canEdit: Boolean get() = this == Manual || this == Target
+
+    /** Only a manual move may change its envelopes: the automatic ones always go from "Unassigned" to theirs. */
+    val canChangeEnvelopes: Boolean get() = this == Manual
+}
 
 /**
  * A live row of `envelope_transfers`: [amountCents] is positive and moves money from [fromEnvelopeId] to [toEnvelopeId].
@@ -49,6 +66,15 @@ data class EnvelopeTransfer(
     val createdAt: Instant,
     val commitmentId: String? = null,
     val commitmentName: String? = null,
+    val notes: String? = null,
+)
+
+/** What the user writes of a move between envelopes. [notes] blank is sent as none. */
+data class EnvelopeTransferDraft(
+    val fromEnvelopeId: String,
+    val toEnvelopeId: String,
+    val amountCents: Long,
+    val notes: String? = null,
 )
 
 /** A page of moves, newest first, and the exact number of live moves the envelope has in all. */

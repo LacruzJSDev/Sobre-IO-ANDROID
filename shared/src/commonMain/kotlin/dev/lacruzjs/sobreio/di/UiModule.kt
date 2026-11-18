@@ -14,6 +14,8 @@ import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesViewModel
 import dev.lacruzjs.sobreio.ui.group.GroupViewModel
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormViewModel
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormViewModel
+import dev.lacruzjs.sobreio.ui.envelopetransfers.EnvelopeTransferFormViewModel
+import dev.lacruzjs.sobreio.ui.envelopetransfers.EnvelopeTransfersViewModel
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormViewModel
 import dev.lacruzjs.sobreio.ui.groups.GroupsViewModel
 import dev.lacruzjs.sobreio.ui.groupsettings.GroupSettingsViewModel
@@ -65,6 +67,19 @@ val uiModule = module {
             envelopeId = params.get<String?>(1),
             envelopes = get(),
             members = get(),
+            dates = get(),
+        )
+    }
+    viewModel { params ->
+        EnvelopeTransfersViewModel(groupId = params.get(), groups = get(), envelopes = get(), transfers = get())
+    }
+    viewModel { params ->
+        EnvelopeTransferFormViewModel(
+            groupId = params.get<String>(0),
+            transferId = params.get<String?>(1),
+            groups = get(),
+            envelopes = get(),
+            transfers = get(),
         )
     }
     viewModel { params ->
@@ -132,7 +147,7 @@ val uiModule = module {
         )
     }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get()) }
-    viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get()) }
+    viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get(), dates = get()) }
     viewModel { params ->
         EnvelopeDetailViewModel(
             groupId = params.get<String>(0),

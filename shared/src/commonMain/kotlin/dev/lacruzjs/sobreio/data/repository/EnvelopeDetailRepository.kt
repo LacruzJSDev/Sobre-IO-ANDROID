@@ -31,7 +31,10 @@ interface EnvelopeDetailRepository {
      */
     suspend fun getTransfers(envelopeId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage>
 
-    /** Voids a move (`voided_at`). Only manual ones: the database keeps the automatic ones' origin. FZ016 when RLS hides it. */
+    /**
+     * Voids a move (`voided_at`): manual ones, monthly targets and commitment reserves (see
+     * [dev.lacruzjs.sobreio.domain.model.TransferOrigin.canVoid]). FZ016 when RLS hides it.
+     */
     suspend fun voidTransfer(id: String): Result<Unit>
 
     /**

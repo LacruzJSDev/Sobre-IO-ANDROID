@@ -37,8 +37,11 @@ data class TransferRow(
     /** Day it was entered, in the group's time zone. */
     val date: LocalDate,
 ) {
-    /** Only manual moves can be deleted: the others are written by the database and keep their origin. */
-    val canDelete: Boolean get() = transfer.origin == TransferOrigin.Manual
+    /** Manual moves, monthly targets and reserves can be voided ([TransferOrigin.canVoid]). */
+    val canDelete: Boolean get() = transfer.origin.canVoid
+
+    /** Manual moves and monthly targets can be edited ([TransferOrigin.canEdit]). */
+    val canEdit: Boolean get() = transfer.origin.canEdit
 }
 
 data class EnvelopeDetailUiState(
@@ -50,6 +53,8 @@ data class EnvelopeDetailUiState(
     val currencyCode: String = "EUR",
     /** Owner or admin of a live group. */
     val canEdit: Boolean = false,
+    /** Any member of a live group may edit and void moves between envelopes. */
+    val canWriteTransfers: Boolean = false,
     val envelope: Envelope? = null,
     /** Name of the holder; null for a common envelope. Only shown when [hasSeveralMembers]. */
     val holderName: String? = null,

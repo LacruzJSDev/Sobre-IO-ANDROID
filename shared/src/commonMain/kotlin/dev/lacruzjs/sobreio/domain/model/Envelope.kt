@@ -50,8 +50,16 @@ data class Envelope(
     val archivedAt: String? = null,
     /** Null for the system envelope. */
     val purpose: EnvelopePurpose? = null,
+    /** First day whose period receives the target (D-53); null when the database did not send it. */
+    val targetsFrom: LocalDate? = null,
 ) {
     val isArchived: Boolean get() = archivedAt != null
+
+    /** The target only starts in a later period than [today]'s: nothing is assigned until [targetsFrom]. */
+    fun targetStartsAfter(today: LocalDate?): Boolean {
+        val from = targetsFrom ?: return false
+        return today != null && monthlyTargetCents > 0 && from > today
+    }
 }
 
 /** What the user edits of an envelope. [ownerUserId] null is a common envelope. */
@@ -63,6 +71,11 @@ data class EnvelopeDraft(
     val ownerUserId: String? = null,
     val color: String? = null,
     val icon: String? = null,
+    /**
+     * First day whose period receives the target (D-53). Null leaves it to the database: today on create, unchanged on
+     * edit (today when a target is first set).
+     */
+    val targetsFrom: LocalDate? = null,
 ) {
     /** The kind follows the type: savings are `saving`, everything else `spending`. */
     val kind: EnvelopeKind get() = purpose.kind

@@ -7,6 +7,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
+import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -16,6 +17,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,7 +35,9 @@ class EnvelopeFormViewModelTest : MainDispatcherTest() {
     private val marta = Member("u2", "Marta", GroupRole.Member)
     private val memberRepository = FakeMemberRepository(listOf(juan, marta))
 
-    private fun form(envelopeId: String? = null) = EnvelopeFormViewModel("g1", envelopeId, repository, memberRepository)
+    private val dates = FakeAccountDetailRepository()
+
+    private fun form(envelopeId: String? = null) = EnvelopeFormViewModel("g1", envelopeId, repository, memberRepository, dates)
 
     @Test
     fun createSendsTrimmedNameKindAndTargetAndAsksToLeave() {
@@ -248,5 +252,69 @@ class EnvelopeFormViewModelTest : MainDispatcherTest() {
 
         memberRepository.members = listOf(juan)
         assertFalse(form().state.value.hasSeveralMembers)
+    }
+
+    // D-53: from when the target is assigned ------------------------------------------------------------------------
+
+    @Test
+    fun aNewEnvelopeCanStartNextPeriod() {
+        val viewModel = form()
+        assertTrue(viewModel.state.value.canChooseStart)
+        assertFalse(viewModel.state.value.startsNextPeriod)
+
+        viewModel.onEvent(EnvelopeFormEvent.NameChanged("Gym"))
+        viewModel.onEvent(EnvelopeFormEvent.MonthlyTargetChanged("30"))
+        viewModel.onEvent(EnvelopeFormEvent.StartNextPeriodChanged(true))
+        viewModel.onEvent(EnvelopeFormEvent.SaveClicked)
+
+        // The fake's period ends on 30 November
+        assertEquals(LocalDate(2026, 12, 1), repository.createdDraft?.targetsFrom)
+    }
+
+    @Test
+    fun aNewEnvelopeLeavesTheStartToTheDatabaseByDefault() {
+        val viewModel = form()
+        viewModel.onEvent(EnvelopeFormEvent.NameChanged("Gym"))
+        viewModel.onEvent(EnvelopeFormEvent.MonthlyTargetChanged("30"))
+        viewModel.onEvent(EnvelopeFormEvent.SaveClicked)
+
+        assertNull(repository.createdDraft?.targetsFrom)
+    }
+
+    @Test
+    fun typesWithoutTargetDoNotOfferTheStart() {
+        val viewModel = form()
+        viewModel.onEvent(EnvelopeFormEvent.PurposeSelected(EnvelopePurpose.Bills))
+
+        assertFalse(viewModel.state.value.canChooseStart)
+    }
+
+    @Test
+    fun anEnvelopeWhoseTargetAlreadyRunsDoesNotOfferTheStart() {
+        repository.envelopes = listOf(rent.copy(targetsFrom = LocalDate(2026, 10, 1)))
+        val viewModel = form("1")
+
+        assertFalse(viewModel.state.value.canChooseStart)
+        viewModel.onEvent(EnvelopeFormEvent.SaveClicked)
+        assertNull(repository.updatedDraft?.targetsFrom)
+    }
+
+    @Test
+    fun anEnvelopeThatStartsLaterShowsItAndTurningItOffStartsToday() {
+        repository.envelopes = listOf(rent.copy(targetsFrom = LocalDate(2026, 12, 1)))
+        val viewModel = form("1")
+        assertTrue(viewModel.state.value.canChooseStart)
+        assertTrue(viewModel.state.value.startsNextPeriod)
+
+        viewModel.onEvent(EnvelopeFormEvent.StartNextPeriodChanged(false))
+        viewModel.onEvent(EnvelopeFormEvent.SaveClicked)
+
+        assertEquals(dates.today, repository.updatedDraft?.targetsFrom)
+    }
+
+    @Test
+    fun withoutTheDatesTheStartIsNotOffered() {
+        dates.todayResult = Result.failure(AppError.Network)
+        assertFalse(form().state.value.canChooseStart)
     }
 }

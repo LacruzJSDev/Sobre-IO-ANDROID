@@ -36,7 +36,7 @@ fun MutableList<NavKey>.popToPrevious() {
  * Groups) and the full-screen forms are not.
  */
 fun NavKey.isPaneDetail(): Boolean = when (this) {
-    is AccountDetail, is EnvelopeDetail, is GroupSettings, is GroupReview, Profile,
+    is AccountDetail, is EnvelopeDetail, is EnvelopeTransfers, is GroupSettings, is GroupReview, Profile,
     is CommitmentDetail, is AccountMovements, is EnvelopeMovements, is Tags,
     -> true
     else -> false

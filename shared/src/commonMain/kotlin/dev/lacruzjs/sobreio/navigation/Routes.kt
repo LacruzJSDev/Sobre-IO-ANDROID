@@ -112,6 +112,20 @@ data class EnvelopeDetail(val groupId: String, val envelopeId: String) : NavKey
 @Serializable
 data class EnvelopeMovements(val groupId: String, val envelopeId: String) : NavKey
 
+/**
+ * Every move between envelopes of the group (level 2 of the Envelopes tab): edit, delete with Undo and "+" for a new
+ * one. Opened by the moves button of the Envelopes tab header; back goes to [Group].
+ */
+@Serializable
+data class EnvelopeTransfers(val groupId: String) : NavKey
+
+/**
+ * Record (`transferId` null) or edit a move between envelopes, as a full screen. Opened from [EnvelopeTransfers] and from
+ * the moves of an [EnvelopeDetail]; back returns there, which reads its list again.
+ */
+@Serializable
+data class EnvelopeTransferForm(val groupId: String, val transferId: String?) : NavKey
+
 /** Create (`envelopeId` null) or edit an envelope, as a full screen. Opened from the Envelopes tab. */
 @Serializable
 data class EnvelopeForm(val groupId: String, val envelopeId: String?) : NavKey

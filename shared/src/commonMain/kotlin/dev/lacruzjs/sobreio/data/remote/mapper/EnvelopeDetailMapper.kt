@@ -37,6 +37,7 @@ internal fun EnvelopeTransferDto.toDomain(commitmentName: String? = null) = Enve
     createdAt = Instant.parse(createdAt),
     commitmentId = commitmentId,
     commitmentName = commitmentName,
+    notes = notes,
 )
 
 /** An origin added by a newer database is treated as automatic, so it cannot be deleted by mistake. */

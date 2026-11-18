@@ -16,13 +16,14 @@ internal data class EnvelopeDto(
     val balance: Long = 0,
 )
 
-/** The columns of `envelopes` that the `envelope_balances` view does not have (colour, icon, type). */
+/** The columns of `envelopes` that the `envelope_balances` view does not have (colour, icon, type, first target day). */
 @Serializable
 internal data class EnvelopeStyleDto(
     val id: String,
     val color: String? = null,
     val icon: String? = null,
     val purpose: String? = null,
+    @SerialName("targets_from") val targetsFrom: String? = null,
 )
 
 /** A row of the `envelope_progress` function; dates travel as ISO text. */

@@ -59,6 +59,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_target_per_month
+import dev.lacruzjs.sobreio.generated.resources.envelope_target_starts_on
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_editor
 import dev.lacruzjs.sobreio.generated.resources.envelopes_empty_member
 import dev.lacruzjs.sobreio.generated.resources.groups_archived_title
@@ -75,6 +76,7 @@ import dev.lacruzjs.sobreio.ui.components.deleteAction
 import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.components.reopenAction
+import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import org.jetbrains.compose.resources.stringResource
@@ -198,16 +200,24 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
 
 @Composable
 private fun EnvelopeRow(envelope: Envelope, state: EnvelopesUiState, languageTag: String) {
-    val progress = state.progress[envelope.id]?.takeIf { !envelope.isArchived }
+    // A target that starts in a later period (D-53) has nothing to measure yet: the row says when it starts instead
+    val startsLater = envelope.targetStartsAfter(state.today)
+    val progress = state.progress[envelope.id]?.takeIf { !envelope.isArchived && !startsLater }
     val hasBar = progress?.hasBar == true
     // With a bar the line under it already says the goal, so the target only shows for envelopes without one
-    val target = if (envelope.monthlyTargetCents > 0 && !hasBar) {
-        stringResource(
+    val target = when {
+        startsLater -> envelope.targetsFrom?.let { from ->
+            stringResource(
+                Res.string.envelope_target_starts_on,
+                formatMoney(envelope.monthlyTargetCents, state.currencyCode, languageTag),
+                formatDate(from, languageTag),
+            )
+        }
+        envelope.monthlyTargetCents > 0 && !hasBar -> stringResource(
             Res.string.envelope_target_per_month,
             formatMoney(envelope.monthlyTargetCents, state.currencyCode, languageTag),
         )
-    } else {
-        null
+        else -> null
     }
     val holder = if (state.hasSeveralMembers) {
         state.holderName(envelope) ?: stringResource(Res.string.holder_common)

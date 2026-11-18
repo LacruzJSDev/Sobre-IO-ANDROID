@@ -9,6 +9,7 @@ import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
+import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -37,7 +38,8 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         .also { it.summary = EnvelopeSummary(unassignedCents = 30_000, inEnvelopesTotalCents = 125_000) }
     private val memberRepository = FakeMemberRepository()
     private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z", purpose = EnvelopePurpose.Savings)
-    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository) }
+    private val dates = FakeAccountDetailRepository()
+    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository, dates) }
 
     private fun EnvelopesUiState.section(purpose: EnvelopePurpose): List<Envelope> =
         sections.firstOrNull { it.first == purpose }?.second.orEmpty()
