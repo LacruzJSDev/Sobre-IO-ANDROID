@@ -241,22 +241,18 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     },
                 )
             }
-<<<<<<< HEAD
             entry<Profile>(metadata = detailPane) {
-                ProfileRoute(onBack = { backStack.popToPrevious() })
-=======
-            entry<Profile> {
                 ProfileRoute(
                     onBack = { backStack.popToPrevious() },
                     onDeleteAccount = { backStack.add(DeleteAccount) },
                 )
             }
+            // Full screen like a form: a one-step destructive flow, never a pane beside the list
             entry<DeleteAccount> {
                 DeleteAccountRoute(
                     onBack = { backStack.popToPrevious() },
                     onOpenGroupSettings = { groupId -> backStack.add(GroupSettings(groupId)) },
                 )
->>>>>>> 2093e12 (feat(ui): delete account from Profile)
             }
         },
     )

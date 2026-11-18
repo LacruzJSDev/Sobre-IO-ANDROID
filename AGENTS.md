@@ -449,7 +449,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   On a phone (one partition) it gives no scene. Entry metadata (ours, same file): `listPane` for `Group` and `Groups` (`Groups`
   also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`,
   `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements` and
-  `Tags`. Forms and `TimeZonePicker` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
+  `Tags`. Forms, `TimeZonePicker` and `DeleteAccount` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
   window and 420 dp from expanded (`listWidth`).
   Window classes: compact < 600 dp, medium 600-840, expanded >= 840. Two panes from medium (a tablet in portrait, an open foldable; the directive keeps them off a
   vertical hinge), so only phones keep one pane, and the back stack rules do not change. `MutableList<NavKey>.openDetail(key)` (next to
