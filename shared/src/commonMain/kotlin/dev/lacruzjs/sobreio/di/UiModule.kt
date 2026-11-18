@@ -28,6 +28,7 @@ import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.deleteaccount.DeleteAccountViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
+import dev.lacruzjs.sobreio.ui.bankimport.BankImportViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -93,6 +94,7 @@ val uiModule = module {
             members = get(),
             envelopes = get(),
             detail = get(),
+            imports = get(),
         )
     }
     viewModel { params ->
@@ -148,6 +150,18 @@ val uiModule = module {
             envelopes = get(),
         )
     }
+    viewModel { params ->
+        BankImportViewModel(
+            groupId = params.get<String>(0),
+            accountId = params.get<String>(1),
+            groups = get(),
+            accounts = get(),
+            envelopes = get(),
+            detail = get(),
+            imports = get(),
+            formats = get(),
+        )
+    }
     viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get()) }
     viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get(), dates = get()) }
     viewModel { params ->
@@ -168,6 +182,8 @@ val uiModule = module {
             groupId = params.get<String>(0),
             fixedAccountId = params.get<String?>(1),
             fixedEnvelopeId = params.get<String?>(2),
+            // Optional fourth parameter: the tag the list starts filtered by
+            initialTagIds = setOfNotNull(params.values.getOrNull(3) as String?),
             movements = get(),
             groups = get(),
             accounts = get(),

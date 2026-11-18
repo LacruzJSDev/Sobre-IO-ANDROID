@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedContentTransitionScope
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailRoute
+import dev.lacruzjs.sobreio.ui.bankimport.BankImportRoute
 import dev.lacruzjs.sobreio.ui.accountform.AccountFormRoute
 import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailRoute
 import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormRoute
@@ -142,12 +143,26 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                         backStack.add(CommitmentDetail(key.groupId, key.accountId, commitmentId))
                     },
                     onSeeAllMovements = { backStack.add(AccountMovements(key.groupId, key.accountId)) },
+                    onImport = { backStack.add(BankImport(key.groupId, key.accountId)) },
+                )
+            }
+            // Full screen, no pane: on a tablet it covers the list and the detail, like the forms
+            entry<BankImport> { key ->
+                BankImportRoute(
+                    groupId = key.groupId,
+                    accountId = key.accountId,
+                    onClose = { backStack.popToPrevious() },
+                    onOpenMovements = { tagId ->
+                        backStack.popToPrevious()
+                        backStack.add(AccountMovements(key.groupId, key.accountId, tagId))
+                    },
                 )
             }
             entry<AccountMovements>(metadata = extraPane) { key ->
                 AccountMovementsRoute(
                     groupId = key.groupId,
                     accountId = key.accountId,
+                    tagId = key.tagId,
                     onBack = { backStack.popToPrevious() },
                     onOpenMovementForm = { movementId, source, accountId ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, accountId))

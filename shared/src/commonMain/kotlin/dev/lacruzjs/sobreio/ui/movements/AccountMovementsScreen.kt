@@ -32,7 +32,9 @@ fun AccountMovementsRoute(
     onBack: () -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?, accountId: String?) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, accountId, null) },
+    /** Starts the list filtered by this tag (the tag of a bank import). */
+    tagId: String? = null,
+    viewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, accountId, null, tagId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }

@@ -1,6 +1,9 @@
 package dev.lacruzjs.sobreio.ui.error
 
+import dev.lacruzjs.sobreio.data.repository.BANK_ROW_ALREADY_IMPORTED
 import dev.lacruzjs.sobreio.domain.error.AppError
+import dev.lacruzjs.sobreio.generated.resources.error_bank_row_already_imported
+import dev.lacruzjs.sobreio.generated.resources.error_fz024_bank_import
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.error_fz023_account_blocked
 import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
@@ -72,6 +75,8 @@ private fun businessRuleMessageRes(code: String): StringResource = when (code) {
     "FZ021" -> Res.string.error_fz021_envelope_type
     "FZ022" -> Res.string.error_fz022_tag_merge
     "FZ023" -> Res.string.error_fz023_account_blocked
+    "FZ024" -> Res.string.error_fz024_bank_import
+    BANK_ROW_ALREADY_IMPORTED -> Res.string.error_bank_row_already_imported
     // FZ004 and FZ010 are reserved and never raised
     else -> Res.string.error_unknown
 }

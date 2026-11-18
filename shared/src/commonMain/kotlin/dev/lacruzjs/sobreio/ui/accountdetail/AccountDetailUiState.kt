@@ -6,6 +6,7 @@ import dev.lacruzjs.sobreio.domain.model.AccountForecast
 import dev.lacruzjs.sobreio.domain.model.AccountMovement
 import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.BankComparison
+import dev.lacruzjs.sobreio.domain.model.BankImportSummary
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
@@ -55,6 +56,10 @@ data class AccountDetailUiState(
     val currencyCode: String = "EUR",
     /** Owner or admin of a live group: the pencil that edits the account is shown. */
     val canEdit: Boolean = false,
+    /** Any member of a live group may import a statement into a live account (D-52). */
+    val canImport: Boolean = false,
+    /** The latest live import of the account, for the Bank section; null when there is none. */
+    val lastImport: BankImportSummary? = null,
     val account: Account? = null,
     /** Name of the holder; null for a joint account. Only shown when [hasSeveralMembers]. */
     val holderName: String? = null,

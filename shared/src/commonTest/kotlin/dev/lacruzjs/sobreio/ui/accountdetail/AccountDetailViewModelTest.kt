@@ -14,6 +14,7 @@ import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeBankImportRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
@@ -47,7 +48,7 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
     private val detail = FakeAccountDetailRepository()
 
     private val viewModel by lazy {
-        AccountDetailViewModel("g1", "a1", groups, accounts, members, envelopes, detail, debounceMillis = 300)
+        AccountDetailViewModel("g1", "a1", groups, accounts, members, envelopes, detail, FakeBankImportRepository(), debounceMillis = 300)
     }
 
     private fun loaded(): AccountDetailViewModel = viewModel.also { it.onEvent(AccountDetailEvent.Refresh) }

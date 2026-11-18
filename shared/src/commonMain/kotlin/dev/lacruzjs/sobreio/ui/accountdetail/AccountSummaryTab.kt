@@ -36,6 +36,13 @@ import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.ui.format.formatShortDate
+import dev.lacruzjs.sobreio.generated.resources.bank_import_action_import
+import dev.lacruzjs.sobreio.generated.resources.bank_import_action_compare
+import dev.lacruzjs.sobreio.generated.resources.bank_import_no_last_import
+import dev.lacruzjs.sobreio.generated.resources.bank_import_last_import_value
+import dev.lacruzjs.sobreio.generated.resources.bank_import_last_import
+import dev.lacruzjs.sobreio.generated.resources.bank_import_section_bank
 import dev.lacruzjs.sobreio.generated.resources.accounts_in_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_outside_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.action_compare_bank
@@ -130,10 +137,7 @@ internal fun AccountSummaryTab(
                         if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
                         if (state.upcoming.isNotEmpty()) UpcomingSection(state, languageTag)
                         LatestMovementsSection(state, languageTag, onEvent)
-                        SecondaryButton(
-                            text = stringResource(Res.string.action_compare_bank),
-                            onClick = { onEvent(AccountDetailEvent.CompareClicked) },
-                        )
+                        BankSection(state, languageTag, onEvent)
                     }
                 }
             }
@@ -146,9 +150,53 @@ internal fun AccountSummaryTab(
                 if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
                 if (state.upcoming.isNotEmpty()) UpcomingSection(state, languageTag)
                 LatestMovementsSection(state, languageTag, onEvent)
+                BankSection(state, languageTag, onEvent)
+            }
+        }
+    }
+}
+
+/**
+ * Everything about the bank in one place (D-52): when the account was last imported, and the two actions that check it
+ * against the bank, compare the balance and import a statement.
+ */
+@Composable
+private fun BankSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
+    FormSection(title = stringResource(Res.string.bank_import_section_bank)) {
+        SoftTile {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(Res.string.bank_import_last_import),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                val last = state.lastImport
+                Text(
+                    text = if (last?.createdDay != null) {
+                        stringResource(
+                            Res.string.bank_import_last_import_value,
+                            formatShortDate(last.createdDay, languageTag, state.today?.year ?: 0),
+                            last.rowsTotal,
+                        )
+                    } else {
+                        stringResource(Res.string.bank_import_no_last_import)
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            SecondaryButton(
+                text = stringResource(Res.string.bank_import_action_compare),
+                onClick = { onEvent(AccountDetailEvent.CompareClicked) },
+                modifier = Modifier.weight(1f),
+            )
+            if (state.canImport) {
                 SecondaryButton(
-                    text = stringResource(Res.string.action_compare_bank),
-                    onClick = { onEvent(AccountDetailEvent.CompareClicked) },
+                    text = stringResource(Res.string.bank_import_action_import),
+                    onClick = { onEvent(AccountDetailEvent.BankImportClicked) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }

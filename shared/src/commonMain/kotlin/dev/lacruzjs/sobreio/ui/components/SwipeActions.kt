@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.automirrored.filled.MergeType
 import androidx.compose.material.icons.filled.MoveToInbox
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.filled.Unarchive
@@ -20,6 +21,7 @@ import dev.lacruzjs.sobreio.generated.resources.action_assign
 import dev.lacruzjs.sobreio.generated.resources.action_cancel_deletion
 import dev.lacruzjs.sobreio.generated.resources.action_delete
 import dev.lacruzjs.sobreio.generated.resources.action_edit
+import dev.lacruzjs.sobreio.generated.resources.action_ignore
 import dev.lacruzjs.sobreio.generated.resources.action_leave
 import dev.lacruzjs.sobreio.generated.resources.action_merge
 import dev.lacruzjs.sobreio.generated.resources.action_remove
@@ -81,6 +83,16 @@ fun mergeAction(onClick: () -> Unit) = inkAction(stringResource(Res.string.actio
 fun assignAction(onClick: () -> Unit) = SwipeAction(
     label = stringResource(Res.string.action_assign),
     icon = Icons.Filled.MoveToInbox,
+    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor = MaterialTheme.colorScheme.onSurface,
+    onClick = onClick,
+)
+
+/** Eye crossed out, soft grey: a statement row that will not be recorded (bank import, D-52). */
+@Composable
+fun ignoreAction(onClick: () -> Unit) = SwipeAction(
+    label = stringResource(Res.string.action_ignore),
+    icon = Icons.Filled.VisibilityOff,
     containerColor = MaterialTheme.colorScheme.surfaceVariant,
     contentColor = MaterialTheme.colorScheme.onSurface,
     onClick = onClick,

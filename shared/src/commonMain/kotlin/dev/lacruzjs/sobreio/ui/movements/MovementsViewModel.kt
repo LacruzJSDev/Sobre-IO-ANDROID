@@ -41,6 +41,8 @@ class MovementsViewModel(
     private val envelopes: EnvelopeRepository,
     private val members: MemberRepository,
     private val tags: TagRepository,
+    /** Tags the list starts filtered by (a bank import's tag); the Tags chip can clear them. */
+    initialTagIds: Set<String> = emptySet(),
     private val searchDebounceMillis: Long = SEARCH_DEBOUNCE_MILLIS,
 ) : ViewModel() {
 
@@ -48,7 +50,7 @@ class MovementsViewModel(
         MovementsUiState(
             fixedAccountId = fixedAccountId,
             fixedEnvelopeId = fixedEnvelopeId,
-            filter = MovementFilter(accountId = fixedAccountId, envelopeId = fixedEnvelopeId),
+            filter = MovementFilter(accountId = fixedAccountId, envelopeId = fixedEnvelopeId, tagIds = initialTagIds),
         ),
     )
     val state: StateFlow<MovementsUiState> = _state.asStateFlow()

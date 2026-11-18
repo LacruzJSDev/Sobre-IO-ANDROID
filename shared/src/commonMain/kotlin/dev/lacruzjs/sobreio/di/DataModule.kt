@@ -3,6 +3,8 @@ package dev.lacruzjs.sobreio.di
 import com.russhwolf.settings.Settings
 import dev.lacruzjs.sobreio.data.local.LastAccountStore
 import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
+import dev.lacruzjs.sobreio.data.local.BankFormatStore
+import dev.lacruzjs.sobreio.data.local.SettingsBankFormatStore
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
 import dev.lacruzjs.sobreio.data.local.SettingsLastAccountStore
 import dev.lacruzjs.sobreio.data.local.SettingsAppPreferencesStore
@@ -13,6 +15,8 @@ import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseAccountDeletionRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
+import dev.lacruzjs.sobreio.data.repository.BankImportRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseBankImportRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeDetailRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeTransferRepository
@@ -55,7 +59,9 @@ val dataModule = module {
     single<MovementFormRepository> { SupabaseMovementFormRepository(get()) }
     single<AccountDeletionRepository> { SupabaseAccountDeletionRepository(get(), get(), get()) }
     single<TagRepository> { SupabaseTagRepository(get()) }
+    single<BankImportRepository> { SupabaseBankImportRepository(get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }
     single<LastAccountStore> { SettingsLastAccountStore(Settings()) }
     single<AppPreferencesStore> { SettingsAppPreferencesStore(Settings()) }
+    single<BankFormatStore> { SettingsBankFormatStore(Settings()) }
 }

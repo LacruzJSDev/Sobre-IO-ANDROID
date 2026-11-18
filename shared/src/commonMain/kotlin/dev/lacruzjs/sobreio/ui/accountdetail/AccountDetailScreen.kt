@@ -72,7 +72,7 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Level 2 of the Accounts tab. Holds the lambdas of the back stack: [onEdit] opens the account form, [onSeeAllMovements]
- * leaves for the group's Movements tab filtered to this account (see AppNavigation).
+ * pushes the account's movements, [onImport] the bank import (see AppNavigation).
  */
 @Composable
 fun AccountDetailRoute(
@@ -81,6 +81,7 @@ fun AccountDetailRoute(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onSeeAllMovements: () -> Unit,
+    onImport: () -> Unit,
     onOpenCommitmentForm: (commitmentId: String?) -> Unit,
     onOpenCommitment: (commitmentId: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -103,6 +104,7 @@ fun AccountDetailRoute(
                 AccountDetailEvent.BackClicked -> onBack()
                 AccountDetailEvent.EditClicked -> onEdit()
                 AccountDetailEvent.SeeAllClicked -> onSeeAllMovements()
+                AccountDetailEvent.BankImportClicked -> onImport()
                 is AccountDetailEvent.TabSelected -> tabIndex = event.tab.ordinal
                 else -> viewModel.onEvent(event)
             }

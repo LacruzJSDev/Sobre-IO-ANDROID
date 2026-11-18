@@ -56,9 +56,13 @@ data class AccountDetail(val groupId: String, val accountId: String) : NavKey
  * list with the account fixed. Back returns to the [AccountDetail].
  */
 @Serializable
-data class AccountMovements(val groupId: String, val accountId: String) : NavKey
+data class AccountMovements(val groupId: String, val accountId: String, val tagId: String? = null) : NavKey
 
 /** Create (`accountId` null) or edit an account, as a full screen. Opened from the Accounts tab. */
+/** Level 3 of Accounts, full screen: import a bank statement into the account (D-52). */
+@Serializable
+data class BankImport(val groupId: String, val accountId: String) : NavKey
+
 @Serializable
 data class AccountForm(val groupId: String, val accountId: String?) : NavKey
 
