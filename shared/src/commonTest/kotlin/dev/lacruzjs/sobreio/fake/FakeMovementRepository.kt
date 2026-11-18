@@ -19,6 +19,7 @@ class FakeMovementRepository(var all: List<Movement> = emptyList()) : MovementRe
 
     val searches = mutableListOf<SearchCall>()
     val voided = mutableListOf<String>()
+    val voidedGroupTransfers = mutableListOf<String>()
 
     var today = LocalDate(2026, 11, 14)
     var context = DateContext(
@@ -44,6 +45,12 @@ class FakeMovementRepository(var all: List<Movement> = emptyList()) : MovementRe
 
     override suspend fun voidMovement(movement: Movement): Result<Unit> {
         voided += movement.id
+        voidResult.onSuccess { all = all.filter { it.id != movement.id } }
+        return voidResult
+    }
+
+    override suspend fun voidGroupTransfer(movement: Movement): Result<Unit> {
+        voidedGroupTransfers += movement.id
         voidResult.onSuccess { all = all.filter { it.id != movement.id } }
         return voidResult
     }
