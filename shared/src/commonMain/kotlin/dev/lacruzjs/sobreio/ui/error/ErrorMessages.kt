@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.error
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.error_fz023_account_blocked
 import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
 import dev.lacruzjs.sobreio.generated.resources.error_email_already_registered
 import dev.lacruzjs.sobreio.generated.resources.error_email_not_confirmed
@@ -70,6 +71,7 @@ private fun businessRuleMessageRes(code: String): StringResource = when (code) {
     "FZ020" -> Res.string.error_fz020_purge
     "FZ021" -> Res.string.error_fz021_envelope_type
     "FZ022" -> Res.string.error_fz022_tag_merge
+    "FZ023" -> Res.string.error_fz023_account_blocked
     // FZ004 and FZ010 are reserved and never raised
     else -> Res.string.error_unknown
 }

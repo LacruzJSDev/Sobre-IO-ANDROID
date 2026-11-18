@@ -17,7 +17,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Navigation | Navigation 3 (`androidx.navigation3-runtime` 1.2 + JetBrains `navigation3-ui`), keys are `@Serializable` `NavKey`s registered in `NavSavedStateConfiguration`; ViewModels scoped per entry with `lifecycle-viewmodel-navigation3` |
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
-| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
 | Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~70 icons of `IconCatalog` are referenced, so R8 strips the rest) |
 | Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user); `kotlinx-datetime` 0.8 (device time zone) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
@@ -31,7 +31,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
 - Features: email and password authentication with 6-digit codes (sign-up confirmation, password recovery), Google
   sign-in on Android (Credential Manager) and iOS (GoogleSignIn iOS SDK 9.x); the Groups screen (list, "+" opens the
-  full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email) and the group shell (`NavigationSuiteScaffold` with the
+  full-screen group form, join with an invitation code), the Group settings screen (details, members, invitations), the Profile screen (editable name, email, delete account), the Delete account screen and the group shell (`NavigationSuiteScaffold` with the
   Group, Accounts, Envelopes and Movements tabs; Accounts, Envelopes, Movements and Group all work). Root navigation follows the session (`SessionViewModel`).
 - Signed-in back stack: `[Group(last)]` when `LastGroupStore` holds a group for this user, else `[Groups]`
   (`initialBackStack`, a synchronous read before the first frame, so no flash and no animation). A group is a root, not a
@@ -233,7 +233,24 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   tell Accounts and Envelopes whether to ask for a holder.
 - Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
   `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
-  screen shows the saved name at once. The email is read-only.
+  screen shows the saved name at once. The email is read-only. At the very bottom a `DestructiveButton` "Delete account"
+  pushes `DeleteAccount` (the column scrolls).
+- Delete account (decision D-51; `ui/deleteaccount`, route `DeleteAccount`, level 2 of Groups above Profile,
+  `DeleteAccountViewModel` with `AccountDeletionRepository`): `ScreenHeader` with back and title, an intro line and, from
+  `account_deletion_preview()` (`DeletionPreviewItem`, `DeletionOutcome` Blocked / Delete / Leave, DTO `DeletionPreviewDto`),
+  sections hidden when empty, each row an `EntityAvatar` (group colour and icon) and the name: first "First name another owner"
+  (blocked: the only owner of a group with other members; a row opens that group's `GroupSettings(groupId)`, where roles change,
+  and the preview reloads when the screen is shown again), then "Deleted for good" (the only member) and "You will leave" (with the
+  note that their movements stay, signed as "Deleted user"). Then a muted line (email and sign-in removed, cannot be undone), a
+  `Switch` tile "I understand this cannot be undone" and a `DestructiveButton` with `isLoading`, enabled only with the switch on,
+  the preview loaded and nothing blocked. The switch is the confirmation: no dialog. A load failure shows a retry; a delete failure
+  shows under the switch and reads the preview again. `SupabaseAccountDeletionRepository.deleteAccount` calls the Edge Function
+  `delete-account` (`supabase-kt` `functions-kt`, installed in `buildSupabaseClient`, POST with the user's JWT, no body) and, on
+  success, clears the user's `LastGroupStore` and `LastAccountStore.clear(userId)` entries and closes the session locally
+  (`signOut(SignOutScope.LOCAL)`: the user no longer exists, so the server cannot revoke it); the session-driven root then shows the
+  sign-in screens. Function errors: the function answers `{"code","message"}`; a `RestException` is mapped by
+  `ErrorMapper.fromFunctionBody` (reads `code` from `RestException.description`, else from the response body) with the same rules as
+  RPC codes (`auth_delete_failed` and unreadable bodies are `Unknown`, retry is safe); `FZ023` ("a group blocks it") has its own message.
 - Envelope detail (`ui/envelopedetail`, route `EnvelopeDetail(groupId, envelopeId)`, level 2; Koin params by position): opened by
   tapping any Envelopes row, "Unassigned" and archived ones included (read only: no pencil, no commitments, name from
   resources, inbox icon; the outlook is skipped for them too). `ScreenHeader` with the avatar, name, group subtitle and a
@@ -450,7 +467,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   On a phone (one partition) it gives no scene. Entry metadata (ours, same file): `listPane` for `Group` and `Groups` (`Groups`
   also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`, `EnvelopeTransfers`,
   `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements` and
-  `Tags`. Forms and `TimeZonePicker` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
+  `Tags`. Forms, `TimeZonePicker` and `DeleteAccount` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
   window and 420 dp from expanded (`listWidth`).
   Window classes: compact < 600 dp, medium 600-840, expanded >= 840. Two panes from medium (a tablet in portrait, an open foldable; the directive keeps them off a
   vertical hinge), so only phones keep one pane, and the back stack rules do not change. `MutableList<NavKey>.openDetail(key)` (next to
@@ -501,7 +518,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `envelopetransfers`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `profile` / `deleteaccount`, `accounts`, `envelopes`, `envelopedetail`, `envelopetransfers`, `movements`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules
@@ -522,7 +539,7 @@ plus `movementform` (the new / edit movement form).
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ021` become
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ023` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
 - Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a
@@ -623,6 +640,10 @@ run the app again from Xcode to renew it. From the terminal, `xcodebuild -projec
 - Kotlin official style; names: `XxxScreen`, `XxxViewModel`, `XxxUiState`, `XxxEvent`, `XxxRepository`.
 - No `!!`; errors become UI state. State classes are immutable.
 - Commits: Conventional Commits in English with scopes `app`, `ui`, `data`, `nav`, `build`; for example `feat(ui): add movements list`.
+- Several agents work on this repository at once: work in your own git worktree, never in the main checkout. From
+  this folder, `git worktree add ../worktrees/app-<topic> -b <type>/<topic> origin/main`, copy `local.properties` into it,
+  and commit only to your own branch. Never switch branches, stash or commit in a checkout you did not create. Before
+  deleting a branch, `git log origin/<branch>..<branch>` must be empty; after the merge, `git worktree remove` it.
 - When you add a dependency, add it to the version catalog and to the "Stack" or "Current state" section above.
 - When you add a screen or a layer rule, update this file in the same change.
 
