@@ -8,8 +8,6 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeOutlook
 import dev.lacruzjs.sobreio.domain.model.EnvelopePeriod
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
 import dev.lacruzjs.sobreio.domain.model.Movement
-import dev.lacruzjs.sobreio.domain.model.TransferOrigin
-import dev.lacruzjs.sobreio.ui.undo.UndoMessage
 import kotlinx.datetime.LocalDate
 
 /** A commitment that reserves money for the envelope in the current cycle (`commitment_funding_status`). */
@@ -36,13 +34,7 @@ data class TransferRow(
     val otherIsUnassigned: Boolean,
     /** Day it was entered, in the group's time zone. */
     val date: LocalDate,
-) {
-    /** Manual moves, monthly targets and reserves can be voided ([TransferOrigin.canVoid]). */
-    val canDelete: Boolean get() = transfer.origin.canVoid
-
-    /** Manual moves and monthly targets can be edited ([TransferOrigin.canEdit]). */
-    val canEdit: Boolean get() = transfer.origin.canEdit
-}
+)
 
 data class EnvelopeDetailUiState(
     /** True until the first load ends; later refreshes keep showing the content. */
@@ -53,8 +45,6 @@ data class EnvelopeDetailUiState(
     val currencyCode: String = "EUR",
     /** Owner or admin of a live group. */
     val canEdit: Boolean = false,
-    /** Any member of a live group may edit and void moves between envelopes. */
-    val canWriteTransfers: Boolean = false,
     val envelope: Envelope? = null,
     /** Name of the holder; null for a common envelope. Only shown when [hasSeveralMembers]. */
     val holderName: String? = null,
@@ -66,22 +56,19 @@ data class EnvelopeDetailUiState(
     /** Null for the system envelope and archived ones, which the outlook skips. */
     val outlook: EnvelopeOutlook? = null,
     val funding: List<FundingRow> = emptyList(),
-    /** The live moves loaded so far, newest first, minus the one hidden while its delete waits for the snackbar. */
+    /**
+     * The newest moves between envelopes, read only: they are edited and deleted only in the envelope's moves screen,
+     * which the section's icon opens.
+     */
     val transfers: List<TransferRow> = emptyList(),
-    /** How many live moves the envelope has in all (the hidden one does not count). */
-    val transfersTotal: Int = 0,
-    val hasMoreTransfers: Boolean = false,
-    val isLoadingMoreTransfers: Boolean = false,
-    val loadMoreTransfersFailed: Boolean = false,
     /** The newest transactions of the envelope. */
     val latestMovements: List<Movement> = emptyList(),
     /** Names of the group's accounts (archived too), to say which one a movement belongs to. */
     val accountNames: Map<String, String> = emptyMap(),
     /** The group has several live accounts: with one, every row would repeat its name, so the second line leaves it out. */
     val hasSeveralAccounts: Boolean = false,
-    /** Failure of a delete or an undo, shown above the content. */
+    /** Failure of a refresh, shown above the content (what was on screen stays). */
     val actionError: AppError? = null,
-    val undoMessage: UndoMessage? = null,
 ) {
     /** The system "Unassigned" envelope: read only, with no commitments and a name from the resources. */
     val isUnassigned: Boolean get() = envelope?.kind == EnvelopeKind.System

@@ -22,7 +22,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,7 +45,8 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_section_bank
 import dev.lacruzjs.sobreio.generated.resources.accounts_in_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_outside_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.action_compare_bank
-import dev.lacruzjs.sobreio.generated.resources.action_see_all
+import dev.lacruzjs.sobreio.generated.resources.action_see_all_movements
+import dev.lacruzjs.sobreio.generated.resources.ic_list
 import dev.lacruzjs.sobreio.generated.resources.chart_balance_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_period
@@ -101,6 +101,8 @@ import dev.lacruzjs.sobreio.ui.components.MoneyText
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+import dev.lacruzjs.sobreio.ui.components.IconActionButton
 
 /**
  * The Summary tab: balance, balance chart with its projection, forecast to the end of the period, in and out by period,
@@ -423,7 +425,17 @@ private fun UpcomingSection(state: AccountDetailUiState, languageTag: String) {
 
 @Composable
 private fun LatestMovementsSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
-    FormSection(title = stringResource(Res.string.detail_section_latest)) {
+    FormSection(
+        title = stringResource(Res.string.detail_section_latest),
+        action = {
+            IconActionButton(
+                icon = vectorResource(Res.drawable.ic_list),
+                iconSize = 24.dp,
+                label = stringResource(Res.string.action_see_all_movements),
+                onClick = { onEvent(AccountDetailEvent.SeeAllClicked) },
+            )
+        },
+    ) {
         SoftTile {
             if (state.movements.isEmpty()) {
                 Text(
@@ -433,11 +445,6 @@ private fun LatestMovementsSection(state: AccountDetailUiState, languageTag: Str
                 )
             } else {
                 state.movements.forEach { MovementRow(it, state.currencyCode, languageTag) }
-            }
-        }
-        if (state.movements.isNotEmpty()) {
-            TextButton(onClick = { onEvent(AccountDetailEvent.SeeAllClicked) }, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.action_see_all))
             }
         }
     }

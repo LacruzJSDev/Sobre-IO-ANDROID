@@ -239,7 +239,6 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
         )
         val state = loaded().state.value
 
-        assertEquals(3, state.transfersTotal)
         val (target, manual, reserve) = state.transfers
         assertEquals(40_000, target.signedCents)
         assertTrue(target.otherIsUnassigned)
@@ -263,142 +262,12 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun manualMovesTargetsAndReservesCanBeDeletedButNotCoversOrReleases() {
-        detail.transfers = listOf(
-            transfer(1, TransferOrigin.Manual),
-            transfer(2, TransferOrigin.Target),
-            transfer(3, TransferOrigin.Commitment),
-            transfer(4, TransferOrigin.Cover),
-            transfer(5, TransferOrigin.Release),
-        )
+    fun onlyTheLatestFiveMovesAreReadAndNoneCanBeChangedHere() {
+        detail.transfers = (1..8).map { transfer(it) }
         val state = loaded().state.value
 
-        assertEquals(listOf(true, true, true, false, false), state.transfers.map { it.canDelete })
-        assertEquals(listOf(true, true, false, false, false), state.transfers.map { it.canEdit })
-        assertTrue(state.canWriteTransfers)
-    }
-
-    @Test
-    fun deletingAMonthlyTargetVoidsItWhenTheSnackbarEnds() {
-        detail.transfers = listOf(transfer(1, TransferOrigin.Target, amount = 40_000))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
-
-        assertTrue(viewModel.state.value.transfers.isEmpty())
-        viewModel.onEvent(EnvelopeDetailEvent.UndoExpired)
-
-        assertEquals(listOf("t1"), detail.voided)
-    }
-
-    @Test
-    fun deletingACoverDoesNothing() {
-        detail.transfers = listOf(transfer(1, TransferOrigin.Cover))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
-
-        assertEquals(1, viewModel.state.value.transfers.size)
-        assertNull(viewModel.state.value.undoMessage)
-        assertTrue(detail.voided.isEmpty())
-    }
-
-    @Test
-    fun deletingAManualMoveHidesItAtOnceAndVoidsItWhenTheSnackbarEnds() {
-        detail.transfers = listOf(transfer(1), transfer(2))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
-
-        val state = viewModel.state.value
-        assertEquals(listOf("t2"), state.transfers.map { it.transfer.id })
-        assertEquals(1, state.transfersTotal)
-        assertEquals(Res.string.transfer_deleted, state.undoMessage?.message)
-        assertEquals(1_000L, state.undoMessage?.amountCents)
-        // Nothing is written while the snackbar is up
-        assertTrue(detail.voided.isEmpty())
-
-        viewModel.onEvent(EnvelopeDetailEvent.UndoExpired)
-
-        assertEquals(listOf("t1"), detail.voided)
-        assertNull(viewModel.state.value.undoMessage)
-        assertEquals(listOf("t2"), viewModel.state.value.transfers.map { it.transfer.id })
-        assertEquals(1, viewModel.state.value.transfersTotal)
-    }
-
-    @Test
-    fun undoBringsTheMoveBackWithoutWritingAnything() {
-        detail.transfers = listOf(transfer(1), transfer(2), transfer(3))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t2"))
-        viewModel.onEvent(EnvelopeDetailEvent.UndoClicked)
-
-        assertTrue(detail.voided.isEmpty())
-        assertEquals(listOf("t1", "t2", "t3"), viewModel.state.value.transfers.map { it.transfer.id })
-        assertEquals(3, viewModel.state.value.transfersTotal)
-        assertNull(viewModel.state.value.undoMessage)
-    }
-
-    @Test
-    fun aFailedVoidBringsTheMoveBackWithTheError() {
-        detail.transfers = listOf(transfer(1))
-        detail.voidResult = Result.failure(AppError.BusinessRule("FZ016"))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
-        viewModel.onEvent(EnvelopeDetailEvent.UndoExpired)
-
-        assertEquals(listOf("t1"), viewModel.state.value.transfers.map { it.transfer.id })
-        assertEquals(1, viewModel.state.value.transfersTotal)
-        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
-    }
-
-    @Test
-    fun aPendingDeleteIsFinalBeforeTheScreenIsReadAgain() {
-        detail.transfers = listOf(transfer(1), transfer(2))
-        val viewModel = loaded()
-        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
-        viewModel.onEvent(EnvelopeDetailEvent.Refresh)
-
-        assertEquals(listOf("t1"), detail.voided)
-        assertEquals(listOf("t2"), viewModel.state.value.transfers.map { it.transfer.id })
-    }
-
-    @Test
-    fun movesArePagedTwentyAtATimeWithTheExactCount() {
-        detail.transfers = (1..45).map { transfer(it) }
-        val viewModel = loaded()
-
-        assertTrue("getTransfers(e1, 0, 20)" in detail.calls)
-        assertEquals(20, viewModel.state.value.transfers.size)
-        assertEquals(45, viewModel.state.value.transfersTotal)
-        assertTrue(viewModel.state.value.hasMoreTransfers)
-
-        viewModel.onEvent(EnvelopeDetailEvent.LoadMoreTransfers)
-        assertTrue("getTransfers(e1, 20, 20)" in detail.calls)
-        assertEquals(40, viewModel.state.value.transfers.size)
-
-        viewModel.onEvent(EnvelopeDetailEvent.LoadMoreTransfers)
-        assertEquals(45, viewModel.state.value.transfers.size)
-        assertFalse(viewModel.state.value.hasMoreTransfers)
-
-        // Nothing left: no further request
-        val calls = detail.calls.size
-        viewModel.onEvent(EnvelopeDetailEvent.LoadMoreTransfers)
-        assertEquals(calls, detail.calls.size)
-    }
-
-    @Test
-    fun aFailedPageCanBeRetried() {
-        detail.transfers = (1..30).map { transfer(it) }
-        val viewModel = loaded()
-        detail.transfersResult = Result.failure(AppError.Network)
-        viewModel.onEvent(EnvelopeDetailEvent.LoadMoreTransfers)
-
-        assertTrue(viewModel.state.value.loadMoreTransfersFailed)
-        assertEquals(20, viewModel.state.value.transfers.size)
-
-        detail.transfersResult = null
-        viewModel.onEvent(EnvelopeDetailEvent.LoadMoreTransfers)
-
-        assertFalse(viewModel.state.value.loadMoreTransfersFailed)
-        assertEquals(30, viewModel.state.value.transfers.size)
+        assertTrue(detail.calls.contains("getTransfers(e1, 0, 5)"))
+        assertEquals(listOf("t1", "t2", "t3", "t4", "t5"), state.transfers.map { it.transfer.id })
     }
 
     @Test
@@ -419,6 +288,7 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
         val viewModel = loaded()
         val before = viewModel.state.value
         viewModel.onEvent(EnvelopeDetailEvent.SeeAllClicked)
+        viewModel.onEvent(EnvelopeDetailEvent.TransfersClicked)
         viewModel.onEvent(EnvelopeDetailEvent.EditClicked)
         viewModel.onEvent(EnvelopeDetailEvent.BackClicked)
         viewModel.onEvent(EnvelopeDetailEvent.CommitmentClicked("a1", "c1"))

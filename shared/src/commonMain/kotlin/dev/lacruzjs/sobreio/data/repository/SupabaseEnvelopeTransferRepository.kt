@@ -24,13 +24,19 @@ class SupabaseEnvelopeTransferRepository(client: SupabaseClient) : EnvelopeTrans
 
     private val postgrest = client.postgrest
 
-    override suspend fun getTransfers(groupId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage> = safeCall {
+    override suspend fun getTransfers(groupId: String, envelopeId: String?, offset: Int, limit: Int): Result<EnvelopeTransferPage> = safeCall {
         val result = postgrest.from(TABLE)
             .select(Columns.raw(TRANSFER_COLUMNS)) {
                 count(Count.EXACT)
                 filter {
                     eq("group_id", groupId)
                     exact("voided_at", null)
+                    if (envelopeId != null) {
+                        or {
+                            eq("from_envelope_id", envelopeId)
+                            eq("to_envelope_id", envelopeId)
+                        }
+                    }
                 }
                 order("created_at", Order.DESCENDING)
                 order("id", Order.ASCENDING)

@@ -19,9 +19,10 @@ class FakeEnvelopeTransferRepository(var transfers: List<EnvelopeTransfer> = emp
     var updateResult: Result<Unit> = Result.success(Unit)
     var voidResult: Result<Unit> = Result.success(Unit)
 
-    override suspend fun getTransfers(groupId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage> {
-        calls += "getTransfers($groupId, $offset, $limit)"
-        return pageResult ?: Result.success(EnvelopeTransferPage(transfers.drop(offset).take(limit), transfers.size))
+    override suspend fun getTransfers(groupId: String, envelopeId: String?, offset: Int, limit: Int): Result<EnvelopeTransferPage> {
+        calls += if (envelopeId == null) "getTransfers($groupId, $offset, $limit)" else "getTransfers($groupId, $envelopeId, $offset, $limit)"
+        val rows = if (envelopeId == null) transfers else transfers.filter { it.fromEnvelopeId == envelopeId || it.toEnvelopeId == envelopeId }
+        return pageResult ?: Result.success(EnvelopeTransferPage(rows.drop(offset).take(limit), rows.size))
     }
 
     override suspend fun getTransfer(id: String): Result<EnvelopeTransfer> {

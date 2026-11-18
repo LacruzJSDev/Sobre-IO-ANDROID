@@ -355,6 +355,8 @@
     <string name="detail_section_upcoming">Próximos vencimientos</string>
     <string name="detail_section_latest">Últimos movimientos</string>
     <string name="action_see_all">Ver todos</string>
+    <string name="action_manage_transfers">Gestionar movimientos entre sobres</string>
+    <string name="action_see_all_movements">Ver todos los movimientos</string>
     <string name="detail_no_movements">Aún no hay movimientos.</string>
     <string name="movement_kind_income">Ingreso</string>
     <string name="movement_kind_expense">Gasto</string>

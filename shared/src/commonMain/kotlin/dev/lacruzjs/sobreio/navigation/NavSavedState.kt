@@ -31,6 +31,7 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(EnvelopeDetail::class)
             subclass(EnvelopeMovements::class)
             subclass(EnvelopeTransfers::class)
+            subclass(EnvelopeTransfersOf::class)
             subclass(EnvelopeTransferForm::class)
             subclass(MovementForm::class)
             subclass(CommitmentForm::class)

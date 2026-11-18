@@ -30,8 +30,29 @@ class EnvelopeTransfersViewModelTest : MainDispatcherTest() {
         "t$index", "u", "e1", 1_000L * index, origin, Instant.parse("2026-11-${10 + index}T10:00:00Z"),
     )
 
-    private fun loaded() = EnvelopeTransfersViewModel("g1", groups, envelopes, transfers).also {
-        it.onEvent(EnvelopeTransfersEvent.Refresh)
+    private fun loaded(envelopeId: String? = null) =
+        EnvelopeTransfersViewModel(groupId = "g1", envelopeId = envelopeId, groups = groups, envelopes = envelopes, transfers = transfers)
+            .also { it.onEvent(EnvelopeTransfersEvent.Refresh) }
+
+    @Test
+    fun fromAnEnvelopeOnlyItsMovesAreListedAndTheEnvelopeIsNamed() {
+        val other = EnvelopeTransfer("t9", "u", "e9", 500, TransferOrigin.Manual, Instant.parse("2026-11-20T10:00:00Z"))
+        transfers.transfers = listOf(other, transfer(1))
+        val state = loaded(envelopeId = "e1").state.value
+
+        assertEquals("getTransfers(g1, e1, 0, 50)", transfers.calls.last())
+        assertEquals(listOf("t1"), state.rows.map { it.transfer.id })
+        assertEquals("Food", state.envelopeName)
+        assertFalse(state.envelopeIsUnassigned)
+    }
+
+    @Test
+    fun theWholeGroupHasNoEnvelopeName() {
+        transfers.transfers = listOf(transfer(1))
+        val state = loaded().state.value
+
+        assertEquals("getTransfers(g1, 0, 50)", transfers.calls.last())
+        assertEquals(null, state.envelopeName)
     }
 
     @Test

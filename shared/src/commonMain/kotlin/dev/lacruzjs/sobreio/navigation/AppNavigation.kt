@@ -176,10 +176,10 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onBack = { backStack.popToPrevious() },
                     onEdit = { backStack.add(EnvelopeForm(key.groupId, key.envelopeId)) },
                     onSeeAllMovements = { backStack.add(EnvelopeMovements(key.groupId, key.envelopeId)) },
+                    onOpenTransfers = { backStack.add(EnvelopeTransfersOf(key.groupId, key.envelopeId)) },
                     onOpenCommitment = { accountId, commitmentId ->
                         backStack.add(CommitmentDetail(key.groupId, accountId, commitmentId))
                     },
-                    onEditTransfer = { transferId -> backStack.add(EnvelopeTransferForm(key.groupId, transferId)) },
                 )
             }
             entry<EnvelopeTransfers>(metadata = detailPane) { key ->
@@ -190,10 +190,20 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onEdit = { transferId -> backStack.add(EnvelopeTransferForm(key.groupId, transferId)) },
                 )
             }
+            entry<EnvelopeTransfersOf>(metadata = extraPane) { key ->
+                EnvelopeTransfersRoute(
+                    groupId = key.groupId,
+                    envelopeId = key.envelopeId,
+                    onBack = { backStack.popToPrevious() },
+                    onNew = { backStack.add(EnvelopeTransferForm(key.groupId, null, toEnvelopeId = key.envelopeId)) },
+                    onEdit = { transferId -> backStack.add(EnvelopeTransferForm(key.groupId, transferId)) },
+                )
+            }
             entry<EnvelopeTransferForm> { key ->
                 EnvelopeTransferFormRoute(
                     groupId = key.groupId,
                     transferId = key.transferId,
+                    toEnvelopeId = key.toEnvelopeId,
                     onClose = { backStack.popToPrevious() },
                 )
             }

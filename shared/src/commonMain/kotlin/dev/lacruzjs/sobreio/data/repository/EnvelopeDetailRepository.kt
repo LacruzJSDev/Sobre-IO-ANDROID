@@ -32,12 +32,6 @@ interface EnvelopeDetailRepository {
     suspend fun getTransfers(envelopeId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage>
 
     /**
-     * Voids a move (`voided_at`): manual ones, monthly targets and commitment reserves (see
-     * [dev.lacruzjs.sobreio.domain.model.TransferOrigin.canVoid]). FZ016 when RLS hides it.
-     */
-    suspend fun voidTransfer(id: String): Result<Unit>
-
-    /**
      * The live commitments with a funded version that points to the envelope, one row each. Which of them reserve money
      * in the current cycle is for `CommitmentRepository.getFundingStatus` to say.
      */

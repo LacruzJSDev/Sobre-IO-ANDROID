@@ -11,12 +11,11 @@ import dev.lacruzjs.sobreio.domain.model.FundingCommitment
 
 /**
  * Serves the lists it is given in pages of the requested size. Calls are recorded in [calls]; set the `*Result` fields to
- * script failures. A voided move leaves [transfers].
+ * script failures.
  */
 class FakeEnvelopeDetailRepository(var envelopes: List<Envelope> = emptyList()) : EnvelopeDetailRepository {
 
     val calls = mutableListOf<String>()
-    val voided = mutableListOf<String>()
 
     var periods: List<EnvelopePeriod> = emptyList()
     var outlook: EnvelopeOutlook? = null
@@ -26,7 +25,6 @@ class FakeEnvelopeDetailRepository(var envelopes: List<Envelope> = emptyList()) 
     var periodsResult: Result<List<EnvelopePeriod>>? = null
     var outlookResult: Result<EnvelopeOutlook?>? = null
     var transfersResult: Result<EnvelopeTransferPage>? = null
-    var voidResult: Result<Unit> = Result.success(Unit)
 
     override suspend fun getEnvelope(envelopeId: String): Result<Envelope> {
         calls += "getEnvelope($envelopeId)"
@@ -46,13 +44,6 @@ class FakeEnvelopeDetailRepository(var envelopes: List<Envelope> = emptyList()) 
     override suspend fun getTransfers(envelopeId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage> {
         calls += "getTransfers($envelopeId, $offset, $limit)"
         return transfersResult ?: Result.success(EnvelopeTransferPage(transfers.drop(offset).take(limit), transfers.size))
-    }
-
-    override suspend fun voidTransfer(id: String): Result<Unit> {
-        calls += "voidTransfer($id)"
-        voided += id
-        voidResult.onSuccess { transfers = transfers.filter { it.id != id } }
-        return voidResult
     }
 
     override suspend fun getFundingCommitments(envelopeId: String): Result<List<FundingCommitment>> {

@@ -74,12 +74,19 @@ val uiModule = module {
         )
     }
     viewModel { params ->
-        EnvelopeTransfersViewModel(groupId = params.get(), groups = get(), envelopes = get(), transfers = get())
+        EnvelopeTransfersViewModel(
+            groupId = params.get<String>(0),
+            envelopeId = params.get<String?>(1),
+            groups = get(),
+            envelopes = get(),
+            transfers = get(),
+        )
     }
     viewModel { params ->
         EnvelopeTransferFormViewModel(
             groupId = params.get<String>(0),
             transferId = params.get<String?>(1),
+            initialToId = params.get<String?>(2),
             groups = get(),
             envelopes = get(),
             transfers = get(),

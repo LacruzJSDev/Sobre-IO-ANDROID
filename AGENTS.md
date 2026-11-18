@@ -263,27 +263,31 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   of the last 6 periods (`EnvelopePeriod.chartColumns()`: assigned and spent, each clamped at 0 because a column cannot be
   negative, a display choice and not a balance); "Commitments that fund it" (`EnvelopeDetailRepository.getFundingCommitments`
   lists the live commitments with a funded version pointing here, `CommitmentRepository.getFundingStatus` keeps only those
-  that reserve money for this envelope now; rows tap to `CommitmentDetail(groupId, accountId, commitmentId)`); a
-  `CollapsibleListSection` of the live `envelope_transfers` of the envelope (exact count with `count(exact)`, pages of 20,
-  newest first, origin label, "From/To <envelope>" and the day in the group time zone, signed `MoneyText` Flow; any member
-  of a live group swipes Edit on manual and monthly target rows (also a tap; opens `EnvelopeTransferForm`) and Delete on
-  manual, target and commitment reserve rows (`TransferOrigin.canVoid`/`canEdit`): hidden at once, Undo snackbar, `voided_at`
-  written when it ends without Undo; a voided target is not generated again in its period, D-53; covers and releases stay
-  read only); and
-  the 5 latest movements (`MovementRepository.search` with the envelope filter) with "See all". `EnvelopeDetailRepository`
-  (`data/repository`, DTOs and mappers in `data/remote`, `FakeEnvelopeDetailRepository` in tests) wraps `envelope_balances`,
+  that reserve money for this envelope now; rows tap to `CommitmentDetail(groupId, accountId, commitmentId)`); "Moves between
+  envelopes": the 5 newest live `envelope_transfers` of the envelope (`LATEST_TRANSFERS`; origin label, "From/To <envelope>" and
+  the day in the group time zone, signed `MoneyText` Flow), READ ONLY, with the swap icon (`Icons.Filled.SwapHoriz`) at the
+  right of the section title opening `EnvelopeTransfersOf(groupId, envelopeId)`, the only place where they are edited and
+  deleted; and the 5 latest movements (`MovementRepository.search` with the envelope filter) with the movements icon
+  (`ic_list`) at the right of the title opening `EnvelopeMovements`. Nothing is edited or deleted in the detail itself, so it
+  has no swipes, no Undo and no "See all" button. `EnvelopeDetailRepository`
+  (`data/repository`, DTOs and mappers in `data/remote`, `FakeEnvelopeDetailRepository` in tests) reads `envelope_balances`,
   `envelope_periods`, `envelope_outlook_current` and `envelope_transfers`; the app only signs the moves for this envelope.
 - Moves between envelopes (`ui/envelopetransfers`, route `EnvelopeTransfers(groupId)`, level 2 of the Envelopes tab, detail pane,
   `EnvelopeTransfersViewModel(groupId)` with `GroupRepository`, `EnvelopeRepository`, `EnvelopeTransferRepository`): opened by the
   swap icon (`IconActionButton`, every member) left of the "+" in the Envelopes tab header. Every live `envelope_transfers` row of
   the group, newest first, 50 per page with load-more: destination envelope avatar, "From → To", origin label and day, `MoneyText`
-  Transfer. Members of a live group swipe Edit and Delete with the same rules and Undo as the envelope detail; the header "+"
-  opens the form for a new manual move. `EnvelopeTransferForm(groupId, transferId?)` (`EnvelopeTransferFormViewModel`, full
-  screen, `FormScaffold`): amount, From and To `EntitySelect`s ("Unassigned" first, each with its balance; a new move starts from
-  Unassigned) and notes; an automatic move (monthly target) shows its envelopes read only with a note, only amount and notes
+  Transfer. Members of a live group swipe Edit (manual moves and monthly targets, also a tap) and Delete (manual, target and
+  commitment reserve rows, `TransferOrigin.canEdit`/`canVoid`): hidden at once, Undo snackbar, `voided_at` written when it ends
+  without Undo; a voided target is not generated again in its period, D-53; covers and releases stay read only. The header "+"
+  opens the form for a new manual move. The same screen limited to one envelope is `EnvelopeTransfersOf(groupId, envelopeId)`
+  (level 3, extra pane above the envelope detail; `EnvelopeTransfersViewModel(groupId, envelopeId)`,
+  `EnvelopeTransferRepository.getTransfers(groupId, envelopeId, …)` filters from or to it; the subtitle names the envelope and
+  its "+" starts the form with that envelope as the destination). `EnvelopeTransferForm(groupId, transferId?, toEnvelopeId?)`
+  (`EnvelopeTransferFormViewModel`, full screen, `FormScaffold`): amount, From and To `EntitySelect`s ("Unassigned" first, each
+  with its balance; a new move starts from Unassigned, and on `toEnvelopeId` when it is a live envelope) and notes; an automatic move (monthly target) shows its envelopes read only with a note, only amount and notes
   change (D-16). Create inserts a manual row, edit is a plain update of `envelope_transfers`. `EnvelopeTransferRepository`
   (`SupabaseEnvelopeTransferRepository`) reads and writes the table; `voidTransfer` only touches `VOIDABLE_ORIGINS`.
-- "See all" of an envelope pushes `EnvelopeMovements(groupId, envelopeId)` (level 3) above the detail: the same
+- The movements icon of an envelope's detail pushes `EnvelopeMovements(groupId, envelopeId)` (level 3) above the detail: the same
   `MovementsViewModel` and `MovementsPane` with `fixedEnvelopeId` (Koin params `groupId, fixedAccountId, fixedEnvelopeId`; the
   Envelope chip is hidden and the rows show their account instead), through the shared `FixedFilterMovementsScreen` that
   `AccountMovementsScreen` also uses. Back returns to the detail.
@@ -322,7 +326,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Summary: balance with kind, holder (several members only) and scope; balance line chart over 1M/3M/6M/1Y (default 3M)
   with the dashed projection to the end of the period; forecast tiles (scheduled in, out, projected end; shortfall tile in
   the `error` colour with the date of the lowest point, `shortfallDate`); in/out column chart of the last 6 periods; next 3
-  due items; latest 5 movements with "See all" (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField` plus the "In credit / Debt" chips, `CompareState.bankIsNegative`, default Debt when the
+  due items; latest 5 movements with the movements icon (`ic_list`) at the right of the section title (pushes `AccountMovements`); "Compare with bank" opens a sheet (`AmountField` plus the "In credit / Debt" chips, `CompareState.bankIsNegative`, default Debt when the
   account balance is negative; debounced `compare_with_bank`, re-run when the sign changes) whose "Adjust to this balance" records an `adjustment` with `create_transaction` and shows an Undo
   snackbar that voids it (`transactions.voided_at`). `AccountDetailRepository` (`data/repository`, DTOs and mappers in
   `data/remote`) wraps `group_today`, `current_period`, `account_forecast`, `account_balance_series`, `account_projection`,
@@ -492,8 +496,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   scrubs the panes and then pops (`previousEntries` = the stack minus the top, so back from a detail never leaves the app).
   On a phone (one partition) it gives no scene. Entry metadata (ours, same file): `listPane` for `Group` and `Groups` (`Groups`
   also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`, `EnvelopeTransfers`,
-  `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements` and
-  `Tags`. Forms, `TimeZonePicker`, `DeleteAccount` and `BankImport` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
+  `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements`,
+  `EnvelopeTransfersOf` and `Tags`. Forms, `TimeZonePicker`, `DeleteAccount` and `BankImport` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
   window and 420 dp from expanded (`listWidth`).
   Window classes: compact < 600 dp, medium 600-840, expanded >= 840. Two panes from medium (a tablet in portrait, an open foldable; the directive keeps them off a
   vertical hinge), so only phones keep one pane, and the back stack rules do not change. `MutableList<NavKey>.openDetail(key)` (next to
@@ -611,6 +615,9 @@ plus `movementform` (the new / edit movement form).
 - Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
   inline list under the tile with its own scroll, a search box over 8 options, `EntityOption` with optional special first options such as
   "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
+- A detail screen shows, never manages: a section of items that are edited elsewhere shows the latest few, read only, and
+  an icon at the right of its title (`FormSection(action = …)`, an `IconActionButton` of 24 dp) opens the screen where they
+  are all listed and managed. No "See all" button under a section, and no item managed in two places.
 - Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, bounded height with
   their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
@@ -630,7 +637,7 @@ plus `movementform` (the new / edit movement form).
   `PendingUndoCommits.await()` before reading, so they never show figures from before the delete. Navigation 3 clears a
   popped entry's ViewModel only after its exit animation, so a level 2 screen with deletes commits on back itself: its
   `BackClicked` calls `commitDetached` and its Route adds `CommitUndoOnBack(pending = state.undoMessage != null)`, which
-  sends system back and the gesture the same way while a delete waits (envelope moves, envelope and account details, review).
+  sends system back and the gesture the same way while a delete waits (envelope moves, account detail, review).
 - Adaptive layout uses `NavigationSuiteScaffold` and our list-detail scene `AdaptiveListDetail` (one scene per root, so panes move instead of scenes cross-fading) (see "Adaptive layout" in Current state); decide widths by the pane's own width (`BoxWithConstraints`, `contentMaxWidth`), never the window's; check phone, tablet and foldable previews or emulators.
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;
@@ -676,7 +683,9 @@ run the app again from Xcode to renew it. From the terminal, `xcodebuild -projec
 - Several agents work on this repository at once: work in your own git worktree, never in the main checkout. From
   this folder, `git worktree add ../worktrees/app-<topic> -b <type>/<topic> origin/main`, copy `local.properties` into it,
   and commit only to your own branch. Never switch branches, stash or commit in a checkout you did not create. Before
-  deleting a branch, `git log origin/<branch>..<branch>` must be empty; after the merge, `git worktree remove` it.
+  deleting a branch, `git log origin/<branch>..<branch>` must be empty; after the merge, `git worktree remove` it and bring
+  the main checkout up to date when it is on `main` (`git pull --ff-only`), the one thing done there, so the author builds
+  the merged code.
 - When you add a dependency, add it to the version catalog and to the "Stack" or "Current state" section above.
 - When you add a screen or a layer rule, update this file in the same change.
 

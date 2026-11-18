@@ -42,16 +42,27 @@ import org.jetbrains.compose.resources.stringResource
  * content (colour palette, icon grid) opens under it. Flat: soft background, rounded corners, spacing, no dividers.
  */
 
-/** A titled group of tiles. */
+/**
+ * A titled group of tiles. [action] sits at the right of the title: in a read-only detail, the icon that opens the
+ * screen where that section's items are all listed and managed (never a "See all" button under the section).
+ */
 @Composable
-fun FormSection(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun FormSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f).padding(start = 4.dp, bottom = 2.dp),
+            )
+            action?.invoke()
+        }
         content()
     }
 }
