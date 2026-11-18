@@ -529,12 +529,18 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Content width, by the pane's own width: `ui/components/ContentWidth.kt` (`ContentWidth.Form` 640, `List` 720, `TwoColumns` 1120,
   `TwoColumnsMinPane` 720 dp, so each column gets about a phone's content width and `Modifier.contentMaxWidth(max)`, which centres and caps while the `Surface` keeps the full width).
   Applied once on the root column of `FormScaffold`, the group shell (List, or TwoColumns on the Group tab), Groups, group settings,
-  review, tags, movements lists, commitment detail, profile and the time zone picker. With `BoxWithConstraints`, a pane of 720 dp or more shows
-  two columns: Group tab (rows of pieces of a similar size so neither side runs on: the hero beside review and warnings; where
-  the money went beside in and out, both cards one height (`IntrinsicSize.Min`), or one alone across; next due items across the
-  whole width), account detail
-  Summary (left: balance, chart, forecast; right: in/out, next due, latest movements, compare) and envelope detail (left: available,
-  this period, really free; right: chart, commitments, transfers, latest movements). `FlatBottomSheet` sets `sheetMaxWidth` to 640 dp.
+  review, tags, movements lists, commitment detail, profile and the time zone picker. Two columns (decided 2026-11-18, `ui/components/TwoColumnLayout.kt`): a pane of 720 dp or more
+  (`ContentWidth.TwoColumnsMinPane`, the pane's own width) shows two columns, EACH WITH ITS OWN SCROLL, so a short column stays
+  put while the other scrolls; below it the same pieces stack in one scrolling column, left first. Left = what sums the screen
+  up, right = what is gone through. `TwoColumnLayout(left, right, top)` scrolls plain columns; `TwoColumnSplit(narrow, left,
+  right)` is for a lazy list (the right column a `LazyColumn` with `RightColumnPadding`, the narrow version the same list with the
+  summary as its first items). Screens: Group tab (left: hero, review, warnings; right: where the money went, in and out, next
+  due items), Accounts (left: hero; right: the list; weights 5/6), Envelopes (same), account detail Summary (left: balance, chart,
+  forecast; right: in/out, next due, latest movements, bank), envelope detail (left: available, this period, really free, chart;
+  right: commitments, transfers, latest movements), commitment detail (left: amount, reservation, changes; right: history) and
+  group settings (left: details and tags; right: members and invitations). The group shell, commitment detail and group settings
+  are held to `ContentWidth.TwoColumns`; Movements stays one column (`ContentWidth.List`) until a filter summary gives its left
+  side content; forms and Profile stay `ContentWidth.Form`. `FlatBottomSheet` sets `sheetMaxWidth` to 640 dp.
 - Debug builds of the Android app allow cleartext HTTP only to `10.0.2.2`, `localhost` and `127.0.0.1`
   (`app/src/debug/res/xml/network_security_config.xml`); release builds are HTTPS only. The iOS app allows local
   networking (`NSAllowsLocalNetworking`).

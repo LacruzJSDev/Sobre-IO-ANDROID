@@ -1,7 +1,9 @@
 package dev.lacruzjs.sobreio.ui.commitmentdetail
+import androidx.compose.runtime.getValue
+import dev.lacruzjs.sobreio.ui.components.TwoColumnLayout
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,8 +16,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
@@ -73,7 +72,6 @@ import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatMoney
-import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.pluralStringResource
@@ -118,7 +116,7 @@ fun CommitmentDetailScreen(
 ) {
     val version = state.version
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.TwoColumns)) {
             ScreenHeader(
                 isRefreshing = state.isRefreshing,
                 title = state.name,
@@ -167,60 +165,59 @@ private fun DetailContent(
     onEvent: (CommitmentDetailEvent) -> Unit,
 ) {
     val languageTag = Locale.current.toLanguageTag()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        val rest = listOfNotNull(
-            frequencyText(version, languageTag),
-            if (state.isArchived) stringResource(Res.string.group_archived_label) else null,
-        ).reduceOrNull { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
-        Row(modifier = Modifier.padding(horizontal = 4.dp)) {
-            MoneyText(
-                amountCents = state.signedCents,
-                currencyCode = state.currencyCode,
-                role = MoneyRole.Flow,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            // The separator comes from the same "a · b" resource, with nothing before it
-            if (rest != null) {
-                Text(
-                    text = stringResource(Res.string.row_subtitle, "", rest),
+    // What the commitment is and how it changed on the left; every due date on the right, each with its own scroll on a
+    // wide pane
+    TwoColumnLayout(
+        left = {
+            val rest = listOfNotNull(
+                frequencyText(version, languageTag),
+                if (state.isArchived) stringResource(Res.string.group_archived_label) else null,
+            ).reduceOrNull { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
+            Row(modifier = Modifier.padding(horizontal = 4.dp)) {
+                MoneyText(
+                    amountCents = state.signedCents,
+                    currencyCode = state.currencyCode,
+                    role = MoneyRole.Flow,
                     style = MaterialTheme.typography.titleMedium,
                 )
+                // The separator comes from the same "a · b" resource, with nothing before it
+                if (rest != null) {
+                    Text(
+                        text = stringResource(Res.string.row_subtitle, "", rest),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
             }
-        }
 
-        state.funding?.let { FundingBlock(it, state.fundingEnvelopeName, state.currencyCode, languageTag) }
+            state.funding?.let { FundingBlock(it, state.fundingEnvelopeName, state.currencyCode, languageTag) }
 
-        CollapsibleListSection(
-            title = stringResource(Res.string.commitment_detail_history_title),
-            count = state.occurrencesTotal,
-            items = state.occurrences,
-            initiallyExpanded = true,
-            emptyText = stringResource(Res.string.commitment_detail_history_empty),
-            itemKey = { it.dueDate.toString() },
-            isLoadingMore = state.isLoadingMore,
-            loadMoreFailed = state.loadMoreFailed,
-            onLoadMore = if (state.hasMoreOccurrences) {
-                { onEvent(CommitmentDetailEvent.LoadMoreOccurrences) }
-            } else {
-                null
-            },
-        ) { OccurrenceItem(it, state.currencyCode, languageTag) }
-
-        CollapsibleListSection(
-            title = stringResource(Res.string.commitment_detail_changes_title),
-            count = state.versions.size,
-            items = state.versions,
-            // One version is nothing to hide; a long story starts folded
-            initiallyExpanded = state.versions.size == 1,
-            itemKey = { it.version.id },
-        ) { VersionItem(it, state.currencyCode, languageTag) }
-    }
+            CollapsibleListSection(
+                title = stringResource(Res.string.commitment_detail_changes_title),
+                count = state.versions.size,
+                items = state.versions,
+                // One version is nothing to hide; a long story starts folded
+                initiallyExpanded = state.versions.size == 1,
+                itemKey = { it.version.id },
+            ) { VersionItem(it, state.currencyCode, languageTag) }
+        },
+        right = {
+            CollapsibleListSection(
+                title = stringResource(Res.string.commitment_detail_history_title),
+                count = state.occurrencesTotal,
+                items = state.occurrences,
+                initiallyExpanded = true,
+                emptyText = stringResource(Res.string.commitment_detail_history_empty),
+                itemKey = { it.dueDate.toString() },
+                isLoadingMore = state.isLoadingMore,
+                loadMoreFailed = state.loadMoreFailed,
+                onLoadMore = if (state.hasMoreOccurrences) {
+                    { onEvent(CommitmentDetailEvent.LoadMoreOccurrences) }
+                } else {
+                    null
+                },
+            ) { OccurrenceItem(it, state.currencyCode, languageTag) }
+        },
+    )
 }
 
 /** The reservation of a funded commitment: what this period sets aside and how far the cycle has got. */

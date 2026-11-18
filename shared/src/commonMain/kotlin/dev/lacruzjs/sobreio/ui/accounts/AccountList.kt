@@ -1,5 +1,13 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import dev.lacruzjs.sobreio.ui.components.SingleColumnPadding
+import dev.lacruzjs.sobreio.ui.components.RightColumnPadding
+import dev.lacruzjs.sobreio.ui.components.LeftColumnPadding
+import dev.lacruzjs.sobreio.ui.components.TwoColumnSplit
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,11 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -73,6 +79,27 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Unit) {
+    // Wide pane: the hero card stays on the left while the accounts scroll on the right
+    TwoColumnSplit(
+        narrow = { AccountRows(state, onEvent, withHero = true, contentPadding = SingleColumnPadding) },
+        left = {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding)) {
+                AccountsHero(state)
+            }
+        },
+        right = { AccountRows(state, onEvent, withHero = false, contentPadding = RightColumnPadding) },
+        leftWeight = 5f,
+        rightWeight = 6f,
+    )
+}
+
+@Composable
+private fun AccountRows(
+    state: AccountsUiState,
+    onEvent: (AccountsEvent) -> Unit,
+    withHero: Boolean,
+    contentPadding: PaddingValues,
+) {
     // Not saved: a row is always drawn closed when its screen is composed again
     var openAccountId by remember { mutableStateOf<String?>(null) }
     var archivedExpanded by rememberSaveable { mutableStateOf(false) }
@@ -114,10 +141,10 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        item(key = "summary") { AccountsHero(state) }
+        if (withHero) item(key = "summary") { AccountsHero(state) }
         if (state.actionError != null) {
             item(key = "action-error") {
                 ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
