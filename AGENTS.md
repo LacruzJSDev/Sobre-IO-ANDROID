@@ -310,7 +310,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   preambles, columns by values then names), `readStatementRows` (charges negative, stable `b1:` FNV references with an occurrence number for
   identical rows, `closingBalanceCents`) and `headerSignature`. `BankImportRepository` / `SupabaseBankImportRepository` wrap
   `bank_import_preview`, `apply_bank_import` (tag name in the user's language, `bank_import_tag_name`, colour `TagColor.Default`),
-  `void_bank_import` and `bank_import_overview`; a 23505 there is `BANK_ROW_ALREADY_IMPORTED`, FZ023 has its own message. Every
+  `void_bank_import` and `bank_import_overview`; a 23505 there is `BANK_ROW_ALREADY_IMPORTED`, FZ024 has its own message. Every
   suggestion comes from the database; the app only reads the file, keeps the user's choices and sorts.
 - Commitments tab rows (`ui/commitments`): the subtitle says "Paid this period" in the inflow colour when a due date of the current period
   is already registered (`CommitmentRepository.getPaidCommitmentIds` over `commitment_occurrences`, status `materialized`), otherwise
@@ -565,7 +565,7 @@ plus `movementform` (the new / edit movement form).
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).
   Never chain several table writes to emulate one operation, and never recompute balances in the app.
-- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ023` become
+- Errors: data maps any failure to an `AppError` in `data/remote/ErrorMapper.kt` (database codes `FZ001`–`FZ024` become
   `BusinessRule`); ui maps `AppError` to string resources in `ui/error/ErrorMessages.kt`. Each happens in one place.
   Repository implementations wrap calls with `safeCall`.
 - Every standalone money figure is a `MoneyText` with its role (Flow, Transfer, Balance, Plain); never `formatMoney` plus a
