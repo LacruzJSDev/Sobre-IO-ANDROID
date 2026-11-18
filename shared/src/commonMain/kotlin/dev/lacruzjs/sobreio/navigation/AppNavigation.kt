@@ -1,8 +1,9 @@
 package dev.lacruzjs.sobreio.navigation
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,19 +62,21 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // entries, because the form's ViewModel stays alive underneath the picker: the form applies it once and clears it.
     var pickedTimeZone by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // List-detail: on a wide window the group (or Groups) is the list pane and its detail screens open beside it. On compact
-    // and medium windows the strategy shows one pane, so it yields to the single pane default and nothing changes
-    val listDetail = rememberListDetailSceneStrategy<NavKey>()
-    // Panes of the list-detail scene. The list takes the full width while nothing is open (no detail placeholder)
-    val listPane = ListDetailSceneStrategy.listPane() + ListDetailSceneStrategy.preferredPaneSize(width = ListPaneWidth) + listPaneMarker
-    val detailPane = ListDetailSceneStrategy.detailPane()
-    val extraPane = ListDetailSceneStrategy.extraPane()
+    // List-detail (AdaptiveListDetail): from a medium window (a tablet in portrait, an open foldable) the group (or Groups)
+    // is the list pane and its detail screens open beside it; the directive keeps the panes off a vertical hinge. Beside a
+    // detail the list takes half of a medium window and a fixed width from expanded. Phones show one pane as before
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val directive = calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(adaptiveInfo)
+    val isExpanded = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    val listDetail = remember(directive, isExpanded) {
+        AdaptiveListDetail<NavKey>(directive = directive, listWidth = if (isExpanded) ListPaneWidth else null)
+    }
 
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.popToPrevious() },
-        sceneStrategies = listOf(SplitWhenDetailOpen(listDetail), SinglePaneSceneStrategy()),
+        sceneStrategies = listOf(listDetail, SinglePaneSceneStrategy()),
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -93,6 +96,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     groupId = key.groupId,
                     onOpenGroups = { backStack.showOnlyGroups() },
                     onGroupGone = { backStack.showOnlyGroups() },
+                    onCloseDetails = { backStack.closeDetails() },
                     onOpenSettings = { backStack.openDetail(GroupSettings(key.groupId)) },
                     onOpenReview = { backStack.openDetail(GroupReview(key.groupId)) },
                     onOpenAccountForm = { accountId -> backStack.add(AccountForm(key.groupId, accountId)) },

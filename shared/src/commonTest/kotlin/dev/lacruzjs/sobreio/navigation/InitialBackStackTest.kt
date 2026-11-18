@@ -87,4 +87,18 @@ class InitialBackStackTest {
         stack.openDetail(Profile)
         assertEquals(listOf<NavKey>(Groups, Profile), stack)
     }
+
+    @Test
+    fun closingDetailsLeavesTheListAlone() {
+        val stack = mutableListOf<NavKey>(Group("g1"), AccountDetail("g1", "a1"), CommitmentDetail("g1", "a1", "c1"))
+        stack.closeDetails()
+        assertEquals(listOf<NavKey>(Group("g1")), stack)
+    }
+
+    @Test
+    fun closingDetailsKeepsTheRootAndIgnoresAListAlone() {
+        val stack = mutableListOf<NavKey>(Group("g1"))
+        stack.closeDetails()
+        assertEquals(listOf<NavKey>(Group("g1")), stack)
+    }
 }

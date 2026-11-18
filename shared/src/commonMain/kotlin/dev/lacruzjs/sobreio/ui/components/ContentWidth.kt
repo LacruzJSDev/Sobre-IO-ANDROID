@@ -22,8 +22,12 @@ object ContentWidth {
     /** Two-column layouts (Group tab, account and envelope details). */
     val TwoColumns: Dp = 1120.dp
 
-    /** A pane at least this wide lays its content out in two columns. */
-    val TwoColumnsMinPane: Dp = 840.dp
+    /**
+     * A pane at least this wide lays its content out in two columns: each column then gets about a phone's content width
+     * (the hero card and charts are designed for that). An open foldable with the list alone qualifies; a pane beside a
+     * detail does not.
+     */
+    val TwoColumnsMinPane: Dp = 720.dp
 }
 
 /**

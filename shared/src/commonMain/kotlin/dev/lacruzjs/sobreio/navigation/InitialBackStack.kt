@@ -48,6 +48,15 @@ fun NavKey.isPaneDetail(): Boolean = when (this) {
  * when no detail is open, so this is a plain push there.
  */
 fun MutableList<NavKey>.openDetail(detail: NavKey) {
-    while (size > 1 && last().isPaneDetail()) removeAt(lastIndex)
+    closeDetails()
     add(detail)
+}
+
+/**
+ * Closes whatever detail (and extra pane) is open beside the list, leaving the list alone: changing the group's tab, since
+ * an account's detail makes no sense beside the envelopes. On a phone the list is only on top when nothing is open, so
+ * this does nothing there.
+ */
+fun MutableList<NavKey>.closeDetails() {
+    while (size > 1 && last().isPaneDetail()) removeAt(lastIndex)
 }
