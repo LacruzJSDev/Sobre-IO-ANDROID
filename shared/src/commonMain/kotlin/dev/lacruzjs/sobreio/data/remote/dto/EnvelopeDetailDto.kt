@@ -34,6 +34,7 @@ internal data class EnvelopeTransferDto(
     val origin: String,
     @SerialName("commitment_id") val commitmentId: String? = null,
     @SerialName("created_at") val createdAt: String,
+    val notes: String? = null,
 )
 
 /** A funded version of a commitment that points to an envelope. */

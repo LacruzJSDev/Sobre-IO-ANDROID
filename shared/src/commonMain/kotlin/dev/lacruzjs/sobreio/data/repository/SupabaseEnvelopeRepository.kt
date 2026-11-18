@@ -46,7 +46,7 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
             .decodeList<EnvelopeDto>()
         // The balances view has no colour or icon: they come from `envelopes`, joined by id
         val styles = postgrest.from(TABLE)
-            .select(Columns.list("id", "color", "icon", "purpose")) { filter { eq("group_id", groupId) } }
+            .select(Columns.list("id", "color", "icon", "purpose", "targets_from")) { filter { eq("group_id", groupId) } }
             .decodeList<EnvelopeStyleDto>()
             .associateBy { it.id }
         balances.mapNotNull { it.toDomain(styles[it.id]) }
@@ -77,6 +77,7 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
                     put("owner_user_id", draft.ownerUserId)
                     put("color", draft.color)
                     put("icon", draft.icon)
+                    draft.targetsFrom?.let { put("targets_from", it.toString()) }
                 },
             ) { select(Columns.list("id")) }
             .decodeSingle<IdDto>()
@@ -92,6 +93,7 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
             set("owner_user_id", draft.ownerUserId)
             set("color", draft.color)
             set("icon", draft.icon)
+            draft.targetsFrom?.let { set("targets_from", it.toString()) }
         }
     }
 

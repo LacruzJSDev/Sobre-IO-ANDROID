@@ -263,16 +263,36 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun onlyManualMovesCanBeDeleted() {
-        detail.transfers = listOf(transfer(1, TransferOrigin.Manual), transfer(2, TransferOrigin.Target), transfer(3, TransferOrigin.Cover))
+    fun manualMovesTargetsAndReservesCanBeDeletedButNotCoversOrReleases() {
+        detail.transfers = listOf(
+            transfer(1, TransferOrigin.Manual),
+            transfer(2, TransferOrigin.Target),
+            transfer(3, TransferOrigin.Commitment),
+            transfer(4, TransferOrigin.Cover),
+            transfer(5, TransferOrigin.Release),
+        )
         val state = loaded().state.value
 
-        assertEquals(listOf(true, false, false), state.transfers.map { it.canDelete })
+        assertEquals(listOf(true, true, true, false, false), state.transfers.map { it.canDelete })
+        assertEquals(listOf(true, true, false, false, false), state.transfers.map { it.canEdit })
+        assertTrue(state.canWriteTransfers)
     }
 
     @Test
-    fun deletingAnAutomaticMoveDoesNothing() {
-        detail.transfers = listOf(transfer(1, TransferOrigin.Target))
+    fun deletingAMonthlyTargetVoidsItWhenTheSnackbarEnds() {
+        detail.transfers = listOf(transfer(1, TransferOrigin.Target, amount = 40_000))
+        val viewModel = loaded()
+        viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
+
+        assertTrue(viewModel.state.value.transfers.isEmpty())
+        viewModel.onEvent(EnvelopeDetailEvent.UndoExpired)
+
+        assertEquals(listOf("t1"), detail.voided)
+    }
+
+    @Test
+    fun deletingACoverDoesNothing() {
+        detail.transfers = listOf(transfer(1, TransferOrigin.Cover))
         val viewModel = loaded()
         viewModel.onEvent(EnvelopeDetailEvent.DeleteTransferClicked("t1"))
 

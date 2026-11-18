@@ -29,6 +29,8 @@ import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailRoute
 import dev.lacruzjs.sobreio.ui.commitmentform.CommitmentFormRoute
 import dev.lacruzjs.sobreio.ui.envelopedetail.EnvelopeDetailRoute
 import dev.lacruzjs.sobreio.ui.envelopeform.EnvelopeFormRoute
+import dev.lacruzjs.sobreio.ui.envelopetransfers.EnvelopeTransferFormRoute
+import dev.lacruzjs.sobreio.ui.envelopetransfers.EnvelopeTransfersRoute
 import dev.lacruzjs.sobreio.ui.group.GroupRoute
 import dev.lacruzjs.sobreio.ui.groupform.GroupFormRoute
 import dev.lacruzjs.sobreio.ui.groupreview.GroupReviewRoute
@@ -104,6 +106,7 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenAccount = { accountId -> backStack.openDetail(AccountDetail(key.groupId, accountId)) },
                     onOpenEnvelopeForm = { envelopeId -> backStack.add(EnvelopeForm(key.groupId, envelopeId)) },
                     onOpenEnvelope = { envelopeId -> backStack.openDetail(EnvelopeDetail(key.groupId, envelopeId)) },
+                    onOpenEnvelopeTransfers = { backStack.openDetail(EnvelopeTransfers(key.groupId)) },
                     onOpenMovementForm = { movementId, source ->
                         backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
                     },
@@ -161,6 +164,22 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                     onOpenCommitment = { accountId, commitmentId ->
                         backStack.add(CommitmentDetail(key.groupId, accountId, commitmentId))
                     },
+                    onEditTransfer = { transferId -> backStack.add(EnvelopeTransferForm(key.groupId, transferId)) },
+                )
+            }
+            entry<EnvelopeTransfers>(metadata = detailPane) { key ->
+                EnvelopeTransfersRoute(
+                    groupId = key.groupId,
+                    onBack = { backStack.popToPrevious() },
+                    onNew = { backStack.add(EnvelopeTransferForm(key.groupId, null)) },
+                    onEdit = { transferId -> backStack.add(EnvelopeTransferForm(key.groupId, transferId)) },
+                )
+            }
+            entry<EnvelopeTransferForm> { key ->
+                EnvelopeTransferFormRoute(
+                    groupId = key.groupId,
+                    transferId = key.transferId,
+                    onClose = { backStack.popToPrevious() },
                 )
             }
             entry<EnvelopeMovements>(metadata = extraPane) { key ->

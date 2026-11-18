@@ -17,6 +17,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeOutlook
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
 import dev.lacruzjs.sobreio.domain.model.FundingCommitment
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
+import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
@@ -89,6 +90,7 @@ class EnvelopeDetailViewModel(
             EnvelopeDetailEvent.EditClicked,
             EnvelopeDetailEvent.SeeAllClicked,
             is EnvelopeDetailEvent.CommitmentClicked,
+            is EnvelopeDetailEvent.EditTransferClicked,
             -> Unit
         }
     }
@@ -183,6 +185,7 @@ class EnvelopeDetailViewModel(
                     groupName = group.name,
                     currencyCode = group.currencyCode,
                     canEdit = group.canEdit,
+                    canWriteTransfers = !group.isArchived && !group.isPendingDeletion,
                     envelope = envelope,
                     holderName = people.firstOrNull { m -> m.userId == envelope.ownerUserId }?.displayName,
                     hasSeveralMembers = people.hasSeveralMembers(),
@@ -244,7 +247,7 @@ class EnvelopeDetailViewModel(
 
     /**
      * No confirmation: the move disappears at once and "Undo" follows. `voided_at` is written only when the snackbar ends
-     * without Undo (or when something else needs it final). Only manual moves have the swipe.
+     * without Undo (or when something else needs it final). Only the origins of [TransferOrigin.canVoid] have the swipe.
      */
     private fun deleteTransfer(transferId: String) {
         val row = _state.value.transfers.firstOrNull { it.transfer.id == transferId && it.canDelete } ?: return

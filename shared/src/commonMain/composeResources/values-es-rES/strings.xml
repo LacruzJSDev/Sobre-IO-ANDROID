@@ -565,7 +565,17 @@
     <string name="transfer_origin_release_plain">Reserva de compromiso liberada</string>
     <string name="transfer_from">Desde %1$s</string>
     <string name="transfer_to">A %1$s</string>
-    <string name="transfer_deleted">Asignación de %1$s eliminada</string>
+    <string name="transfer_deleted">Movimiento de %1$s eliminado</string>
+    <string name="envelope_transfer_new_title">Nuevo movimiento entre sobres</string>
+    <string name="envelope_transfer_edit_title">Editar movimiento</string>
+    <string name="envelope_transfer_unknown_envelope">Sobre</string>
+    <string name="envelope_transfers_route">%1$s → %2$s</string>
+    <string name="envelope_transfer_automatic_note">Lo hizo el objetivo mensual: siempre va de Sin asignar a su sobre. Puedes cambiar el importe o eliminarlo; no se vuelve a hacer este periodo.</string>
+    <string name="form_section_envelope_transfer">Sobres</string>
+    <string name="validation_envelopes_differ">El destino debe ser otro sobre.</string>
+    <string name="field_envelope_start_next_period">Empezar el periodo siguiente</string>
+    <string name="envelope_start_next_period_note">El primer objetivo se asigna el %1$s; este periodo no se toma nada de Sin asignar.</string>
+    <string name="envelope_target_starts_on">Objetivo %1$s al mes desde el %2$s</string>
 
     <!-- Envelope types (D-46) -->
     <string name="envelope_purpose_monthly">Gasto mensual</string>

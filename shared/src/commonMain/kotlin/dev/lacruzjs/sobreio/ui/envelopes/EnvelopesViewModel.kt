@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.envelopes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.model.Envelope
@@ -29,6 +30,7 @@ class EnvelopesViewModel(
     private val groupId: String,
     private val envelopes: EnvelopeRepository,
     private val members: MemberRepository,
+    private val dates: AccountDetailRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopesUiState())
@@ -100,6 +102,8 @@ class EnvelopesViewModel(
             }
             // Only needed to name holders; without them the rows simply show no holder
             members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
+            // Only tells which targets start in a later period (D-53); without it the rows show their bar as usual
+            dates.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
         }
     }
 
