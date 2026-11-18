@@ -12,6 +12,7 @@ import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.contribution_deleted
 import dev.lacruzjs.sobreio.generated.resources.movement_deleted
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
@@ -253,7 +254,8 @@ class MovementsViewModel(
 
     /**
      * No confirmation: the row disappears at once and "Undo" follows. The void is written only when the snackbar ends
-     * without Undo (or when something else needs it final), like leaving a group. Contribution legs are not deletable here.
+     * without Undo (or when something else needs it final), like leaving a group. A contribution leg voids the whole
+     * contribution (both legs, in both groups) with `void_group_transfer`; the other leg lives in the other group's ledger.
      */
     private fun delete(movementId: String) {
         val movement = _state.value.items.firstOrNull { it.id == movementId && it.canDelete } ?: return
@@ -262,11 +264,16 @@ class MovementsViewModel(
         _state.update { it.copy(items = it.items - movement, actionError = null) }
         undo.show(
             UndoableAction(
-                message = Res.string.movement_deleted,
+                message = if (movement.isGroupTransfer) Res.string.contribution_deleted else Res.string.movement_deleted,
                 argument = "",
                 amountCents = abs(movement.amountCents),
                 commit = {
-                    movements.voidMovement(movement).onSuccess {
+                    val void = if (movement.isGroupTransfer) {
+                        movements.voidGroupTransfer(movement)
+                    } else {
+                        movements.voidMovement(movement)
+                    }
+                    void.onSuccess {
                         // The database no longer has the row, so the next page starts one row earlier
                         fetched = (fetched - 1).coerceAtLeast(0)
                         serverTotal = (serverTotal - 1).coerceAtLeast(0)

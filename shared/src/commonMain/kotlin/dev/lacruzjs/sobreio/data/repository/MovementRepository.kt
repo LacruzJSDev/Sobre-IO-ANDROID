@@ -30,6 +30,13 @@ interface MovementRepository {
      */
     suspend fun voidMovement(movement: Movement): Result<Unit>
 
+    /**
+     * Voids the contribution between groups that [movement] (either leg) belongs to: `void_group_transfer` voids both
+     * legs and the link at once. Fails with FZ016 when the caller cannot see the link (not a member of both groups) and
+     * with FZ005 when it is already voided.
+     */
+    suspend fun voidGroupTransfer(movement: Movement): Result<Unit>
+
     /** The group's today and its current and previous periods, for the date presets of the Dates chip. */
     suspend fun getDateContext(groupId: String): Result<DateContext>
 }

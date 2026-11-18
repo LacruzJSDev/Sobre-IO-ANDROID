@@ -522,6 +522,7 @@
     <string name="movements_empty">Aún no hay movimientos.</string>
     <string name="movements_empty_filtered">Ningún movimiento coincide con estos filtros.</string>
     <string name="movement_deleted">Movimiento de %1$s eliminado</string>
+    <string name="contribution_deleted">Aportación de %1$s eliminada en los dos grupos</string>
     <string name="edit_movement_title">Editar movimiento</string>
     <string name="amount_placeholder">0,00</string>
     <string name="field_date">Fecha</string>

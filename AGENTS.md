@@ -436,9 +436,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   not on an envelope's own list; a transfer shows "To/From <account>" there), line 2 ALWAYS filled (22 dp): the tags as small
   chips with their colour dot (`MovementTags`: up to 3, or 2 and "+N") or a muted "No tags", so rows keep one height; the amount
   on the right (unsigned for a transfer in the group ledger). Swipe: Delete only (`deleteAction`), hidden at once with Undo; the void (`voided_at` on
-  `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs have no swipe
-  (they are voided as a pair with `void_group_transfer`, not offered yet); edit comes with the form.
-  `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`,
+  `transactions` or `account_transfers`) is written only when the snackbar ends without Undo. Contribution legs (`group_transfer`)
+  swipe Delete only (no Edit): the row hides with an Undo snackbar "Contribution of X deleted in both groups" and, when it ends
+  without Undo, `MovementRepository.voidGroupTransfer` reads the leg's `group_transfers` link and calls `void_group_transfer`,
+  which voids both legs (the other one lives in the other group's ledger); the database decides who may (only a member of both
+  groups sees the link, otherwise FZ016), and a failure brings the row back with the error.
+  `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`, `voidGroupTransfer`,
   `getDateContext` = `group_today`, `current_period` and the previous `periods` row) and `TagRepository` (live `tags`).
   Nothing is summed or filtered in the app; the DB function shows an account transfer once in the group ledger (D-45).
 - Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,

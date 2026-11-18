@@ -29,8 +29,11 @@ data class Movement(
     val isAccountTransfer: Boolean get() = kind == MovementKind.TransferOut || kind == MovementKind.TransferIn
     val isGroupTransfer: Boolean get() = kind == MovementKind.GroupTransferOut || kind == MovementKind.GroupTransferIn
 
-    /** Contribution legs are voided as a pair (`void_group_transfer`), which this screen does not offer yet. */
-    val canDelete: Boolean get() = !isGroupTransfer
+    /**
+     * Every row can be deleted (voided); a contribution leg voids both legs at once (`void_group_transfer`), and the
+     * database decides who may (only a member of both groups sees the link).
+     */
+    val canDelete: Boolean get() = true
 
     /** Expenses, incomes and account transfers are edited in the form; adjustments and contribution legs are not. */
     val canEdit: Boolean get() = !isGroupTransfer && kind != MovementKind.Adjustment

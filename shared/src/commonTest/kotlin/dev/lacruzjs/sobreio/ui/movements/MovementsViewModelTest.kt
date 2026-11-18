@@ -17,6 +17,7 @@ import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.fake.FakeMovementRepository
 import dev.lacruzjs.sobreio.fake.FakeTagRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.contribution_deleted
 import dev.lacruzjs.sobreio.generated.resources.movement_deleted
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -352,14 +353,45 @@ class MovementsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun contributionLegsCannotBeDeleted() {
-        ledger.all = listOf(movement(1).copy(kind = MovementKind.GroupTransferOut))
+    fun aContributionLegIsHiddenAndVoidedAsAPairOnlyWhenTheSnackbarEnds() {
+        ledger.all = listOf(movement(1).copy(kind = MovementKind.GroupTransferOut), movement(2))
         val viewModel = loaded()
 
         viewModel.onEvent(MovementsEvent.DeleteClicked("m1"))
 
-        assertEquals(1, viewModel.state.value.items.size)
-        assertNull(viewModel.state.value.undoMessage)
+        assertEquals(listOf("m2"), viewModel.state.value.items.map { it.id })
+        assertEquals(Res.string.contribution_deleted, viewModel.state.value.undoMessage?.message)
+        assertTrue(ledger.voidedGroupTransfers.isEmpty())
+
+        viewModel.onEvent(MovementsEvent.UndoExpired)
+
+        assertEquals(listOf("m1"), ledger.voidedGroupTransfers)
+        assertTrue(ledger.voided.isEmpty())
+    }
+
+    @Test
+    fun undoKeepsTheContribution() {
+        ledger.all = listOf(movement(1).copy(kind = MovementKind.GroupTransferIn), movement(2))
+        val viewModel = loaded()
+        viewModel.onEvent(MovementsEvent.DeleteClicked("m1"))
+
+        viewModel.onEvent(MovementsEvent.UndoClicked)
+
+        assertEquals(listOf("m1", "m2"), viewModel.state.value.items.map { it.id })
+        assertTrue(ledger.voidedGroupTransfers.isEmpty())
+    }
+
+    @Test
+    fun aRefusedContributionVoidBringsTheRowBackWithTheError() {
+        ledger.all = listOf(movement(1).copy(kind = MovementKind.GroupTransferOut), movement(2))
+        val viewModel = loaded()
+        ledger.voidResult = Result.failure(AppError.BusinessRule("FZ016"))
+        viewModel.onEvent(MovementsEvent.DeleteClicked("m1"))
+
+        viewModel.onEvent(MovementsEvent.UndoExpired)
+
+        assertEquals(listOf("m1", "m2"), viewModel.state.value.items.map { it.id })
+        assertEquals(AppError.BusinessRule("FZ016"), viewModel.state.value.actionError)
     }
 
     @Test
