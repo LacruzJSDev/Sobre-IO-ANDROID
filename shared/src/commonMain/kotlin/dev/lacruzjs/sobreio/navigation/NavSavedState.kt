@@ -26,6 +26,7 @@ internal val NavSavedStateConfiguration = SavedStateConfiguration {
             subclass(AccountDetail::class)
             subclass(AccountMovements::class)
             subclass(AccountForm::class)
+            subclass(BankImport::class)
             subclass(EnvelopeForm::class)
             subclass(EnvelopeDetail::class)
             subclass(EnvelopeMovements::class)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
+import dev.lacruzjs.sobreio.data.repository.BankImportRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
@@ -48,6 +49,7 @@ class AccountDetailViewModel(
     private val members: MemberRepository,
     private val envelopes: EnvelopeRepository,
     private val detail: AccountDetailRepository,
+    private val imports: BankImportRepository,
     private val debounceMillis: Long = COMPARE_DEBOUNCE_MILLIS,
 ) : ViewModel() {
 
@@ -94,6 +96,7 @@ class AccountDetailViewModel(
             AccountDetailEvent.BackClicked,
             AccountDetailEvent.EditClicked,
             AccountDetailEvent.SeeAllClicked,
+            AccountDetailEvent.BankImportClicked,
             is AccountDetailEvent.TabSelected,
             -> Unit
         }
@@ -140,6 +143,8 @@ class AccountDetailViewModel(
             val movements = async { detail.getLatestMovements(accountId, LATEST_MOVEMENTS) }
             val memberList = async { members.getMembers(groupId) }
             val envelopeList = async { envelopes.getEnvelopes(groupId) }
+            // Only for the Bank section's "Last import": a failure leaves it out
+            val lastImport = async { imports.getLastImport(accountId) }
 
             val periodResult = period.await()
             val forecastResult = forecast.await()
@@ -173,6 +178,8 @@ class AccountDetailViewModel(
                     groupName = group.name,
                     currencyCode = group.currencyCode,
                     canEdit = group.canEdit,
+                    canImport = !group.isArchived && !group.isPendingDeletion && !account.isArchived,
+                    lastImport = lastImport.await().getOrNull(),
                     account = account,
                     holderName = people.firstOrNull { m -> m.userId == account.ownerUserId }?.displayName,
                     hasSeveralMembers = people.hasSeveralMembers(),

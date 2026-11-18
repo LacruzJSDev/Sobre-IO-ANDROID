@@ -18,6 +18,9 @@ sealed interface AccountDetailEvent {
     data object SeeAllClicked : AccountDetailEvent
 
     data object CompareClicked : AccountDetailEvent
+
+    /** Handled by the Route: opens the bank import (D-52). */
+    data object BankImportClicked : AccountDetailEvent
     data object CompareDismissed : AccountDetailEvent
     data class BankBalanceChanged(val value: String) : AccountDetailEvent
     data class BankSignChanged(val negative: Boolean) : AccountDetailEvent

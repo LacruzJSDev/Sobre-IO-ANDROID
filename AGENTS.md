@@ -19,7 +19,8 @@ Human documentation (Spanish): [README.md](README.md).
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
 | Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~70 icons of `IconCatalog` are referenced, so R8 strips the rest) |
-| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user); `kotlinx-datetime` 0.8 (device time zone) |
+| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user, last account, bank CSV formats per account); `kotlinx-datetime` 0.8 (device time zone) |
+| Files | Android: `androidx.activity:activity-compose` (in `:shared` androidMain) for the system document picker; iOS: `UIDocumentPickerViewController` from Kotlin (no Swift) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen |
 
@@ -251,6 +252,31 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `MovementsViewModel` and `MovementsPane` with `fixedEnvelopeId` (Koin params `groupId, fixedAccountId, fixedEnvelopeId`; the
   Envelope chip is hidden and the rows show their account instead), through the shared `FixedFilterMovementsScreen` that
   `AccountMovementsScreen` also uses. Back returns to the detail.
+- Bank import (D-52 in the DB repo, RF11; `ui/bankimport`, route `BankImport(groupId, accountId)`, level 3 of Accounts, full screen
+  with no pane metadata, `BankImportViewModel(groupId, accountId)` with `GroupRepository`, `AccountRepository`, `EnvelopeRepository`,
+  `AccountDetailRepository`, `BankImportRepository` and `BankFormatStore`). Entry: the account detail's Summary ends with a "Bank" section
+  (`BankSection`): a soft tile "Last import" (`bank_import_overview`, date and rows, or "Never") and two `SecondaryButton`s, "Compare"
+  (the old Compare with bank sheet) and "Import CSV" (`AccountDetailUiState.canImport`: any member of a live group, live account;
+  `BankImportClicked`, handled by the Route). One route, one ViewModel, steps in `ImportStep`: Source (how to export the CSV, last import
+  and "export from" date, black "Choose CSV file": `rememberStatementFilePicker` in `ui/bankimport/picker`, expect/actual, the Route
+  launches it and sends `FilePicked(PickResult)`; 5 MB limit), Columns (only when `BankFormatStore` has no mapping for this account and
+  header: a preview of each column, Date / Description / Amount ("One column" or "Charge and credit") / optional Balance as
+  `ExpandableFormTile`s of `FormChip`s, day order and decimal mark as `ChipFormTile`s only when ambiguous; "Continue" saves the mapping),
+  Review (a `LazyColumn` of `SoftTile` rows in sections by what will happen: Due items (confirm), Already recorded (link), New, then folded
+  Ignored and Already imported; each row: bank description, one muted line from `decisionLine`, `MoneyText` Flow and short date; tap opens
+  `RowSheet` (`FlatBottomSheet`: what to do as chips, kind Expense/Income or Transfer, envelope `EntitySelect` with Unassigned first, or the
+  other account, notes; the pending or existing candidate as an `EntitySelect`; the envelope also goes to rows with the same description),
+  swipe `ignoreAction` with an Undo snackbar; a header icon reopens Columns; a fixed black "Import N rows"), and Result (counts, a
+  `StatCard` comparing the CSV's closing balance with `compare_with_bank`, "Undo import" (`void_bank_import`) and "See movements", which
+  pops and pushes `AccountMovements(groupId, accountId, tagId)` filtered by the import tag). Back goes one step back; leaving a review with
+  rows shows an `AlertDialog` ("Keep reviewing" / "Discard"), the only confirmation dialog of the app, because it loses unsaved work
+  (`NavigationBackHandler` in the Route). The CSV is read in `domain/bankimport` (pure, unit tested): `decodeStatement` (UTF-8, else
+  Windows-1252), `detectSeparator`, `parseCsv`, `parseStatementDate` / `parseStatementAmount`, `guessMapping` (header row past bank
+  preambles, columns by values then names), `readStatementRows` (charges negative, stable `b1:` FNV references with an occurrence number for
+  identical rows, `closingBalanceCents`) and `headerSignature`. `BankImportRepository` / `SupabaseBankImportRepository` wrap
+  `bank_import_preview`, `apply_bank_import` (tag name in the user's language, `bank_import_tag_name`, colour `TagColor.Default`),
+  `void_bank_import` and `bank_import_overview`; a 23505 there is `BANK_ROW_ALREADY_IMPORTED`, FZ023 has its own message. Every
+  suggestion comes from the database; the app only reads the file, keeps the user's choices and sorts.
 - Commitments tab rows (`ui/commitments`): the subtitle says "Paid this period" in the inflow colour when a due date of the current period
   is already registered (`CommitmentRepository.getPaidCommitmentIds` over `commitment_occurrences`, status `materialized`), otherwise
   "Next <date>" as before.
@@ -350,7 +376,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
   `account_transfers`; then the tag step (`transaction_tags` insert / delete). A tag failure keeps the movement, shows the error and
   the next Save only retries the tags. Saved pops the form and the lists reload when shown again.
-- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?, fixedEnvelopeId: String?)`, one screen in three places): the Movements
+- Movements (`ui/movements`, `MovementsViewModel(groupId, fixedAccountId: String?, fixedEnvelopeId: String?, initialTagIds)`, the fourth Koin parameter optional: `AccountMovements.tagId` starts the list filtered by a bank import's tag; one screen in three places): the Movements
   tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
@@ -432,7 +458,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   On a phone (one partition) it gives no scene. Entry metadata (ours, same file): `listPane` for `Group` and `Groups` (`Groups`
   also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`,
   `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements` and
-  `Tags`. Forms and `TimeZonePicker` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
+  `Tags`. Forms, `TimeZonePicker` and `BankImport` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
   window and 420 dp from expanded (`listWidth`).
   Window classes: compact < 600 dp, medium 600-840, expanded >= 840. Two panes from medium (a tablet in portrait, an open foldable; the directive keeps them off a
   vertical hinge), so only phones keep one pane, and the back stack rules do not change. `MutableList<NavKey>.openDetail(key)` (next to
@@ -483,7 +509,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `accounts`, `envelopes`, `envelopedetail`, `movements`, `bankimport`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules
@@ -553,7 +579,7 @@ plus `movementform` (the new / edit movement form).
   their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
   Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
-  grey, Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,
+  grey, Ignore eye-off in soft grey (a bank statement row), Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,
   Remove member and Revoke invitation in red) and used by every list; never build a `SwipeAction` by hand. Each has an
   accessible label shown on long press (`LabelTooltip`, Material3 `TooltipBox`). Every swipe action (and the role
   change) that does not open a screen or sheet shows a bottom snackbar saying what happened, with Undo when possible
