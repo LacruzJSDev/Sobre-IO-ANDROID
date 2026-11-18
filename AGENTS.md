@@ -205,7 +205,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   the switch (`AccountFormUiState.scopeError`). Envelope form (`EnvelopeFormViewModel`): avatar + name, "Appearance" (envelope icons), "Envelope": the type as a
   `ChipFormTile` of four chips (Monthly spending, Bills, Savings, Free; D-46), the holder ("Common" or a member, same visibility
   rule) and the amount field only for Monthly (monthly target, required above 0) and Savings (monthly contribution, optional);
-  Bills and Free send 0. A `FormNote` at the very end explains the chosen type. Create inserts and edit updates all fields of
+  Bills and Free send 0. For Monthly and Savings a "Start next period" `Switch` tile (D-53) is shown when creating, when the
+  stored target was 0 or when the stored `targets_from` is still after today: on sends `targets_from` = the day after
+  `current_period`'s end (dates from `AccountDetailRepository.getToday`/`getCurrentPeriod`; a failed read hides the switch), off
+  on an envelope that started later sends today, otherwise nothing is sent and the database keeps its rule. The Envelopes rows
+  of an envelope whose target starts later show "Target X a month from <date>" instead of the bar (`Envelope.targetStartsAfter`,
+  `EnvelopesUiState.today`). A `FormNote` at the very end explains the chosen type. Create inserts and edit updates all fields of
   `envelopes` (`EnvelopeDraft`: `purpose` and the kind that follows it, savings is `saving` and the rest `spending`); the type can
   be changed when editing, and FZ021 (leaving Bills while funded commitments point to it) shows "It has commitments with a
   reserve..." under the type (`purposeError`). Commitment form: when "Set aside each period" is on, the envelope `EntitySelect`
@@ -260,11 +265,24 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   lists the live commitments with a funded version pointing here, `CommitmentRepository.getFundingStatus` keeps only those
   that reserve money for this envelope now; rows tap to `CommitmentDetail(groupId, accountId, commitmentId)`); a
   `CollapsibleListSection` of the live `envelope_transfers` of the envelope (exact count with `count(exact)`, pages of 20,
-  newest first, origin label, "From/To <envelope>" and the day in the group time zone, signed `MoneyText` Flow; only
-  `origin = 'manual'` rows swipe Delete: hidden at once, Undo snackbar, `voided_at` written when it ends without Undo); and
+  newest first, origin label, "From/To <envelope>" and the day in the group time zone, signed `MoneyText` Flow; any member
+  of a live group swipes Edit on manual and monthly target rows (also a tap; opens `EnvelopeTransferForm`) and Delete on
+  manual, target and commitment reserve rows (`TransferOrigin.canVoid`/`canEdit`): hidden at once, Undo snackbar, `voided_at`
+  written when it ends without Undo; a voided target is not generated again in its period, D-53; covers and releases stay
+  read only); and
   the 5 latest movements (`MovementRepository.search` with the envelope filter) with "See all". `EnvelopeDetailRepository`
   (`data/repository`, DTOs and mappers in `data/remote`, `FakeEnvelopeDetailRepository` in tests) wraps `envelope_balances`,
   `envelope_periods`, `envelope_outlook_current` and `envelope_transfers`; the app only signs the moves for this envelope.
+- Moves between envelopes (`ui/envelopetransfers`, route `EnvelopeTransfers(groupId)`, level 2 of the Envelopes tab, detail pane,
+  `EnvelopeTransfersViewModel(groupId)` with `GroupRepository`, `EnvelopeRepository`, `EnvelopeTransferRepository`): opened by the
+  swap icon (`IconActionButton`, every member) left of the "+" in the Envelopes tab header. Every live `envelope_transfers` row of
+  the group, newest first, 50 per page with load-more: destination envelope avatar, "From → To", origin label and day, `MoneyText`
+  Transfer. Members of a live group swipe Edit and Delete with the same rules and Undo as the envelope detail; the header "+"
+  opens the form for a new manual move. `EnvelopeTransferForm(groupId, transferId?)` (`EnvelopeTransferFormViewModel`, full
+  screen, `FormScaffold`): amount, From and To `EntitySelect`s ("Unassigned" first, each with its balance; a new move starts from
+  Unassigned) and notes; an automatic move (monthly target) shows its envelopes read only with a note, only amount and notes
+  change (D-16). Create inserts a manual row, edit is a plain update of `envelope_transfers`. `EnvelopeTransferRepository`
+  (`SupabaseEnvelopeTransferRepository`) reads and writes the table; `voidTransfer` only touches `VOIDABLE_ORIGINS`.
 - "See all" of an envelope pushes `EnvelopeMovements(groupId, envelopeId)` (level 3) above the detail: the same
   `MovementsViewModel` and `MovementsPane` with `fixedEnvelopeId` (Koin params `groupId, fixedAccountId, fixedEnvelopeId`; the
   Envelope chip is hidden and the rows show their account instead), through the shared `FixedFilterMovementsScreen` that
@@ -473,7 +491,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   Navigation 3 cleans up an entry only once it leaves composition), and system back from a detail is a predictive gesture that
   scrubs the panes and then pops (`previousEntries` = the stack minus the top, so back from a detail never leaves the app).
   On a phone (one partition) it gives no scene. Entry metadata (ours, same file): `listPane` for `Group` and `Groups` (`Groups`
-  also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`,
+  also keeps its back-animation `transitionSpec`, combined with `+`); `detailPane` for `AccountDetail`, `EnvelopeDetail`, `EnvelopeTransfers`,
   `GroupSettings`, `GroupReview` and `Profile`; `extraPane` for `CommitmentDetail`, `AccountMovements`, `EnvelopeMovements` and
   `Tags`. Forms, `TimeZonePicker`, `DeleteAccount` and `BankImport` have no pane metadata (full-screen scenes). Beside a detail the list takes half of a medium
   window and 420 dp from expanded (`listWidth`).
@@ -526,7 +544,7 @@ app/                          Android application only: MainActivity, SobreioApp
 iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodeproj + SwiftUI shell (iOSApp.swift, ContentView.swift)
 ```
 
-Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `profile` / `deleteaccount`, `accounts`, `envelopes`, `envelopedetail`, `movements`, `bankimport`,
+Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `profile` / `deleteaccount`, `accounts`, `envelopes`, `envelopedetail`, `envelopetransfers`, `movements`, `bankimport`,
 plus `movementform` (the new / edit movement form).
 
 ## Rules

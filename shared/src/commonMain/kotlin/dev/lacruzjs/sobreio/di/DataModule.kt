@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.data.repository.BankImportRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseBankImportRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeDetailRepository
+import dev.lacruzjs.sobreio.data.repository.EnvelopeTransferRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
@@ -31,6 +32,7 @@ import dev.lacruzjs.sobreio.data.repository.SupabaseAccountRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseAuthRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseCommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseEnvelopeDetailRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseEnvelopeTransferRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseEnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseGroupRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseMemberRepository
@@ -51,6 +53,7 @@ val dataModule = module {
     single<CommitmentRepository> { SupabaseCommitmentRepository(get()) }
     single<EnvelopeRepository> { SupabaseEnvelopeRepository(get()) }
     single<EnvelopeDetailRepository> { SupabaseEnvelopeDetailRepository(get()) }
+    single<EnvelopeTransferRepository> { SupabaseEnvelopeTransferRepository(get()) }
     single<MemberRepository> { SupabaseMemberRepository(get()) }
     single<MovementRepository> { SupabaseMovementRepository(get()) }
     single<MovementFormRepository> { SupabaseMovementFormRepository(get()) }

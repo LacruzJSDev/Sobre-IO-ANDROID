@@ -42,7 +42,7 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
             ?: throw AppError.NotFound
         // The balances view has no colour or icon: they come from `envelopes`
         val style = postgrest.from(ENVELOPES_TABLE)
-            .select(Columns.list("id", "color", "icon")) { filter { eq("id", envelopeId) } }
+            .select(Columns.list("id", "color", "icon", "purpose", "targets_from")) { filter { eq("id", envelopeId) } }
             .decodeSingleOrNull<EnvelopeStyleDto>()
         balance.toDomain(style) ?: throw AppError.NotFound
     }
@@ -73,7 +73,7 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
 
     override suspend fun getTransfers(envelopeId: String, offset: Int, limit: Int): Result<EnvelopeTransferPage> = safeCall {
         val result = postgrest.from(TRANSFERS_TABLE)
-            .select(Columns.raw("id,from_envelope_id,to_envelope_id,amount,origin,commitment_id,created_at")) {
+            .select(Columns.raw(TRANSFER_COLUMNS)) {
                 count(Count.EXACT)
                 filter {
                     exact("voided_at", null)
@@ -107,7 +107,7 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
                 select(Columns.list("id"))
                 filter {
                     eq("id", id)
-                    eq("origin", "manual")
+                    isIn("origin", VOIDABLE_ORIGINS)
                 }
             }
             .decodeList<IdDto>()
@@ -157,3 +157,9 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
         const val VERSIONS_TABLE = "commitment_versions"
     }
 }
+
+/** The columns of `envelope_transfers` that [dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer] needs. */
+internal const val TRANSFER_COLUMNS = "id,from_envelope_id,to_envelope_id,amount,origin,commitment_id,created_at,notes"
+
+/** The origins the app voids ([dev.lacruzjs.sobreio.domain.model.TransferOrigin.canVoid]); the filter keeps the rest safe. */
+internal val VOIDABLE_ORIGINS = listOf("manual", "target", "commitment")

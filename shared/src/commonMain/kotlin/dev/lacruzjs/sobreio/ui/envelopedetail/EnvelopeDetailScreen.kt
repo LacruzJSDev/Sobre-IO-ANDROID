@@ -84,13 +84,6 @@ import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.holder_common
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.transfer_from
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_commitment
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_commitment_plain
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_cover
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_manual
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_release
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_release_plain
-import dev.lacruzjs.sobreio.generated.resources.transfer_origin_target
 import dev.lacruzjs.sobreio.generated.resources.transfer_to
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.components.StatCard
@@ -113,6 +106,8 @@ import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
 import dev.lacruzjs.sobreio.ui.components.charts.GroupedColumnChart
 import dev.lacruzjs.sobreio.ui.components.charts.compactAmount
 import dev.lacruzjs.sobreio.ui.components.deleteAction
+import dev.lacruzjs.sobreio.ui.components.editAction
+import dev.lacruzjs.sobreio.ui.envelopetransfers.originLabel
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.envelopes.labelRes
 import dev.lacruzjs.sobreio.ui.error.messageRes
@@ -132,7 +127,8 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Level 2 of the Envelopes tab, also for "Unassigned" (read only). Holds the lambdas of the back stack: [onEdit] opens the
- * envelope form, [onSeeAllMovements] the envelope's movements and [onOpenCommitment] a funding commitment's detail. It
+ * envelope form, [onSeeAllMovements] the envelope's movements, [onOpenCommitment] a funding commitment's detail and
+ * [onEditTransfer] the form of a move between envelopes. It
  * reads again each time it is shown, so coming back from the form shows the new figures.
  */
 @Composable
@@ -143,6 +139,7 @@ fun EnvelopeDetailRoute(
     onEdit: () -> Unit,
     onSeeAllMovements: () -> Unit,
     onOpenCommitment: (accountId: String, commitmentId: String) -> Unit,
+    onEditTransfer: (transferId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EnvelopeDetailViewModel = koinViewModel { parametersOf(groupId, envelopeId) },
 ) {
@@ -156,6 +153,7 @@ fun EnvelopeDetailRoute(
                 EnvelopeDetailEvent.EditClicked -> onEdit()
                 EnvelopeDetailEvent.SeeAllClicked -> onSeeAllMovements()
                 is EnvelopeDetailEvent.CommitmentClicked -> onOpenCommitment(event.accountId, event.commitmentId)
+                is EnvelopeDetailEvent.EditTransferClicked -> onEditTransfer(event.transferId)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -432,16 +430,25 @@ private fun TransfersSection(state: EnvelopeDetailUiState, languageTag: String, 
             null
         },
     ) { row ->
-        // Only the manual ones can be deleted; the automatic ones are written by the database
-        if (row.canDelete) {
+        // Manual moves, targets and reserves can be voided (a target is then not generated again in its period, D-53);
+        // covers and releases belong to what made them
+        val actions = if (state.canWriteTransfers) {
+            listOfNotNull(
+                if (row.canEdit) editAction { onEvent(EnvelopeDetailEvent.EditTransferClicked(row.transfer.id)) } else null,
+                if (row.canDelete) deleteAction { onEvent(EnvelopeDetailEvent.DeleteTransferClicked(row.transfer.id)) } else null,
+            )
+        } else {
+            emptyList()
+        }
+        if (actions.isNotEmpty()) {
             SwipeActionsRow(
-                actions = listOf(deleteAction { onEvent(EnvelopeDetailEvent.DeleteTransferClicked(row.transfer.id)) }),
+                actions = actions,
                 isOpen = openId == row.transfer.id,
                 // A row reporting "closed" must not close another one that has just opened
                 onOpenChange = { open ->
                     if (open) openId = row.transfer.id else if (openId == row.transfer.id) openId = null
                 },
-                onClick = {},
+                onClick = { if (row.canEdit) onEvent(EnvelopeDetailEvent.EditTransferClicked(row.transfer.id)) },
             ) {
                 TransferItem(row, state.currencyCode, languageTag)
             }
@@ -453,18 +460,7 @@ private fun TransfersSection(state: EnvelopeDetailUiState, languageTag: String, 
 
 @Composable
 private fun TransferItem(row: TransferRow, currencyCode: String, languageTag: String) {
-    val transfer = row.transfer
-    val label = when (transfer.origin) {
-        TransferOrigin.Manual -> stringResource(Res.string.transfer_origin_manual)
-        TransferOrigin.Target -> stringResource(Res.string.transfer_origin_target)
-        TransferOrigin.Commitment -> transfer.commitmentName
-            ?.let { stringResource(Res.string.transfer_origin_commitment, it) }
-            ?: stringResource(Res.string.transfer_origin_commitment_plain)
-        TransferOrigin.Cover -> stringResource(Res.string.transfer_origin_cover)
-        TransferOrigin.Release -> transfer.commitmentName
-            ?.let { stringResource(Res.string.transfer_origin_release, it) }
-            ?: stringResource(Res.string.transfer_origin_release_plain)
-    }
+    val label = row.transfer.originLabel()
     val other = if (row.otherIsUnassigned) stringResource(Res.string.envelopes_unassigned) else row.otherName
     val direction = other?.let {
         stringResource(if (row.signedCents > 0) Res.string.transfer_from else Res.string.transfer_to, it)

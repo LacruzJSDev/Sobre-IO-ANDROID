@@ -27,6 +27,7 @@ internal fun EnvelopeDto.toDomain(style: EnvelopeStyleDto? = null): Envelope? {
         ownerUserId = ownerUserId,
         archivedAt = archivedAt,
         purpose = style?.purpose.toEnvelopePurpose(),
+        targetsFrom = style?.targetsFrom?.let(LocalDate::parse),
     )
 }
 

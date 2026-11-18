@@ -44,6 +44,10 @@ import dev.lacruzjs.sobreio.generated.resources.group_settings_title
 import dev.lacruzjs.sobreio.generated.resources.ic_settings
 import dev.lacruzjs.sobreio.generated.resources.action_new_account
 import dev.lacruzjs.sobreio.generated.resources.action_new_envelope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapHoriz
+import dev.lacruzjs.sobreio.ui.components.IconActionButton
+import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_transfers
 import dev.lacruzjs.sobreio.generated.resources.action_new_movement
 import dev.lacruzjs.sobreio.generated.resources.tab_accounts
 import dev.lacruzjs.sobreio.generated.resources.tab_accounts_empty
@@ -100,6 +104,7 @@ fun GroupRoute(
     onOpenAccount: (accountId: String) -> Unit,
     onOpenEnvelopeForm: (envelopeId: String?) -> Unit,
     onOpenEnvelope: (envelopeId: String) -> Unit,
+    onOpenEnvelopeTransfers: () -> Unit,
     onOpenMovementForm: (movementId: String?, source: MovementSource?) -> Unit,
     onOpenTransferForm: (TransferSuggestion) -> Unit,
     modifier: Modifier = Modifier,
@@ -204,6 +209,12 @@ fun GroupRoute(
             )
         },
         envelopesAction = {
+            // Every member sees the moves between envelopes; only owner and admin create envelopes
+            IconActionButton(
+                icon = Icons.Filled.SwapHoriz,
+                label = stringResource(Res.string.envelope_detail_section_transfers),
+                onClick = onOpenEnvelopeTransfers,
+            )
             if (envelopesState.canEdit) {
                 AddIconButton(
                     contentDescription = stringResource(Res.string.action_new_envelope),
