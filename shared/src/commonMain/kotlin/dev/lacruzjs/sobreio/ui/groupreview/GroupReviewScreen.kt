@@ -52,6 +52,7 @@ import dev.lacruzjs.sobreio.ui.components.UndoSnackbarHost
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
+import dev.lacruzjs.sobreio.ui.undo.CommitUndoOnBack
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -69,14 +70,16 @@ fun GroupReviewRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(GroupReviewEvent.Refresh) }
+    val leave = {
+        viewModel.onEvent(GroupReviewEvent.BackClicked)
+        onBack()
+    }
+    CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
     GroupReviewScreen(
         state = state,
         onEvent = { event ->
             when (event) {
-                GroupReviewEvent.BackClicked -> {
-                    viewModel.onEvent(event)
-                    onBack()
-                }
+                GroupReviewEvent.BackClicked -> leave()
                 else -> viewModel.onEvent(event)
             }
         },

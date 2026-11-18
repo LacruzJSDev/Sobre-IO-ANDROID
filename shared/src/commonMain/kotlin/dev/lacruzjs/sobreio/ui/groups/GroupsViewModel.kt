@@ -15,6 +15,7 @@ import dev.lacruzjs.sobreio.generated.resources.group_deletion_cancelled
 import dev.lacruzjs.sobreio.generated.resources.group_reopened
 import dev.lacruzjs.sobreio.generated.resources.group_left
 import dev.lacruzjs.sobreio.ui.auth.validateRequired
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +73,8 @@ class GroupsViewModel(
 
     private fun load() {
         viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             groups.getGroups()
                 .onSuccess { list -> _state.update { it.withGroups(list) } }
                 .onFailure { e -> _state.update { it.copy(isLoading = false, error = e.asAppError()) } }

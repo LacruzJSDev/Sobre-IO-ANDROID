@@ -566,7 +566,7 @@
     <string name="transfer_from">Desde %1$s</string>
     <string name="transfer_to">A %1$s</string>
     <string name="transfer_deleted">Movimiento de %1$s eliminado</string>
-    <string name="envelope_transfer_new_title">Nuevo movimiento entre sobres</string>
+    <string name="envelope_transfer_new_title">Mover dinero</string>
     <string name="envelope_transfer_edit_title">Editar movimiento</string>
     <string name="envelope_transfer_unknown_envelope">Sobre</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
@@ -575,6 +575,7 @@
     <string name="validation_envelopes_differ">El destino debe ser otro sobre.</string>
     <string name="field_envelope_start_next_period">Empezar el periodo siguiente</string>
     <string name="envelope_start_next_period_note">El primer objetivo se asigna el %1$s; este periodo no se toma nada de Sin asignar.</string>
+    <string name="envelope_start_next_period_note_off">El objetivo de este periodo se toma ahora de Sin asignar. Actívalo para empezar el %1$s.</string>
     <string name="envelope_target_starts_on">Objetivo %1$s al mes desde el %2$s</string>
 
     <!-- Envelope types (D-46) -->
@@ -735,7 +736,10 @@
     <string name="bank_import_source_help_excel">Si tu banco solo da un Excel, ábrelo y guárdalo como CSV.</string>
     <string name="bank_import_choose_file">Elegir fichero CSV</string>
     <string name="bank_import_last_import">Última importación</string>
-    <string name="bank_import_last_import_value">%1$s · %2$d filas</string>
+    <plurals name="bank_import_last_import_value">
+        <item quantity="one">%1$s · %2$d fila</item>
+        <item quantity="other">%1$s · %2$d filas</item>
+    </plurals>
     <string name="bank_import_no_last_import">Nunca</string>
     <string name="bank_import_since">Su última fila era del %1$s: exporta desde ese día.</string>
     <string name="bank_import_read_only">Esta cuenta o su grupo están archivados: no se puede importar.</string>
@@ -767,7 +771,10 @@
     <string name="bank_import_columns_remembered">Se recuerda para esta cuenta: la próxima vez este formato se salta este paso.</string>
     <string name="bank_import_continue">Seguir</string>
     <string name="bank_import_edit_columns">Columnas</string>
-    <string name="bank_import_review_range">%1$s – %2$s · %3$d filas</string>
+    <plurals name="bank_import_review_range">
+        <item quantity="one">%1$s – %2$s · %3$d fila</item>
+        <item quantity="other">%1$s – %2$s · %3$d filas</item>
+    </plurals>
     <plurals name="bank_import_review_skipped">
         <item quantity="one">Se ha dejado fuera %1$d fila sin fecha o sin importe.</item>
         <item quantity="other">Se han dejado fuera %1$d filas sin fecha o sin importe.</item>
@@ -823,6 +830,7 @@
     <string name="bank_import_result_difference">Diferencia</string>
     <string name="bank_import_result_matches">La app coincide con el banco.</string>
     <string name="bank_import_result_mismatch_note">La diferencia la explican movimientos posteriores al extracto o filas que faltan. Puedes ajustarla con Comparar en la cuenta.</string>
+    <string name="bank_import_result_undone_title">Importación deshecha</string>
     <string name="bank_import_result_undone">Importación deshecha: todo lo que apuntó se ha anulado.</string>
     <string name="bank_import_undo_import">Deshacer importación</string>
     <string name="bank_import_see_movements">Ver movimientos</string>

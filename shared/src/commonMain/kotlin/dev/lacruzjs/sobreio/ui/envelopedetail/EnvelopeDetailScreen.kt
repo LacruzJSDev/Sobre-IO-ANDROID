@@ -119,6 +119,7 @@ import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
+import dev.lacruzjs.sobreio.ui.undo.CommitUndoOnBack
 import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
@@ -145,11 +146,16 @@ fun EnvelopeDetailRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(EnvelopeDetailEvent.Refresh) }
+    val leave = {
+        viewModel.onEvent(EnvelopeDetailEvent.BackClicked)
+        onBack()
+    }
+    CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
     EnvelopeDetailScreen(
         state = state,
         onEvent = { event ->
             when (event) {
-                EnvelopeDetailEvent.BackClicked -> onBack()
+                EnvelopeDetailEvent.BackClicked -> leave()
                 EnvelopeDetailEvent.EditClicked -> onEdit()
                 EnvelopeDetailEvent.SeeAllClicked -> onSeeAllMovements()
                 is EnvelopeDetailEvent.CommitmentClicked -> onOpenCommitment(event.accountId, event.commitmentId)

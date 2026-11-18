@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.TransferHint
 import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.model.shortfallDate
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -68,6 +69,8 @@ class GroupSummaryViewModel(
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             val reads = coroutineScope {
                 val todayD = async { detail.getToday(groupId) }
                 val outlookD = async { summary.getOutlook(groupId) }

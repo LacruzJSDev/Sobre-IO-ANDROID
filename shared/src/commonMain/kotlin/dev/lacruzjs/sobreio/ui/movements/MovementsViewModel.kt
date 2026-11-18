@@ -13,6 +13,7 @@ import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.movement_deleted
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.Job
@@ -123,6 +124,8 @@ class MovementsViewModel(
     /** The group, the names the rows and chips need, the date presets and the first page. */
     private fun loadAll() {
         viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             groups.getGroup(groupId)
                 .onSuccess { group ->
                     _state.update {

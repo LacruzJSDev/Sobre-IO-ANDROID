@@ -65,8 +65,8 @@ class GroupReviewViewModel(
                 undo.commit()
                 load()
             }
-            // Handled by the Route, which navigates; a skip still waiting is made final first
-            GroupReviewEvent.BackClicked -> undo.commit()
+            // Handled by the Route, which navigates; a skip still waiting is made final first, before the group reloads
+            GroupReviewEvent.BackClicked -> undo.commitDetached()
             is GroupReviewEvent.ConfirmClicked -> openConfirm(event.key)
             is GroupReviewEvent.SkipClicked -> skip(event.key)
             is GroupReviewEvent.AmountChanged ->

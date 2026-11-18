@@ -51,10 +51,13 @@ class UndoController(
         scope.launch { commitAction(action) }
     }
 
-    /** For `onCleared`: the ViewModel scope is already cancelled, so the commit runs on its own scope. */
+    /**
+     * For `onCleared`: the ViewModel scope is already cancelled, so the commit runs on its own scope. It is registered
+     * in [PendingUndoCommits], so the screen shown next reads the data only once the write is done.
+     */
     fun commitDetached() {
         val action = take() ?: return
-        CoroutineScope(SupervisorJob()).launch { action.commit() }
+        PendingUndoCommits.track(CoroutineScope(SupervisorJob()).launch { action.commit() })
     }
 
     private suspend fun commitAction(action: UndoableAction) {

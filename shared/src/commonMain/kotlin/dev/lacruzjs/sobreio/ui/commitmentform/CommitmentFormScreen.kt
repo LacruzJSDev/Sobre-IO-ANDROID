@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -181,6 +182,7 @@ fun CommitmentFormScreen(
                         value = state.name,
                         onValueChange = { onEvent(CommitmentFormEvent.NameChanged(it)) },
                         label = stringResource(Res.string.field_commitment_name),
+                        capitalization = KeyboardCapitalization.Sentences,
                         errorRes = state.nameError,
                         enabled = enabled,
                         modifier = Modifier.weight(1f),
@@ -367,6 +369,7 @@ fun CommitmentFormScreen(
                             value = state.notes,
                             onValueChange = { onEvent(CommitmentFormEvent.NotesChanged(it)) },
                             label = stringResource(Res.string.field_notes),
+                            capitalization = KeyboardCapitalization.Sentences,
                             enabled = enabled,
                             imeAction = ImeAction.Done,
                         )

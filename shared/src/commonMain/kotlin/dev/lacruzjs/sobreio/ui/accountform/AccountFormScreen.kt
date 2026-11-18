@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -144,6 +145,7 @@ fun AccountFormScreen(
                         value = state.name,
                         onValueChange = { onEvent(AccountFormEvent.NameChanged(it)) },
                         label = stringResource(Res.string.field_account_name),
+                        capitalization = KeyboardCapitalization.Sentences,
                         errorRes = state.nameError,
                         enabled = !state.isSubmitting,
                         imeAction = ImeAction.Done,

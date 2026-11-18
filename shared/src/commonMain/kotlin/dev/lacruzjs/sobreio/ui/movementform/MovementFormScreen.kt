@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -219,6 +220,7 @@ fun MovementFormScreen(
                         value = state.notes,
                         onValueChange = { onEvent(MovementFormEvent.NotesChanged(it)) },
                         label = stringResource(Res.string.field_notes),
+                        capitalization = KeyboardCapitalization.Sentences,
                         enabled = enabled,
                         imeAction = ImeAction.Done,
                     )

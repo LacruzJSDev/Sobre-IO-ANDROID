@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,6 +68,7 @@ fun SignUpScreen(
             value = state.name,
             onValueChange = { onEvent(SignUpEvent.NameChanged(it)) },
             label = stringResource(Res.string.field_name),
+            capitalization = KeyboardCapitalization.Sentences,
             errorRes = state.nameError,
             enabled = !state.isLoading,
         )

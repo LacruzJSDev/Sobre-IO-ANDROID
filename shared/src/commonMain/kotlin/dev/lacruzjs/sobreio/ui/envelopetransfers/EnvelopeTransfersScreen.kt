@@ -70,6 +70,7 @@ import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
+import dev.lacruzjs.sobreio.ui.undo.CommitUndoOnBack
 import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
@@ -91,11 +92,16 @@ fun EnvelopeTransfersRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(EnvelopeTransfersEvent.Refresh) }
+    val leave = {
+        viewModel.onEvent(EnvelopeTransfersEvent.BackClicked)
+        onBack()
+    }
+    CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
     EnvelopeTransfersScreen(
         state = state,
         onEvent = { event ->
             when (event) {
-                EnvelopeTransfersEvent.BackClicked -> onBack()
+                EnvelopeTransfersEvent.BackClicked -> leave()
                 EnvelopeTransfersEvent.NewClicked -> onNew()
                 is EnvelopeTransfersEvent.EditClicked -> onEdit(event.transferId)
                 else -> viewModel.onEvent(event)

@@ -120,7 +120,8 @@ class EnvelopeTransfersViewModel(
             is EnvelopeTransfersEvent.DeleteClicked -> delete(event.transferId)
             EnvelopeTransfersEvent.UndoClicked -> undo.undo()
             EnvelopeTransfersEvent.UndoExpired -> undo.commit()
-            EnvelopeTransfersEvent.BackClicked,
+            // The Route navigates; a delete still waiting is made final first, before the screen below reloads
+            EnvelopeTransfersEvent.BackClicked -> undo.commitDetached()
             EnvelopeTransfersEvent.NewClicked,
             is EnvelopeTransfersEvent.EditClicked,
             -> Unit
