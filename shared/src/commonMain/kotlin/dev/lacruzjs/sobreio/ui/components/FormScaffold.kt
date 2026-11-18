@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -55,7 +54,7 @@ fun FormScaffold(
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         // A tap outside the fields closes the keyboard
-        Column(modifier = Modifier.fillMaxSize().clearFocusOnTap()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.Form).clearFocusOnTap()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -90,8 +89,7 @@ fun FormScaffold(
                     .verticalScroll(rememberScrollState())
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                    .widthIn(max = 560.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 content = content,
             )

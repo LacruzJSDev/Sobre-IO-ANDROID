@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.movements
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 
@@ -91,7 +92,7 @@ internal fun FixedFilterMovementsScreen(
     leading: @Composable () -> Unit,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             if (state.searchOpen) {
                 MovementsSearchHeader(
                     text = state.searchText,

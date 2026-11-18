@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -187,7 +191,7 @@ fun AccountDetailScreen(
                         Box(Modifier.weight(1f).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
                             when (selectedTab) {
                                 AccountDetailTab.Summary -> AccountSummaryTab(state, onEvent)
-                                AccountDetailTab.Commitments -> commitmentsContent()
+                                AccountDetailTab.Commitments -> Box(Modifier.fillMaxHeight().contentMaxWidth()) { commitmentsContent() }
                             }
                         }
                     }
@@ -284,6 +288,15 @@ private val previewState = AccountDetailUiState(
 @PreviewLightDark
 @Composable
 private fun AccountDetailScreenPreview() {
+    SobreioTheme {
+        AccountDetailScreen(state = previewState, selectedTab = AccountDetailTab.Summary, onEvent = {})
+    }
+}
+
+/** A tablet-wide pane: the summary lays out in two columns. */
+@Preview(widthDp = 1024, heightDp = 768)
+@Composable
+private fun AccountDetailScreenTabletPreview() {
     SobreioTheme {
         AccountDetailScreen(state = previewState, selectedTab = AccountDetailTab.Summary, onEvent = {})
     }

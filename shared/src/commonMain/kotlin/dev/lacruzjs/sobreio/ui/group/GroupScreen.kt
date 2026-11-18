@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
@@ -89,6 +93,7 @@ fun GroupRoute(
     groupId: String,
     onOpenGroups: () -> Unit,
     onGroupGone: () -> Unit,
+    onCloseDetails: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenReview: () -> Unit,
     onOpenAccountForm: (accountId: String?) -> Unit,
@@ -107,6 +112,12 @@ fun GroupRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
+    // Every tab change goes through here: a detail open beside the list belongs to the tab being left, so it closes
+    fun selectTab(tab: GroupTab) {
+        if (tab.ordinal == selectedIndex) return
+        selectedIndex = tab.ordinal
+        onCloseDetails()
+    }
 
     val accountsState by accountsViewModel.state.collectAsStateWithLifecycle()
     // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
@@ -143,7 +154,7 @@ fun GroupRoute(
                 GroupEvent.MenuClicked -> onOpenGroups()
                 GroupEvent.SettingsClicked -> onOpenSettings()
                 is GroupEvent.TabSelected -> {
-                    selectedIndex = event.tab.ordinal
+                    selectTab(event.tab)
                     // Shown again each time the tab is selected, so it reads the due dates again
                     if (event.tab == GroupTab.Group) summaryViewModel.onEvent(GroupSummaryEvent.Refresh)
                 }
@@ -159,12 +170,12 @@ fun GroupRoute(
                         is GroupSummaryEvent.WarningClicked -> when (val warning = event.warning) {
                             is GroupWarning.EnvelopeOverspent -> onOpenEnvelope(warning.envelopeId)
                             is GroupWarning.AccountShortfallOn -> onOpenAccount(warning.accountId)
-                            is GroupWarning.CommitmentsShortfall -> selectedIndex = GroupTab.Envelopes.ordinal
+                            is GroupWarning.CommitmentsShortfall -> selectTab(GroupTab.Envelopes)
                         }
                         is GroupSummaryEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
                         GroupSummaryEvent.ReviewClicked -> onOpenReview()
                         is GroupSummaryEvent.SpendingClicked -> onOpenEnvelope(event.envelopeId)
-                        GroupSummaryEvent.SeeAllEnvelopesClicked -> selectedIndex = GroupTab.Envelopes.ordinal
+                        GroupSummaryEvent.SeeAllEnvelopesClicked -> selectTab(GroupTab.Envelopes)
                         else -> summaryViewModel.onEvent(event)
                     }
                 },
@@ -332,7 +343,12 @@ fun GroupScreen(
         },
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column {
+            // Lists keep a readable width; the Group tab lays out two columns on a wide pane, so it gets more room
+            Column(
+                modifier = Modifier.fillMaxSize().contentMaxWidth(
+                    if (state.selectedTab == GroupTab.Group) ContentWidth.TwoColumns else ContentWidth.List,
+                ),
+            ) {
                 // Same header on every tab. The right side is free for the actions of each section.
                 if (state.selectedTab == GroupTab.Movements && movementsHeader != null) movementsHeader() else ScreenHeader(
                     title = state.group?.name.orEmpty(),
@@ -410,6 +426,18 @@ private fun GroupTab.label(): StringResource = when (this) {
 @PreviewLightDark
 @Composable
 private fun GroupScreenPreview() {
+    SobreioTheme {
+        GroupScreen(
+            state = GroupUiState(group = Group("1", "Casa", "EUR"), isLoading = false, selectedTab = GroupTab.Accounts),
+            onEvent = {},
+        )
+    }
+}
+
+/** A tablet-wide window: the rail shows and the Group tab would lay out in two columns. */
+@Preview(widthDp = 1024, heightDp = 768)
+@Composable
+private fun GroupScreenTabletPreview() {
     SobreioTheme {
         GroupScreen(
             state = GroupUiState(group = Group("1", "Casa", "EUR"), isLoading = false, selectedTab = GroupTab.Accounts),

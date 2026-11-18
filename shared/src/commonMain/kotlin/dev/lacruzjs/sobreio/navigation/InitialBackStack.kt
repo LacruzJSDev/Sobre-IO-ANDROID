@@ -29,3 +29,34 @@ fun MutableList<NavKey>.showOnlyGroups() {
 fun MutableList<NavKey>.popToPrevious() {
     if (size > 1) removeAt(lastIndex)
 }
+
+/**
+ * Whether this key is shown in a detail or extra pane of the list-detail scene (see `AppNavigation`): an account,
+ * envelope, group settings, review or profile detail, and the lower levels that open above them. A list pane (Group,
+ * Groups) and the full-screen forms are not.
+ */
+fun NavKey.isPaneDetail(): Boolean = when (this) {
+    is AccountDetail, is EnvelopeDetail, is GroupSettings, is GroupReview, Profile,
+    is CommitmentDetail, is AccountMovements, is EnvelopeMovements, is Tags,
+    -> true
+    else -> false
+}
+
+/**
+ * Opens [detail] in the detail pane: whatever detail (and extra pane) the list already has open is replaced, so choosing
+ * another account or envelope beside an open one never stacks details. On a phone the list is only on top of the stack
+ * when no detail is open, so this is a plain push there.
+ */
+fun MutableList<NavKey>.openDetail(detail: NavKey) {
+    closeDetails()
+    add(detail)
+}
+
+/**
+ * Closes whatever detail (and extra pane) is open beside the list, leaving the list alone: changing the group's tab, since
+ * an account's detail makes no sense beside the envelopes. On a phone the list is only on top when nothing is open, so
+ * this does nothing there.
+ */
+fun MutableList<NavKey>.closeDetails() {
+    while (size > 1 && last().isPaneDetail()) removeAt(lastIndex)
+}

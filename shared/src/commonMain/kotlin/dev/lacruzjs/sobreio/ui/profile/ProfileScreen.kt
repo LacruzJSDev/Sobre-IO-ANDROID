@@ -1,4 +1,6 @@
 package dev.lacruzjs.sobreio.ui.profile
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import dev.lacruzjs.sobreio.ui.components.clearFocusOnTap
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +71,7 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column {
+        Column(modifier = Modifier.contentMaxWidth(ContentWidth.Form)) {
             ScreenHeader(
                 title = stringResource(Res.string.action_profile),
                 onBack = { onEvent(ProfileEvent.BackClicked) },

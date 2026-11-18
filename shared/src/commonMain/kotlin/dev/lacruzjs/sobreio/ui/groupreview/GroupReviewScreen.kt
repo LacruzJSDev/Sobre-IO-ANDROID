@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupreview
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -90,7 +91,7 @@ fun GroupReviewScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
             ScreenHeader(
                 title = stringResource(Res.string.group_review_title),
                 subtitle = state.groupName.takeIf { it.isNotEmpty() },
