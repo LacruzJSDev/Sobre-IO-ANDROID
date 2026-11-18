@@ -22,6 +22,8 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -122,12 +124,14 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun backMakesAWaitingSkipFinal() {
+    fun backMakesAWaitingSkipFinal() = runTest {
         summary.pending = listOf(due("c1"))
         loaded()
         viewModel.onEvent(GroupReviewEvent.SkipClicked("c1|2026-11-10"))
 
         viewModel.onEvent(GroupReviewEvent.BackClicked)
+        // The skip is written outside the ViewModel's scope (it outlives the screen): wait for it like a reload does
+        PendingUndoCommits.await()
 
         assertTrue(summary.calls.contains("skip(c1, 2026-11-10)"))
     }
