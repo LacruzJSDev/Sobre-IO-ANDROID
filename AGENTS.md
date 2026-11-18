@@ -605,6 +605,10 @@ run the app again from Xcode to renew it. From the terminal, `xcodebuild -projec
 - Kotlin official style; names: `XxxScreen`, `XxxViewModel`, `XxxUiState`, `XxxEvent`, `XxxRepository`.
 - No `!!`; errors become UI state. State classes are immutable.
 - Commits: Conventional Commits in English with scopes `app`, `ui`, `data`, `nav`, `build`; for example `feat(ui): add movements list`.
+- Several agents work on this repository at once: work in your own git worktree, never in the main checkout. From
+  this folder, `git worktree add ../worktrees/app-<topic> -b <type>/<topic> origin/main`, copy `local.properties` into it,
+  and commit only to your own branch. Never switch branches, stash or commit in a checkout you did not create. Before
+  deleting a branch, `git log origin/<branch>..<branch>` must be empty; after the merge, `git worktree remove` it.
 - When you add a dependency, add it to the version catalog and to the "Stack" or "Current state" section above.
 - When you add a screen or a layer rule, update this file in the same change.
 
