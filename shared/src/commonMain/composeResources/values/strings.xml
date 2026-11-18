@@ -698,6 +698,20 @@
         <item quantity="one">%1$d account</item>
         <item quantity="other">%1$d accounts</item>
     </plurals>
+    <string name="profile_delete_account">Delete account</string>
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_intro">This is what will happen to each of your groups.</string>
+    <string name="delete_account_blocked_title">First name another owner</string>
+    <string name="delete_account_blocked_note">You are the only owner of these groups and they have other members. Open one and make someone else owner.</string>
+    <string name="delete_account_delete_title">Deleted for good</string>
+    <string name="delete_account_delete_note">You are the only member: the group, its accounts and its movements disappear.</string>
+    <string name="delete_account_leave_title">You will leave</string>
+    <string name="delete_account_leave_note">Your movements stay in these groups, signed as “Deleted user”.</string>
+    <string name="delete_account_no_groups">You do not belong to any group.</string>
+    <string name="delete_account_final_note">Your email and sign-in are removed. This cannot be undone.</string>
+    <string name="delete_account_confirm_label">I understand this is final</string>
+    <string name="delete_account_action">Delete my account</string>
+    <string name="error_fz023_account_blocked">You are the only owner of a group with more members: name another owner before deleting your account.</string>
     <!-- Bank import (D-52) -->
     <string name="action_ignore">Ignore</string>
     <string name="field_from_account">Source account</string>
@@ -803,6 +817,6 @@
     <string name="bank_import_result_undone">Import undone: everything it recorded has been voided.</string>
     <string name="bank_import_undo_import">Undo import</string>
     <string name="bank_import_see_movements">See movements</string>
-    <string name="error_fz023_bank_import">A statement row no longer matches what it confirms or links. Review it again.</string>
+    <string name="error_fz024_bank_import">A statement row no longer matches what it confirms or links. Review it again.</string>
     <string name="error_bank_row_already_imported">Some rows were imported meanwhile. Choose the file again to review them.</string>
 </resources>

@@ -11,4 +11,8 @@ class FakeLastAccountStore : LastAccountStore {
     override fun set(userId: String, groupId: String, accountId: String) {
         values[userId to groupId] = accountId
     }
+
+    override fun clear(userId: String) {
+        values.keys.removeAll { it.first == userId }
+    }
 }

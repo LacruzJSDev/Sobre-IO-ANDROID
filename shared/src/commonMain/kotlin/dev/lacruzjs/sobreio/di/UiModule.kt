@@ -23,6 +23,7 @@ import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormViewModel
 import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
 import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
+import dev.lacruzjs.sobreio.ui.deleteaccount.DeleteAccountViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
 import dev.lacruzjs.sobreio.ui.bankimport.BankImportViewModel
@@ -35,6 +36,7 @@ val uiModule = module {
     viewModelOf(::SignUpViewModel)
     viewModelOf(::PasswordRecoveryViewModel)
     viewModelOf(::ProfileViewModel)
+    viewModelOf(::DeleteAccountViewModel)
     viewModelOf(::GroupsViewModel)
     viewModelOf(::SignInViewModel)
     // Plain values come as Koin parameters from the Route (koinViewModel { parametersOf(...) }). Navigation 3 keys

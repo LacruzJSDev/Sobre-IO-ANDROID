@@ -41,6 +41,7 @@ import dev.lacruzjs.sobreio.ui.movements.EnvelopeMovementsRoute
 import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.ui.movementform.MovementFormRoute
 import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
+import dev.lacruzjs.sobreio.ui.deleteaccount.DeleteAccountRoute
 import dev.lacruzjs.sobreio.ui.profile.ProfileRoute
 import dev.lacruzjs.sobreio.ui.timezone.TimeZonePickerRoute
 import org.koin.compose.koinInject
@@ -256,7 +257,17 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                 )
             }
             entry<Profile>(metadata = detailPane) {
-                ProfileRoute(onBack = { backStack.popToPrevious() })
+                ProfileRoute(
+                    onBack = { backStack.popToPrevious() },
+                    onDeleteAccount = { backStack.add(DeleteAccount) },
+                )
+            }
+            // Full screen like a form: a one-step destructive flow, never a pane beside the list
+            entry<DeleteAccount> {
+                DeleteAccountRoute(
+                    onBack = { backStack.popToPrevious() },
+                    onOpenGroupSettings = { groupId -> backStack.add(GroupSettings(groupId)) },
+                )
             }
         },
     )

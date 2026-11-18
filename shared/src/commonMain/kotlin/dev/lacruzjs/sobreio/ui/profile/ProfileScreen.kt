@@ -3,6 +3,8 @@ import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import dev.lacruzjs.sobreio.ui.components.clearFocusOnTap
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,7 +34,9 @@ import dev.lacruzjs.sobreio.generated.resources.action_profile
 import dev.lacruzjs.sobreio.generated.resources.action_save
 import dev.lacruzjs.sobreio.generated.resources.field_display_name
 import dev.lacruzjs.sobreio.generated.resources.profile_name_saved
+import dev.lacruzjs.sobreio.ui.components.DestructiveButton
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.generated.resources.profile_delete_account
 import dev.lacruzjs.sobreio.generated.resources.profile_accessibility_section
 import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_label
 import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_note
@@ -48,6 +52,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ProfileRoute(
     onBack: () -> Unit,
+    onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel(),
 ) {
@@ -57,6 +62,7 @@ fun ProfileRoute(
         onEvent = { event ->
             when (event) {
                 ProfileEvent.BackClicked -> onBack()
+                ProfileEvent.DeleteAccountClicked -> onDeleteAccount()
                 else -> viewModel.onEvent(event)
             }
         },
@@ -79,6 +85,7 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .clearFocusOnTap()
+                    .verticalScroll(rememberScrollState())
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
                     .padding(horizontal = 24.dp, vertical = 16.dp)
                     .widthIn(max = 480.dp)
@@ -127,6 +134,11 @@ fun ProfileScreen(
                         )
                     }
                 }
+                DestructiveButton(
+                    text = stringResource(Res.string.profile_delete_account),
+                    onClick = { onEvent(ProfileEvent.DeleteAccountClicked) },
+                    modifier = Modifier.padding(top = 16.dp),
+                )
             }
         }
     }

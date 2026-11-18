@@ -697,6 +697,20 @@
         <item quantity="one">%1$d cuenta</item>
         <item quantity="other">%1$d cuentas</item>
     </plurals>
+    <string name="profile_delete_account">Eliminar cuenta</string>
+    <string name="delete_account_title">Eliminar cuenta</string>
+    <string name="delete_account_intro">Esto es lo que pasará con cada uno de tus grupos.</string>
+    <string name="delete_account_blocked_title">Antes nombra a otro propietario</string>
+    <string name="delete_account_blocked_note">Eres el único propietario de estos grupos y tienen más miembros. Abre uno y haz propietaria a otra persona.</string>
+    <string name="delete_account_delete_title">Se borrarán para siempre</string>
+    <string name="delete_account_delete_note">Eres el único miembro: el grupo, sus cuentas y sus movimientos desaparecen.</string>
+    <string name="delete_account_leave_title">Saldrás de</string>
+    <string name="delete_account_leave_note">Tus movimientos se quedan en estos grupos, firmados como «Usuario eliminado».</string>
+    <string name="delete_account_no_groups">No perteneces a ningún grupo.</string>
+    <string name="delete_account_final_note">Se eliminan tu email y tu acceso. No se puede deshacer.</string>
+    <string name="delete_account_confirm_label">Entiendo que es definitivo</string>
+    <string name="delete_account_action">Eliminar mi cuenta</string>
+    <string name="error_fz023_account_blocked">Eres el único propietario de un grupo con más miembros: nombra a otro propietario antes de darte de baja.</string>
     <!-- Importar del banco (D-52) -->
     <string name="action_ignore">Ignorar</string>
     <string name="field_from_account">Cuenta de origen</string>
@@ -802,6 +816,6 @@
     <string name="bank_import_result_undone">Importación deshecha: todo lo que apuntó se ha anulado.</string>
     <string name="bank_import_undo_import">Deshacer importación</string>
     <string name="bank_import_see_movements">Ver movimientos</string>
-    <string name="error_fz023_bank_import">Una fila del extracto ya no corresponde a lo que confirma o enlaza. Revísala de nuevo.</string>
+    <string name="error_fz024_bank_import">Una fila del extracto ya no corresponde a lo que confirma o enlaza. Revísala de nuevo.</string>
     <string name="error_bank_row_already_imported">Algunas filas se han importado mientras tanto. Elige el fichero otra vez para revisarlas.</string>
 </resources>
