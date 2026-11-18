@@ -69,7 +69,14 @@ targets:
       - name: Build the shared Kotlin framework
         basedOnDependencyAnalysis: false
         script: |
-          # Xcode starts the script with a minimal environment
+          # Xcode starts the script with a minimal environment. Use a system JDK, else the one Android Studio ships
           export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home 2>/dev/null)}"
+          if [ ! -x "$JAVA_HOME/bin/java" ]; then
+            export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+          fi
+          if [ ! -x "$JAVA_HOME/bin/java" ]; then
+            echo "error: no Java found. Install a JDK 17+ or Android Studio, or set JAVA_HOME"
+            exit 1
+          fi
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
