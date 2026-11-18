@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import dev.lacruzjs.sobreio.generated.resources.holder_common
 import dev.lacruzjs.sobreio.generated.resources.field_monthly_contribution
 import dev.lacruzjs.sobreio.generated.resources.field_envelope_start_next_period
 import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note
+import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note_off
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.components.ColorFormTile
@@ -141,6 +143,7 @@ fun EnvelopeFormScreen(
                         value = state.name,
                         onValueChange = { onEvent(EnvelopeFormEvent.NameChanged(it)) },
                         label = stringResource(Res.string.field_envelope_name),
+                        capitalization = KeyboardCapitalization.Sentences,
                         errorRes = state.nameError,
                         enabled = !state.isSubmitting,
                         imeAction = ImeAction.Done,
@@ -210,7 +213,14 @@ fun EnvelopeFormScreen(
                         val languageTag = Locale.current.toLanguageTag()
                         FormTile(
                             label = stringResource(Res.string.field_envelope_start_next_period),
-                            note = stringResource(Res.string.envelope_start_next_period_note, formatDate(nextStart, languageTag)),
+                            note = stringResource(
+                                if (state.startsNextPeriod) {
+                                    Res.string.envelope_start_next_period_note
+                                } else {
+                                    Res.string.envelope_start_next_period_note_off
+                                },
+                                formatDate(nextStart, languageTag),
+                            ),
                         ) {
                             Switch(
                                 checked = state.startsNextPeriod,

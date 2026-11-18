@@ -1,12 +1,14 @@
 package dev.lacruzjs.sobreio.ui.bankimport
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.bankimport.AmountMode
 import dev.lacruzjs.sobreio.domain.bankimport.DateOrder
@@ -73,7 +75,7 @@ internal fun ColumnsStep(state: BankImportUiState, onEvent: (BankImportEvent) ->
             SoftTile {
                 (0 until table.columnCount).forEach { c ->
                     val samples = table.body(mapping.headerRow).take(PREVIEW_ROWS).mapNotNull { it.getOrNull(c)?.takeIf(String::isNotBlank) }
-                    LabelValue(label = columnName(table, mapping.headerRow, c), value = samples.joinToString(" · "))
+                    PreviewColumn(name = columnName(table, mapping.headerRow, c), samples = samples.joinToString(" · "))
                 }
             }
         }
@@ -171,3 +173,20 @@ private fun ColumnTileRow(
     }
 }
 
+/**
+ * One column of the file: its name above a line of sample values. Stacked, so a long description never squeezes the
+ * name (side by side the name broke over two lines); the samples are cut with an ellipsis.
+ */
+@Composable
+private fun PreviewColumn(name: String, samples: String) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        Text(
+            samples,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}

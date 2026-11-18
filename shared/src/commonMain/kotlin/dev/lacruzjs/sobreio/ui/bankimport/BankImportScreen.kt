@@ -90,6 +90,7 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_result_matches
 import dev.lacruzjs.sobreio.generated.resources.bank_import_result_mismatch_note
 import dev.lacruzjs.sobreio.generated.resources.bank_import_result_title
 import dev.lacruzjs.sobreio.generated.resources.bank_import_result_undone
+import dev.lacruzjs.sobreio.generated.resources.bank_import_result_undone_title
 import dev.lacruzjs.sobreio.generated.resources.bank_import_review_range
 import dev.lacruzjs.sobreio.generated.resources.bank_import_review_skipped
 import dev.lacruzjs.sobreio.generated.resources.bank_import_review_title
@@ -215,7 +216,7 @@ private fun Header(state: BankImportUiState, onEvent: (BankImportEvent) -> Unit)
         ImportStep.Source -> Res.string.bank_import_title
         ImportStep.Columns -> Res.string.bank_import_columns_title
         ImportStep.Review -> Res.string.bank_import_review_title
-        ImportStep.Result -> Res.string.bank_import_result_title
+        ImportStep.Result -> if (state.undone) Res.string.bank_import_result_undone_title else Res.string.bank_import_result_title
     }
     // The first and last steps close the import (X); the middle ones go back a step (arrow)
     val closes = state.step == ImportStep.Source || state.step == ImportStep.Result
@@ -274,7 +275,12 @@ private fun SourceStep(state: BankImportUiState, onEvent: (BankImportEvent) -> U
             LabelValue(
                 label = stringResource(Res.string.bank_import_last_import),
                 value = if (last?.createdDay != null) {
-                    stringResource(Res.string.bank_import_last_import_value, formatShortDate(last.createdDay, languageTag, year), last.rowsTotal)
+                    pluralStringResource(
+                        Res.plurals.bank_import_last_import_value,
+                        last.rowsTotal,
+                        formatShortDate(last.createdDay, languageTag, year),
+                        last.rowsTotal,
+                    )
                 } else {
                     stringResource(Res.string.bank_import_no_last_import)
                 },
@@ -320,8 +326,9 @@ private fun ReviewStep(state: BankImportUiState, onEvent: (BankImportEvent) -> U
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             if (first != null && last != null) {
                                 Text(
-                                    stringResource(
-                                        Res.string.bank_import_review_range,
+                                    pluralStringResource(
+                                        Res.plurals.bank_import_review_range,
+                                        state.rows.size,
                                         formatShortDate(first, languageTag, year),
                                         formatShortDate(last, languageTag, year),
                                         state.rows.size,
@@ -533,7 +540,9 @@ private fun ResultStep(state: BankImportUiState, onEvent: (BankImportEvent) -> U
         },
     ) {
         if (state.undone) {
+            // The counts described the import that no longer exists: only say what undoing did
             FormNote(stringResource(Res.string.bank_import_result_undone))
+            return@StepColumn
         }
         SoftTile {
             LabelValue(stringResource(Res.string.bank_import_result_created), result.created.toString())

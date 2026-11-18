@@ -21,6 +21,7 @@ import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.Job
@@ -85,8 +86,9 @@ class EnvelopeDetailViewModel(
             is EnvelopeDetailEvent.DeleteTransferClicked -> deleteTransfer(event.transferId)
             EnvelopeDetailEvent.UndoClicked -> undo.undo()
             EnvelopeDetailEvent.UndoExpired -> undo.commit()
+            // The Route navigates; a delete still waiting is made final first, before the screen below reloads
+            EnvelopeDetailEvent.BackClicked -> undo.commitDetached()
             // Handled by the Route
-            EnvelopeDetailEvent.BackClicked,
             EnvelopeDetailEvent.EditClicked,
             EnvelopeDetailEvent.SeeAllClicked,
             is EnvelopeDetailEvent.CommitmentClicked,
@@ -107,6 +109,8 @@ class EnvelopeDetailViewModel(
         loadJob?.cancel()
         loadMoreJob?.cancel()
         loadJob = viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             val failure = loadAll()
             if (failure != null) {
                 // A refresh that fails keeps what is on screen; only a first load turns into the error state

@@ -99,6 +99,7 @@ import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -174,8 +175,9 @@ private fun BankSection(state: AccountDetailUiState, languageTag: String, onEven
                 val last = state.lastImport
                 Text(
                     text = if (last?.createdDay != null) {
-                        stringResource(
-                            Res.string.bank_import_last_import_value,
+                        pluralStringResource(
+                            Res.plurals.bank_import_last_import_value,
+                            last.rowsTotal,
                             formatShortDate(last.createdDay, languageTag, state.today?.year ?: 0),
                             last.rowsTotal,
                         )

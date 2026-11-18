@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_save
 import dev.lacruzjs.sobreio.generated.resources.field_tag_color
@@ -29,6 +30,7 @@ internal fun TagSheet(state: TagsUiState, onEvent: (TagsEvent) -> Unit) {
             value = state.name,
             onValueChange = { onEvent(TagsEvent.NameChanged(it)) },
             label = stringResource(Res.string.field_tag_name),
+            capitalization = KeyboardCapitalization.Sentences,
             errorRes = state.nameError,
             enabled = !state.isSubmitting,
             imeAction = ImeAction.Done,

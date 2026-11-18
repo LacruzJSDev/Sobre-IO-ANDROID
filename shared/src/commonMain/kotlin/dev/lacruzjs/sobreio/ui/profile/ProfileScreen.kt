@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -97,6 +98,7 @@ fun ProfileScreen(
                     value = state.name,
                     onValueChange = { onEvent(ProfileEvent.NameChanged(it)) },
                     label = stringResource(Res.string.field_display_name),
+                    capitalization = KeyboardCapitalization.Sentences,
                     errorRes = state.nameError,
                     enabled = !state.isSaving,
                     imeAction = ImeAction.Done,

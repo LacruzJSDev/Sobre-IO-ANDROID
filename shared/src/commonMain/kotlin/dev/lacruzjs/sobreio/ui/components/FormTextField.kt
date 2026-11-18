@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
@@ -52,6 +53,8 @@ fun FormTextField(
     onImeAction: () -> Unit = {},
     leadingIcon: (@Composable () -> Unit)? = null,
     inputTransformation: InputTransformation? = null,
+    /** Names and notes start with a capital ([KeyboardCapitalization.Sentences]); codes, emails and searches do not. */
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
 ) {
     val state = rememberSyncedTextFieldState(value, onValueChange)
     OutlinedTextField(
@@ -65,7 +68,7 @@ fun FormTextField(
         leadingIcon = leadingIcon,
         supportingText = errorRes?.let { { Text(stringResource(it)) } },
         inputTransformation = inputTransformation,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardOptions = KeyboardOptions(capitalization = capitalization, keyboardType = keyboardType, imeAction = imeAction),
         onKeyboardAction = rememberKeyboardActionHandler(imeAction, onImeAction),
     )
 }

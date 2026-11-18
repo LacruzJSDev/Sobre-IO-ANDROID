@@ -20,6 +20,7 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.adjustment_recorded
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.Job
@@ -92,8 +93,9 @@ class AccountDetailViewModel(
             AccountDetailEvent.AdjustClicked -> adjust()
             AccountDetailEvent.UndoClicked -> undo.undo()
             AccountDetailEvent.UndoExpired -> undo.commit()
+            // The Route navigates; an adjustment still waiting is made final first, before the screen below reloads
+            AccountDetailEvent.BackClicked -> undo.commitDetached()
             // Handled by the Route
-            AccountDetailEvent.BackClicked,
             AccountDetailEvent.EditClicked,
             AccountDetailEvent.SeeAllClicked,
             AccountDetailEvent.BankImportClicked,
@@ -111,6 +113,8 @@ class AccountDetailViewModel(
         if (showSpinner) _state.update { it.copy(isLoading = true, error = null) }
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             val failure = loadAll()
             if (failure != null) {
                 // A refresh that fails keeps what is on screen; only a first load turns into the error state

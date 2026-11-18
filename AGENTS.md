@@ -598,7 +598,8 @@ plus `movementform` (the new / edit movement form).
   Amounts are always typed positive (`AmountField` rejects "-"); a real negative balance is chosen with the "In credit /
   Debt" chips (`BalanceSignChips`): the account form's opening balance (`openingBalanceIsDebt`, Debt by default for a
   credit card until the user taps a chip) and Compare with bank; the ViewModel applies the sign. The 6-digit codes use
-  `digitsOnly(maxLength)`. Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
+  `digitsOnly(maxLength)`. Names and notes pass `capitalization = KeyboardCapitalization.Sentences` to `FormTextField`
+  (the default is none, for emails, codes and searches). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
   avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
@@ -624,6 +625,12 @@ plus `movementform` (the new / edit movement form).
   delete) and an Undo snackbar follows. ViewModels use `UndoController` (`ui/undo`): `show(UndoableAction(commit, undo,
   restore))`; `commit` runs when the snackbar ends, another destructive action starts, the screen is shown again or the
   ViewModel is cleared; failures restore the row and show the error. The screen shows `UndoMessage` with `UndoSnackbarHost`.
+  A commit made as a screen closes (`commitDetached`) is registered in `PendingUndoCommits`, and the screens that reload
+  money when shown (Groups, Accounts, Envelopes, Group tab, account and envelope details, movements) call
+  `PendingUndoCommits.await()` before reading, so they never show figures from before the delete. Navigation 3 clears a
+  popped entry's ViewModel only after its exit animation, so a level 2 screen with deletes commits on back itself: its
+  `BackClicked` calls `commitDetached` and its Route adds `CommitUndoOnBack(pending = state.undoMessage != null)`, which
+  sends system back and the gesture the same way while a delete waits (envelope moves, envelope and account details, review).
 - Adaptive layout uses `NavigationSuiteScaffold` and our list-detail scene `AdaptiveListDetail` (one scene per root, so panes move instead of scenes cross-fading) (see "Adaptive layout" in Current state); decide widths by the pane's own width (`BoxWithConstraints`, `contentMaxWidth`), never the window's; check phone, tablet and foldable previews or emulators.
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;

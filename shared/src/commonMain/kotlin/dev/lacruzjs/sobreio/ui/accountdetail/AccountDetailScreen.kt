@@ -65,6 +65,7 @@ import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
+import dev.lacruzjs.sobreio.ui.undo.CommitUndoOnBack
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -95,13 +96,18 @@ fun AccountDetailRoute(
 
     // Shown again after the edit form: the name, colour or figures may have changed
     LaunchedEffect(Unit) { viewModel.onEvent(AccountDetailEvent.Refresh) }
+    val leave = {
+        viewModel.onEvent(AccountDetailEvent.BackClicked)
+        onBack()
+    }
+    CommitUndoOnBack(pending = state.undoMessage != null, onLeave = leave)
 
     AccountDetailScreen(
         state = state,
         selectedTab = AccountDetailTab.entries[tabIndex],
         onEvent = { event ->
             when (event) {
-                AccountDetailEvent.BackClicked -> onBack()
+                AccountDetailEvent.BackClicked -> leave()
                 AccountDetailEvent.EditClicked -> onEdit()
                 AccountDetailEvent.SeeAllClicked -> onSeeAllMovements()
                 AccountDetailEvent.BankImportClicked -> onImport()

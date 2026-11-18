@@ -10,6 +10,7 @@ import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.account_deleted
 import dev.lacruzjs.sobreio.generated.resources.account_reopened
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +64,8 @@ class AccountsViewModel(
 
     private fun load() {
         viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             val list = accounts.getAccounts(groupId)
             val summary = accounts.getSummary(groupId)
             val failure = list.exceptionOrNull() ?: summary.exceptionOrNull()

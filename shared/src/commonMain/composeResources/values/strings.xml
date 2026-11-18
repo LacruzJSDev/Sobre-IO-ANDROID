@@ -567,7 +567,7 @@
     <string name="transfer_from">From %1$s</string>
     <string name="transfer_to">To %1$s</string>
     <string name="transfer_deleted">Move of %1$s deleted</string>
-    <string name="envelope_transfer_new_title">New move between envelopes</string>
+    <string name="envelope_transfer_new_title">Move money</string>
     <string name="envelope_transfer_edit_title">Edit move</string>
     <string name="envelope_transfer_unknown_envelope">Envelope</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
@@ -576,6 +576,7 @@
     <string name="validation_envelopes_differ">The destination must be a different envelope.</string>
     <string name="field_envelope_start_next_period">Start next period</string>
     <string name="envelope_start_next_period_note">The first target is assigned on %1$s; nothing is taken from Unassigned this period.</string>
+    <string name="envelope_start_next_period_note_off">This period's target is taken from Unassigned now. Turn it on to start on %1$s instead.</string>
     <string name="envelope_target_starts_on">Target %1$s a month from %2$s</string>
 
     <!-- Envelope types (D-46) -->
@@ -736,7 +737,10 @@
     <string name="bank_import_source_help_excel">If your bank only gives an Excel file, open it and save it as CSV.</string>
     <string name="bank_import_choose_file">Choose CSV file</string>
     <string name="bank_import_last_import">Last import</string>
-    <string name="bank_import_last_import_value">%1$s · %2$d rows</string>
+    <plurals name="bank_import_last_import_value">
+        <item quantity="one">%1$s · %2$d row</item>
+        <item quantity="other">%1$s · %2$d rows</item>
+    </plurals>
     <string name="bank_import_no_last_import">Never</string>
     <string name="bank_import_since">Its last row was on %1$s: export from that day on.</string>
     <string name="bank_import_read_only">This account or its group is archived: nothing can be imported.</string>
@@ -768,7 +772,10 @@
     <string name="bank_import_columns_remembered">Remembered for this account: next time this format skips this step.</string>
     <string name="bank_import_continue">Continue</string>
     <string name="bank_import_edit_columns">Columns</string>
-    <string name="bank_import_review_range">%1$s – %2$s · %3$d rows</string>
+    <plurals name="bank_import_review_range">
+        <item quantity="one">%1$s – %2$s · %3$d row</item>
+        <item quantity="other">%1$s – %2$s · %3$d rows</item>
+    </plurals>
     <plurals name="bank_import_review_skipped">
         <item quantity="one">%1$d row without a date or amount was left out.</item>
         <item quantity="other">%1$d rows without a date or amount were left out.</item>
@@ -824,6 +831,7 @@
     <string name="bank_import_result_difference">Difference</string>
     <string name="bank_import_result_matches">The app matches the bank.</string>
     <string name="bank_import_result_mismatch_note">Movements after the statement or missing rows explain the difference. You can fix it with Compare in the account.</string>
+    <string name="bank_import_result_undone_title">Import undone</string>
     <string name="bank_import_result_undone">Import undone: everything it recorded has been voided.</string>
     <string name="bank_import_undo_import">Undo import</string>
     <string name="bank_import_see_movements">See movements</string>

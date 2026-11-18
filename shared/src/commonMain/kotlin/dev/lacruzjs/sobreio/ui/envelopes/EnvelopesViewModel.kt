@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_source_invalid
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
+import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +76,8 @@ class EnvelopesViewModel(
 
     private fun load() {
         viewModelScope.launch {
+            // A delete made final as the previous screen closed is written before reading
+            PendingUndoCommits.await()
             // A new target becomes an assignment of the current period; a failure here must not stop the list
             envelopes.materializeThroughToday(groupId)
             val list = envelopes.getEnvelopes(groupId)

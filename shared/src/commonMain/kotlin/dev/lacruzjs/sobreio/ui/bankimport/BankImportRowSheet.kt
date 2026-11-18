@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.BankRowAction
@@ -139,6 +140,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                     value = draft.notes,
                     onValueChange = { onEvent(BankImportEvent.SheetNotesChanged(it)) },
                     label = stringResource(Res.string.field_notes),
+                    capitalization = KeyboardCapitalization.Sentences,
                 )
                 if (draft.status == BankRowStatus.BeforeOpening) FormNote(stringResource(Res.string.bank_import_before_opening_note))
             }
