@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import kotlinx.datetime.LocalDate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
@@ -68,6 +69,9 @@ class EnvelopeDetailViewModel(
         when (event) {
             EnvelopeDetailEvent.Refresh -> load(showSpinner = !hasLoaded)
             EnvelopeDetailEvent.Retry -> load(showSpinner = true)
+            is EnvelopeDetailEvent.BalanceDaySelected -> balanceOn(event.day)
+            is EnvelopeDetailEvent.OutlookUntilSelected -> outlookUntil(event.day)
+            EnvelopeDetailEvent.OutlookUntilCleared -> _state.update { it.copy(outlookUntil = null, outlookUntilFigures = null) }
             // Handled by the Route
             EnvelopeDetailEvent.BackClicked,
             EnvelopeDetailEvent.EditClicked,
@@ -75,6 +79,29 @@ class EnvelopeDetailViewModel(
             EnvelopeDetailEvent.TransfersClicked,
             is EnvelopeDetailEvent.CommitmentClicked,
             -> Unit
+        }
+    }
+
+    private var balanceDayJob: Job? = null
+    private var outlookJob: Job? = null
+
+    private fun balanceOn(day: LocalDate) {
+        _state.update { it.copy(balanceDay = day, balanceOnDayCents = null) }
+        balanceDayJob?.cancel()
+        balanceDayJob = viewModelScope.launch {
+            detail.getBalanceAt(envelopeId, day)
+                .onSuccess { cents -> _state.update { if (it.balanceDay == day) it.copy(balanceOnDayCents = cents) else it } }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
+        }
+    }
+
+    private fun outlookUntil(day: LocalDate) {
+        _state.update { it.copy(outlookUntil = day, outlookUntilFigures = null) }
+        outlookJob?.cancel()
+        outlookJob = viewModelScope.launch {
+            detail.getOutlookUntil(groupId, envelopeId, day)
+                .onSuccess { figures -> _state.update { if (it.outlookUntil == day) it.copy(outlookUntilFigures = figures) else it } }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
 
@@ -170,6 +197,7 @@ class EnvelopeDetailViewModel(
                     period = periodRows.firstOrNull { p -> p.contains(today) } ?: periodRows.lastOrNull(),
                     chartPeriods = periodRows,
                     outlook = outlookResult.getOrThrow(),
+                    today = today,
                     funding = funding,
                     transfers = page.items.map { t -> t.toRow() },
                     latestMovements = latestResult.getOrThrow().items,

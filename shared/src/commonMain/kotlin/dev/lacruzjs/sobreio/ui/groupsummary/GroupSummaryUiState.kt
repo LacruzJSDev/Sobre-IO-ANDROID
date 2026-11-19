@@ -39,6 +39,9 @@ data class GroupSummaryUiState(
     val outlook: GroupOutlook? = null,
     /** The group's today. */
     val today: LocalDate? = null,
+    /** "Look until": the chosen day and `group_outlook` up to it (null until the database answers). */
+    val lookAheadDay: LocalDate? = null,
+    val lookAhead: GroupOutlook? = null,
     /** `group_free_projection`: the free money day by day, from today to the end of the period. */
     val freeProjection: List<FreePoint> = emptyList(),
     /** Due dates to review, oldest first; the review screen is where they are confirmed or skipped. */

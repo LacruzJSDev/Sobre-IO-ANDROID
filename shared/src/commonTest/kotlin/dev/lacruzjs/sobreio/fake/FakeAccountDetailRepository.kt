@@ -44,6 +44,19 @@ class FakeAccountDetailRepository : AccountDetailRepository {
         return forecastResult ?: Result.success(forecast)
     }
 
+    var forecasts: Map<String, AccountForecast> = emptyMap()
+    var balanceAt: Long = 0
+
+    override suspend fun getBalanceAt(accountId: String, day: LocalDate): Result<Long> {
+        calls += "getBalanceAt($accountId, $day)"
+        return Result.success(balanceAt)
+    }
+
+    override suspend fun getForecasts(groupId: String): Result<Map<String, AccountForecast>> {
+        calls += "getForecasts($groupId)"
+        return Result.success(forecasts)
+    }
+
     override suspend fun getBalanceSeries(accountId: String, from: LocalDate, to: LocalDate, points: Int): Result<List<BalancePoint>> {
         calls += "getBalanceSeries($from, $to)"
         return seriesResult ?: Result.success(series)

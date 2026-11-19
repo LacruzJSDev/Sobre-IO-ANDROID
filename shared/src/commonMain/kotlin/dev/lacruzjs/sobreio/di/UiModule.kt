@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.di
 
+import dev.lacruzjs.sobreio.ui.history.MovementHistoryViewModel
+import dev.lacruzjs.sobreio.ui.export.ExportViewModel
 import dev.lacruzjs.sobreio.ui.accountdetail.AccountDetailViewModel
 import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
 import dev.lacruzjs.sobreio.ui.commitmentdetail.CommitmentDetailViewModel
@@ -56,6 +58,10 @@ val uiModule = module {
             tags = get(),
         )
     }
+    viewModel { params ->
+        MovementHistoryViewModel(params.get<String>(0), params.get<String>(1), params.get<String?>(2), audit = get(), members = get())
+    }
+    viewModel { params -> ExportViewModel(groupId = params.get(), exports = get(), groups = get()) }
     viewModel { params -> TagsViewModel(groupId = params.get(), tags = get(), groups = get()) }
     viewModel { params -> GroupFormViewModel(groupId = params.get<String?>(0), groups = get()) }
     viewModel { params -> AccountFormViewModel(
@@ -214,6 +220,8 @@ val uiModule = module {
             detail = get(),
             auth = get(),
             lastAccount = get(),
+            commitments = get(),
+            summary = get(),
         )
     }
 }

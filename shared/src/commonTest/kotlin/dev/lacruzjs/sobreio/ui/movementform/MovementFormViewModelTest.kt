@@ -1,5 +1,11 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import dev.lacruzjs.sobreio.domain.model.CommitmentKind
+import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.PendingMatch
+import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
+import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
@@ -65,11 +71,58 @@ class MovementFormViewModelTest : MainDispatcherTest() {
     private val detail = FakeAccountDetailRepository()
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
     private val last = FakeLastAccountStore()
+    private val commitments = FakeCommitmentRepository()
+    private val summary = FakeGroupSummaryRepository()
 
     private fun vm(movementId: String? = null, source: String? = null, fixed: String? = null, prefill: MovementPrefill? = null) =
-        MovementFormViewModel("g1", movementId, source, fixed, prefill, form, groups, accounts, envelopes, tags, detail, auth, last)
+        MovementFormViewModel("g1", movementId, source, fixed, prefill, form, groups, accounts, envelopes, tags, detail, auth, last, commitments, summary)
 
     private fun MovementFormViewModel.type(amount: String) = onEvent(MovementFormEvent.AmountChanged(amount))
+
+    private fun dueLight(kind: CommitmentKind = CommitmentKind.Expense) =
+        DueOccurrence("light", "v1", "Light", kind, LocalDate(2026, 11, 12), 4_500, "acc", null, "food", false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun aMovementThatLooksLikeAPendingDueDateOffersToRegisterIt() {
+        commitments.matches = listOf(PendingMatch("light", "Light", LocalDate(2026, 11, 12), 4_500, 2))
+        summary.upcoming = listOf(dueLight())
+        val vm = vm()
+        vm.onEvent(MovementFormEvent.AccountSelected("acc"))
+        vm.type("47,10")
+        testDispatcher.scheduler.advanceTimeBy(500)
+
+        assertEquals("light", vm.state.value.suggestion?.commitmentId)
+
+        vm.onEvent(MovementFormEvent.SuggestionAccepted)
+
+        assertTrue("confirm(light, 2026-11-12)" in summary.calls)
+        assertEquals(4_710L, summary.confirmedAmount)
+        assertEquals(today, summary.confirmedDate)
+        assertTrue(vm.state.value.saved)
+        assertTrue(form.calls.none { it.startsWith("createTransaction") })
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun anIncomeIsNotOfferedAnExpenseDueDateAndANoIsRemembered() {
+        commitments.matches = listOf(PendingMatch("light", "Light", LocalDate(2026, 11, 12), 4_500, 2))
+        summary.upcoming = listOf(dueLight())
+        val vm = vm()
+        vm.onEvent(MovementFormEvent.KindSelected(EntryKind.Income))
+        vm.onEvent(MovementFormEvent.AccountSelected("acc"))
+        vm.type("45")
+        testDispatcher.scheduler.advanceTimeBy(500)
+        assertNull(vm.state.value.suggestion)
+
+        vm.onEvent(MovementFormEvent.KindSelected(EntryKind.Expense))
+        testDispatcher.scheduler.advanceTimeBy(500)
+        assertEquals("light", vm.state.value.suggestion?.commitmentId)
+        vm.onEvent(MovementFormEvent.SuggestionDismissed)
+        vm.type("45,5")
+        testDispatcher.scheduler.advanceTimeBy(500)
+        assertNull(vm.state.value.suggestion)
+    }
 
     @Test
     fun expenseStartsWithNoEnvelopeAndTheGroupsToday() {

@@ -57,6 +57,14 @@ data class EnvelopeDetailUiState(
     val chartPeriods: List<EnvelopePeriod> = emptyList(),
     /** Null for the system envelope and archived ones, which the outlook skips. */
     val outlook: EnvelopeOutlook? = null,
+    /** The group's today: the latest day "Balance on" may ask for. */
+    val today: LocalDate? = null,
+    /** The day chosen in "Balance on" and what `envelope_balance_at` gave for it (null until it answers). */
+    val balanceDay: LocalDate? = null,
+    val balanceOnDayCents: Long? = null,
+    /** "Look until": the chosen day and `envelope_outlook(p_until)` for it; null shows the period's [outlook]. */
+    val outlookUntil: LocalDate? = null,
+    val outlookUntilFigures: EnvelopeOutlook? = null,
     val funding: List<FundingRow> = emptyList(),
     /**
      * The newest moves between envelopes, read only: they are edited and deleted only in the envelope's moves screen,

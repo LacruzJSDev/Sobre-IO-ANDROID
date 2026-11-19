@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import kotlinx.serialization.SerialName
+import dev.lacruzjs.sobreio.domain.model.PendingMatch
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentFundingDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentIdDto
 import dev.lacruzjs.sobreio.data.remote.dto.CommitmentLinkDto
@@ -105,6 +107,29 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
             .map { it.commitmentId }
             .toSet()
     }
+
+    override suspend fun matchPending(accountId: String, signedCents: Long, date: LocalDate): Result<List<PendingMatch>> =
+        safeCall {
+            postgrest.rpc(
+                "match_pending",
+                buildJsonObject {
+                    put("p_account_id", accountId)
+                    put("p_amount", signedCents)
+                    put("p_date", date.toString())
+                },
+            ).decodeList<PendingMatchDto>().map {
+                PendingMatch(it.commitmentId, it.commitmentName, LocalDate.parse(it.dueDate), it.amount, it.daysOff)
+            }
+        }
+
+    @Serializable
+    private data class PendingMatchDto(
+        @SerialName("commitment_id") val commitmentId: String,
+        @SerialName("commitment_name") val commitmentName: String,
+        @SerialName("due_date") val dueDate: String,
+        val amount: Long = 0,
+        @SerialName("days_off") val daysOff: Int = 0,
+    )
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> = safeCall {
         if (commitmentIds.isEmpty()) return@safeCall emptyList()

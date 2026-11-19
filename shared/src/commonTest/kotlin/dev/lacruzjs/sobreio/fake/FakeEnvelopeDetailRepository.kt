@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.fake
 
+import kotlinx.datetime.LocalDate
 import dev.lacruzjs.sobreio.data.repository.EnvelopeDetailRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
@@ -34,6 +35,19 @@ class FakeEnvelopeDetailRepository(var envelopes: List<Envelope> = emptyList()) 
     override suspend fun getPeriods(envelopeId: String, limit: Int): Result<List<EnvelopePeriod>> {
         calls += "getPeriods($envelopeId, $limit)"
         return periodsResult ?: Result.success(periods.takeLast(limit))
+    }
+
+    var balanceAt: Long = 0
+    var outlookUntil: EnvelopeOutlook? = null
+
+    override suspend fun getBalanceAt(envelopeId: String, day: LocalDate): Result<Long> {
+        calls += "getBalanceAt($envelopeId, $day)"
+        return Result.success(balanceAt)
+    }
+
+    override suspend fun getOutlookUntil(groupId: String, envelopeId: String, until: LocalDate): Result<EnvelopeOutlook?> {
+        calls += "getOutlookUntil($envelopeId, $until)"
+        return Result.success(outlookUntil)
     }
 
     override suspend fun getOutlook(groupId: String, envelopeId: String): Result<EnvelopeOutlook?> {

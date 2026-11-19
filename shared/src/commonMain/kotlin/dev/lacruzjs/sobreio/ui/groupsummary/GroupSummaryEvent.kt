@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
+import kotlinx.datetime.LocalDate
 import dev.lacruzjs.sobreio.domain.model.GroupWarning
 import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 
@@ -9,6 +10,10 @@ sealed interface GroupSummaryEvent {
 
     /** Read everything again; sent when the group shell or the tab is shown, and by the retry button. */
     data object Refresh : GroupSummaryEvent
+
+    /** "Look until": the group's figures up to that day (`group_outlook(p_until)`); cleared hides them. */
+    data class LookAheadSelected(val day: LocalDate) : GroupSummaryEvent
+    data object LookAheadCleared : GroupSummaryEvent
 
     /** Handled by the Route, which opens the review screen. */
     data object ReviewClicked : GroupSummaryEvent

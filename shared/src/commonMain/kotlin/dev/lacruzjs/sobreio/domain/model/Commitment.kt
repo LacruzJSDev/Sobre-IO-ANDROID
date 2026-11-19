@@ -169,3 +169,15 @@ data class CommitmentFunding(
     val periodsInCycle: Int,
     val periodsLeft: Int,
 )
+
+/**
+ * A pending due date that looks like a bank row or a movement being typed (`match_pending`): same direction, a date
+ * within a few days and an amount within the tolerance. Ordered by the database from the closest.
+ */
+data class PendingMatch(
+    val commitmentId: String,
+    val name: String,
+    val dueDate: LocalDate,
+    val amountCents: Long,
+    val daysOff: Int,
+)

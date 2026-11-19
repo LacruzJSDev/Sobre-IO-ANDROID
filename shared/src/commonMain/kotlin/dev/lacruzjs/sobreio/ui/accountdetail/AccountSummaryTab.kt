@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
 
+import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -115,6 +116,13 @@ internal fun AccountSummaryTab(
         top = { ErrorText(state.actionError, modifier = Modifier.fillMaxWidth()) },
         left = {
             BalanceSection(account, state, languageTag)
+            BalanceOnDay(
+                day = state.balanceDay,
+                balanceCents = state.balanceOnDayCents,
+                currencyCode = state.currencyCode,
+                today = state.today,
+                onDaySelected = { onEvent(AccountDetailEvent.BalanceDaySelected(it)) },
+            )
             BalanceChartSection(state, languageTag, onEvent)
             state.forecast?.let { ForecastSection(state, it.scheduledInCents, it.scheduledOutCents, it.projectedEndCents, it.shortfallCents, languageTag) }
         },

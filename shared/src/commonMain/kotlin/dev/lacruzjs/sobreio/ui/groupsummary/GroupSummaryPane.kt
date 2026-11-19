@@ -1,6 +1,14 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
 
+import dev.lacruzjs.sobreio.generated.resources.balance_on_day_choose
+import dev.lacruzjs.sobreio.generated.resources.outlook_until_label
+import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_free_on
+import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_note
+import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_title
+import dev.lacruzjs.sobreio.ui.components.StatRow
+import dev.lacruzjs.sobreio.ui.components.StatCard
+import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import androidx.compose.foundation.background
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.generated.resources.transfer_hint_uncovered
@@ -151,6 +159,7 @@ private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, on
             GroupHero(state, outlook, languageTag)
             ReviewCard(state, languageTag, onEvent)
             if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
+            LookAheadSection(state, languageTag, onEvent)
         },
         right = {
             if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
@@ -158,6 +167,51 @@ private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, on
             UpcomingSection(state, languageTag)
         },
     )
+}
+
+/**
+ * "Look until": the same figures as the hero card but up to a chosen day (`group_outlook(p_until)`), for example the
+ * next pay day or a date past the end of the period. Every figure is the database's.
+ */
+@Composable
+private fun LookAheadSection(state: GroupSummaryUiState, languageTag: String, onEvent: (GroupSummaryEvent) -> Unit) {
+    FormSection(title = stringResource(Res.string.group_look_ahead_title)) {
+        DateFormTile(
+            label = stringResource(Res.string.outlook_until_label),
+            date = state.lookAheadDay,
+            onDateSelected = { onEvent(GroupSummaryEvent.LookAheadSelected(it)) },
+            emptyText = stringResource(Res.string.balance_on_day_choose),
+            onClear = if (state.lookAheadDay != null) ({ onEvent(GroupSummaryEvent.LookAheadCleared) }) else null,
+            note = if (state.lookAheadDay == null) stringResource(Res.string.group_look_ahead_note) else null,
+        )
+        val figures = state.lookAhead
+        val day = state.lookAheadDay
+        if (figures != null && day != null) {
+            StatCard(
+                currencyCode = state.currencyCode,
+                rows = buildList {
+                    add(StatRow(stringResource(Res.string.group_summary_free_today), figures.freeTodayCents, MoneyRole.Balance))
+                    if (figures.committedShortfallCents > 0) {
+                        add(StatRow(stringResource(Res.string.group_hero_note_commitments), -figures.committedShortfallCents, MoneyRole.Flow))
+                    }
+                    if (figures.pendingOutCents > 0) {
+                        add(StatRow(stringResource(Res.string.group_hero_note_contributions), -figures.pendingOutCents, MoneyRole.Flow))
+                    }
+                    if (figures.pendingIncomeCents > 0) {
+                        add(StatRow(stringResource(Res.string.group_hero_note_income), figures.pendingIncomeCents, MoneyRole.Flow))
+                    }
+                    add(
+                        StatRow(
+                            stringResource(Res.string.group_look_ahead_free_on, formatDate(day, languageTag)),
+                            figures.freeProjectedCents,
+                            MoneyRole.Balance,
+                            emphasised = true,
+                        ),
+                    )
+                },
+            )
+        }
+    }
 }
 
 /**

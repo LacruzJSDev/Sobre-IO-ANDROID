@@ -410,4 +410,22 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
         assertNull(state.error)
         assertEquals(AppError.Network, state.actionError)
     }
+
+    @Test
+    fun lookingAheadAsksTheDatabaseForThatDayAndClearingHidesIt() {
+        val vm = loaded()
+        val day = LocalDate(2026, 12, 31)
+        summary.outlookUntil = summary.outlook.copy(periodEnd = day, freeProjectedCents = 12_300)
+
+        vm.onEvent(GroupSummaryEvent.LookAheadSelected(day))
+
+        assertTrue("getOutlookUntil($day)" in summary.calls)
+        assertEquals(day, vm.state.value.lookAheadDay)
+        assertEquals(12_300L, vm.state.value.lookAhead?.freeProjectedCents)
+
+        vm.onEvent(GroupSummaryEvent.LookAheadCleared)
+
+        assertNull(vm.state.value.lookAhead)
+        assertNull(vm.state.value.lookAheadDay)
+    }
 }

@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import dev.lacruzjs.sobreio.ui.export.ExportEvent
+import dev.lacruzjs.sobreio.ui.export.ExportHost
+import dev.lacruzjs.sobreio.ui.export.ExportViewModel
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
@@ -111,7 +114,9 @@ fun GroupRoute(
     envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
     movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null, null) },
     summaryViewModel: GroupSummaryViewModel = koinViewModel { parametersOf(groupId) },
+    exportViewModel: ExportViewModel = koinViewModel { parametersOf(groupId) },
 ) {
+    ExportHost(exportViewModel)
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
@@ -250,6 +255,7 @@ fun GroupRoute(
             MovementsHeaderActions(
                 onSearch = { movementsViewModel.onEvent(MovementsEvent.SearchOpened) },
                 onNew = { onOpenMovementForm(null, null) },
+                onExport = { exportViewModel.onEvent(ExportEvent.Opened) },
             )
         },
         // While searching the whole header becomes the search field

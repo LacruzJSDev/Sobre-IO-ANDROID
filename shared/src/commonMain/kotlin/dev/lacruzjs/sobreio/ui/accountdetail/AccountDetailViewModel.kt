@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import kotlinx.datetime.LocalDate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -84,6 +85,7 @@ class AccountDetailViewModel(
             }
             AccountDetailEvent.Retry -> load(showSpinner = true)
             is AccountDetailEvent.RangeSelected -> selectRange(event.range)
+            is AccountDetailEvent.BalanceDaySelected -> balanceOn(event.day)
             AccountDetailEvent.CompareClicked -> _state.update {
                 // A debt on the account suggests a debt on the bank's side too
                 it.copy(compare = CompareState(bankIsNegative = (it.account?.balanceCents ?: 0L) < 0L))
@@ -108,6 +110,18 @@ class AccountDetailViewModel(
             AccountDetailEvent.BankImportClicked,
             is AccountDetailEvent.TabSelected,
             -> Unit
+        }
+    }
+
+    private var balanceDayJob: Job? = null
+
+    private fun balanceOn(day: LocalDate) {
+        _state.update { it.copy(balanceDay = day, balanceOnDayCents = null) }
+        balanceDayJob?.cancel()
+        balanceDayJob = viewModelScope.launch {
+            detail.getBalanceAt(accountId, day)
+                .onSuccess { cents -> _state.update { if (it.balanceDay == day) it.copy(balanceOnDayCents = cents) else it } }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
         }
     }
 

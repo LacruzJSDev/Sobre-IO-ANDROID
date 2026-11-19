@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.di
 
+import dev.lacruzjs.sobreio.data.repository.SupabaseAuditRepository
+import dev.lacruzjs.sobreio.data.repository.AuditRepository
+import dev.lacruzjs.sobreio.data.repository.SupabaseExportRepository
+import dev.lacruzjs.sobreio.data.repository.ExportRepository
 import com.russhwolf.settings.Settings
 import dev.lacruzjs.sobreio.data.cache.QueryCache
 import dev.lacruzjs.sobreio.data.cache.CachedAccountRepository
@@ -73,6 +77,8 @@ val dataModule = module {
     single<MovementRepository> { CachedMovementRepository(SupabaseMovementRepository(get()), get()) }
     single<MovementFormRepository> { CachedMovementFormRepository(SupabaseMovementFormRepository(get()), get()) }
     single<AccountDeletionRepository> { SupabaseAccountDeletionRepository(get(), get(), get()) }
+    single<AuditRepository> { SupabaseAuditRepository(get()) }
+    single<ExportRepository> { SupabaseExportRepository(get()) }
     single<TagRepository> { CachedTagRepository(SupabaseTagRepository(get()), get()) }
     single<BankImportRepository> { CachedBankImportRepository(SupabaseBankImportRepository(get()), get()) }
     single<LastGroupStore> { SettingsLastGroupStore(Settings()) }

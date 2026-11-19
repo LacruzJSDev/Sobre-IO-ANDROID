@@ -60,6 +60,22 @@ class SupabaseAccountDetailRepository(client: SupabaseClient) : AccountDetailRep
             ?.toDomain()
     }
 
+    override suspend fun getBalanceAt(accountId: String, day: LocalDate): Result<Long> = safeCall {
+        postgrest.rpc(
+            "account_balance_at",
+            buildJsonObject {
+                put("p_account_id", accountId)
+                put("p_as_of", day.toString())
+            },
+        ).decodeAs<Long>()
+    }
+
+    override suspend fun getForecasts(groupId: String): Result<Map<String, AccountForecast>> = safeCall {
+        postgrest.rpc("account_forecast", buildJsonObject { put("p_group_id", groupId) })
+            .decodeList<ForecastDto>()
+            .associate { it.accountId to it.toDomain() }
+    }
+
     override suspend fun getBalanceSeries(
         accountId: String,
         from: LocalDate,

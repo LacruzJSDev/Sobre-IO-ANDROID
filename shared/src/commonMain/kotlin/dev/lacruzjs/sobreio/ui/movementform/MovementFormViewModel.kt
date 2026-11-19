@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
+import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.LastAccountStore
@@ -69,7 +73,15 @@ class MovementFormViewModel(
     private val detail: AccountDetailRepository,
     private val auth: AuthRepository,
     private val lastAccount: LastAccountStore,
+    commitments: CommitmentRepository,
+    private val summary: GroupSummaryRepository,
 ) : ViewModel() {
+
+    private val matcher = PendingMatcher(groupId, commitments, summary)
+    private var matchJob: Job? = null
+
+    /** Suggestions the user said no to; never offered again in this form. */
+    private val dismissedSuggestions = mutableSetOf<String>()
 
     private val _state = MutableStateFlow(MovementFormUiState(isEditing = movementId != null))
     val state: StateFlow<MovementFormUiState> = _state.asStateFlow()
@@ -106,9 +118,61 @@ class MovementFormViewModel(
             is MovementFormEvent.TagQueryChanged -> _state.update { it.copy(tagQuery = event.value, tagError = null, tagFailure = null) }
             MovementFormEvent.TagCreateClicked -> createTag()
             MovementFormEvent.SaveClicked -> save()
+            MovementFormEvent.SuggestionAccepted -> acceptSuggestion()
+            MovementFormEvent.SuggestionDismissed -> _state.update { s ->
+                s.suggestion?.let { dismissedSuggestions += it.key }
+                s.copy(suggestion = null)
+            }
             MovementFormEvent.Retry -> load()
             MovementFormEvent.NavigationHandled -> _state.update { it.copy(saved = false) }
             MovementFormEvent.CloseClicked -> Unit
+        }
+        if (event is MovementFormEvent.KindSelected || event is MovementFormEvent.AmountChanged ||
+            event is MovementFormEvent.AccountSelected || event is MovementFormEvent.DateChanged
+        ) {
+            scheduleMatch()
+        }
+    }
+
+    // Pending due date suggestion ----------------------------------------------------------------------------------
+
+    /** After a short pause in typing, asks whether the new movement is a pending due date (only when creating). */
+    private fun scheduleMatch() {
+        matchJob?.cancel()
+        val s = _state.value
+        val cents = parseMoneyInput(s.amount)
+        val accountId = s.accountId
+        val date = s.date
+        if (s.isEditing || s.isTransfer || createdId != null || cents == null || cents <= 0 || accountId == null || date == null) {
+            if (s.suggestion != null) _state.update { it.copy(suggestion = null) }
+            return
+        }
+        matchJob = viewModelScope.launch {
+            delay(MATCH_DEBOUNCE_MS)
+            val found = matcher.find(s.kind, accountId, cents, date)?.takeUnless { it.key in dismissedSuggestions }
+            _state.update { it.copy(suggestion = found) }
+        }
+    }
+
+    /**
+     * Registers the suggested due date with the typed amount and date: the database creates the movement in the
+     * commitment's envelope and marks the due date as done. The chosen tags follow in their own step.
+     */
+    private fun acceptSuggestion() {
+        val s = _state.value
+        val suggestion = s.suggestion ?: return
+        val cents = parseMoneyInput(s.amount) ?: return
+        val accountId = s.accountId ?: return
+        if (s.isSubmitting) return
+        _state.update { it.copy(isSubmitting = true, submitError = null) }
+        viewModelScope.launch {
+            summary.confirm(suggestion.commitmentId, suggestion.kind, suggestion.dueDate, cents, s.date ?: suggestion.dueDate, emptyList())
+                .onSuccess { fact ->
+                    createdId = fact.id
+                    rememberAccount(accountId)
+                    syncTags(fact.id).onSuccess { finish() }.onFailure { fail(it) }
+                }
+                .onFailure { fail(it) }
         }
     }
 
@@ -445,6 +509,10 @@ class MovementFormViewModel(
     private fun finish() = _state.update { it.copy(isSubmitting = false, saved = true) }
 
     private fun fail(e: Throwable) = _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) }
+
+    private companion object {
+        const val MATCH_DEBOUNCE_MS = 400L
+    }
 
     /** Cents as the text the user would type: `12.50` style with a plain point. */
     private fun Long.toInputText(): String = when {

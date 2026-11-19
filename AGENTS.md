@@ -461,6 +461,28 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `MovementRepository` (`search` = `search_movements` + `search_movements_count` on the first page, `voidMovement`, `voidGroupTransfer`,
   `getDateContext` = `group_today`, `current_period` and the previous `periods` row) and `TagRepository` (live `tags`).
   Nothing is summed or filtered in the app; the DB function shows an account transfer once in the group ledger (D-45).
+- Database features shown since phase 4 (2026-11-19; every figure is the database's):
+  Accounts rows add a third line from `account_forecast` (`AccountDetailRepository.getForecasts`, all accounts at once, the
+  same function behind the `account_outlook` view): "End of period: X" muted, or "Short by X before the period ends" in
+  `LocalMoneyColors.negative`. The account and envelope details have "Balance on" (`ui/components/BalanceOnDay`: a
+  `DateFormTile` up to the group's today and the `account_balance_at` / `envelope_balance_at` answer as a `MoneyText` Balance).
+  "Look until": the envelope detail's "Really free" `StatCard` takes a `DateFormTile` (clearable, back to the period end) that
+  reads `envelope_outlook(p_until)` (`EnvelopeDetailRepository.getOutlookUntil`), and the Group tab's left column ends with a
+  "Look ahead" section (`group_outlook(p_until)`, `GroupSummaryRepository.getOutlookUntil`: free today, the three database
+  figures that explain it when above 0, and "Free on <day>" emphasised). Export (`ui/export`, D-36): a download icon in the
+  Movements tab header opens `ExportHost`'s sheet (`ExportViewModel(groupId)` with `ExportRepository`: the last 12 `periods`
+  as chips, newest chosen); "Export CSV" reads `export_period` and the Route builds the file with `domain/export`'s pure
+  `buildExportCsv` (translated header and types, `CsvDialect`: `;` and decimal comma in Spanish, `,` and point otherwise, BOM,
+  CRLF) and hands it to `rememberCsvSaver` (expect/actual: Android `CreateDocument("text/csv")`, iOS
+  `UIDocumentPickerViewController(forExportingURLs)` from a temporary file); not cached. Pending match (`match_pending`): while
+  creating an expense or income, 400 ms after the amount, account, date or kind change, `PendingMatcher` (`ui/movementform`)
+  asks `CommitmentRepository.matchPending` and keeps the first match whose `upcoming_occurrences` row has the same kind;
+  `SuggestionCard` ("Is it <name>?", due date and amount, "No" / "It's this one") under the Money section; yes calls
+  `confirm_occurrence` with the typed amount and date (the commitment's envelope) and then the tag step; no is remembered for the
+  form. History (`ui/history`, D-41): editing a movement ends with `MovementHistorySection` from `MovementHistoryViewModel(groupId,
+  movementId, source)` and `AuditRepository` (`audit_log` rows of the transaction or account transfer, oldest first): "Created by
+  <who> · <day>" and "<who> changed <fields> · <day>" (bookkeeping columns left out, `visibleHistoryFields`), "Automatic" for the
+  daily task and "Former member" for someone who left; a failure leaves it out. The read-only RPCs above are in `READ_ONLY_RPCS`.
 - Charts (`ui/components/charts`, Canvas only, no library): `BalanceLineChart(past, projection, todayX, texts: LineChartTexts,
   contentDescription)` (2 dp ink line, 10 % area, dashed lighter projection, today hairline, end dot with ring, crosshair
   and tooltip on touch or drag; the selection clears on a press outside the chart or when the page scrolls) and `GroupedColumnChart(series: List<ColumnSeries>, groups: List<ColumnGroup>, formatY,

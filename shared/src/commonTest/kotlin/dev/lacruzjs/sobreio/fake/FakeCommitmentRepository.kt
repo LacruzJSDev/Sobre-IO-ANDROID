@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.fake
 
+import dev.lacruzjs.sobreio.domain.model.PendingMatch
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Commitment
@@ -75,6 +76,13 @@ class FakeCommitmentRepository(var commitments: List<Commitment> = emptyList()) 
         if (offset > 0) loadMoreGate?.await()
         if (offset > 0 && loadMoreResults.isNotEmpty()) return loadMoreResults.removeFirst()
         return occurrencesResult ?: Result.success(OccurrencePage(occurrences.drop(offset).take(limit), occurrences.size))
+    }
+
+    var matches: List<PendingMatch> = emptyList()
+
+    override suspend fun matchPending(accountId: String, signedCents: Long, date: LocalDate): Result<List<PendingMatch>> {
+        calls += "matchPending($accountId, $signedCents, $date)"
+        return Result.success(matches)
     }
 
     override suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>> =

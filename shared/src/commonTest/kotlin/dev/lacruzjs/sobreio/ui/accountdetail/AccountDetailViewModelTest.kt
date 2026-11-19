@@ -349,4 +349,16 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
         assertNotNull(state.account)
         assertEquals(AppError.Network, state.actionError)
     }
+
+    @Test
+    fun aDayInBalanceOnShowsWhatTheDatabaseSaysForIt() {
+        val vm = loaded()
+        detail.balanceAt = 77_700
+        val day = LocalDate(2026, 10, 1)
+
+        vm.onEvent(AccountDetailEvent.BalanceDaySelected(day))
+
+        assertEquals(day, vm.state.value.balanceDay)
+        assertEquals(77_700L, vm.state.value.balanceOnDayCents)
+    }
 }

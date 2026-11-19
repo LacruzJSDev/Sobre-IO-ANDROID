@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import dev.lacruzjs.sobreio.domain.model.PendingMatch
 import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentChange
 import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
@@ -47,6 +48,12 @@ interface CommitmentRepository {
      * groups, so a contribution without a row here cannot be changed from this group.
      */
     suspend fun getLinks(commitmentIds: List<String>): Result<List<CommitmentLink>>
+
+    /**
+     * The pending due dates of [accountId] that look like a movement of [signedCents] on [date] (`match_pending`:
+     * same direction, ±5 days, amount within 20 %), the closest first. It only suggests: registering is `confirm_occurrence`.
+     */
+    suspend fun matchPending(accountId: String, signedCents: Long, date: LocalDate): Result<List<PendingMatch>>
 
     /** `create_commitment` (not for contributions); returns the commitment id. A taken name fails with DuplicateName. */
     suspend fun createCommitment(draft: CommitmentDraft): Result<String>

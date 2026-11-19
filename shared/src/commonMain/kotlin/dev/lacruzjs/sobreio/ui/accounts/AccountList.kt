@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
+import dev.lacruzjs.sobreio.generated.resources.accounts_row_end_of_period
+import dev.lacruzjs.sobreio.generated.resources.accounts_row_shortfall
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.rememberScrollState
@@ -313,6 +316,21 @@ private fun AccountRow(account: Account, state: AccountsUiState, languageTag: St
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            // Where it will be at the end of the period (account_forecast); a shortfall says so in the negative colour
+            state.forecasts[account.id]?.takeIf { !account.isArchived }?.let { forecast ->
+                val short = forecast.shortfallCents > 0
+                Text(
+                    text = if (short) {
+                        stringResource(Res.string.accounts_row_shortfall, formatMoney(forecast.shortfallCents, state.currencyCode, languageTag))
+                    } else {
+                        stringResource(Res.string.accounts_row_end_of_period, formatMoney(forecast.projectedEndCents, state.currencyCode, languageTag))
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (short) LocalMoneyColors.current.negative else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         MoneyText(
             amountCents = account.balanceCents,

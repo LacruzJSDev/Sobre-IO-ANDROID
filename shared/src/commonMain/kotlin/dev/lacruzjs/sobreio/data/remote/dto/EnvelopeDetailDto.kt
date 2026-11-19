@@ -24,6 +24,16 @@ internal data class EnvelopeOutlookDto(
     val shortfall: Long = 0,
 )
 
+/** A row of `envelope_outlook(p_group_id, p_until)`: the same figures, one row per envelope. */
+@Serializable
+internal data class EnvelopeOutlookRowDto(
+    @SerialName("envelope_id") val envelopeId: String,
+    val balance: Long = 0,
+    val committed: Long = 0,
+    val free: Long = 0,
+    val shortfall: Long = 0,
+)
+
 /** A row of `envelope_transfers`; [createdAt] is the timestamp text. */
 @Serializable
 internal data class EnvelopeTransferDto(

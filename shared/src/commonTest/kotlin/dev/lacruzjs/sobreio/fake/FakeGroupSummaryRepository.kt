@@ -55,6 +55,13 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     var flowPeriods: Int? = null
 
     /** Due dates confirmed or skipped leave [pending], as the database does. */
+    var outlookUntil: GroupOutlook? = null
+
+    override suspend fun getOutlookUntil(groupId: String, until: LocalDate): Result<GroupOutlook> {
+        calls += "getOutlookUntil($until)"
+        return Result.success(outlookUntil ?: outlook.copy(periodEnd = until))
+    }
+
     override suspend fun getOutlook(groupId: String): Result<GroupOutlook> {
         calls += "getOutlook($groupId)"
         return outlookResult ?: Result.success(outlook)

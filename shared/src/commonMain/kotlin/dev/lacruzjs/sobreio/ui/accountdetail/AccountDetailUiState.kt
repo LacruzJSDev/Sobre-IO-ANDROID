@@ -69,6 +69,9 @@ data class AccountDetailUiState(
     val range: BalanceRange = BalanceRange.ThreeMonths,
     /** The group's today and the last day of its period, from the database. */
     val today: LocalDate? = null,
+    /** The day chosen in "Balance on" and the balance `account_balance_at` gave for it (null until it answers). */
+    val balanceDay: LocalDate? = null,
+    val balanceOnDayCents: Long? = null,
     val periodEnd: LocalDate? = null,
     val balanceSeries: List<BalancePoint> = emptyList(),
     val projection: List<ProjectionPoint> = emptyList(),

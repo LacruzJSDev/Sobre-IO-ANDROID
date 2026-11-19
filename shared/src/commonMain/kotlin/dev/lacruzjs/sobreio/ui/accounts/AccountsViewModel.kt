@@ -105,6 +105,8 @@ class AccountsViewModel(
                 error = null,
             )
         }
+        // Each row's end of period; without it the rows simply leave that line out
+        detail.getForecasts(groupId).onSuccess { map -> _state.update { it.copy(forecasts = map) } }
         loadBalanceSeries()
         // Only needed to name holders; without them the rows simply show no holder
         members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }

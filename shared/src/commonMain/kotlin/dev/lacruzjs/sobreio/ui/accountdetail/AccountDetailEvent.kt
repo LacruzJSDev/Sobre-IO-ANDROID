@@ -1,8 +1,13 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import kotlinx.datetime.LocalDate
+
 sealed interface AccountDetailEvent {
     /** Load everything; sent each time the screen is shown (also when coming back from the edit form). */
     data object Refresh : AccountDetailEvent
+
+    /** A day chosen in "Balance on": the database says what the account held at the end of it. */
+    data class BalanceDaySelected(val day: LocalDate) : AccountDetailEvent
 
     /** Try again after a failed load. */
     data object Retry : AccountDetailEvent
