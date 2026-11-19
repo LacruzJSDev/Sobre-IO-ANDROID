@@ -114,7 +114,6 @@
     <string name="action_new_account">Nueva cuenta</string>
     <string name="action_new_envelope">Nuevo sobre</string>
     <string name="action_new_movement">Nuevo movimiento</string>
-    <string name="coming_soon">Próximamente</string>
 
     <!-- Accounts tab -->
     <string name="accounts_total">Total en cuentas</string>

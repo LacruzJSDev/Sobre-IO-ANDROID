@@ -30,6 +30,12 @@ import dev.lacruzjs.sobreio.generated.resources.ic_arrow_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * A header drawn by a part of a screen that does not own it, such as a tab of the group shell: the owner keeps the title,
+ * avatar and navigation, and the part adds its own actions on the right and says whether it is refreshing (the thin bar).
+ */
+typealias TabHeader = @Composable (isRefreshing: Boolean, actions: @Composable RowScope.() -> Unit) -> Unit
+
 /** Back arrow of every header; its label is read by screen readers and shown on long press. */
 @Composable
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {

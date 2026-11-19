@@ -114,9 +114,8 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   (`archived_at`) at once, so FZ008 returns immediately and the row comes back; the row then appears in the Archived section; Undo unarchives. Name
   clashes (SQLSTATE 23505, also when reopening) map to `AppError.DuplicateName`. `SupabaseAccountRepository.getAccounts` reads
   the balances (`account_balances`, with `owner_user_id` and `archived_at`, archived rows included) and the colour and icon
-  from `accounts` (the view has neither) in two queries joined by id in the repository. `GroupScreen` stays stateless: it takes
-  `accountsAction` and `accountsContent` slots that `GroupRoute` fills from the `AccountsViewModel`, and sends it
-  `GroupLoaded(currency, canEdit)` once the group loads. Tapping a row opens the detail.
+  from `accounts` (the view has neither) in two queries joined by id in the repository. The tab is `AccountsTabRoute` (see Group shell).
+  Tapping a row opens the detail.
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
   the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
   `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), the `envelopes_summary(p_group_id)` RPC
@@ -193,10 +192,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   skipped" and writes `skip_occurrence` only when the snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing
   the row back meanwhile; the back arrow and `onCleared` make a waiting skip final). With nothing left it shows "All caught up: nothing
   to review" and a button back to the group. `FlatButton`, `PrimaryButton` and `SecondaryButton` take `compact` for small row buttons.
-- Group shell: the header's right side holds, on the Group tab, a gear (`ic_settings`, visible to everyone) that opens
-  the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it is shown
-  again) and, on Movements, a "+" that opens the movement form (Accounts and Envelopes
-  have their own, see above).
+- Group shell (phase 6, part E): `GroupRoute` keeps only the group (`GroupViewModel`), the selected tab and the Group tab's
+  badge (it reads `GroupSummaryViewModel`, refreshes it when shown, on the Group tab and on a remote change). Each tab is its
+  own route in its package (`GroupSummaryTabRoute`, `AccountsTabRoute`, `EnvelopesTabRoute`, `MovementsTabRoute`): it gets the
+  loaded `Group` and a `TabHeader` (`ui/components/ScreenHeader.kt`: the shell's title, avatar and menu button, with the tab's
+  actions and refresh bar), creates its ViewModel with `koinViewModel` (kept by the group's entry, so a tab keeps its state
+  while another is shown), sends it `GroupLoaded` before its first frame, refreshes it each time it is shown and on a remote
+  change, and wires its clicks to the navigation lambdas. `GroupScreen` is stateless: `tabContent(tab, group, header)`; while
+  the group loads or fails it draws the header alone. Header actions: on the Group tab a gear (`ic_settings`, visible to
+  everyone) that opens the group settings (`GroupSettings(groupId)` route, level 2; the Group route reloads the group when it
+  is shown again); on Movements search, export and a "+" that opens the movement form (Accounts and Envelopes have their own,
+  see above). The export sheet (`ExportHost`) lives in `MovementsTabRoute`.
 - Full-screen forms (`FormScaffold`: close X on the left, title, "Save" on the right with a spinner while saving; the
   fields scroll above the keyboard with `imePadding()`; system back = the X): `GroupForm(groupId?)` (`ui/groupform`),
   `AccountForm(groupId, accountId?)` (`ui/accountform`) and `EnvelopeForm(groupId, envelopeId?)` (`ui/envelopeform`),
@@ -442,7 +448,7 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
   (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
-  (`MovementsSearchHeader`; the group shell takes it through its `movementsHeader` slot), debounced 300 ms, matching notes
+  (`MovementsSearchHeader`, drawn by `MovementsTabRoute` instead of the shell's header), debounced 300 ms, matching notes
   or an amount ("42,30" or "42.30"). "+" opens the movement form (`NewClicked`, intercepted by the Route; on an account's list it preselects that account). Expense and income rows and account transfer rows swipe Edit (`Movement.canEdit`: not adjustments or contribution legs; `EditClicked(id, source)` opens `MovementForm`) and Delete.
   Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
   only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
