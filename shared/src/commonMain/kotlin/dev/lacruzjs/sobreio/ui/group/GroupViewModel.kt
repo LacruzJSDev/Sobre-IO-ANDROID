@@ -44,11 +44,9 @@ class GroupViewModel(
         when (event) {
             GroupEvent.Retry -> load()
             GroupEvent.NavigationHandled -> _state.update { it.copy(navigateBack = false) }
-            GroupEvent.NewItemClicked -> _state.update { it.copy(newItemSheetOpen = true) }
-            GroupEvent.NewItemDismissed -> _state.update { it.copy(newItemSheetOpen = false) }
             GroupEvent.Refresh -> refresh()
             // Handled by the Route
-            GroupEvent.MenuClicked, is GroupEvent.TabSelected, GroupEvent.SettingsClicked -> Unit
+            GroupEvent.MenuClicked, is GroupEvent.TabSelected -> Unit
         }
     }
 

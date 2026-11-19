@@ -115,7 +115,6 @@
     <string name="action_new_account">New account</string>
     <string name="action_new_envelope">New envelope</string>
     <string name="action_new_movement">New movement</string>
-    <string name="coming_soon">Coming soon</string>
 
     <!-- Accounts tab -->
     <string name="accounts_total">Total in accounts</string>

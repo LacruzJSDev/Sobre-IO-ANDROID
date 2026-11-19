@@ -96,15 +96,6 @@ class GroupViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun newItemSheetOpensAndCloses() {
-        val viewModel = viewModel("g1")
-        viewModel.onEvent(GroupEvent.NewItemClicked)
-        assertTrue(viewModel.state.value.newItemSheetOpen)
-        viewModel.onEvent(GroupEvent.NewItemDismissed)
-        assertFalse(viewModel.state.value.newItemSheetOpen)
-    }
-
-    @Test
     fun anOpenGroupFollowsItsChangesAndReadsItselfAgainOnOne() {
         val viewModel = viewModel("g1")
         assertEquals(listOf("g1"), changes.followed)

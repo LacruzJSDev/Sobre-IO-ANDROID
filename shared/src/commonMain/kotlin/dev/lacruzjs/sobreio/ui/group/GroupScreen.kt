@@ -1,56 +1,40 @@
 package dev.lacruzjs.sobreio.ui.group
 
-import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
-import dev.lacruzjs.sobreio.ui.components.LabelTooltip
-import dev.lacruzjs.sobreio.ui.export.ExportEvent
-import dev.lacruzjs.sobreio.ui.export.ExportHost
-import dev.lacruzjs.sobreio.ui.export.ExportViewModel
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import dev.lacruzjs.sobreio.ui.components.ContentWidth
-import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
-
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.Group
+import dev.lacruzjs.sobreio.domain.model.MovementSource
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.ic_account_balance
 import dev.lacruzjs.sobreio.generated.resources.ic_envelope
 import dev.lacruzjs.sobreio.generated.resources.ic_home
 import dev.lacruzjs.sobreio.generated.resources.ic_list
-import dev.lacruzjs.sobreio.generated.resources.group_settings_title
-import dev.lacruzjs.sobreio.generated.resources.ic_settings
-import dev.lacruzjs.sobreio.generated.resources.action_new_account
-import dev.lacruzjs.sobreio.generated.resources.action_new_envelope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SwapHoriz
-import dev.lacruzjs.sobreio.ui.components.IconActionButton
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_transfers
-import dev.lacruzjs.sobreio.generated.resources.action_new_movement
 import dev.lacruzjs.sobreio.generated.resources.tab_accounts
 import dev.lacruzjs.sobreio.generated.resources.tab_accounts_empty
 import dev.lacruzjs.sobreio.generated.resources.tab_envelopes
@@ -59,34 +43,25 @@ import dev.lacruzjs.sobreio.generated.resources.tab_group
 import dev.lacruzjs.sobreio.generated.resources.tab_group_badge
 import dev.lacruzjs.sobreio.generated.resources.tab_movements
 import dev.lacruzjs.sobreio.generated.resources.tab_movements_empty
-import dev.lacruzjs.sobreio.ui.accounts.AccountsEvent
-import dev.lacruzjs.sobreio.ui.accounts.AccountsPane
-import dev.lacruzjs.sobreio.ui.accounts.AccountsViewModel
-import dev.lacruzjs.sobreio.ui.components.AddIconButton
-import dev.lacruzjs.sobreio.ui.components.ComingSoonSheet
+import dev.lacruzjs.sobreio.ui.accounts.AccountsTabRoute
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconCategory
-import dev.lacruzjs.sobreio.ui.components.iconFor
-import dev.lacruzjs.sobreio.ui.theme.EntityColor
-import dev.lacruzjs.sobreio.ui.components.MenuButton
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
+import dev.lacruzjs.sobreio.ui.components.MenuButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
-import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesEvent
-import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesPane
-import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesViewModel
+import dev.lacruzjs.sobreio.ui.components.TabHeader
+import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
+import dev.lacruzjs.sobreio.ui.components.iconFor
+import dev.lacruzjs.sobreio.ui.envelopes.EnvelopesTabRoute
 import dev.lacruzjs.sobreio.ui.error.messageRes
 import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryEvent
-import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryPane
+import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryTabRoute
 import dev.lacruzjs.sobreio.ui.groupsummary.GroupSummaryViewModel
-import dev.lacruzjs.sobreio.domain.model.GroupWarning
-import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
-import dev.lacruzjs.sobreio.domain.model.MovementSource
-import dev.lacruzjs.sobreio.ui.movements.MovementsEvent
-import dev.lacruzjs.sobreio.ui.movements.MovementsHeaderActions
-import dev.lacruzjs.sobreio.ui.movements.MovementsPane
-import dev.lacruzjs.sobreio.ui.movements.MovementsSearchHeader
-import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
+import dev.lacruzjs.sobreio.ui.movements.MovementsTabRoute
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
+import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -112,14 +87,11 @@ fun GroupRoute(
     onOpenTransferForm: (TransferSuggestion) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupViewModel = koinViewModel { parametersOf(groupId) },
-    accountsViewModel: AccountsViewModel = koinViewModel { parametersOf(groupId) },
-    envelopesViewModel: EnvelopesViewModel = koinViewModel { parametersOf(groupId) },
-    movementsViewModel: MovementsViewModel = koinViewModel { parametersOf(groupId, null, null) },
+    // The same instance the Group tab shows: the shell reads it for the tab's badge, whichever tab is open
     summaryViewModel: GroupSummaryViewModel = koinViewModel { parametersOf(groupId) },
-    exportViewModel: ExportViewModel = koinViewModel { parametersOf(groupId) },
 ) {
-    ExportHost(exportViewModel)
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val summaryState by summaryViewModel.state.collectAsStateWithLifecycle()
     // Saved as the enum's position: it is the one thing the platform savers are sure to handle
     var selectedIndex by rememberSaveable { mutableStateOf(GroupTab.Group.ordinal) }
     // Every tab change goes through here: a detail open beside the list belongs to the tab being left, so it closes
@@ -129,39 +101,9 @@ fun GroupRoute(
         onCloseDetails()
     }
 
-    val accountsState by accountsViewModel.state.collectAsStateWithLifecycle()
-    // Currency and role of the group reach the accounts tab once the group has loaded, before its content is shown
-    val envelopesState by envelopesViewModel.state.collectAsStateWithLifecycle()
-    val movementsState by movementsViewModel.state.collectAsStateWithLifecycle()
-    val summaryState by summaryViewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.group) {
-        state.group?.let {
-            accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit, !it.isArchived && !it.isPendingDeletion))
-            envelopesViewModel.onEvent(EnvelopesEvent.GroupLoaded(it.currencyCode, it.canEdit))
-            // Any member may review a due date, but not in an archived group or one pending deletion
-            summaryViewModel.onEvent(GroupSummaryEvent.GroupLoaded(it.currencyCode, !it.isArchived && !it.isPendingDeletion))
-        }
-    }
-
-    // Changes made elsewhere in the group are read as they happen (D-55): the Group tab's figures (they also give the
-    // badge) and the tab on display, once its Undo is settled; the other tabs read again when they are shown
+    // Changes made elsewhere in the group are read as they happen (D-55): here the Group tab's figures, which give the
+    // badge; each tab route reads its own while it is on display
     RefreshOnRemoteChange { summaryViewModel.onEvent(GroupSummaryEvent.Refresh) }
-    val selectedTabNow = GroupTab.entries[selectedIndex]
-    RefreshOnRemoteChange(
-        paused = when (selectedTabNow) {
-            GroupTab.Accounts -> accountsState.undoMessage != null
-            GroupTab.Envelopes -> envelopesState.undoMessage != null
-            GroupTab.Movements -> movementsState.undoMessage != null
-            GroupTab.Group -> false
-        },
-    ) {
-        when (selectedTabNow) {
-            GroupTab.Accounts -> accountsViewModel.onEvent(AccountsEvent.Refresh)
-            GroupTab.Envelopes -> envelopesViewModel.onEvent(EnvelopesEvent.Refresh)
-            GroupTab.Movements -> movementsViewModel.onEvent(MovementsEvent.Refresh)
-            GroupTab.Group -> Unit
-        }
-    }
 
     // Back from the group settings: the group may have been renamed, archived or left
     LaunchedEffect(Unit) {
@@ -177,24 +119,11 @@ fun GroupRoute(
         }
     }
 
-    val selectedTab = GroupTab.entries[selectedIndex]
-    // The thin bar under the header follows the tab on screen
-    val tabRefreshing = when (selectedTab) {
-        GroupTab.Group -> summaryState.isRefreshing
-        GroupTab.Accounts -> accountsState.isRefreshing
-        GroupTab.Envelopes -> envelopesState.isRefreshing
-        GroupTab.Movements -> movementsState.isRefreshing
-    }
     GroupScreen(
-        state = state.copy(
-            selectedTab = selectedTab,
-            pendingCount = summaryState.pendingCount,
-            isRefreshing = state.isRefreshing || tabRefreshing,
-        ),
+        state = state.copy(selectedTab = GroupTab.entries[selectedIndex], pendingCount = summaryState.pendingCount),
         onEvent = { event ->
             when (event) {
                 GroupEvent.MenuClicked -> onOpenGroups()
-                GroupEvent.SettingsClicked -> onOpenSettings()
                 is GroupEvent.TabSelected -> {
                     selectTab(event.tab)
                     // Shown again each time the tab is selected, so it reads the due dates again
@@ -204,144 +133,55 @@ fun GroupRoute(
             }
         },
         modifier = modifier,
-        groupContent = {
-            GroupSummaryPane(
-                state = summaryState,
-                onEvent = { event ->
-                    when (event) {
-                        is GroupSummaryEvent.WarningClicked -> when (val warning = event.warning) {
-                            is GroupWarning.EnvelopeOverspent -> onOpenEnvelope(warning.envelopeId)
-                            is GroupWarning.AccountShortfallOn -> onOpenAccount(warning.accountId)
-                            is GroupWarning.CommitmentsShortfall -> selectTab(GroupTab.Envelopes)
-                        }
-                        is GroupSummaryEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
-                        GroupSummaryEvent.ReviewClicked -> onOpenReview()
-                        is GroupSummaryEvent.SpendingClicked -> onOpenEnvelope(event.envelopeId)
-                        GroupSummaryEvent.SeeAllEnvelopesClicked -> selectTab(GroupTab.Envelopes)
-                        else -> summaryViewModel.onEvent(event)
-                    }
-                },
-            )
-        },
-        accountsAction = {
-            if (accountsState.canEdit) {
-                AddIconButton(
-                    contentDescription = stringResource(Res.string.action_new_account),
-                    onClick = { onOpenAccountForm(null) },
+        tabContent = { tab, group, header ->
+            when (tab) {
+                GroupTab.Group -> GroupSummaryTabRoute(
+                    group = group,
+                    header = header,
+                    onOpenSettings = onOpenSettings,
+                    onOpenReview = onOpenReview,
+                    onOpenAccount = onOpenAccount,
+                    onOpenEnvelope = onOpenEnvelope,
+                    onShowEnvelopes = { selectTab(GroupTab.Envelopes) },
+                    onOpenTransferForm = onOpenTransferForm,
+                    viewModel = summaryViewModel,
                 )
-            }
-        },
-        accountsContent = {
-            // Shown again each time the tab is selected, so it reads the list again
-            LaunchedEffect(Unit) { accountsViewModel.onEvent(AccountsEvent.Refresh) }
-            AccountsPane(
-                state = accountsState,
-                onEvent = { event ->
-                    when (event) {
-                        is AccountsEvent.EditClicked -> onOpenAccountForm(event.accountId)
-                        is AccountsEvent.OpenClicked -> onOpenAccount(event.accountId)
-                        is AccountsEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
-                        else -> accountsViewModel.onEvent(event)
-                    }
-                },
-            )
-        },
-        envelopesAction = {
-            // Every member sees the moves between envelopes; only owner and admin create envelopes
-            IconActionButton(
-                icon = Icons.Filled.SwapHoriz,
-                label = stringResource(Res.string.envelope_detail_section_transfers),
-                onClick = onOpenEnvelopeTransfers,
-            )
-            if (envelopesState.canEdit) {
-                AddIconButton(
-                    contentDescription = stringResource(Res.string.action_new_envelope),
-                    onClick = { onOpenEnvelopeForm(null) },
+                GroupTab.Accounts -> AccountsTabRoute(
+                    group = group,
+                    header = header,
+                    onOpenAccountForm = onOpenAccountForm,
+                    onOpenAccount = onOpenAccount,
+                    onOpenTransferForm = onOpenTransferForm,
                 )
-            }
-        },
-        envelopesContent = {
-            // Shown again each time the tab is selected, so it reads the summary and the list again
-            LaunchedEffect(Unit) { envelopesViewModel.onEvent(EnvelopesEvent.Refresh) }
-            EnvelopesPane(
-                state = envelopesState,
-                onEvent = { event ->
-                    when (event) {
-                        is EnvelopesEvent.EditClicked -> onOpenEnvelopeForm(event.envelopeId)
-                        is EnvelopesEvent.OpenClicked -> onOpenEnvelope(event.envelopeId)
-                        EnvelopesEvent.TransfersClicked -> onOpenEnvelopeTransfers()
-                        else -> envelopesViewModel.onEvent(event)
-                    }
-                },
-            )
-        },
-        movementsAction = {
-            MovementsHeaderActions(
-                onSearch = { movementsViewModel.onEvent(MovementsEvent.SearchOpened) },
-                onNew = { onOpenMovementForm(null, null) },
-                onExport = { exportViewModel.onEvent(ExportEvent.Opened) },
-            )
-        },
-        // While searching the whole header becomes the search field
-        movementsHeader = if (movementsState.searchOpen) {
-            {
-                MovementsSearchHeader(
-                    text = movementsState.searchText,
-                    onTextChange = { movementsViewModel.onEvent(MovementsEvent.SearchChanged(it)) },
-                    onClose = { movementsViewModel.onEvent(MovementsEvent.SearchClosed) },
-                    isRefreshing = movementsState.isRefreshing,
+                GroupTab.Envelopes -> EnvelopesTabRoute(
+                    group = group,
+                    header = header,
+                    onOpenEnvelopeForm = onOpenEnvelopeForm,
+                    onOpenEnvelope = onOpenEnvelope,
+                    onOpenEnvelopeTransfers = onOpenEnvelopeTransfers,
                 )
+                GroupTab.Movements -> MovementsTabRoute(group = group, header = header, onOpenMovementForm = onOpenMovementForm)
             }
-        } else {
-            null
-        },
-        movementsContent = {
-            // Shown again each time the tab is selected, so it reads the ledger again; the filters are kept
-            LaunchedEffect(Unit) { movementsViewModel.onEvent(MovementsEvent.Refresh) }
-            MovementsPane(
-                state = movementsState,
-                onEvent = { event ->
-                    when (event) {
-                        is MovementsEvent.EditClicked -> onOpenMovementForm(event.movementId, event.source)
-                        else -> movementsViewModel.onEvent(event)
-                    }
-                },
-            )
         },
     )
 }
 
 /**
- * The group's four sections: a bar on phones, a rail on wider windows (what NavigationSuiteScaffold picks). The Accounts
- * and Envelopes tabs have their own state and ViewModel, so the shell takes their header action and content as slots.
+ * The group's four sections: a bar on phones, a rail on wider windows (what NavigationSuiteScaffold picks). Each tab is
+ * its own route with its own ViewModel: the shell hands it the loaded [Group] and a [TabHeader] (title, avatar and menu
+ * button) that the tab draws with its own actions and refresh bar. While the group loads or fails, the shell draws the
+ * header alone.
  */
 @Composable
 fun GroupScreen(
     state: GroupUiState,
     onEvent: (GroupEvent) -> Unit,
     modifier: Modifier = Modifier,
-    groupContent: @Composable () -> Unit = {},
-    accountsAction: @Composable () -> Unit = {},
-    accountsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_accounts_empty)) },
-    envelopesAction: @Composable () -> Unit = {},
-    envelopesContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_envelopes_empty)) },
-    movementsAction: @Composable () -> Unit = {
-        AddIconButton(
-            contentDescription = stringResource(Res.string.action_new_movement),
-            onClick = { onEvent(GroupEvent.NewItemClicked) },
-        )
+    tabContent: @Composable (tab: GroupTab, group: Group, header: TabHeader) -> Unit = { tab, _, header ->
+        header(false) {}
+        EmptyState(message = stringResource(tab.emptyLabel()))
     },
-    /** Replaces the whole header on the Movements tab while it is not null (the search field). */
-    movementsHeader: (@Composable () -> Unit)? = null,
-    movementsContent: @Composable () -> Unit = { EmptyState(message = stringResource(Res.string.tab_movements_empty)) },
 ) {
-    if (state.newItemSheetOpen) {
-        ComingSoonSheet(
-            title = stringResource(state.selectedTab.newItemLabel()),
-            onDismiss = { onEvent(GroupEvent.NewItemDismissed) },
-        )
-    }
-
     val selected = MaterialTheme.colorScheme.primary
     val itemColors = NavigationSuiteDefaults.itemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
@@ -399,31 +239,38 @@ fun GroupScreen(
                 // Every tab lays out two columns on a wide pane (Movements: the filters and their totals beside the rows)
                 modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.TwoColumns),
             ) {
-                // Same header on every tab. The right side is free for the actions of each section.
-                if (state.selectedTab == GroupTab.Movements && movementsHeader != null) movementsHeader() else ScreenHeader(
-                    title = state.group?.name.orEmpty(),
-                    // A group is a root, not a page above Groups: a menu button opens them, never a back arrow
-                    navigation = { MenuButton(onClick = { onEvent(GroupEvent.MenuClicked) }) },
-                    leading = {
-                        EntityAvatar(
-                            name = state.group?.name.orEmpty(),
-                            icon = iconFor(IconCategory.Group, state.group?.icon),
-                            color = EntityColor.fromHex(state.group?.color),
-                            size = 36.dp,
-                        )
-                    },
-                    actions = { HeaderAction(state, onEvent, accountsAction, envelopesAction, movementsAction) },
-                    isRefreshing = state.isRefreshing,
-                )
+                // Same header on every tab: the group, its menu button, and on the right what the tab adds
+                val header: TabHeader = { tabRefreshing, actions ->
+                    ScreenHeader(
+                        title = state.group?.name.orEmpty(),
+                        // A group is a root, not a page above Groups: a menu button opens them, never a back arrow
+                        navigation = { MenuButton(onClick = { onEvent(GroupEvent.MenuClicked) }) },
+                        leading = {
+                            EntityAvatar(
+                                name = state.group?.name.orEmpty(),
+                                icon = iconFor(IconCategory.Group, state.group?.icon),
+                                color = EntityColor.fromHex(state.group?.color),
+                                size = 36.dp,
+                            )
+                        },
+                        actions = actions,
+                        isRefreshing = state.isRefreshing || tabRefreshing,
+                    )
+                }
+                val group = state.group
+                val error = state.error
                 when {
-                    state.isLoading -> ListSkeleton()
-                    state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
-                        TextButton(onClick = { onEvent(GroupEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
+                    error != null -> {
+                        header(false) {}
+                        EmptyState(message = stringResource(error.messageRes())) {
+                            TextButton(onClick = { onEvent(GroupEvent.Retry) }) { Text(stringResource(Res.string.action_retry)) }
+                        }
                     }
-                    state.selectedTab == GroupTab.Accounts -> accountsContent()
-                    state.selectedTab == GroupTab.Envelopes -> envelopesContent()
-                    state.selectedTab == GroupTab.Movements -> movementsContent()
-                    else -> groupContent()
+                    state.isLoading || group == null -> {
+                        header(false) {}
+                        ListSkeleton()
+                    }
+                    else -> tabContent(state.selectedTab, group, header)
                 }
             }
         }
@@ -431,40 +278,20 @@ fun GroupScreen(
 }
 
 /** Right side of the header: the settings gear on the Group tab (everyone), "+" on the lists. */
-@Composable
-private fun HeaderAction(
-    state: GroupUiState,
-    onEvent: (GroupEvent) -> Unit,
-    accountsAction: @Composable () -> Unit,
-    envelopesAction: @Composable () -> Unit,
-    movementsAction: @Composable () -> Unit,
-) {
-    when (state.selectedTab) {
-        GroupTab.Group -> LabelTooltip(stringResource(Res.string.group_settings_title)) {
-            IconButton(onClick = { onEvent(GroupEvent.SettingsClicked) }) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_settings),
-                    contentDescription = stringResource(Res.string.group_settings_title),
-                )
-            }
-        }
-        GroupTab.Accounts -> accountsAction()
-        GroupTab.Envelopes -> envelopesAction()
-        GroupTab.Movements -> movementsAction()
-    }
-}
-
-private fun GroupTab.newItemLabel(): StringResource = when (this) {
-    GroupTab.Accounts -> Res.string.action_new_account
-    GroupTab.Envelopes -> Res.string.action_new_envelope
-    else -> Res.string.action_new_movement
-}
 
 private fun GroupTab.icon(): DrawableResource = when (this) {
     GroupTab.Group -> Res.drawable.ic_home
     GroupTab.Accounts -> Res.drawable.ic_account_balance
     GroupTab.Envelopes -> Res.drawable.ic_envelope
     GroupTab.Movements -> Res.drawable.ic_list
+}
+
+/** What a tab says in a preview with no content. */
+private fun GroupTab.emptyLabel(): StringResource = when (this) {
+    GroupTab.Group -> Res.string.tab_group
+    GroupTab.Accounts -> Res.string.tab_accounts_empty
+    GroupTab.Envelopes -> Res.string.tab_envelopes_empty
+    GroupTab.Movements -> Res.string.tab_movements_empty
 }
 
 private fun GroupTab.label(): StringResource = when (this) {
