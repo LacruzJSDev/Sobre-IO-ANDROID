@@ -22,6 +22,9 @@ interface GroupSummaryRepository {
     /** `group_outlook_current` of the group. */
     suspend fun getOutlook(groupId: String): Result<GroupOutlook>
 
+    /** The same figures looking up to [until] instead of the end of the period (`group_outlook(p_until)`). */
+    suspend fun getOutlookUntil(groupId: String, until: LocalDate): Result<GroupOutlook>
+
     /** `pending_occurrences`: due dates up to today that nobody registered or skipped, oldest first. */
     suspend fun getPending(groupId: String): Result<List<DueOccurrence>>
 

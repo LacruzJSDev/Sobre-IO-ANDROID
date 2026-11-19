@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.accounts
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
+import dev.lacruzjs.sobreio.domain.model.AccountForecast
 import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.Member
 import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
@@ -20,6 +21,8 @@ data class AccountsUiState(
     val outsideCents: Long = 0,
     /** `group_balance_series`: the group's total balance over the last three months, oldest first; empty until it loads. */
     val balanceSeries: List<BalancePoint> = emptyList(),
+    /** `account_forecast` by account id: each live row's projected balance at the end of the period and its shortfall. */
+    val forecasts: Map<String, AccountForecast> = emptyMap(),
     /** The active members: holder names are shown only when there are several. */
     val members: List<Member> = emptyList(),
     /** Set by [AccountsEvent.GroupLoaded]; money is formatted with it. */

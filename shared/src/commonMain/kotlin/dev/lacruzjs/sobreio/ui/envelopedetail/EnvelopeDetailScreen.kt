@@ -1,5 +1,11 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_free_until
+import dev.lacruzjs.sobreio.generated.resources.outlook_until_note
+import dev.lacruzjs.sobreio.generated.resources.outlook_until_period_end
+import dev.lacruzjs.sobreio.generated.resources.outlook_until_label
+import dev.lacruzjs.sobreio.ui.components.DateFormTile
+import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -227,8 +233,25 @@ private fun DetailContent(
         top = { ErrorText(state.actionError, modifier = Modifier.fillMaxWidth()) },
         left = {
             AvailableSection(envelope, state, languageTag)
+            BalanceOnDay(
+                day = state.balanceDay,
+                balanceCents = state.balanceOnDayCents,
+                currencyCode = state.currencyCode,
+                today = state.today,
+                onDaySelected = { onEvent(EnvelopeDetailEvent.BalanceDaySelected(it)) },
+            )
             state.period?.let { PeriodSection(it, state.currencyCode) }
-            state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
+            state.outlook?.let { periodOutlook ->
+                OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
+                DateFormTile(
+                    label = stringResource(Res.string.outlook_until_label),
+                    date = state.outlookUntil,
+                    onDateSelected = { onEvent(EnvelopeDetailEvent.OutlookUntilSelected(it)) },
+                    emptyText = stringResource(Res.string.outlook_until_period_end),
+                    onClear = if (state.outlookUntil != null) ({ onEvent(EnvelopeDetailEvent.OutlookUntilCleared) }) else null,
+                    note = stringResource(Res.string.outlook_until_note),
+                )
+            }
             if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
         },
         right = {
@@ -292,9 +315,13 @@ private fun PeriodSection(period: EnvelopePeriod, currencyCode: String) {
 
 /** What is left once the commitments to the end of the period are paid (`envelope_outlook_current`). */
 @Composable
-private fun OutlookSection(outlook: EnvelopeOutlook, currencyCode: String, languageTag: String) {
+private fun OutlookSection(outlook: EnvelopeOutlook, until: LocalDate?, currencyCode: String, languageTag: String) {
     StatCard(
-        title = stringResource(Res.string.envelope_detail_section_free),
+        title = if (until == null) {
+            stringResource(Res.string.envelope_detail_section_free)
+        } else {
+            stringResource(Res.string.envelope_detail_section_free_until, formatDate(until, languageTag))
+        },
         currencyCode = currencyCode,
         rows = listOf(
             StatRow(stringResource(Res.string.envelope_detail_committed), -outlook.committedCents, MoneyRole.Flow),

@@ -1,5 +1,10 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.datetime.LocalDate
+import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeOutlookRowDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopeOutlookDto
 import dev.lacruzjs.sobreio.data.remote.dto.EnvelopePeriodDto
@@ -56,6 +61,29 @@ class SupabaseEnvelopeDetailRepository(client: SupabaseClient) : EnvelopeDetailR
             .map { it.toDomain() }
             .reversed()
     }
+
+    override suspend fun getBalanceAt(envelopeId: String, day: LocalDate): Result<Long> = safeCall {
+        postgrest.rpc(
+            "envelope_balance_at",
+            buildJsonObject {
+                put("p_envelope_id", envelopeId)
+                put("p_as_of", day.toString())
+            },
+        ).decodeAs<Long>()
+    }
+
+    override suspend fun getOutlookUntil(groupId: String, envelopeId: String, until: LocalDate): Result<EnvelopeOutlook?> =
+        safeCall {
+            postgrest.rpc(
+                "envelope_outlook",
+                buildJsonObject {
+                    put("p_group_id", groupId)
+                    put("p_until", until.toString())
+                },
+            ).decodeList<EnvelopeOutlookRowDto>()
+                .firstOrNull { it.envelopeId == envelopeId }
+                ?.let { EnvelopeOutlookDto(it.balance, it.committed, it.free, it.shortfall).toDomain() }
+        }
 
     override suspend fun getOutlook(groupId: String, envelopeId: String): Result<EnvelopeOutlook?> = safeCall {
         postgrest.from(OUTLOOK_VIEW)

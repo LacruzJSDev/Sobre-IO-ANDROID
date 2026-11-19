@@ -49,6 +49,9 @@ class CachedAccountDetailRepository(
     override suspend fun getCurrentPeriod(groupId: String) = cache.get("currentPeriod", groupId) { remote.getCurrentPeriod(groupId) }
     override suspend fun getForecast(groupId: String, accountId: String) =
         cache.get("account.forecast", groupId, accountId) { remote.getForecast(groupId, accountId) }
+    override suspend fun getBalanceAt(accountId: String, day: LocalDate) =
+        cache.get("account.balanceAt", accountId, day) { remote.getBalanceAt(accountId, day) }
+    override suspend fun getForecasts(groupId: String) = cache.get("account.forecasts", groupId) { remote.getForecasts(groupId) }
     override suspend fun getBalanceSeries(accountId: String, from: LocalDate, to: LocalDate, points: Int) =
         cache.get("account.balanceSeries", accountId, from, to, points) { remote.getBalanceSeries(accountId, from, to, points) }
     override suspend fun getProjection(accountId: String) = cache.get("account.projection", accountId) { remote.getProjection(accountId) }
@@ -78,6 +81,10 @@ class CachedEnvelopeDetailRepository(
     private val cache: QueryCache,
 ) : EnvelopeDetailRepository by remote {
     override suspend fun getEnvelope(envelopeId: String) = cache.get("envelope", envelopeId) { remote.getEnvelope(envelopeId) }
+    override suspend fun getBalanceAt(envelopeId: String, day: LocalDate) =
+        cache.get("envelope.balanceAt", envelopeId, day) { remote.getBalanceAt(envelopeId, day) }
+    override suspend fun getOutlookUntil(groupId: String, envelopeId: String, until: LocalDate) =
+        cache.get("envelope.outlookUntil", groupId, envelopeId, until) { remote.getOutlookUntil(groupId, envelopeId, until) }
     override suspend fun getPeriods(envelopeId: String, limit: Int) =
         cache.get("envelope.periods", envelopeId, limit) { remote.getPeriods(envelopeId, limit) }
     override suspend fun getOutlook(groupId: String, envelopeId: String) =
@@ -102,6 +109,8 @@ class CachedGroupSummaryRepository(
     private val cache: QueryCache,
 ) : GroupSummaryRepository by remote {
     override suspend fun getOutlook(groupId: String) = cache.get("group.outlook", groupId) { remote.getOutlook(groupId) }
+    override suspend fun getOutlookUntil(groupId: String, until: LocalDate) =
+        cache.get("group.outlookUntil", groupId, until) { remote.getOutlookUntil(groupId, until) }
     override suspend fun getPending(groupId: String) = cache.get("group.pending", groupId) { remote.getPending(groupId) }
     override suspend fun getUpcoming(groupId: String, from: LocalDate, to: LocalDate) =
         cache.get("group.upcoming", groupId, from, to) { remote.getUpcoming(groupId, from, to) }
@@ -124,6 +133,8 @@ class CachedCommitmentRepository(private val remote: CommitmentRepository, priva
         cache.get("commitment.occurrences", commitmentId, offset, limit) { remote.getOccurrences(commitmentId, offset, limit) }
     override suspend fun getPaidCommitmentIds(commitmentIds: List<String>, from: LocalDate, to: LocalDate) =
         cache.get("commitments.paid", commitmentIds, from, to) { remote.getPaidCommitmentIds(commitmentIds, from, to) }
+    override suspend fun matchPending(accountId: String, signedCents: Long, date: LocalDate) =
+        cache.get("commitments.matchPending", accountId, signedCents, date) { remote.matchPending(accountId, signedCents, date) }
     override suspend fun getLinks(commitmentIds: List<String>) = cache.get("commitments.links", commitmentIds) { remote.getLinks(commitmentIds) }
 }
 

@@ -46,6 +46,19 @@ class SupabaseGroupSummaryRepository(client: SupabaseClient) : GroupSummaryRepos
             ?: throw AppError.NotFound
     }
 
+    override suspend fun getOutlookUntil(groupId: String, until: LocalDate): Result<GroupOutlook> = safeCall {
+        postgrest.rpc(
+            "group_outlook",
+            buildJsonObject {
+                put("p_group_id", groupId)
+                put("p_until", until.toString())
+            },
+        ).decodeList<GroupOutlookDto>()
+            .firstOrNull()
+            ?.toDomain()
+            ?: throw AppError.NotFound
+    }
+
     override suspend fun getPending(groupId: String): Result<List<DueOccurrence>> = safeCall {
         postgrest.rpc("pending_occurrences", buildJsonObject { put("p_group_id", groupId) })
             .decodeList<DueOccurrenceDto>()

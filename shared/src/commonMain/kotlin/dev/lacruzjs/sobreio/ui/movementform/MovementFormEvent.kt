@@ -24,6 +24,12 @@ sealed interface MovementFormEvent {
     /** The picker's "Create" row: makes a tag named like the search text and selects it. */
     data object TagCreateClicked : MovementFormEvent
     data object SaveClicked : MovementFormEvent
+
+    /** "It's this one": register the suggested pending due date instead of a new movement (`confirm_occurrence`). */
+    data object SuggestionAccepted : MovementFormEvent
+
+    /** "No": the suggestion goes and is not offered again in this form. */
+    data object SuggestionDismissed : MovementFormEvent
     data object Retry : MovementFormEvent
     data object NavigationHandled : MovementFormEvent
 }

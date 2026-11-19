@@ -20,6 +20,11 @@ data class MovementFormUiState(
     val isSubmitting: Boolean = false,
     val saved: Boolean = false,
     val submitError: AppError? = null,
+    /**
+     * A pending due date this new expense or income looks like (`match_pending`); null when none, when editing or for a
+     * transfer. Accepting registers that due date with the typed amount and date.
+     */
+    val suggestion: PendingSuggestion? = null,
     val currencyCode: String = "EUR",
     /** The group's today: the last day the date can be. */
     val today: LocalDate? = null,

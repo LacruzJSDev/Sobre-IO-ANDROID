@@ -57,6 +57,8 @@ class GroupSummaryViewModel(
             is GroupSummaryEvent.GroupLoaded ->
                 _state.update { it.copy(currencyCode = event.currencyCode, canRecord = event.canRecord) }
             GroupSummaryEvent.Refresh -> load()
+            is GroupSummaryEvent.LookAheadSelected -> lookAhead(event.day)
+            GroupSummaryEvent.LookAheadCleared -> _state.update { it.copy(lookAheadDay = null, lookAhead = null) }
             // Handled by the Route, which navigates
             GroupSummaryEvent.ReviewClicked,
             is GroupSummaryEvent.WarningClicked,
@@ -70,6 +72,18 @@ class GroupSummaryViewModel(
     init {
         // Painted from the cache before the first frame when the group was seen recently; read when it was not
         load()
+    }
+
+    private var lookAheadJob: Job? = null
+
+    private fun lookAhead(day: LocalDate) {
+        _state.update { it.copy(lookAheadDay = day, lookAhead = null) }
+        lookAheadJob?.cancel()
+        lookAheadJob = viewModelScope.launch {
+            summary.getOutlookUntil(groupId, day)
+                .onSuccess { figures -> _state.update { if (it.lookAheadDay == day) it.copy(lookAhead = figures) else it } }
+                .onFailure { e -> _state.update { it.copy(actionError = e.asAppError()) } }
+        }
     }
 
     private fun load() {

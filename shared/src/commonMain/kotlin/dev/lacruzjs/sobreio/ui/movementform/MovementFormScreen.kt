@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import dev.lacruzjs.sobreio.ui.history.MovementHistorySection
+import dev.lacruzjs.sobreio.ui.history.MovementHistoryViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -98,7 +100,15 @@ fun MovementFormRoute(
             viewModel.onEvent(MovementFormEvent.NavigationHandled)
         }
     }
+    // Who created it and who changed what since: only an existing movement has a history
+    val historyLines = if (movementId != null) {
+        val history: MovementHistoryViewModel = koinViewModel(key = "history-$movementId") { parametersOf(groupId, movementId, source) }
+        history.lines.collectAsStateWithLifecycle().value
+    } else {
+        emptyList()
+    }
     MovementFormScreen(
+        footer = { MovementHistorySection(historyLines) },
         state = state,
         onEvent = { event ->
             when (event) {
@@ -123,6 +133,7 @@ fun MovementFormScreen(
     state: MovementFormUiState,
     onEvent: (MovementFormEvent) -> Unit,
     modifier: Modifier = Modifier,
+    footer: @Composable () -> Unit = {},
 ) {
     FormScaffold(
         title = stringResource(if (state.isEditing) Res.string.edit_movement_title else Res.string.action_new_movement),
@@ -207,6 +218,8 @@ fun MovementFormScreen(
                     }
                 }
 
+                state.suggestion?.let { SuggestionCard(it, state.currencyCode, enabled, onEvent) }
+
                 FormSection(title = stringResource(Res.string.form_section_details)) {
                     DateFormTile(
                         label = stringResource(Res.string.field_date),
@@ -237,6 +250,7 @@ fun MovementFormScreen(
                     }
                 }
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
+                footer()
 
             }
         }

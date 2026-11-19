@@ -26,6 +26,12 @@ interface AccountDetailRepository {
     /** Forecast to the end of the period of one account; null for an archived account, which the database skips. */
     suspend fun getForecast(groupId: String, accountId: String): Result<AccountForecast?>
 
+    /** Balance of the account at the end of [day] (`account_balance_at`). */
+    suspend fun getBalanceAt(accountId: String, day: LocalDate): Result<Long>
+
+    /** Forecast to the end of the period of every live account of the group, by account id (`account_forecast`). */
+    suspend fun getForecasts(groupId: String): Result<Map<String, AccountForecast>>
+
     /** Balance over [from]..[to], at most [points] days, oldest first (`account_balance_series`). */
     suspend fun getBalanceSeries(accountId: String, from: LocalDate, to: LocalDate, points: Int = 60): Result<List<BalancePoint>>
 

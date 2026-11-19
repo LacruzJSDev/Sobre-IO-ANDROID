@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.generated.resources.export_open
+import dev.lacruzjs.sobreio.ui.components.IconActionButton
+import androidx.compose.material.icons.filled.FileDownload
 import dev.lacruzjs.sobreio.ui.components.RefreshBar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -36,7 +39,11 @@ import org.jetbrains.compose.resources.stringResource
 
 /** The two icons on the right of the Movements header: search and "+" (the header allows at most two). */
 @Composable
-fun MovementsHeaderActions(onSearch: () -> Unit, onNew: () -> Unit) {
+fun MovementsHeaderActions(onSearch: () -> Unit, onNew: () -> Unit, onExport: (() -> Unit)? = null) {
+    // Only the group's whole ledger exports a period (the Movements tab); an account's list does not
+    if (onExport != null) {
+        IconActionButton(icon = Icons.Filled.FileDownload, label = stringResource(Res.string.export_open), onClick = onExport)
+    }
     IconButton(onClick = onSearch) {
         Icon(imageVector = Icons.Filled.Search, contentDescription = stringResource(Res.string.action_search))
     }

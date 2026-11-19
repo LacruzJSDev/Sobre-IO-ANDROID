@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import kotlinx.datetime.LocalDate
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeOutlook
 import dev.lacruzjs.sobreio.domain.model.EnvelopePeriod
@@ -18,6 +19,15 @@ interface EnvelopeDetailRepository {
      * [dev.lacruzjs.sobreio.domain.error.AppError.NotFound] when it is not visible.
      */
     suspend fun getEnvelope(envelopeId: String): Result<Envelope>
+
+    /** Balance of the envelope at the end of [day] (`envelope_balance_at`). */
+    suspend fun getBalanceAt(envelopeId: String, day: LocalDate): Result<Long>
+
+    /**
+     * The envelope's balance, what is committed until [until] (overdue included) and what stays really free
+     * (`envelope_outlook(p_until)`); null when the database has no outlook for it (Unassigned, archived).
+     */
+    suspend fun getOutlookUntil(groupId: String, envelopeId: String, until: LocalDate): Result<EnvelopeOutlook?>
 
     /** The last [limit] periods already created for the envelope, oldest first (`envelope_periods`). */
     suspend fun getPeriods(envelopeId: String, limit: Int = 6): Result<List<EnvelopePeriod>>
