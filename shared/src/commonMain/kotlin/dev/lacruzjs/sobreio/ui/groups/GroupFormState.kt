@@ -3,7 +3,7 @@ package dev.lacruzjs.sobreio.ui.groups
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
+import dev.lacruzjs.sobreio.ui.validation.validateRequired
 import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.StringResource
 

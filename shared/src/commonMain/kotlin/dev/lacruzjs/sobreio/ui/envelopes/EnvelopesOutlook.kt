@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.ui.components.displayName
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_manage_transfers
 import dev.lacruzjs.sobreio.generated.resources.envelope_transfer_unknown_envelope
@@ -21,9 +21,8 @@ import dev.lacruzjs.sobreio.generated.resources.envelope_transfers_route
 import dev.lacruzjs.sobreio.generated.resources.envelopes_latest_moves_title
 import dev.lacruzjs.sobreio.generated.resources.envelopes_payments_empty
 import dev.lacruzjs.sobreio.generated.resources.envelopes_payments_title
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.MoneyText
@@ -137,7 +136,6 @@ internal fun LatestMovesSection(state: EnvelopesUiState, onEvent: (EnvelopesEven
 /** Envelope names by id, "Unassigned" translated (it is stored in Spanish). */
 @Composable
 private fun envelopeNames(state: EnvelopesUiState): Map<String, String> {
-    val unassigned = stringResource(Res.string.envelopes_unassigned)
     return (state.envelopes + state.archivedEnvelopes + listOfNotNull(state.unassigned))
-        .associate { it.id to if (it.kind == EnvelopeKind.System) unassigned else it.name }
+        .associate { it.id to it.displayName() }
 }

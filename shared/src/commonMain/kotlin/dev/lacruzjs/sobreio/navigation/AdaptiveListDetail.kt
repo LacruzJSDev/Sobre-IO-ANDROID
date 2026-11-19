@@ -106,7 +106,10 @@ private class ListDetailScene<T : Any>(
     // The list entry's metadata, so a root's own transition (Groups arrives like a back) applies when the root changes
     override val metadata: Map<String, Any> = listEntry.metadata
 
-    private val history = entries.map { ThreePaneScaffoldDestinationItem(it.paneRole!!, it.contentKey) }
+    // The strategy builds the scene only from entries that have a pane role, so none is dropped here
+    private val history = entries.mapNotNull { entry ->
+        entry.paneRole?.let { ThreePaneScaffoldDestinationItem(it, entry.contentKey) }
+    }
 
     private val scaffoldValue: ThreePaneScaffoldValue = valueFor(history)
 

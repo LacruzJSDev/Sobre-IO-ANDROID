@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopeform
 
+import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -18,8 +19,6 @@ import dev.lacruzjs.sobreio.generated.resources.envelope_type_has_funded
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -207,7 +206,7 @@ class EnvelopeFormViewModel(
         val current = _state.value
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val name = current.name.trim()
-        val nameError = validateName(name)
+        val nameError = validateName(name, MAX_ENVELOPE_NAME_LENGTH)
         // Bills and Free have no target field: the database wants 0 there
         val target = if (current.showsTarget) parseMoneyInput(current.monthlyTarget) else 0L
         val targetError = when {
@@ -257,11 +256,6 @@ class EnvelopeFormViewModel(
         else -> EnvelopePurpose.Free
     }
 
-    private fun validateName(name: String): StringResource? = when {
-        name.isEmpty() -> validateRequired(name)
-        name.length > MAX_ENVELOPE_NAME_LENGTH -> Res.string.validation_name_too_long
-        else -> null
-    }
 
     /** Cents as the text the user would type: nothing for no target, otherwise `12.50` style with a plain point. */
     private fun Long.toInputText(): String = when {

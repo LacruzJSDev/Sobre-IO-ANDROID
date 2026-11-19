@@ -1,9 +1,10 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.ui.components.ListSectionTitle
 import dev.lacruzjs.sobreio.generated.resources.info_accounts_total_2
 import dev.lacruzjs.sobreio.generated.resources.info_accounts_total_1
 import dev.lacruzjs.sobreio.ui.components.HeroLabelWithInfo
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.generated.resources.chart_enlarge
 import dev.lacruzjs.sobreio.generated.resources.chart_table_balance
@@ -173,11 +174,11 @@ private fun AccountRows(
         }
         // The "In envelopes" title only helps when there is a second section to tell it from
         if (outside.isNotEmpty() && state.inEnvelopes.isNotEmpty()) {
-            item(key = "title-in") { SectionTitle(stringResource(Res.string.accounts_in_envelopes_title)) }
+            item(key = "title-in") { ListSectionTitle(stringResource(Res.string.accounts_in_envelopes_title)) }
         }
         rows(state.inEnvelopes, false)
         if (outside.isNotEmpty()) {
-            item(key = "title-outside") { SectionTitle(stringResource(Res.string.accounts_outside_envelopes_title)) }
+            item(key = "title-outside") { ListSectionTitle(stringResource(Res.string.accounts_outside_envelopes_title)) }
             rows(outside, false)
         }
         if (state.archivedAccounts.isNotEmpty()) {
@@ -197,15 +198,6 @@ private fun AccountRows(
     }
 }
 
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp),
-    )
-}
 
 /**
  * The hero card of the tab: the total in accounts with, when the chart is shown, its period on the right; the chart of

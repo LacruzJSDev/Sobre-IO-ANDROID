@@ -40,7 +40,7 @@ import dev.lacruzjs.sobreio.generated.resources.group_review_back
 import dev.lacruzjs.sobreio.generated.resources.group_review_empty
 import dev.lacruzjs.sobreio.generated.resources.group_review_title
 import dev.lacruzjs.sobreio.generated.resources.group_summary_due_subtitle
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar

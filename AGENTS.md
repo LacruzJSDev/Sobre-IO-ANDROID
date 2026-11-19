@@ -668,6 +668,10 @@ plus `movementform` (the new / edit movement form).
 - Loading: every ViewModel that reads loads through `revalidate` (see "Data loading" in Current state) and every new
   read a screen needs gets a cached override in `CachedRepositories.kt`; a new read-only RPC goes into `READ_ONLY_RPCS`.
   No full-screen `CircularProgressIndicator`: skeleton for a first load, `isRefreshing` on the header for the rest.
+- Shared pieces live in `ui/components` or `ui/validation`, never inside one screen's package for others to import:
+  `SoftTile` (the soft surface a section sits on), `ListSectionTitle` (the muted title that splits a list), `Envelope.displayName()`
+  (the translated name of the system envelope "Unassigned", stored in Spanish; never compare `kind == System` by hand to name
+  it), and `ui/validation/Validation.kt` (`validateRequired`, `validateName(name, maxLength)`, email, password, 6-digit code).
 - A screen receives `state` and `onEvent`; it never calls a repository, Supabase or the back stack directly.
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).

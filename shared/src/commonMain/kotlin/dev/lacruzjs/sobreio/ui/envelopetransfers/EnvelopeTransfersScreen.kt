@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopetransfers
 
+import dev.lacruzjs.sobreio.ui.components.displayName
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -290,11 +291,8 @@ private fun TransferRowItem(row: GroupTransferRow, currencyCode: String, languag
 
 /** The system envelope is stored with a Spanish name: the UI has its own, translated. */
 @Composable
-private fun envelopeName(envelope: Envelope?): String = when {
-    envelope == null -> stringResource(Res.string.envelope_transfer_unknown_envelope)
-    envelope.kind == EnvelopeKind.System -> stringResource(Res.string.envelopes_unassigned)
-    else -> envelope.name
-}
+private fun envelopeName(envelope: Envelope?): String =
+    envelope?.displayName() ?: stringResource(Res.string.envelope_transfer_unknown_envelope)
 
 /** How many rows before the end the next page is asked for. */
 private const val LOAD_MORE_AHEAD = 10

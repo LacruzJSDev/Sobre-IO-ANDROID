@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.components.ListSectionTitle
+import dev.lacruzjs.sobreio.ui.components.displayName
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -62,7 +64,6 @@ import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.domain.model.MovementType
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_clear_filters
-import dev.lacruzjs.sobreio.generated.resources.action_new_movement
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.entity_all_accounts
 import dev.lacruzjs.sobreio.generated.resources.entity_all_envelopes
@@ -83,12 +84,10 @@ import dev.lacruzjs.sobreio.generated.resources.list_load_more_failed
 import dev.lacruzjs.sobreio.generated.resources.movement_from_account
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_transfer
 import dev.lacruzjs.sobreio.generated.resources.movement_to_account
-import dev.lacruzjs.sobreio.generated.resources.movement_transfer_route
 import dev.lacruzjs.sobreio.generated.resources.movements_day_today
 import dev.lacruzjs.sobreio.generated.resources.movements_day_yesterday
 import dev.lacruzjs.sobreio.generated.resources.movements_empty
 import dev.lacruzjs.sobreio.generated.resources.movements_empty_filtered
-import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
@@ -231,14 +230,13 @@ private fun movementChips(state: MovementsUiState): List<MovementsChip> = buildL
 private fun MovementFilterChip(chip: MovementsChip, state: MovementsUiState, onEvent: (MovementsEvent) -> Unit) {
     val languageTag = Locale.current.toLanguageTag()
     val filter = state.filter
-    val unassignedName = stringResource(Res.string.envelopes_unassigned)
     val label = stringResource(chip.labelRes())
     val account = state.accounts.firstOrNull { it.id == filter.accountId }
     val envelope = state.envelope(filter.envelopeId)
     val member = state.members.firstOrNull { it.userId == filter.createdBy }
     val activeText: String? = when (chip) {
         MovementsChip.Account -> account?.name
-        MovementsChip.Envelope -> envelope?.let { if (it.kind == EnvelopeKind.System) unassignedName else it.name }
+        MovementsChip.Envelope -> envelope?.displayName()
         MovementsChip.Type -> filter.type?.let { stringResource(it.labelRes()) }
         MovementsChip.Dates -> if (filter.from != null && filter.to != null) {
             stringResource(
@@ -386,12 +384,7 @@ private fun DayHeader(section: DaySection, languageTag: String) {
         DayRelative.Yesterday -> stringResource(Res.string.movements_day_yesterday, date)
         DayRelative.Other -> formatWeekdayDayMonth(section.date, languageTag)
     }
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp),
-    )
+    ListSectionTitle(text)
 }
 
 /**
@@ -424,8 +417,9 @@ private fun MovementRow(movement: Movement, state: MovementsUiState, languageTag
         }
         // On an envelope's own list it would repeat on every row
         state.fixedEnvelopeId != null -> null
-        envelope == null || envelope.kind == EnvelopeKind.System -> stringResource(Res.string.envelopes_unassigned)
-        else -> envelope.name
+        // A transaction without a known envelope is shown as Unassigned
+        envelope == null -> stringResource(Res.string.envelopes_unassigned)
+        else -> envelope.displayName()
     }
     val tags = movement.tagIds.mapNotNull { id -> state.tags.firstOrNull { it.id == id } }
     val amount = if (ledgerTransfer) kotlin.math.abs(movement.amountCents) else movement.amountCents

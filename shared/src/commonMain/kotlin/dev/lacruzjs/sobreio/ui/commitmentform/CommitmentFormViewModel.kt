@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.commitmentform
 
+import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -31,15 +32,12 @@ import dev.lacruzjs.sobreio.generated.resources.validation_end_date_before_start
 import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
 import dev.lacruzjs.sobreio.generated.resources.validation_funded_needs_bills
 import dev.lacruzjs.sobreio.generated.resources.validation_funded_no_bills
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 
 /**
  * The create and edit form of a commitment of one account ([accountId]); [commitmentId] null creates.
@@ -280,7 +278,7 @@ class CommitmentFormViewModel(
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val name = current.name.trim()
         val cents = parseMoneyInput(current.amount)
-        val nameError = validateName(name)
+        val nameError = validateName(name, MAX_COMMITMENT_NAME_LENGTH)
         val amountError = when {
             cents == null -> Res.string.validation_amount_invalid
             cents <= 0 -> Res.string.validation_amount_positive
@@ -438,11 +436,6 @@ class CommitmentFormViewModel(
         }
     }
 
-    private fun validateName(name: String): StringResource? = when {
-        name.isEmpty() -> validateRequired(name)
-        name.length > MAX_COMMITMENT_NAME_LENGTH -> Res.string.validation_name_too_long
-        else -> null
-    }
 
     /** Cents as the text the user would type: `12.50` style with a plain point. */
     private fun Long.toInputText(): String = when {

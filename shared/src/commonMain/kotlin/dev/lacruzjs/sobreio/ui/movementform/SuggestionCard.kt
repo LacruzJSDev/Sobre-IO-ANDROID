@@ -15,7 +15,7 @@ import dev.lacruzjs.sobreio.generated.resources.movement_suggestion_no
 import dev.lacruzjs.sobreio.generated.resources.movement_suggestion_note
 import dev.lacruzjs.sobreio.generated.resources.movement_suggestion_title
 import dev.lacruzjs.sobreio.generated.resources.movement_suggestion_yes
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.format.formatDate

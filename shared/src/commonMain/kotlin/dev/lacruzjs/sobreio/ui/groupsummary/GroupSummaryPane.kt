@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
 
+import dev.lacruzjs.sobreio.ui.components.displayName
 import dev.lacruzjs.sobreio.generated.resources.info_free_today_3
 import dev.lacruzjs.sobreio.generated.resources.info_free_today_2
 import dev.lacruzjs.sobreio.generated.resources.info_free_today_1
@@ -76,7 +77,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.GroupWarning
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -86,7 +86,6 @@ import dev.lacruzjs.sobreio.generated.resources.chart_flows_period
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_in
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_out
 import dev.lacruzjs.sobreio.generated.resources.detail_section_upcoming
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.group_hero_chart_description
 import dev.lacruzjs.sobreio.generated.resources.group_hero_drops
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_commitments
@@ -108,7 +107,7 @@ import dev.lacruzjs.sobreio.generated.resources.group_summary_warnings_title
 import dev.lacruzjs.sobreio.generated.resources.warning_account_shortfall
 import dev.lacruzjs.sobreio.generated.resources.warning_commitments_shortfall
 import dev.lacruzjs.sobreio.generated.resources.warning_envelope_overspent
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -514,7 +513,7 @@ private fun SpendingSection(
         SoftTile {
             val bar = LocalMoneyColors.current.outflow
             state.spending.forEach { item ->
-                val name = if (item.envelope.kind == EnvelopeKind.System) stringResource(Res.string.envelopes_unassigned) else item.envelope.name
+                val name = item.envelope.displayName()
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
