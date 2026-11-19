@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.di
 
+import dev.lacruzjs.sobreio.data.realtime.SupabaseGroupChangeFeed
+import dev.lacruzjs.sobreio.data.realtime.GroupChangeFeed
 import dev.lacruzjs.sobreio.data.repository.SupabaseAuditRepository
 import dev.lacruzjs.sobreio.data.repository.AuditRepository
 import dev.lacruzjs.sobreio.data.repository.SupabaseExportRepository
@@ -77,6 +79,7 @@ val dataModule = module {
     single<MovementRepository> { CachedMovementRepository(SupabaseMovementRepository(get()), get()) }
     single<MovementFormRepository> { CachedMovementFormRepository(SupabaseMovementFormRepository(get()), get()) }
     single<AccountDeletionRepository> { SupabaseAccountDeletionRepository(get(), get(), get()) }
+    single<GroupChangeFeed> { SupabaseGroupChangeFeed(get(), get()) }
     single<AuditRepository> { SupabaseAuditRepository(get()) }
     single<ExportRepository> { SupabaseExportRepository(get()) }
     single<TagRepository> { CachedTagRepository(SupabaseTagRepository(get()), get()) }

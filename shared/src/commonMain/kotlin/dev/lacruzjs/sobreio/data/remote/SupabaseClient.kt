@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.data.remote
 
+import io.github.jan.supabase.realtime.Realtime
 import dev.lacruzjs.sobreio.AppConfig
 import dev.lacruzjs.sobreio.data.cache.QueryCache
 import dev.lacruzjs.sobreio.data.cache.cacheInvalidationPlugin
@@ -27,5 +28,6 @@ fun buildSupabaseClient(cache: QueryCache): SupabaseClient = createSupabaseClien
     install(Auth)
     install(Postgrest)
     install(Functions)
+    install(Realtime)
     httpConfig { install(cacheInvalidationPlugin(cache)) }
 }

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +27,8 @@ fun TagMovementsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(MovementsEvent.Refresh) }
     val tag = state.tags.firstOrNull { it.id == tagId }
     FixedFilterMovementsScreen(
         state = state,

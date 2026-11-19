@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import kotlin.test.assertNotNull
+import dev.lacruzjs.sobreio.fake.FakeGroupChangeFeed
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.Group
@@ -21,7 +23,9 @@ class GroupViewModelTest : MainDispatcherTest() {
     private val lastGroup = FakeLastGroupStore()
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
 
-    private fun viewModel(groupId: String) = GroupViewModel(groupId, repository, lastGroup, auth)
+    private val changes = FakeGroupChangeFeed()
+
+    private fun viewModel(groupId: String) = GroupViewModel(groupId, repository, lastGroup, auth, changes)
 
     @Test
     fun loadsTheGroupAndRemembersItAsLast() {
@@ -52,7 +56,7 @@ class GroupViewModelTest : MainDispatcherTest() {
         val failing = object : dev.lacruzjs.sobreio.data.repository.GroupRepository by repository {
             override suspend fun getGroup(id: String): Result<Group> = Result.failure(AppError.Network)
         }
-        val viewModel = GroupViewModel("g1", failing, lastGroup, auth)
+        val viewModel = GroupViewModel("g1", failing, lastGroup, auth, changes)
 
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.navigateBack)
@@ -98,5 +102,17 @@ class GroupViewModelTest : MainDispatcherTest() {
         assertTrue(viewModel.state.value.newItemSheetOpen)
         viewModel.onEvent(GroupEvent.NewItemDismissed)
         assertFalse(viewModel.state.value.newItemSheetOpen)
+    }
+
+    @Test
+    fun anOpenGroupFollowsItsChangesAndReadsItselfAgainOnOne() {
+        val viewModel = viewModel("g1")
+        assertEquals(listOf("g1"), changes.followed)
+        val before = repository.calls.count { it == "getGroup(g1)" }
+
+        changes.emit()
+
+        assertEquals(before + 1, repository.calls.count { it == "getGroup(g1)" })
+        assertNotNull(viewModel.state.value.group)
     }
 }

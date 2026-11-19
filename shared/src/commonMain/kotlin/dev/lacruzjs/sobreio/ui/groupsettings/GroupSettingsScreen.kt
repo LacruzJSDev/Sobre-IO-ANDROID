@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.rememberScrollState
@@ -125,6 +126,8 @@ fun GroupSettingsRoute(
 
     // Shown again after the group form: read the group, members and invitations again
     LaunchedEffect(Unit) { viewModel.onEvent(GroupSettingsEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(GroupSettingsEvent.Refresh) }
 
     if (state.navigateToGroups) {
         LaunchedEffect(Unit) {

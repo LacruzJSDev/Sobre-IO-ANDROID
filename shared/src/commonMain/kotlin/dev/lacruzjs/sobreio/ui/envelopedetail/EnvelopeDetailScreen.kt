@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import dev.lacruzjs.sobreio.generated.resources.envelope_outlook_more
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_2
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_1
@@ -156,6 +157,8 @@ fun EnvelopeDetailRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(EnvelopeDetailEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = false) { viewModel.onEvent(EnvelopeDetailEvent.Refresh) }
     EnvelopeDetailScreen(
         state = state,
         onEvent = { event ->

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import dev.lacruzjs.sobreio.ui.export.ExportEvent
 import dev.lacruzjs.sobreio.ui.export.ExportHost
@@ -139,6 +140,26 @@ fun GroupRoute(
             envelopesViewModel.onEvent(EnvelopesEvent.GroupLoaded(it.currencyCode, it.canEdit))
             // Any member may review a due date, but not in an archived group or one pending deletion
             summaryViewModel.onEvent(GroupSummaryEvent.GroupLoaded(it.currencyCode, !it.isArchived && !it.isPendingDeletion))
+        }
+    }
+
+    // Changes made elsewhere in the group are read as they happen (D-55): the Group tab's figures (they also give the
+    // badge) and the tab on display, once its Undo is settled; the other tabs read again when they are shown
+    RefreshOnRemoteChange { summaryViewModel.onEvent(GroupSummaryEvent.Refresh) }
+    val selectedTabNow = GroupTab.entries[selectedIndex]
+    RefreshOnRemoteChange(
+        paused = when (selectedTabNow) {
+            GroupTab.Accounts -> accountsState.undoMessage != null
+            GroupTab.Envelopes -> envelopesState.undoMessage != null
+            GroupTab.Movements -> movementsState.undoMessage != null
+            GroupTab.Group -> false
+        },
+    ) {
+        when (selectedTabNow) {
+            GroupTab.Accounts -> accountsViewModel.onEvent(AccountsEvent.Refresh)
+            GroupTab.Envelopes -> envelopesViewModel.onEvent(EnvelopesEvent.Refresh)
+            GroupTab.Movements -> movementsViewModel.onEvent(MovementsEvent.Refresh)
+            GroupTab.Group -> Unit
         }
     }
 
