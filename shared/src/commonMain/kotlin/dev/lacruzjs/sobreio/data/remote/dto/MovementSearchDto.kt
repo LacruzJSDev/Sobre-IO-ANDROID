@@ -39,9 +39,3 @@ internal data class TagUsageDto(
     val movements: Long = 0,
 )
 
-/** The columns of `periods` that the Movements screen reads. */
-@Serializable
-internal data class PeriodDto(
-    @SerialName("start_date") val startDate: String,
-    @SerialName("end_date") val endDate: String,
-)

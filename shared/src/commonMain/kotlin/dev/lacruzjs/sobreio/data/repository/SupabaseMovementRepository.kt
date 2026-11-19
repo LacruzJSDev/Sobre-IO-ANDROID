@@ -6,13 +6,10 @@ import dev.lacruzjs.sobreio.domain.model.PeriodTotals
 import dev.lacruzjs.sobreio.domain.model.MovementReport
 import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.data.remote.dto.MovementSearchDto
-import dev.lacruzjs.sobreio.data.remote.dto.PeriodDto
-import dev.lacruzjs.sobreio.data.remote.dto.PeriodRangeDto
 import dev.lacruzjs.sobreio.data.remote.mapper.searchParams
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
 import dev.lacruzjs.sobreio.data.remote.safeCall
 import dev.lacruzjs.sobreio.domain.error.AppError
-import dev.lacruzjs.sobreio.domain.model.DateContext
 import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.domain.model.MovementPage
@@ -21,7 +18,6 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
@@ -126,30 +122,6 @@ class SupabaseMovementRepository(client: SupabaseClient) : MovementRepository {
             ?: throw AppError.BusinessRule("FZ016")
         postgrest.rpc("void_group_transfer", buildJsonObject { put("p_link_id", linkId) })
         Unit
-    }
-
-    override suspend fun getDateContext(groupId: String): Result<DateContext> = safeCall {
-        val today = LocalDate.parse(
-            postgrest.rpc("group_today", buildJsonObject { put("p_group_id", groupId) }).decodeAs<String>(),
-        )
-        val current = postgrest.rpc("current_period", buildJsonObject { put("p_group_id", groupId) })
-            .decodeList<PeriodRangeDto>()
-            .firstOrNull()
-            ?.toDomain()
-            ?: throw AppError.NotFound
-        val previous = postgrest.from("periods")
-            .select(Columns.raw("start_date,end_date")) {
-                filter {
-                    eq("group_id", groupId)
-                    lt("start_date", current.start.toString())
-                }
-                order("start_date", Order.DESCENDING)
-                limit(1)
-            }
-            .decodeList<PeriodDto>()
-            .firstOrNull()
-            ?.toDomain()
-        DateContext(today, current, previous)
     }
 
     @Serializable

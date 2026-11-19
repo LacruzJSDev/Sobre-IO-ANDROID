@@ -20,6 +20,7 @@ import dev.lacruzjs.sobreio.domain.model.TransferHint
 import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
@@ -40,9 +41,10 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
 
     private val summary = FakeGroupSummaryRepository()
     private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val accounts = FakeAccountRepository(listOf(checking))
     private val envelopes = FakeEnvelopeRepository(listOf(unassigned, bills, food))
-    private val viewModel by lazy { GroupSummaryViewModel("g1", summary, detail, accounts, envelopes) }
+    private val viewModel by lazy { GroupSummaryViewModel("g1", summary, detail, accounts, envelopes, calendar) }
 
     private fun due(id: String, kind: CommitmentKind = CommitmentKind.Expense, day: Int = 10, amount: Long = 5_000) =
         DueOccurrence(id, "v-$id", "Name $id", kind, LocalDate(2026, 11, day), amount, "a1", null, "e1", false)
@@ -75,7 +77,7 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
 
     @Test
     fun noDaysAreLeftOnTheLastDay() {
-        detail.today = LocalDate(2026, 11, 30)
+        calendar.today = LocalDate(2026, 11, 30)
         loaded()
 
         assertEquals(0, viewModel.state.value.daysLeft)
@@ -269,7 +271,7 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
 
     @Test
     fun noUpcomingIsAskedWhenTodayIsTheLastDay() {
-        detail.today = LocalDate(2026, 11, 30)
+        calendar.today = LocalDate(2026, 11, 30)
         loaded()
 
         assertNull(summary.upcomingRange)

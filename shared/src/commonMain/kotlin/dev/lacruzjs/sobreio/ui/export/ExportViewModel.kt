@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.export
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.ExportRepository
@@ -20,6 +21,7 @@ class ExportViewModel(
     private val groupId: String,
     private val exports: ExportRepository,
     private val groups: GroupRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExportUiState())
@@ -48,7 +50,7 @@ class ExportViewModel(
         if (_state.value.periods.isNotEmpty()) return
         _state.update { it.copy(isLoadingPeriods = true) }
         viewModelScope.launch {
-            exports.getPeriods(groupId)
+            calendar.getPeriods(groupId)
                 .onSuccess { list ->
                     _state.update { it.copy(periods = list, selectedPeriodId = list.firstOrNull()?.id, isLoadingPeriods = false) }
                 }

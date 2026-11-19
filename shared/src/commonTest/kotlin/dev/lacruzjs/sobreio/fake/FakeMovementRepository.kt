@@ -3,12 +3,9 @@ package dev.lacruzjs.sobreio.fake
 import dev.lacruzjs.sobreio.domain.model.MovementReport
 import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.data.repository.MovementRepository
-import dev.lacruzjs.sobreio.domain.model.DateContext
 import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
 import dev.lacruzjs.sobreio.domain.model.MovementPage
-import dev.lacruzjs.sobreio.domain.model.PeriodRange
-import kotlinx.datetime.LocalDate
 
 /** One call of [FakeMovementRepository.search], to check what the ViewModel asked for. */
 data class SearchCall(val filter: MovementFilter, val limit: Int, val offset: Int, val withTotal: Boolean)
@@ -23,15 +20,8 @@ class FakeMovementRepository(var all: List<Movement> = emptyList()) : MovementRe
     val voided = mutableListOf<String>()
     val voidedGroupTransfers = mutableListOf<String>()
 
-    var today = LocalDate(2026, 11, 14)
-    var context = DateContext(
-        today = today,
-        currentPeriod = PeriodRange(LocalDate(2026, 11, 1), LocalDate(2026, 11, 30)),
-        previousPeriod = PeriodRange(LocalDate(2026, 10, 1), LocalDate(2026, 10, 31)),
-    )
     var searchResult: Result<Unit> = Result.success(Unit)
     var voidResult: Result<Unit> = Result.success(Unit)
-    var contextResult: Result<DateContext>? = null
 
     override suspend fun search(
         groupId: String,
@@ -56,8 +46,6 @@ class FakeMovementRepository(var all: List<Movement> = emptyList()) : MovementRe
         voidResult.onSuccess { all = all.filter { it.id != movement.id } }
         return voidResult
     }
-
-    override suspend fun getDateContext(groupId: String): Result<DateContext> = contextResult ?: Result.success(context)
 
     var totals = MovementTotals(0, 0, 0, 0)
     var report = MovementReport(emptyList(), emptyList())

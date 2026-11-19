@@ -1,8 +1,8 @@
 package dev.lacruzjs.sobreio.ui.commitmentdetail
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
@@ -37,9 +37,9 @@ class CommitmentDetailViewModel(
     private val commitmentId: String,
     private val commitments: CommitmentRepository,
     private val groups: GroupRepository,
-    private val detail: AccountDetailRepository,
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CommitmentDetailUiState())
@@ -76,7 +76,7 @@ class CommitmentDetailViewModel(
     private suspend fun read() {
         run {
             val groupResult = groups.getGroup(groupId)
-            val todayResult = detail.getToday(groupId)
+            val todayResult = calendar.getToday(groupId)
             val commitmentResult = commitments.getCommitment(commitmentId)
             val occurrencesResult = commitments.getOccurrences(commitmentId, offset = 0, limit = PAGE_SIZE)
             val failure = groupResult.exceptionOrNull() ?: todayResult.exceptionOrNull()

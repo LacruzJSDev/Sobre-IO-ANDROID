@@ -15,6 +15,7 @@ import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeBankImportRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
@@ -46,9 +47,10 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
     private val members = FakeMemberRepository(listOf(ana, leo))
     private val envelopes = FakeEnvelopeRepository(listOf(unassigned, food))
     private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
 
     private val viewModel by lazy {
-        AccountDetailViewModel("g1", "a1", groups, accounts, members, envelopes, detail, FakeBankImportRepository(), debounceMillis = 300)
+        AccountDetailViewModel("g1", "a1", groups, accounts, members, envelopes, detail, FakeBankImportRepository(), calendar, debounceMillis = 300)
     }
 
     private fun loaded(): AccountDetailViewModel = viewModel.also { it.onEvent(AccountDetailEvent.Refresh) }
@@ -103,11 +105,11 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
 
     @Test
     fun aFailedLoadShowsTheErrorAndRetryRecovers() {
-        detail.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
         loaded()
         assertEquals(AppError.Network, viewModel.state.value.error)
 
-        detail.todayResult = null
+        calendar.todayResult = null
         viewModel.onEvent(AccountDetailEvent.Retry)
         assertNull(viewModel.state.value.error)
         assertFalse(viewModel.state.value.isLoading)
@@ -340,7 +342,7 @@ class AccountDetailViewModelTest : MainDispatcherTest() {
     @Test
     fun aRefreshAfterTheFirstLoadKeepsTheContentOnScreen() {
         loaded()
-        detail.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
         viewModel.onEvent(AccountDetailEvent.Refresh)
 
         val state = viewModel.state.value

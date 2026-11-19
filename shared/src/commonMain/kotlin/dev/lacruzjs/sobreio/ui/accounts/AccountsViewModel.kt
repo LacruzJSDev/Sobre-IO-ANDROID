@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import kotlinx.datetime.plus
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
 import androidx.lifecycle.ViewModel
@@ -33,6 +34,7 @@ class AccountsViewModel(
     private val members: MemberRepository,
     private val detail: AccountDetailRepository,
     private val summary: GroupSummaryRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountsUiState())
@@ -118,7 +120,7 @@ class AccountsViewModel(
 
     /** The hero card's chart: the group's total balance over the last three months. Secondary: a failure just leaves it out. */
     private suspend fun loadBalanceSeries() {
-        val today = detail.getToday(groupId).getOrNull() ?: return
+        val today = calendar.getToday(groupId).getOrNull() ?: return
         val from = today.minus(CHART_MONTHS, DateTimeUnit.MONTH)
         accounts.getBalanceSeries(groupId, from, today, CHART_POINTS)
             .onSuccess { series -> _state.update { it.copy(balanceSeries = series.sortedBy { p -> p.day }) } }
@@ -130,8 +132,8 @@ class AccountsViewModel(
      */
     private suspend fun loadOutlook() {
         summary.getTransferPlan(groupId).onSuccess { list -> _state.update { it.copy(plan = list) } }
-        val today = detail.getToday(groupId).getOrNull() ?: return
-        val period = detail.getCurrentPeriod(groupId).getOrNull() ?: return
+        val today = calendar.getToday(groupId).getOrNull() ?: return
+        val period = calendar.getCurrentPeriod(groupId).getOrNull() ?: return
         val from = today.plus(1, DateTimeUnit.DAY)
         if (from > period.end) {
             _state.update { it.copy(upcoming = emptyList(), periodEnd = period.end) }

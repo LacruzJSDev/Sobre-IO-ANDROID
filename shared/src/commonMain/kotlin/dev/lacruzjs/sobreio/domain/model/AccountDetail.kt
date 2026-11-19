@@ -59,9 +59,6 @@ data class AccountMovement(
 /** Answer of `compare_with_bank`: [differenceCents] is the bank balance minus the app's, what would be left to record. */
 data class BankComparison(val appBalanceCents: Long, val bankBalanceCents: Long, val differenceCents: Long)
 
-/** First and last day of the group's current period. */
-data class PeriodRange(val start: LocalDate, val end: LocalDate)
-
 /**
  * The day on which the balance reaches the forecast's lowest point: the first projection row at [minCents] or, when the
  * database's within-day ordering put the minimum between two rows, the first row with the lowest balance. Null without rows.

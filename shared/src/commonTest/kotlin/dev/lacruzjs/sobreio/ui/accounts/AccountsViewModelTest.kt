@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
@@ -32,7 +33,8 @@ class AccountsViewModelTest : MainDispatcherTest() {
         .also { it.summary = AccountsSummary(totalCents = 105_000, inEnvelopesCents = 105_000, outsideCents = 0) }
     private val memberRepository = FakeMemberRepository()
     private val detail = FakeAccountDetailRepository()
-    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository, detail, FakeGroupSummaryRepository()) }
+    private val calendar = FakeCalendarRepository()
+    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository, detail, FakeGroupSummaryRepository(), calendar) }
 
     private fun loaded(canEdit: Boolean = true): AccountsViewModel = viewModel.also {
         it.onEvent(AccountsEvent.GroupLoaded("USD", canEdit))
@@ -244,7 +246,7 @@ class AccountsViewModelTest : MainDispatcherTest() {
 
     @Test
     fun noSeriesWhenTodayCannotBeRead() {
-        detail.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
         loaded()
 
         assertTrue(viewModel.state.value.balanceSeries.isEmpty())

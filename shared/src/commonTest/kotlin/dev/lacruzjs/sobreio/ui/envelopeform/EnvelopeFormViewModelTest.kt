@@ -7,7 +7,7 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -35,9 +35,9 @@ class EnvelopeFormViewModelTest : MainDispatcherTest() {
     private val marta = Member("u2", "Marta", GroupRole.Member)
     private val memberRepository = FakeMemberRepository(listOf(juan, marta))
 
-    private val dates = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
 
-    private fun form(envelopeId: String? = null) = EnvelopeFormViewModel("g1", envelopeId, repository, memberRepository, dates)
+    private fun form(envelopeId: String? = null) = EnvelopeFormViewModel("g1", envelopeId, repository, memberRepository, calendar)
 
     @Test
     fun createSendsTrimmedNameKindAndTargetAndAsksToLeave() {
@@ -309,12 +309,12 @@ class EnvelopeFormViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(EnvelopeFormEvent.StartNextPeriodChanged(false))
         viewModel.onEvent(EnvelopeFormEvent.SaveClicked)
 
-        assertEquals(dates.today, repository.updatedDraft?.targetsFrom)
+        assertEquals(calendar.today, repository.updatedDraft?.targetsFrom)
     }
 
     @Test
     fun withoutTheDatesTheStartIsNotOffered() {
-        dates.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
         assertFalse(form().state.value.canChooseStart)
     }
 }

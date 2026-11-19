@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
@@ -20,7 +21,6 @@ import dev.lacruzjs.sobreio.domain.model.StoredTransaction
 import dev.lacruzjs.sobreio.domain.model.StoredTransfer
 import dev.lacruzjs.sobreio.domain.model.Tag
 import dev.lacruzjs.sobreio.domain.model.User
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
@@ -68,14 +68,14 @@ class MovementFormViewModelTest : MainDispatcherTest() {
     )
     private val tags = FakeTagRepository(listOf(Tag("t1", "g1", "Trip"), Tag("t2", "g1", "Home")))
     private val form = FakeMovementFormRepository()
-    private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val auth = FakeAuthRepository(AuthState.SignedIn(User("u1", "ana@example.com", "Ana")))
     private val last = FakeLastAccountStore()
     private val commitments = FakeCommitmentRepository()
     private val summary = FakeGroupSummaryRepository()
 
     private fun vm(movementId: String? = null, source: String? = null, fixed: String? = null, prefill: MovementPrefill? = null) =
-        MovementFormViewModel("g1", movementId, source, fixed, prefill, form, groups, accounts, envelopes, tags, detail, auth, last, commitments, summary)
+        MovementFormViewModel("g1", movementId, source, fixed, prefill, form, groups, accounts, envelopes, tags, auth, last, commitments, summary, calendar)
 
     private fun MovementFormViewModel.type(amount: String) = onEvent(MovementFormEvent.AmountChanged(amount))
 

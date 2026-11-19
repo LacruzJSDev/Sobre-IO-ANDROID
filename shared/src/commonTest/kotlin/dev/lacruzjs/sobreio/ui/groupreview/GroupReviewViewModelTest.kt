@@ -10,8 +10,8 @@ import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
@@ -44,10 +44,10 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
     private val group = Group("g1", "Home", "EUR", GroupRole.Member)
     private val groupRepo = FakeGroupRepository(listOf(group))
     private val summary = FakeGroupSummaryRepository()
-    private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val accounts = FakeAccountRepository(listOf(checking, cash))
     private val envelopes = FakeEnvelopeRepository(listOf(unassigned, bills, food, empty, old))
-    private val viewModel by lazy { GroupReviewViewModel("g1", groupRepo, summary, detail, accounts, envelopes) }
+    private val viewModel by lazy { GroupReviewViewModel("g1", groupRepo, summary, accounts, envelopes, calendar) }
 
     private fun due(
         id: String,
@@ -88,12 +88,12 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
 
     @Test
     fun failedLoadShowsTheErrorAndRetryReloads() {
-        detail.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
         loaded()
         assertEquals(AppError.Network, viewModel.state.value.error)
         assertFalse(viewModel.state.value.isLoading)
 
-        detail.todayResult = null
+        calendar.todayResult = null
         viewModel.onEvent(GroupReviewEvent.Refresh)
 
         assertNull(viewModel.state.value.error)
@@ -104,7 +104,7 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
     fun aFailedRefreshKeepsTheRowsAndShowsTheErrorAbove() {
         summary.pending = listOf(due("c1"))
         loaded()
-        detail.todayResult = Result.failure(AppError.Network)
+        calendar.todayResult = Result.failure(AppError.Network)
 
         viewModel.onEvent(GroupReviewEvent.Refresh)
 
@@ -150,7 +150,7 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
 
     @Test
     fun aDueDateInTheFutureBeyondTodayStartsOnToday() {
-        detail.today = LocalDate(2026, 11, 14)
+        calendar.today = LocalDate(2026, 11, 14)
         summary.pending = listOf(due("c1", day = 20))
         loaded()
 

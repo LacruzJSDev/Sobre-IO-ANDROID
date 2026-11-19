@@ -1,8 +1,8 @@
 package dev.lacruzjs.sobreio.ui.groupreview
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
@@ -38,9 +38,9 @@ class GroupReviewViewModel(
     private val groupId: String,
     private val groups: GroupRepository,
     private val summary: GroupSummaryRepository,
-    private val detail: AccountDetailRepository,
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupReviewUiState())
@@ -97,7 +97,7 @@ class GroupReviewViewModel(
             revalidate(onRefreshing = { refreshing -> _state.update { it.copy(isRefreshing = refreshing) } }) {
                 val reads = coroutineScope {
                     val groupD = async { groups.getGroup(groupId) }
-                    val todayD = async { detail.getToday(groupId) }
+                    val todayD = async { calendar.getToday(groupId) }
                     val pendingD = async { summary.getPending(groupId) }
                     val accountsD = async { accounts.getAccounts(groupId) }
                     val envelopesD = async { envelopes.getEnvelopes(groupId) }

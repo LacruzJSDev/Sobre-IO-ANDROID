@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
@@ -7,7 +8,6 @@ import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.LastAccountStore
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
@@ -70,11 +70,11 @@ class MovementFormViewModel(
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
     private val tags: TagRepository,
-    private val detail: AccountDetailRepository,
     private val auth: AuthRepository,
     private val lastAccount: LastAccountStore,
     commitments: CommitmentRepository,
     private val summary: GroupSummaryRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val matcher = PendingMatcher(groupId, commitments, summary)
@@ -292,7 +292,7 @@ class MovementFormViewModel(
         _state.update { it.copy(isLoading = true, loadError = null) }
         viewModelScope.launch {
             val groupResult = groups.getGroup(groupId)
-            val todayResult = detail.getToday(groupId)
+            val todayResult = calendar.getToday(groupId)
             val accountsResult = accounts.getAccounts(groupId)
             val envelopesResult = envelopes.getEnvelopes(groupId)
             val failure = groupResult.exceptionOrNull()

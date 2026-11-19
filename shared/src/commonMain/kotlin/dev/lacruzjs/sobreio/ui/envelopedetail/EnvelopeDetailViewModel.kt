@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import kotlinx.datetime.LocalDate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -49,6 +50,7 @@ class EnvelopeDetailViewModel(
     private val movements: MovementRepository,
     private val commitments: CommitmentRepository,
     private val detail: EnvelopeDetailRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopeDetailUiState())
@@ -140,7 +142,7 @@ class EnvelopeDetailViewModel(
             val outlook = async { if (hasOutlook) detail.getOutlook(groupId, envelopeId) else Result.success<EnvelopeOutlook?>(null) }
             val transfers = async { detail.getTransfers(envelopeId, 0, LATEST_TRANSFERS) }
             val latest = async { movements.search(groupId, MovementFilter(envelopeId = envelopeId), LATEST_MOVEMENTS, 0, false) }
-            val context = async { movements.getDateContext(groupId) }
+            val context = async { calendar.getDateContext(groupId) }
             val fundingCandidates = async {
                 if (isUnassigned) Result.success(emptyList<FundingCommitment>()) else detail.getFundingCommitments(envelopeId)
             }

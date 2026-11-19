@@ -5,7 +5,6 @@ import dev.lacruzjs.sobreio.domain.model.AccountMovement
 import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.BankComparison
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
-import dev.lacruzjs.sobreio.domain.model.PeriodRange
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
 import kotlinx.datetime.LocalDate
@@ -16,12 +15,6 @@ import kotlinx.datetime.LocalDate
  * [dev.lacruzjs.sobreio.domain.error.AppError]s.
  */
 interface AccountDetailRepository {
-
-    /** The group's "today" (`group_today`), in the group's time zone. */
-    suspend fun getToday(groupId: String): Result<LocalDate>
-
-    /** First and last day of the group's current period (`current_period`). */
-    suspend fun getCurrentPeriod(groupId: String): Result<PeriodRange>
 
     /** Forecast to the end of the period of one account; null for an archived account, which the database skips. */
     suspend fun getForecast(groupId: String, accountId: String): Result<AccountForecast?>

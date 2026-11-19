@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeTransferRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
@@ -11,16 +12,13 @@ import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.EnvelopeSummary
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.Member
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_deleted
 import dev.lacruzjs.sobreio.generated.resources.envelope_reopened
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
-import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.generated.resources.validation_source_invalid
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.datetime.LocalDate
@@ -40,8 +38,8 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
         .also { it.summary = EnvelopeSummary(unassignedCents = 30_000, inEnvelopesTotalCents = 125_000) }
     private val memberRepository = FakeMemberRepository()
     private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z", purpose = EnvelopePurpose.Savings)
-    private val dates = FakeAccountDetailRepository()
-    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository, dates, FakeEnvelopeTransferRepository(), FakeGroupSummaryRepository()) }
+    private val calendar = FakeCalendarRepository()
+    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository, FakeEnvelopeTransferRepository(), FakeGroupSummaryRepository(), calendar) }
 
     private fun EnvelopesUiState.section(purpose: EnvelopePurpose): List<Envelope> =
         sections.firstOrNull { it.first == purpose }?.second.orEmpty()

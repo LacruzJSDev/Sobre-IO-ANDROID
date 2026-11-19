@@ -13,8 +13,8 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
 import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
@@ -52,10 +52,10 @@ class CommitmentFormViewModelTest : MainDispatcherTest() {
         listOf(Group("g1", "Casa", "EUR", GroupRole.Owner), Group("g2", "Pareja", "EUR", GroupRole.Admin), Group("g3", "Dollars", "USD", GroupRole.Owner)),
     )
     private val commitments = FakeCommitmentRepository()
-    private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
 
     private fun form(commitmentId: String? = null) =
-        CommitmentFormViewModel("g1", "acc", commitmentId, commitments, groups, accounts, envelopes, detail)
+        CommitmentFormViewModel("g1", "acc", commitmentId, commitments, groups, accounts, envelopes, calendar)
 
     private fun version(kind: CommitmentKind = CommitmentKind.Expense, funded: Boolean = false) = CommitmentVersion(
         id = "v1", commitmentId = "c1", effectiveFrom = LocalDate(2026, 1, 1), effectiveTo = null, kind = kind,

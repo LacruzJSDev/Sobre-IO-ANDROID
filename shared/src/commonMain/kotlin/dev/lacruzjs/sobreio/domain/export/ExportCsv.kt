@@ -1,10 +1,8 @@
 package dev.lacruzjs.sobreio.domain.export
 
+import dev.lacruzjs.sobreio.domain.model.GroupPeriod
 import kotlinx.datetime.LocalDate
 import kotlin.math.absoluteValue
-
-/** One period the group already has, to export (`periods`). */
-data class ExportPeriod(val id: String, val start: LocalDate, val end: LocalDate)
 
 /** What a row of `export_period` is. */
 enum class ExportRecordType { Transaction, AccountTransfer, EnvelopeTransfer }
@@ -66,7 +64,7 @@ fun buildCsv(header: List<String>, rows: List<List<String>>, dialect: CsvDialect
 }
 
 /** `sobreio-<group>-<start>_<end>.csv`, with the group name reduced to safe letters. */
-fun exportFileName(groupName: String, period: ExportPeriod): String {
+fun exportFileName(groupName: String, period: GroupPeriod): String {
     val slug = groupName.lowercase()
         .map { if (it.isLetterOrDigit()) it else '-' }
         .joinToString("")

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import kotlinx.datetime.LocalDate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,6 +55,7 @@ class AccountDetailViewModel(
     private val envelopes: EnvelopeRepository,
     private val detail: AccountDetailRepository,
     private val imports: BankImportRepository,
+    private val calendar: CalendarRepository,
     private val debounceMillis: Long = COMPARE_DEBOUNCE_MILLIS,
 ) : ViewModel() {
 
@@ -160,13 +162,13 @@ class AccountDetailViewModel(
             stopIfCachePass()
             return AppError.NotFound
         }
-        val today = detail.getToday(groupId).getOrElse { return it.asAppError() }
+        val today = calendar.getToday(groupId).getOrElse { return it.asAppError() }
         val range = _state.value.range
         val from = today.minus(range.months, DateTimeUnit.MONTH)
         val upcomingTo = today.plus(UPCOMING_MONTHS, DateTimeUnit.MONTH)
 
         return coroutineScope {
-            val period = async { detail.getCurrentPeriod(groupId) }
+            val period = async { calendar.getCurrentPeriod(groupId) }
             val forecast = async { detail.getForecast(groupId, accountId) }
             val series = async { detail.getBalanceSeries(accountId, from, today) }
             val projection = async { detail.getProjection(accountId) }

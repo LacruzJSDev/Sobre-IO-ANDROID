@@ -1,6 +1,5 @@
 package dev.lacruzjs.sobreio.data.repository
 
-import dev.lacruzjs.sobreio.domain.export.ExportPeriod
 import dev.lacruzjs.sobreio.domain.export.ExportRow
 
 /**
@@ -9,9 +8,6 @@ import dev.lacruzjs.sobreio.domain.export.ExportRow
  * is always read fresh.
  */
 interface ExportRepository {
-
-    /** The group's periods up to today's, newest first, at most [limit]. */
-    suspend fun getPeriods(groupId: String, limit: Int = 12): Result<List<ExportPeriod>>
 
     /** Every live movement and move between envelopes of the period, ordered by date (`export_period`). */
     suspend fun exportPeriod(groupId: String, periodId: String): Result<List<ExportRow>>
