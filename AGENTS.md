@@ -676,7 +676,13 @@ plus `movementform` (the new / edit movement form).
 - Shared pieces live in `ui/components` or `ui/validation`, never inside one screen's package for others to import:
   `SoftTile` (the soft surface a section sits on), `ListSectionTitle` (the muted title that splits a list), `Envelope.displayName()`
   (the translated name of the system envelope "Unassigned", stored in Spanish; never compare `kind == System` by hand to name
-  it), and `ui/validation/Validation.kt` (`validateRequired`, `validateName(name, maxLength)`, email, password, 6-digit code).
+  it), `ui/validation/Validation.kt` (`validateRequired`, `validateName(name, maxLength)`, `validatePositiveAmount`, `validateTagName`,
+  email, password, 6-digit code) and `ui/format/MoneyInput.kt` (`parseMoneyInput` and its inverse `formatMoneyInput`, the text
+  that prefills an amount field).
+- A form's rules are pure functions of its UI state in `<feature>/<Feature>Rules.kt`, each with a `<Feature>RulesTest`: what
+  Save finds wrong (`validate<Feature>Form` returning `<Feature>Errors` and `withErrors`), the draft it sends (`…DraftOf`), how a
+  choice changes the other fields and how a stored row fills the form (`MovementFormRules`, `CommitmentFormRules`,
+  `BankImportRules`; the movement form's tag step is `TagSync`). The ViewModel keeps the flow: state, coroutines, repositories.
 - A screen receives `state` and `onEvent`; it never calls a repository, Supabase or the back stack directly.
 - ViewModels depend on repository interfaces only; tests use fakes.
 - Writes that change money go through the database RPCs (`create_transaction`, `create_account_transfer`, …).

@@ -1,12 +1,16 @@
 package dev.lacruzjs.sobreio.ui.validation
 
+import dev.lacruzjs.sobreio.domain.MAX_TAG_NAME_LENGTH
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
+import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_code_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_email_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_password_short
 import dev.lacruzjs.sobreio.generated.resources.validation_passwords_mismatch
 import dev.lacruzjs.sobreio.generated.resources.validation_required
+import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
 import org.jetbrains.compose.resources.StringResource
 
 /*
@@ -50,3 +54,17 @@ internal fun validatePasswordsMatch(password: String, repeated: String): StringR
 
 internal fun validateCode(value: String): StringResource? =
     if (value.length != CODE_LENGTH || !value.all(Char::isDigit)) Res.string.validation_code_invalid else null
+
+/** An amount read with `parseMoneyInput`: null means the text was not an amount; it must be above zero. */
+internal fun validatePositiveAmount(cents: Long?): StringResource? = when {
+    cents == null -> Res.string.validation_amount_invalid
+    cents <= 0 -> Res.string.validation_amount_positive
+    else -> null
+}
+
+/** A tag name already normalised (`normalizeTagName`): present and at most [MAX_TAG_NAME_LENGTH] characters. */
+internal fun validateTagName(name: String): StringResource? = when {
+    name.isEmpty() -> Res.string.validation_required
+    name.length > MAX_TAG_NAME_LENGTH -> Res.string.validation_tag_name_too_long
+    else -> null
+}

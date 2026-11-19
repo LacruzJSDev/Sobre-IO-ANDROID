@@ -19,6 +19,7 @@ import dev.lacruzjs.sobreio.generated.resources.envelope_type_has_funded
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
+import dev.lacruzjs.sobreio.ui.format.formatMoneyInput
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -191,7 +192,7 @@ class EnvelopeFormViewModel(
                                 color = envelope.color,
                                 icon = envelope.icon,
                                 ownerUserId = envelope.ownerUserId,
-                                monthlyTarget = envelope.monthlyTargetCents.toInputText(),
+                                monthlyTarget = formatMoneyInput(envelope.monthlyTargetCents),
                                 storedTargetCents = envelope.monthlyTargetCents,
                                 storedTargetsFrom = envelope.targetsFrom,
                             )
@@ -257,10 +258,4 @@ class EnvelopeFormViewModel(
     }
 
 
-    /** Cents as the text the user would type: nothing for no target, otherwise `12.50` style with a plain point. */
-    private fun Long.toInputText(): String = when {
-        this <= 0 -> ""
-        this % 100 == 0L -> (this / 100).toString()
-        else -> "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
-    }
 }

@@ -14,12 +14,12 @@ import dev.lacruzjs.sobreio.domain.model.DueOccurrence
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.occurrence_recorded
 import dev.lacruzjs.sobreio.generated.resources.occurrence_skipped
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
+import dev.lacruzjs.sobreio.ui.format.formatMoneyInput
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import dev.lacruzjs.sobreio.ui.loading.revalidate
+import dev.lacruzjs.sobreio.ui.validation.validatePositiveAmount
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -142,7 +142,7 @@ class GroupReviewViewModel(
             it.copy(
                 sheet = ConfirmDraft(
                     occurrence = occurrence,
-                    amount = occurrence.amountCents.toInputText(),
+                    amount = formatMoneyInput(occurrence.amountCents),
                     date = if (occurrence.dueDate < limit) occurrence.dueDate else limit,
                 ),
             )
@@ -153,11 +153,7 @@ class GroupReviewViewModel(
         val draft = _state.value.sheet ?: return
         if (draft.isSubmitting) return
         val cents = parseMoneyInput(draft.amount)
-        val amountError = when {
-            cents == null -> Res.string.validation_amount_invalid
-            cents <= 0 -> Res.string.validation_amount_positive
-            else -> null
-        }
+        val amountError = validatePositiveAmount(cents)
         if (amountError != null || cents == null) {
             updateSheet { it.copy(amountError = amountError) }
             return
@@ -225,12 +221,6 @@ class GroupReviewViewModel(
     private fun updateSheet(change: (ConfirmDraft) -> ConfirmDraft) =
         _state.update { s -> s.copy(sheet = s.sheet?.let(change)) }
 
-    /** Cents as the text the user would type: a plain point. */
-    private fun Long.toInputText(): String = when {
-        this <= 0 -> ""
-        this % 100 == 0L -> (this / 100).toString()
-        else -> "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
-    }
 
     private class Reads(
         val group: Result<dev.lacruzjs.sobreio.domain.model.Group>,
