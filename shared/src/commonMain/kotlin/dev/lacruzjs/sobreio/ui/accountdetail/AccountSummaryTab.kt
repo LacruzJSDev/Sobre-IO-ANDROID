@@ -1,6 +1,16 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
 
+import androidx.compose.ui.unit.Dp
+import dev.lacruzjs.sobreio.generated.resources.chart_table_balance
+import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.BalanceChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomedChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
+import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
+import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
 import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -230,67 +240,88 @@ private fun BalanceSection(account: Account, state: AccountDetailUiState, langua
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BalanceChartSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
-    FormSection(title = stringResource(Res.string.detail_section_balance_chart)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BalanceRange.entries.forEach { range ->
-                FilterChip(
-                    selected = range == state.range,
-                    onClick = { onEvent(AccountDetailEvent.RangeSelected(range)) },
-                    label = { Text(stringResource(range.labelRes())) },
-                    shape = MaterialTheme.shapes.medium,
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                    border = null,
-                )
-            }
+    val title = stringResource(Res.string.detail_section_balance_chart)
+    // The zoomed page: the same range chips and chart, taller, and every point of the series as a figure
+    val zoom = rememberChartZoom(ZOOM_BALANCE, title) {
+        RangeChips(state, onEvent)
+        SoftTile { BalanceChart(state, languageTag, ZoomedChartHeight) }
+        ChartTable(
+            columns = listOf(stringResource(Res.string.chart_table_balance)),
+            rows = state.balanceSeries.asReversed().map { ChartTableRow(formatDate(it.day, languageTag), listOf(it.balanceCents)) },
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Balance,
+        )
+    }
+    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+        RangeChips(state, onEvent)
+        ZoomableChart(ZOOM_BALANCE) { SoftTile { BalanceChart(state, languageTag) } }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RangeChips(state: AccountDetailUiState, onEvent: (AccountDetailEvent) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BalanceRange.entries.forEach { range ->
+            FilterChip(
+                selected = range == state.range,
+                onClick = { onEvent(AccountDetailEvent.RangeSelected(range)) },
+                label = { Text(stringResource(range.labelRes())) },
+                shape = MaterialTheme.shapes.medium,
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                border = null,
+            )
         }
-        SoftTile {
-            val today = state.today
-            if (today == null || state.balanceSeries.size < 2) {
-                Text(
-                    text = stringResource(Res.string.chart_no_data),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                val past = remember(state.balanceSeries) {
-                    state.balanceSeries.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) }
-                }
-                val projection = remember(state.projection, state.periodEnd) { projectionPoints(state) }
-                val first = state.balanceSeries.first()
-                val last = state.balanceSeries.last()
-                val texts = LineChartTexts(
-                    formatY = { compactAmount(it, languageTag) },
-                    formatXAxis = { formatDayMonth(LocalDate.fromEpochDays(it), languageTag) },
-                    formatXTooltip = { formatDate(LocalDate.fromEpochDays(it), languageTag) },
-                    formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-                    todayLabel = stringResource(Res.string.chart_today),
-                    projectedLabel = stringResource(Res.string.chart_projected),
-                    seriesLabel = stringResource(Res.string.detail_section_balance),
-                )
-                BalanceLineChart(
-                    past = past,
-                    projection = projection,
-                    todayX = today.toEpochDays(),
-                    texts = texts,
-                    contentDescription = stringResource(
-                        Res.string.chart_balance_description,
-                        formatDayMonth(first.day, languageTag),
-                        formatDayMonth(last.day, languageTag),
-                        formatMoney(first.balanceCents, state.currencyCode, languageTag),
-                        formatMoney(last.balanceCents, state.currencyCode, languageTag),
-                    ),
-                    // A new range is on its way: the old one stays, faded
-                    modifier = Modifier.alpha(if (state.isSeriesLoading) 0.5f else 1f),
-                )
-            }
+    }
+}
+
+@Composable
+private fun BalanceChart(state: AccountDetailUiState, languageTag: String, height: Dp = BalanceChartHeight) {
+    val today = state.today
+    if (today == null || state.balanceSeries.size < 2) {
+        Text(
+            text = stringResource(Res.string.chart_no_data),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        val past = remember(state.balanceSeries) {
+            state.balanceSeries.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) }
         }
+        val projection = remember(state.projection, state.periodEnd) { projectionPoints(state) }
+        val first = state.balanceSeries.first()
+        val last = state.balanceSeries.last()
+        val texts = LineChartTexts(
+            formatY = { compactAmount(it, languageTag) },
+            formatXAxis = { formatDayMonth(LocalDate.fromEpochDays(it), languageTag) },
+            formatXTooltip = { formatDate(LocalDate.fromEpochDays(it), languageTag) },
+            formatValue = { formatMoney(it, state.currencyCode, languageTag) },
+            todayLabel = stringResource(Res.string.chart_today),
+            projectedLabel = stringResource(Res.string.chart_projected),
+            seriesLabel = stringResource(Res.string.detail_section_balance),
+        )
+        BalanceLineChart(
+            past = past,
+            projection = projection,
+            todayX = today.toEpochDays(),
+            texts = texts,
+            contentDescription = stringResource(
+                Res.string.chart_balance_description,
+                formatDayMonth(first.day, languageTag),
+                formatDayMonth(last.day, languageTag),
+                formatMoney(first.balanceCents, state.currencyCode, languageTag),
+                formatMoney(last.balanceCents, state.currencyCode, languageTag),
+            ),
+            // A new range is on its way: the old one stays, faded
+            modifier = Modifier.alpha(if (state.isSeriesLoading) 0.5f else 1f),
+            height = height,
+        )
     }
 }
 
@@ -344,32 +375,51 @@ private fun ForecastSection(
 
 @Composable
 private fun FlowsSection(state: AccountDetailUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.detail_section_flows)) {
-        SoftTile {
-            val groups = state.flows.map {
-                ColumnGroup(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, it.outflowCents))
-            }
-            val periods = state.flows.map {
-                stringResource(
-                    Res.string.chart_flows_period,
-                    formatMonthShort(it.startDate, languageTag),
-                    formatMoney(it.inflowCents, state.currencyCode, languageTag),
-                    formatMoney(it.outflowCents, state.currencyCode, languageTag),
-                )
-            }.joinToString(" ")
-            GroupedColumnChart(
-                series = listOf(
-                    ColumnSeries(stringResource(Res.string.chart_legend_in), LocalMoneyColors.current.inflow),
-                    ColumnSeries(stringResource(Res.string.chart_legend_out), LocalMoneyColors.current.outflow),
-                ),
-                groups = groups,
-                formatY = { compactAmount(it, languageTag) },
-                formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-                contentDescription = stringResource(Res.string.chart_flows_description, state.flows.size, periods),
-            )
-        }
+    val title = stringResource(Res.string.detail_section_flows)
+    val zoom = rememberChartZoom(ZOOM_FLOWS, title) {
+        SoftTile { FlowsChart(state, languageTag, ZoomedChartHeight) }
+        ChartTable(
+            columns = listOf(stringResource(Res.string.chart_legend_in), stringResource(Res.string.chart_legend_out)),
+            rows = state.flows.asReversed().map {
+                ChartTableRow(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, -it.outflowCents))
+            },
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Flow,
+        )
+    }
+    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+        ZoomableChart(ZOOM_FLOWS) { SoftTile { FlowsChart(state, languageTag) } }
     }
 }
+
+@Composable
+private fun FlowsChart(state: AccountDetailUiState, languageTag: String, height: Dp = FlowsChartHeight) {
+    val groups = state.flows.map {
+        ColumnGroup(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, it.outflowCents))
+    }
+    val periods = state.flows.map {
+        stringResource(
+            Res.string.chart_flows_period,
+            formatMonthShort(it.startDate, languageTag),
+            formatMoney(it.inflowCents, state.currencyCode, languageTag),
+            formatMoney(it.outflowCents, state.currencyCode, languageTag),
+        )
+    }.joinToString(" ")
+    GroupedColumnChart(
+        series = listOf(
+            ColumnSeries(stringResource(Res.string.chart_legend_in), LocalMoneyColors.current.inflow),
+            ColumnSeries(stringResource(Res.string.chart_legend_out), LocalMoneyColors.current.outflow),
+        ),
+        groups = groups,
+        formatY = { compactAmount(it, languageTag) },
+        formatValue = { formatMoney(it, state.currencyCode, languageTag) },
+        contentDescription = stringResource(Res.string.chart_flows_description, state.flows.size, periods),
+        height = height,
+    )
+}
+
+private const val ZOOM_BALANCE = "account-balance"
+private const val ZOOM_FLOWS = "account-flows"
 
 @Composable
 private fun UpcomingSection(state: AccountDetailUiState, languageTag: String) {

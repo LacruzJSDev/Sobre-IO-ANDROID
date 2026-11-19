@@ -241,3 +241,4 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 1 (caché, carga en dos pasadas, esqueletos y barra fina): hecha (#27).
 - Fase 3 (dos columnas con scroll independiente): Grupo, Cuentas, Sobres, detalles de cuenta, sobre y compromiso, y ajustes del grupo. Movimientos sigue en una columna hasta la 5.3 (resumen del filtro); la revisión de la importación del banco y el perfil se quedan en una columna.
 - Fase 4 (funciones de la base de datos): fin de periodo en cada cuenta, saldo en una fecha, "Mirar hasta…" en Grupo y sobre, exportar un periodo a CSV, sugerir el vencimiento pendiente al apuntar un movimiento e historial de cambios de un movimiento.
+- Fase 5.1 (gráficas a pantalla completa con animación de zoom y la tabla de valores): hecha.

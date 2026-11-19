@@ -491,6 +491,16 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Chart zoom (plan phase 5.1, `ui/components/charts/ChartZoom.kt`): `App` installs `ChartZoomHost` once around the navigation
+  (a `SharedTransitionLayout` and one full-screen page drawn above everything). A chart card is wrapped in
+  `ZoomableChart(key)`; `rememberChartZoom(key, title) { content }` returns the function that opens the page; the card and the
+  page share their bounds (`sharedElementWithCallerManagedVisibility`, 350 ms), so the card grows into the page and shrinks back
+  on the X, system back or the gesture (`NavigationBackHandler` while open). Section charts open from `ChartZoomButton` (an
+  "Enlarge chart" icon in `FormSection(action = …)`): account balance (range chips, chart at `ZoomedChartHeight` 360 dp and every
+  point), account and Group in/out and the envelope chart (each period's figures in a `ChartTable`). The small hero charts
+  (Group really free, Accounts total) open on tap and show a `DayLineChart` (a `BalanceLineChart` with axes and crosshair) and
+  every day's figure. `ChartTable` only shows the rows the chart draws; nothing is computed. `BalanceLineChart` and
+  `GroupedColumnChart` take `height` (defaults `BalanceChartHeight` 220 dp and `FlowsChartHeight` 200 dp).
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and

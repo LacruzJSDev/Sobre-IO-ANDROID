@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio
 
+import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,6 +17,6 @@ fun App() {
     val colorBlindSafe by preferences.colorBlindSafe.collectAsStateWithLifecycle()
     SobreioTheme(colorBlindSafe = colorBlindSafe) {
         // An open swipe row closes when anything outside it is touched, anywhere in the app
-        OutsidePressHostProvider { NavigationWrapper() }
+        OutsidePressHostProvider { ChartZoomHost { NavigationWrapper() } }
     }
 }

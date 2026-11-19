@@ -1,6 +1,17 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
 
+import dev.lacruzjs.sobreio.generated.resources.chart_enlarge
+import dev.lacruzjs.sobreio.generated.resources.chart_table_free
+import dev.lacruzjs.sobreio.ui.components.charts.DayLineChart
+import androidx.compose.ui.unit.Dp
+import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomedChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
+import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
+import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
 import dev.lacruzjs.sobreio.generated.resources.balance_on_day_choose
 import dev.lacruzjs.sobreio.generated.resources.outlook_until_label
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_free_on
@@ -241,21 +252,40 @@ private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languag
             val points = remember(state.freeProjection) { state.freeProjection.map { LineChartPoint(it.day.toEpochDays(), it.freeCents) } }
             val first = state.freeProjection.first()
             val last = state.freeProjection.last()
-            FreeProjectionChart(
-                points = points,
-                todayX = state.today.toEpochDays(),
-                lineColor = paper,
-                negativeColor = hero.negativeOnContainer,
-                ringColor = hero.container,
-                height = 56.dp,
-                contentDescription = stringResource(
+            val description = stringResource(
                     Res.string.group_hero_chart_description,
                     formatDayMonth(first.day, languageTag),
                     formatDayMonth(last.day, languageTag),
                     formatMoney(first.freeCents, state.currencyCode, languageTag),
                     formatMoney(last.freeCents, state.currencyCode, languageTag),
-                ),
-            )
+                )
+            val today = state.today
+            // A tap opens the chart full screen: axes, crosshair and every day's figure
+            val zoom = rememberChartZoom(ZOOM_GROUP_FREE, stringResource(Res.string.group_summary_free_today)) {
+                SoftTile {
+                    DayLineChart(points, today.toEpochDays(), stringResource(Res.string.chart_table_free), state.currencyCode, languageTag, description)
+                }
+                ChartTable(
+                    columns = listOf(stringResource(Res.string.chart_table_free)),
+                    rows = state.freeProjection.map { ChartTableRow(formatDate(it.day, languageTag), listOf(it.freeCents)) },
+                    currencyCode = state.currencyCode,
+                    role = MoneyRole.Balance,
+                )
+            }
+            ZoomableChart(
+                ZOOM_GROUP_FREE,
+                Modifier.clickable(onClickLabel = stringResource(Res.string.chart_enlarge), role = Role.Button, onClick = zoom),
+            ) {
+                FreeProjectionChart(
+                    points = points,
+                    todayX = today.toEpochDays(),
+                    lineColor = paper,
+                    negativeColor = hero.negativeOnContainer,
+                    ringColor = hero.container,
+                    height = 56.dp,
+                    contentDescription = description,
+                )
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
@@ -518,32 +548,51 @@ private fun FlowsSection(
     languageTag: String,
     modifier: Modifier = Modifier,
 ) {
-    FormSection(title = stringResource(Res.string.group_summary_flows_title), modifier = modifier) {
-        SoftTile {
-            val groups = state.flows.map {
-                ColumnGroup(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, it.outflowCents))
-            }
-            val periods = state.flows.map {
-                stringResource(
-                    Res.string.chart_flows_period,
-                    formatMonthShort(it.startDate, languageTag),
-                    formatMoney(it.inflowCents, state.currencyCode, languageTag),
-                    formatMoney(it.outflowCents, state.currencyCode, languageTag),
-                )
-            }.joinToString(" ")
-            GroupedColumnChart(
-                series = listOf(
-                    ColumnSeries(stringResource(Res.string.chart_legend_in), LocalMoneyColors.current.inflow),
-                    ColumnSeries(stringResource(Res.string.chart_legend_out), LocalMoneyColors.current.outflow),
-                ),
-                groups = groups,
-                formatY = { compactAmount(it, languageTag) },
-                formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-                contentDescription = stringResource(Res.string.chart_flows_description, state.flows.size, periods),
-            )
-        }
+    val title = stringResource(Res.string.group_summary_flows_title)
+    val zoom = rememberChartZoom(ZOOM_GROUP_FLOWS, title) {
+        SoftTile { GroupFlowsChart(state, languageTag, ZoomedChartHeight) }
+        ChartTable(
+            columns = listOf(stringResource(Res.string.chart_legend_in), stringResource(Res.string.chart_legend_out)),
+            rows = state.flows.asReversed().map {
+                ChartTableRow(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, -it.outflowCents))
+            },
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Flow,
+        )
+    }
+    FormSection(title = title, modifier = modifier, action = { ChartZoomButton(zoom) }) {
+        ZoomableChart(ZOOM_GROUP_FLOWS) { SoftTile { GroupFlowsChart(state, languageTag) } }
     }
 }
+
+@Composable
+private fun GroupFlowsChart(state: GroupSummaryUiState, languageTag: String, height: Dp = FlowsChartHeight) {
+    val groups = state.flows.map {
+        ColumnGroup(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, it.outflowCents))
+    }
+    val periods = state.flows.map {
+        stringResource(
+            Res.string.chart_flows_period,
+            formatMonthShort(it.startDate, languageTag),
+            formatMoney(it.inflowCents, state.currencyCode, languageTag),
+            formatMoney(it.outflowCents, state.currencyCode, languageTag),
+        )
+    }.joinToString(" ")
+    GroupedColumnChart(
+        series = listOf(
+            ColumnSeries(stringResource(Res.string.chart_legend_in), LocalMoneyColors.current.inflow),
+            ColumnSeries(stringResource(Res.string.chart_legend_out), LocalMoneyColors.current.outflow),
+        ),
+        groups = groups,
+        formatY = { compactAmount(it, languageTag) },
+        formatValue = { formatMoney(it, state.currencyCode, languageTag) },
+        contentDescription = stringResource(Res.string.chart_flows_description, state.flows.size, periods),
+        height = height,
+    )
+}
+
+private const val ZOOM_GROUP_FLOWS = "group-flows"
+private const val ZOOM_GROUP_FREE = "group-free"
 
 /** A row of small cards, one per due date until the end of the period; one muted card when there is none. */
 @Composable

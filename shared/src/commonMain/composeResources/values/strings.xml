@@ -885,4 +885,7 @@
     <string name="history_field_account">the account</string>
     <string name="history_field_voided">its deletion</string>
     <string name="history_field_details">other details</string>
+    <string name="chart_enlarge">Enlarge chart</string>
+    <string name="chart_table_balance">Balance</string>
+    <string name="chart_table_free">Free</string>
 </resources>
