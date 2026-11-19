@@ -1,33 +1,13 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
 import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
-import dev.lacruzjs.sobreio.generated.resources.envelope_outlook_more
-import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_2
-import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_1
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_period_2
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_period_1
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_left
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_activity
-import androidx.compose.ui.unit.Dp
-import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
-import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
-import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
-import dev.lacruzjs.sobreio.ui.components.charts.ZoomedChartHeight
-import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
-import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
-import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_free_until
-import dev.lacruzjs.sobreio.generated.resources.outlook_until_note
-import dev.lacruzjs.sobreio.generated.resources.outlook_until_period_end
-import dev.lacruzjs.sobreio.generated.resources.outlook_until_label
-import dev.lacruzjs.sobreio.ui.components.DateFormTile
-import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,19 +20,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,39 +42,18 @@ import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.action_manage_transfers
 import dev.lacruzjs.sobreio.generated.resources.action_retry
-import dev.lacruzjs.sobreio.generated.resources.action_see_all_movements
-import dev.lacruzjs.sobreio.generated.resources.chart_legend_assigned
-import dev.lacruzjs.sobreio.generated.resources.chart_legend_spent
-import dev.lacruzjs.sobreio.generated.resources.detail_no_movements
-import dev.lacruzjs.sobreio.generated.resources.detail_section_latest
 import dev.lacruzjs.sobreio.generated.resources.edit_envelope_title
-import dev.lacruzjs.sobreio.generated.resources.envelope_chart_description
-import dev.lacruzjs.sobreio.generated.resources.envelope_chart_period
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_activity
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_assigned
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_available
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_brought
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_committed
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_free
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_left
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_chart
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_commitments
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_free
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_period
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_transfers
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_shortfall
-import dev.lacruzjs.sobreio.generated.resources.envelope_detail_transfers_empty
-import dev.lacruzjs.sobreio.generated.resources.envelope_funding_row
 import dev.lacruzjs.sobreio.generated.resources.envelope_target_per_month
 import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.holder_common
-import dev.lacruzjs.sobreio.generated.resources.ic_list
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
-import dev.lacruzjs.sobreio.generated.resources.transfer_from
-import dev.lacruzjs.sobreio.generated.resources.transfer_to
-import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
@@ -114,26 +68,16 @@ import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import dev.lacruzjs.sobreio.ui.components.StatCard
 import dev.lacruzjs.sobreio.ui.components.StatRow
-import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
-import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
-import dev.lacruzjs.sobreio.ui.components.charts.GroupedColumnChart
-import dev.lacruzjs.sobreio.ui.components.charts.compactAmount
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.envelopes.labelRes
-import dev.lacruzjs.sobreio.ui.envelopetransfers.originLabel
 import dev.lacruzjs.sobreio.ui.error.messageRes
-import dev.lacruzjs.sobreio.ui.format.formatDate
-import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatMoney
-import dev.lacruzjs.sobreio.ui.format.formatMonthShort
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
-import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.theme.SobreioTheme
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -315,291 +259,6 @@ private fun PeriodSection(period: EnvelopePeriod, currencyCode: String) {
             StatRow(stringResource(Res.string.envelope_detail_left), period.closingCents, MoneyRole.Balance, emphasised = true),
         ),
     )
-}
-
-/** What is left once the commitments to the end of the period are paid (`envelope_outlook_current`). */
-/**
- * "Really free" on the detail is just the card; a tap grows it into a page with the tools to explore it: the same
- * figures up to a chosen day ("Look until") and the balance on a past day.
- */
-@Composable
-private fun ZoomableOutlook(
-    state: EnvelopeDetailUiState,
-    periodOutlook: EnvelopeOutlook,
-    languageTag: String,
-    onEvent: (EnvelopeDetailEvent) -> Unit,
-) {
-    val title = stringResource(Res.string.envelope_detail_section_free)
-    val open = rememberChartZoom(ZOOM_OUTLOOK, title) {
-        OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
-        DateFormTile(
-            label = stringResource(Res.string.outlook_until_label),
-            date = state.outlookUntil,
-            onDateSelected = { onEvent(EnvelopeDetailEvent.OutlookUntilSelected(it)) },
-            emptyText = stringResource(Res.string.outlook_until_period_end),
-            onClear = if (state.outlookUntil != null) ({ onEvent(EnvelopeDetailEvent.OutlookUntilCleared) }) else null,
-            note = stringResource(Res.string.outlook_until_note),
-        )
-        EnvelopeBalanceOnDay(state, onEvent)
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        ZoomableChart(
-            ZOOM_OUTLOOK,
-            Modifier.clickable(onClickLabel = stringResource(Res.string.envelope_outlook_more), role = Role.Button, onClick = open),
-        ) {
-            OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
-        }
-        Text(
-            text = stringResource(Res.string.envelope_outlook_more),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
-    }
-}
-
-@Composable
-private fun EnvelopeBalanceOnDay(state: EnvelopeDetailUiState, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    BalanceOnDay(
-        day = state.balanceDay,
-        balanceCents = state.balanceOnDayCents,
-        currencyCode = state.currencyCode,
-        today = state.today,
-        onDaySelected = { onEvent(EnvelopeDetailEvent.BalanceDaySelected(it)) },
-    )
-}
-
-private const val ZOOM_OUTLOOK = "envelope-outlook"
-
-@Composable
-private fun OutlookSection(outlook: EnvelopeOutlook, until: LocalDate?, currencyCode: String, languageTag: String) {
-    StatCard(
-        title = if (until == null) {
-            stringResource(Res.string.envelope_detail_section_free)
-        } else {
-            stringResource(Res.string.envelope_detail_section_free_until, formatDate(until, languageTag))
-        },
-        info = listOf(Res.string.info_envelope_free_1, Res.string.info_envelope_free_2),
-        currencyCode = currencyCode,
-        rows = listOf(
-            StatRow(stringResource(Res.string.envelope_detail_committed), -outlook.committedCents, MoneyRole.Flow),
-            StatRow(stringResource(Res.string.envelope_detail_free), outlook.freeCents, MoneyRole.Balance, emphasised = true),
-        ),
-        warning = if (outlook.shortfallCents > 0) {
-            stringResource(Res.string.envelope_detail_shortfall, formatMoney(outlook.shortfallCents, currencyCode, languageTag))
-        } else {
-            null
-        },
-    )
-}
-
-@Composable
-private fun ChartSection(state: EnvelopeDetailUiState, languageTag: String) {
-    val title = stringResource(Res.string.envelope_detail_section_chart)
-    // The zoomed page: the chart taller and each period as the database has it (assigned, movements, what was left)
-    val zoom = rememberChartZoom(ZOOM_ENVELOPE_CHART, title) {
-        SoftTile { EnvelopeChart(state, languageTag, ZoomedChartHeight) }
-        ChartTable(
-            columns = listOf(
-                stringResource(Res.string.chart_legend_assigned),
-                stringResource(Res.string.envelope_detail_activity),
-                stringResource(Res.string.envelope_detail_left),
-            ),
-            rows = state.chartPeriods.asReversed().map {
-                ChartTableRow(formatMonthShort(it.startDate, languageTag), listOf(it.assignedCents, it.activityCents, it.closingCents))
-            },
-            currencyCode = state.currencyCode,
-            role = MoneyRole.Flow,
-        )
-    }
-    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
-        ZoomableChart(ZOOM_ENVELOPE_CHART) { SoftTile { EnvelopeChart(state, languageTag) } }
-    }
-}
-
-@Composable
-private fun EnvelopeChart(state: EnvelopeDetailUiState, languageTag: String, height: Dp = FlowsChartHeight) {
-    val groups = state.chartPeriods.map { ColumnGroup(formatMonthShort(it.startDate, languageTag), it.chartColumns()) }
-    val periods = state.chartPeriods.map {
-        val (assigned, spent) = it.chartColumns()
-        stringResource(
-            Res.string.envelope_chart_period,
-            formatMonthShort(it.startDate, languageTag),
-            formatMoney(assigned, state.currencyCode, languageTag),
-            formatMoney(spent, state.currencyCode, languageTag),
-        )
-    }.joinToString(" ")
-    GroupedColumnChart(
-        series = listOf(
-            ColumnSeries(stringResource(Res.string.chart_legend_assigned), LocalMoneyColors.current.inflow),
-            ColumnSeries(stringResource(Res.string.chart_legend_spent), LocalMoneyColors.current.outflow),
-        ),
-        groups = groups,
-        formatY = { compactAmount(it, languageTag) },
-        formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-        contentDescription = stringResource(Res.string.envelope_chart_description, state.chartPeriods.size, periods),
-        height = height,
-    )
-}
-
-private const val ZOOM_ENVELOPE_CHART = "envelope-chart"
-
-/** The commitments that reserve money for the envelope, read only: tapping one opens its detail. */
-@Composable
-private fun FundingSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    FormSection(title = stringResource(Res.string.envelope_detail_section_commitments)) {
-        state.funding.forEach { row ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(role = Role.Button) { onEvent(EnvelopeDetailEvent.CommitmentClicked(row.accountId, row.commitmentId)) }
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                EntityAvatar(name = row.name, icon = row.kind.icon(), color = null)
-                Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                    Text(text = row.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        text = stringResource(
-                            Res.string.envelope_funding_row,
-                            formatMoney(row.thisPeriodCents, state.currencyCode, languageTag),
-                            formatDate(row.nextDueDate, languageTag),
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * The newest moves between envelopes, read only. The icon on the right of the title opens the envelope's moves screen,
- * the only place where they are edited and deleted.
- */
-@Composable
-private fun TransfersSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    FormSection(
-        title = stringResource(Res.string.envelope_detail_section_transfers),
-        action = {
-            IconActionButton(
-                icon = Icons.Filled.SwapHoriz,
-                iconSize = 24.dp,
-                label = stringResource(Res.string.action_manage_transfers),
-                onClick = { onEvent(EnvelopeDetailEvent.TransfersClicked) },
-            )
-        },
-    ) {
-        SoftTile {
-            if (state.transfers.isEmpty()) {
-                Text(
-                    text = stringResource(Res.string.envelope_detail_transfers_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                state.transfers.forEach { TransferItem(it, state.currencyCode, languageTag) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TransferItem(row: TransferRow, currencyCode: String, languageTag: String) {
-    val label = row.transfer.originLabel()
-    val other = if (row.otherIsUnassigned) stringResource(Res.string.envelopes_unassigned) else row.otherName
-    val direction = other?.let {
-        stringResource(if (row.signedCents > 0) Res.string.transfer_from else Res.string.transfer_to, it)
-    }
-    val date = formatDate(row.date, languageTag)
-    val second = if (direction != null) stringResource(Res.string.row_subtitle, direction, date) else date
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(text = label, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                text = second,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        MoneyText(
-            amountCents = row.signedCents,
-            currencyCode = currencyCode,
-            role = MoneyRole.Flow,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun LatestMovementsSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    FormSection(
-        title = stringResource(Res.string.detail_section_latest),
-        action = {
-            IconActionButton(
-                icon = vectorResource(Res.drawable.ic_list),
-                iconSize = 24.dp,
-                label = stringResource(Res.string.action_see_all_movements),
-                onClick = { onEvent(EnvelopeDetailEvent.SeeAllClicked) },
-            )
-        },
-    ) {
-        SoftTile {
-            if (state.latestMovements.isEmpty()) {
-                Text(
-                    text = stringResource(Res.string.detail_no_movements),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                state.latestMovements.forEach { MovementItem(it, state, languageTag) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MovementItem(movement: Movement, state: EnvelopeDetailUiState, languageTag: String) {
-    val primary = movement.notes ?: stringResource(movement.kind.labelRes())
-    val account = if (state.hasSeveralAccounts) state.accountNames[movement.accountId] else null
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = primary, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (account != null) {
-                Text(
-                    text = account,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            MoneyText(
-                amountCents = movement.amountCents,
-                currencyCode = state.currencyCode,
-                role = MoneyRole.Flow,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-            )
-            Text(
-                text = formatDayMonth(movement.date, languageTag),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
 }
 
 private val previewEnvelope = Envelope(
