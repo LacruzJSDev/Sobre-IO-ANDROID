@@ -32,4 +32,16 @@ class DateFormatTest {
         assertEquals("Mar 19", formatShortDate(date, "en", 2026))
         assertEquals("19 mar 2026", formatShortDate(date, "es-ES", 2025))
     }
+
+    @Test
+    fun shortFormsOfADayForChartsAndHeaders() {
+        // Friday 13 November 2026
+        val date = kotlinx.datetime.LocalDate(2026, 11, 13)
+        assertEquals("Nov 13", formatDayMonth(date, "en-GB"))
+        assertEquals("13 nov", formatDayMonth(date, "es_ES"))
+        assertEquals("Nov", formatMonthShort(date, "en"))
+        assertEquals("nov", formatMonthShort(date, "es"))
+        assertEquals("Fri Nov 13", formatWeekdayDayMonth(date, "en"))
+        assertEquals("vie 13 nov", formatWeekdayDayMonth(date, "es-ES"))
+    }
 }

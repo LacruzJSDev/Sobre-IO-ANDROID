@@ -145,4 +145,11 @@ class StatementReadingTest {
     fun headerSignatureIgnoresCaseAndPunctuation() {
         assertEquals(headerSignature(listOf("F.Valor", "Concepto ")), headerSignature(listOf("f valor", "CONCEPTO")))
     }
+
+    @Test
+    fun aReferenceIsAFixedHashOfTheRowAndItsOccurrence() {
+        // FNV-1a 64 of "base#1": the same on every device and every version, so a re-import finds its rows (D-37)
+        assertEquals("b1:49c5afa0f49fb4b0", statementRef("base", 1))
+        assertNotEquals(statementRef("base", 1), statementRef("base", 2))
+    }
 }

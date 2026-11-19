@@ -1,9 +1,7 @@
 package dev.lacruzjs.sobreio.ui.groups
 
 import dev.lacruzjs.sobreio.domain.model.Group
-import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.validation.validateRequired
+import dev.lacruzjs.sobreio.ui.validation.validateName
 import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.StringResource
 
@@ -32,7 +30,7 @@ data class GroupFormState(
     val isEditing: Boolean get() = editing != null
 
     /** This state with [nameError] set when the trimmed name is blank or too long. */
-    fun validated(): GroupFormState = copy(nameError = validateGroupName(name.trim()))
+    fun validated(): GroupFormState = copy(nameError = validateName(name.trim(), MAX_GROUP_NAME_LENGTH))
 
     companion object {
         fun forNew() = GroupFormState()
@@ -47,10 +45,4 @@ data class GroupFormState(
             editing = group,
         )
     }
-}
-
-internal fun validateGroupName(name: String): StringResource? = when {
-    name.isEmpty() -> validateRequired(name)
-    name.length > MAX_GROUP_NAME_LENGTH -> Res.string.validation_name_too_long
-    else -> null
 }

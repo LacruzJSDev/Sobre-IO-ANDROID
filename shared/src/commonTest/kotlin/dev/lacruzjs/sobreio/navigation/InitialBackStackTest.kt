@@ -101,4 +101,17 @@ class InitialBackStackTest {
         stack.closeDetails()
         assertEquals(listOf<NavKey>(Group("g1")), stack)
     }
+
+    @Test
+    fun onlyDetailsAndExtraPanesAreReplacedBesideTheList() {
+        val panes = listOf(
+            AccountDetail("g", "a"), EnvelopeDetail("g", "e"), EnvelopeTransfers("g"), GroupSettings("g"), GroupReview("g"),
+            Profile, CommitmentDetail("g", "a", "c"), AccountMovements("g", "a"), EnvelopeMovements("g", "e"),
+            EnvelopeTransfersOf("g", "e"), Tags("g"), TagMovements("g", "t"),
+        )
+        val others = listOf(Groups, Group("g"), GroupForm(null), AccountForm("g", null), BankImport("g", "a"), DeleteAccount)
+
+        assertEquals(panes, panes.filter { it.isPaneDetail() })
+        assertEquals(emptyList(), others.filter { it.isPaneDetail() })
+    }
 }
