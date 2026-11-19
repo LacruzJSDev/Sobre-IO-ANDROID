@@ -70,7 +70,7 @@ class TagsViewModel(
             TagsEvent.UndoClicked -> undo.undo()
             TagsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which owns the back stack
-            TagsEvent.BackClicked -> Unit
+            TagsEvent.BackClicked, is TagsEvent.OpenClicked -> Unit
         }
     }
 

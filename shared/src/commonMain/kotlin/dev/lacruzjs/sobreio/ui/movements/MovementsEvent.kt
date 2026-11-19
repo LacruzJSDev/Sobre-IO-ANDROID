@@ -13,6 +13,9 @@ sealed interface MovementsEvent {
     data object LoadMore : MovementsEvent
     data object RetryLoadMore : MovementsEvent
 
+    /** "See report" under the totals: reads the totals per period and per envelope for the zoomed report page. */
+    data object ReportOpened : MovementsEvent
+
     data object SearchOpened : MovementsEvent
     data object SearchClosed : MovementsEvent
     data class SearchChanged(val text: String) : MovementsEvent

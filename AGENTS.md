@@ -491,6 +491,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Movement reports (plan phase 5.3, D-54 in the DB repo): `MovementRepository.getTotals` (`search_movements_summary`) and
+  `getReport` (`search_movements_by_period` + `search_movements_by_envelope`) take the screen's `MovementFilter`
+  (`domain/model/MovementReport.kt`). `MovementsViewModel` reads the totals after each first page (secondary: a failure hides
+  the card) and the report on `ReportOpened`. `MovementsUiState.showsTotals`: a filter is on, or the list is an account's,
+  envelope's or tag's (the plain ledger shows none). `ui/movements/MovementsTotals.kt`: `TotalsCard` (a `StatCard` "N movements"
+  with in, out and net emphasised, and "See report") is a `ZoomableChart` that grows into the report page (by period: in/out
+  columns and a `ChartTable`; by envelope: name, amount and a bar). Wide pane: `MovementsPane` is a `TwoColumnSplit` (left:
+  `FilterChipsFlow` and the totals card, or a hint without a filter; right: the rows); narrow: the chips row and the card as the
+  list's first item. The group shell and `FixedFilterMovementsScreen` are `ContentWidth.TwoColumns` wide. Tapping a tag in Tags
+  (any member; editing stays a swipe) opens `TagMovements(groupId, tagId)` (level 4, extra pane): the same pane through
+  `TagMovementsRoute`, starting filtered by the tag, so its totals and report are the tag's.
 - Help texts (plan phase 5.4): every icon-only button shows its accessible name on long press (`LabelTooltip`; `BackButton`,
   `MenuButton`, `AddIconButton`, the header gear, search and close, steppers, clear date, password eye and the zoom's X were
   wrapped). `ui/components/InfoButton.kt`: `InfoButton(title, paragraphs)` is a 16 dp ⓘ (32 dp target) that opens a

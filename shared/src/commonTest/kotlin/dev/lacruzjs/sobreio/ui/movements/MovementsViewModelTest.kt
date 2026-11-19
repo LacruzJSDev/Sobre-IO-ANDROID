@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.domain.model.EnvelopeTotals
+import dev.lacruzjs.sobreio.domain.model.MovementReport
+import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
@@ -435,5 +438,32 @@ class MovementsViewModelTest : MainDispatcherTest() {
         val viewModel = loaded()
 
         assertFalse(viewModel.state.value.hasSeveralMembers)
+    }
+
+    @Test
+    fun aFilterShowsTheDatabaseTotalsOfWhatItPicks() {
+        ledger.totals = MovementTotals(inflowCents = 1_000, outflowCents = 4_500, netCents = -3_500, count = 3)
+        val viewModel = loaded()
+        // The plain group ledger shows no totals
+        assertFalse(viewModel.state.value.showsTotals)
+
+        viewModel.onEvent(MovementsEvent.TagsApplied(setOf("t1")))
+
+        assertEquals(setOf("t1"), ledger.totalsFilters.last().tagIds)
+        assertTrue(viewModel.state.value.showsTotals)
+        assertEquals(-3_500L, viewModel.state.value.totals?.netCents)
+    }
+
+    @Test
+    fun theReportIsReadWhenItsPageOpens() {
+        ledger.totals = MovementTotals(0, 100, -100, 1)
+        ledger.report = MovementReport(emptyList(), listOf(EnvelopeTotals("e1", 0, 100, 1)))
+        val viewModel = loaded(fixedAccountId = "a1")
+        assertTrue(viewModel.state.value.showsTotals)
+        assertNull(viewModel.state.value.report)
+
+        viewModel.onEvent(MovementsEvent.ReportOpened)
+
+        assertEquals("e1", viewModel.state.value.report?.envelopes?.single()?.envelopeId)
     }
 }

@@ -1,5 +1,10 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import kotlinx.serialization.SerialName
+import dev.lacruzjs.sobreio.domain.model.EnvelopeTotals
+import dev.lacruzjs.sobreio.domain.model.PeriodTotals
+import dev.lacruzjs.sobreio.domain.model.MovementReport
+import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.data.remote.dto.MovementSearchDto
 import dev.lacruzjs.sobreio.data.remote.dto.PeriodDto
 import dev.lacruzjs.sobreio.data.remote.dto.PeriodRangeDto
@@ -48,6 +53,44 @@ class SupabaseMovementRepository(client: SupabaseClient) : MovementRepository {
         }
         MovementPage(items, total)
     }
+
+    override suspend fun getTotals(groupId: String, filter: MovementFilter): Result<MovementTotals> = safeCall {
+        postgrest.rpc("search_movements_summary", searchParams(groupId, filter))
+            .decodeList<TotalsDto>()
+            .firstOrNull()
+            ?.let { MovementTotals(it.inflow, it.outflow, it.net, it.movements) }
+            ?: MovementTotals(0, 0, 0, 0)
+    }
+
+    override suspend fun getReport(groupId: String, filter: MovementFilter): Result<MovementReport> = safeCall {
+        val periods = postgrest.rpc("search_movements_by_period", searchParams(groupId, filter))
+            .decodeList<PeriodTotalsDto>()
+            .map { PeriodTotals(LocalDate.parse(it.start), LocalDate.parse(it.end), it.inflow, it.outflow, it.movements) }
+        val envelopes = postgrest.rpc("search_movements_by_envelope", searchParams(groupId, filter))
+            .decodeList<EnvelopeTotalsDto>()
+            .map { EnvelopeTotals(it.envelopeId, it.inflow, it.outflow, it.movements) }
+        MovementReport(periods, envelopes)
+    }
+
+    @Serializable
+    private data class TotalsDto(val inflow: Long = 0, val outflow: Long = 0, val net: Long = 0, val movements: Long = 0)
+
+    @Serializable
+    private data class PeriodTotalsDto(
+        @SerialName("period_start") val start: String,
+        @SerialName("period_end") val end: String,
+        val inflow: Long = 0,
+        val outflow: Long = 0,
+        val movements: Long = 0,
+    )
+
+    @Serializable
+    private data class EnvelopeTotalsDto(
+        @SerialName("envelope_id") val envelopeId: String,
+        val inflow: Long = 0,
+        val outflow: Long = 0,
+        val movements: Long = 0,
+    )
 
     override suspend fun voidMovement(movement: Movement): Result<Unit> = safeCall {
         val table = when (movement.source) {

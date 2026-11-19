@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.movements
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import dev.lacruzjs.sobreio.domain.model.MovementSource
@@ -94,7 +95,8 @@ internal fun FixedFilterMovementsScreen(
     leading: @Composable () -> Unit,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
+        // Two columns on a wide pane: the filters and totals beside the rows
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.TwoColumns)) {
             if (state.searchOpen) {
                 MovementsSearchHeader(
                     text = state.searchText,

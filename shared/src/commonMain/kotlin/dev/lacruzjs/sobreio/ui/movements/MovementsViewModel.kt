@@ -101,6 +101,7 @@ class MovementsViewModel(
             is MovementsEvent.TagsApplied -> applyFilter(_state.value.filter.copy(tagIds = event.tagIds))
             is MovementsEvent.PersonSelected -> applyFilter(_state.value.filter.copy(createdBy = event.userId))
             MovementsEvent.NewClicked, is MovementsEvent.EditClicked -> Unit
+            MovementsEvent.ReportOpened -> loadReport()
             is MovementsEvent.DeleteClicked -> delete(event.movementId)
             MovementsEvent.UndoClicked -> undo.undo()
             MovementsEvent.UndoExpired -> undo.commit()
@@ -178,7 +179,8 @@ class MovementsViewModel(
     }
 
     private suspend fun readFirstPage(request: Int) {
-        movements.search(groupId, _state.value.filter, PAGE_SIZE, 0, withTotal = true)
+        val filter = _state.value.filter
+        movements.search(groupId, filter, PAGE_SIZE, 0, withTotal = true)
             .onSuccess { page ->
                 if (request != generation) return@onSuccess
                 fetched = page.items.size
@@ -191,6 +193,21 @@ class MovementsViewModel(
                 if (request != generation) return@onFailure
                 _state.update { it.copy(isLoading = false, error = e.asAppError()) }
             }
+        // The totals of this filter, after the rows so they never hold the list back; secondary: without them the card
+        // is simply not shown
+        movements.getTotals(groupId, filter).let { result ->
+            if (request == generation) _state.update { it.copy(totals = result.getOrNull(), report = null) }
+        }
+    }
+
+    /** The report page of the current filter; a failure leaves the page with the totals only. */
+    private fun loadReport() {
+        val filter = _state.value.filter
+        viewModelScope.launch {
+            movements.getReport(groupId, filter).onSuccess { report ->
+                if (_state.value.filter == filter) _state.update { it.copy(report = report) }
+            }
+        }
     }
 
     private fun loadMore() {

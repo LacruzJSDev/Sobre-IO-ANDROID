@@ -34,6 +34,13 @@ data class GroupSettings(val groupId: String) : NavKey
 data class Tags(val groupId: String, val startWithCreate: Boolean = false) : NavKey
 
 /**
+ * The movements of one tag (level 4, above [Tags]): the Movements list filtered by the tag, with its totals and report
+ * (D-54). Opened by tapping a tag.
+ */
+@Serializable
+data class TagMovements(val groupId: String, val tagId: String) : NavKey
+
+/**
  * The due dates waiting for review (level 2 of the Group tab): confirm or skip each one. Opened by the "Review" button of
  * the Group tab's review card; back returns to [Group], which reads its figures again.
  */

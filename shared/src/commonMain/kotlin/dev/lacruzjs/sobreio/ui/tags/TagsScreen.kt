@@ -73,6 +73,8 @@ fun TagsRoute(
     onBack: () -> Unit,
     /** Opened from the "+" of an empty Tags section: the create sheet opens once the group has loaded. */
     startWithCreate: Boolean = false,
+    /** A tap on a tag opens its movements and totals. */
+    onOpenMovements: (tagId: String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: TagsViewModel = koinViewModel { parametersOf(groupId) },
 ) {
@@ -90,6 +92,7 @@ fun TagsRoute(
         onEvent = { event ->
             when (event) {
                 TagsEvent.BackClicked -> onBack()
+                is TagsEvent.OpenClicked -> onOpenMovements(event.tagId)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -183,11 +186,12 @@ private fun TagList(state: TagsUiState, onEvent: (TagsEvent) -> Unit) {
                     onOpenChange = { open ->
                         if (open) openTagId = tag.id else if (openTagId == tag.id) openTagId = null
                     },
-                    onClick = { if (!archived) onEvent(TagsEvent.EditClicked(tag.id)) },
+                    // A tap shows what the tag holds (its movements and totals); editing is the swipe
+                    onClick = { onEvent(TagsEvent.OpenClicked(tag.id)) },
                     content = row,
                 )
             } else {
-                row()
+                Box(modifier = Modifier.clickable(role = Role.Button) { onEvent(TagsEvent.OpenClicked(tag.id)) }) { row() }
             }
         }
     }

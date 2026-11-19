@@ -375,11 +375,8 @@ fun GroupScreen(
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                // Group, Accounts and Envelopes lay out two columns on a wide pane; Movements stays one readable column until
-                // its filter summary gives the left side something to hold
-                modifier = Modifier.fillMaxSize().contentMaxWidth(
-                    if (state.selectedTab == GroupTab.Movements) ContentWidth.List else ContentWidth.TwoColumns,
-                ),
+                // Every tab lays out two columns on a wide pane (Movements: the filters and their totals beside the rows)
+                modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.TwoColumns),
             ) {
                 // Same header on every tab. The right side is free for the actions of each section.
                 if (state.selectedTab == GroupTab.Movements && movementsHeader != null) movementsHeader() else ScreenHeader(

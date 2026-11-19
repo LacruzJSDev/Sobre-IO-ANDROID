@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.domain.model.MovementReport
+import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.DateContext
@@ -40,6 +42,10 @@ data class MovementsUiState(
     val items: List<Movement> = emptyList(),
     val hasMore: Boolean = false,
     /** True while the first page of the current filter loads. */
+    /** `search_movements_summary` of the current filter (D-54); null until it answers or when it failed. */
+    val totals: MovementTotals? = null,
+    /** Its report per period and per envelope, read when the report page opens. */
+    val report: MovementReport? = null,
     val isLoading: Boolean = true,
     /** Reading again from the database with rows on screen: the thin bar under the header. */
     val isRefreshing: Boolean = false,
@@ -63,6 +69,12 @@ data class MovementsUiState(
     val hasSeveralAccounts: Boolean get() = accounts.count { !it.isArchived } > 1
 
     val today: LocalDate? get() = dateContext?.today
+
+    /**
+     * The totals card: shown when a filter is on or the list is one account's or envelope's. The plain group ledger has
+     * no totals (all of it, ever, says little).
+     */
+    val showsTotals: Boolean get() = totals != null && (hasActiveFilters || fixedAccountId != null || fixedEnvelopeId != null)
 
     /** A filter or a search is on (the fixed account or envelope does not count): the empty state then says "no results". */
     val hasActiveFilters: Boolean

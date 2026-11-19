@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.data.repository
 
+import dev.lacruzjs.sobreio.domain.model.MovementReport
+import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.domain.model.DateContext
 import dev.lacruzjs.sobreio.domain.model.Movement
 import dev.lacruzjs.sobreio.domain.model.MovementFilter
@@ -36,6 +38,12 @@ interface MovementRepository {
      * with FZ005 when it is already voided.
      */
     suspend fun voidGroupTransfer(movement: Movement): Result<Unit>
+
+    /** The database's totals of the rows [filter] picks (`search_movements_summary`, D-54). */
+    suspend fun getTotals(groupId: String, filter: MovementFilter): Result<MovementTotals>
+
+    /** The same totals per period and per envelope (`search_movements_by_period`, `search_movements_by_envelope`). */
+    suspend fun getReport(groupId: String, filter: MovementFilter): Result<MovementReport>
 
     /** The group's today and its current and previous periods, for the date presets of the Dates chip. */
     suspend fun getDateContext(groupId: String): Result<DateContext>

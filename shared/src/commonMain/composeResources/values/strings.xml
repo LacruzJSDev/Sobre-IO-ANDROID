@@ -911,4 +911,17 @@
     <string name="info_envelope_period_2">What is left is carried to the next period.</string>
     <string name="info_envelope_free_1">The envelope\'s balance minus what pending commitments will still take from it until the end of the period (or the day you choose).</string>
     <string name="info_envelope_free_2">When the commitments need more than the envelope has, the difference will have to come from elsewhere.</string>
+    <plurals name="movements_totals_title">
+        <item quantity="one">%1$d movement</item>
+        <item quantity="other">%1$d movements</item>
+    </plurals>
+    <string name="movements_totals_in">In</string>
+    <string name="movements_totals_out">Out</string>
+    <string name="movements_totals_net">Net</string>
+    <string name="movements_totals_hint">Choose a filter (an account, an envelope, dates, a tag…) to see how much came in and went out.</string>
+    <string name="movements_report_open">See report</string>
+    <string name="movements_report_title">Report</string>
+    <string name="movements_report_loading">Reading the report…</string>
+    <string name="movements_report_by_period">By period</string>
+    <string name="movements_report_by_envelope">By envelope</string>
 </resources>
