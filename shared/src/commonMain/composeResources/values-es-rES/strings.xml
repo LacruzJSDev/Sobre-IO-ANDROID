@@ -910,4 +910,17 @@
     <string name="info_envelope_period_2">Lo que queda pasa al siguiente periodo.</string>
     <string name="info_envelope_free_1">El saldo del sobre menos lo que los compromisos pendientes aún le quitarán hasta fin de periodo (o hasta el día que elijas).</string>
     <string name="info_envelope_free_2">Cuando los compromisos necesitan más de lo que tiene el sobre, la diferencia tendrá que salir de otro sitio.</string>
+    <plurals name="movements_totals_title">
+        <item quantity="one">%1$d movimiento</item>
+        <item quantity="other">%1$d movimientos</item>
+    </plurals>
+    <string name="movements_totals_in">Entradas</string>
+    <string name="movements_totals_out">Salidas</string>
+    <string name="movements_totals_net">Neto</string>
+    <string name="movements_totals_hint">Elige un filtro (una cuenta, un sobre, unas fechas, una etiqueta…) para ver cuánto entró y cuánto salió.</string>
+    <string name="movements_report_open">Ver informe</string>
+    <string name="movements_report_title">Informe</string>
+    <string name="movements_report_loading">Leyendo el informe…</string>
+    <string name="movements_report_by_period">Por periodo</string>
+    <string name="movements_report_by_envelope">Por sobre</string>
 </resources>

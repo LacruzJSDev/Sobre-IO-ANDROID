@@ -5,6 +5,9 @@ import dev.lacruzjs.sobreio.ui.theme.TagColor
 sealed interface TagsEvent {
     /** Handled by the Route, which owns the back stack. */
     data object BackClicked : TagsEvent
+
+    /** A tap on a tag: the Route opens its movements with their totals. */
+    data class OpenClicked(val tagId: String) : TagsEvent
     data object Retry : TagsEvent
 
     /** The "+" of the header and the Edit swipe action: both open the same sheet. */

@@ -142,6 +142,10 @@ class CachedMovementRepository(private val remote: MovementRepository, private v
     override suspend fun search(groupId: String, filter: MovementFilter, limit: Int, offset: Int, withTotal: Boolean) =
         cache.get("movements", groupId, filter, limit, offset, withTotal) { remote.search(groupId, filter, limit, offset, withTotal) }
     override suspend fun getDateContext(groupId: String) = cache.get("dateContext", groupId) { remote.getDateContext(groupId) }
+    override suspend fun getTotals(groupId: String, filter: MovementFilter) =
+        cache.get("movements.totals", groupId, filter) { remote.getTotals(groupId, filter) }
+    override suspend fun getReport(groupId: String, filter: MovementFilter) =
+        cache.get("movements.report", groupId, filter) { remote.getReport(groupId, filter) }
 }
 
 class CachedMovementFormRepository(

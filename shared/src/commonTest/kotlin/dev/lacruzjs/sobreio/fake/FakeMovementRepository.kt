@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.fake
 
+import dev.lacruzjs.sobreio.domain.model.MovementReport
+import dev.lacruzjs.sobreio.domain.model.MovementTotals
 import dev.lacruzjs.sobreio.data.repository.MovementRepository
 import dev.lacruzjs.sobreio.domain.model.DateContext
 import dev.lacruzjs.sobreio.domain.model.Movement
@@ -56,4 +58,15 @@ class FakeMovementRepository(var all: List<Movement> = emptyList()) : MovementRe
     }
 
     override suspend fun getDateContext(groupId: String): Result<DateContext> = contextResult ?: Result.success(context)
+
+    var totals = MovementTotals(0, 0, 0, 0)
+    var report = MovementReport(emptyList(), emptyList())
+    var totalsFilters = mutableListOf<MovementFilter>()
+
+    override suspend fun getTotals(groupId: String, filter: MovementFilter): Result<MovementTotals> {
+        totalsFilters += filter
+        return Result.success(totals)
+    }
+
+    override suspend fun getReport(groupId: String, filter: MovementFilter): Result<MovementReport> = Result.success(report)
 }

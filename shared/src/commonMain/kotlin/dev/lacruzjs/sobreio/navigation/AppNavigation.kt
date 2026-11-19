@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.navigation
 
+import dev.lacruzjs.sobreio.ui.movements.TagMovementsRoute
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth
@@ -237,7 +238,22 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
                 )
             }
             entry<Tags>(metadata = extraPane) { key ->
-                TagsRoute(groupId = key.groupId, startWithCreate = key.startWithCreate, onBack = { backStack.popToPrevious() })
+                TagsRoute(
+                    groupId = key.groupId,
+                    startWithCreate = key.startWithCreate,
+                    onBack = { backStack.popToPrevious() },
+                    onOpenMovements = { tagId -> backStack.add(TagMovements(key.groupId, tagId)) },
+                )
+            }
+            entry<TagMovements>(metadata = extraPane) { key ->
+                TagMovementsRoute(
+                    groupId = key.groupId,
+                    tagId = key.tagId,
+                    onBack = { backStack.popToPrevious() },
+                    onOpenMovementForm = { movementId, source ->
+                        backStack.add(MovementForm(key.groupId, movementId, source?.name, null))
+                    },
+                )
             }
             entry<GroupForm> { key ->
                 GroupFormRoute(

@@ -1,5 +1,12 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import dev.lacruzjs.sobreio.ui.components.RightColumnPadding
+import dev.lacruzjs.sobreio.ui.components.LeftColumnPadding
+import dev.lacruzjs.sobreio.ui.components.TwoColumnSplit
 import dev.lacruzjs.sobreio.generated.resources.movement_no_tags
 import dev.lacruzjs.sobreio.generated.resources.movement_tags_more
 import dev.lacruzjs.sobreio.generated.resources.movement_row_aside
@@ -119,30 +126,28 @@ fun MovementsPane(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        FilterChips(state, onEvent)
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        ) {
-            when {
-                state.isLoading && state.items.isEmpty() -> ListSkeleton(withHero = false, rows = 8)
-                state.error != null && state.items.isEmpty() -> EmptyState(message = stringResource(state.error.messageRes())) {
-                    TextButton(onClick = { onEvent(MovementsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
+        // Wide pane: the filters and the totals of what they pick on the left, the rows on the right
+        TwoColumnSplit(
+            modifier = Modifier.weight(1f),
+            narrow = {
+                Column(Modifier.fillMaxSize()) {
+                    FilterChips(state, onEvent)
+                    MovementRows(state, onEvent, withTotals = true, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp))
                 }
-                state.items.isEmpty() -> if (state.hasActiveFilters) {
-                    EmptyState(message = stringResource(Res.string.movements_empty_filtered)) {
-                        TextButton(onClick = { onEvent(MovementsEvent.ClearAllFilters) }) {
-                            Text(stringResource(Res.string.action_clear_filters))
-                        }
-                    }
-                } else {
-                    EmptyState(message = stringResource(Res.string.movements_empty))
+            },
+            left = {
+                Column(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    FilterChipsFlow(state, onEvent)
+                    if (state.showsTotals) TotalsCard(state, onEvent) else TotalsHint()
                 }
-                else -> MovementList(state, onEvent)
-            }
-        }
+            },
+            right = { MovementRows(state, onEvent, withTotals = false, contentPadding = RightColumnPadding) },
+            leftWeight = 5f,
+            rightWeight = 7f,
+        )
         UndoSnackbarHost(
             message = state.undoMessage?.let { message ->
                 val languageTag = Locale.current.toLanguageTag()
@@ -157,84 +162,135 @@ fun MovementsPane(
     MovementsSheets(state, onEvent)
 }
 
+/** The rows of the list with their loading, error and empty states; [withTotals] puts the totals card first. */
+@Composable
+private fun MovementRows(
+    state: MovementsUiState,
+    onEvent: (MovementsEvent) -> Unit,
+    withTotals: Boolean,
+    contentPadding: PaddingValues,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+    ) {
+
+        when {
+            state.isLoading && state.items.isEmpty() -> ListSkeleton(withHero = false, rows = 8)
+            state.error != null && state.items.isEmpty() -> EmptyState(message = stringResource(state.error.messageRes())) {
+                TextButton(onClick = { onEvent(MovementsEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
+            }
+            state.items.isEmpty() -> if (state.hasActiveFilters) {
+                EmptyState(message = stringResource(Res.string.movements_empty_filtered)) {
+                    TextButton(onClick = { onEvent(MovementsEvent.ClearAllFilters) }) {
+                        Text(stringResource(Res.string.action_clear_filters))
+                    }
+                }
+            } else {
+                EmptyState(message = stringResource(Res.string.movements_empty))
+            }
+            else -> MovementList(state, onEvent, withTotals, contentPadding)
+        }
+    }
+}
+
 // Chips ------------------------------------------------------------------------------------------------------------
 
 @Composable
 private fun FilterChips(state: MovementsUiState, onEvent: (MovementsEvent) -> Unit) {
-    val languageTag = Locale.current.toLanguageTag()
-    val filter = state.filter
-    val chips = buildList {
-        // The level 3 list is one account's: there is nothing to choose
-        if (state.fixedAccountId == null) add(MovementsChip.Account)
-        if (state.fixedEnvelopeId == null) add(MovementsChip.Envelope)
-        add(MovementsChip.Type)
-        add(MovementsChip.Dates)
-        add(MovementsChip.Tags)
-        if (state.hasSeveralMembers) add(MovementsChip.Person)
-    }
-    val unassignedName = stringResource(Res.string.envelopes_unassigned)
     LazyRow(
         modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(chips, key = { it.name }) { chip ->
-            val label = stringResource(chip.labelRes())
-            val account = state.accounts.firstOrNull { it.id == filter.accountId }
-            val envelope = state.envelope(filter.envelopeId)
-            val member = state.members.firstOrNull { it.userId == filter.createdBy }
-            val activeText: String? = when (chip) {
-                MovementsChip.Account -> account?.name
-                MovementsChip.Envelope -> envelope?.let { if (it.kind == EnvelopeKind.System) unassignedName else it.name }
-                MovementsChip.Type -> filter.type?.let { stringResource(it.labelRes()) }
-                MovementsChip.Dates -> if (filter.from != null && filter.to != null) {
-                    stringResource(
-                        Res.string.filter_date_range,
-                        formatDayMonth(filter.from, languageTag),
-                        formatDayMonth(filter.to, languageTag),
-                    )
-                } else {
-                    null
-                }
-                MovementsChip.Tags -> when (filter.tagIds.size) {
-                    0 -> null
-                    1 -> state.tags.firstOrNull { it.id in filter.tagIds }?.name
-                        ?: stringResource(Res.string.filter_tags_count, 1)
-                    else -> stringResource(Res.string.filter_tags_count, filter.tagIds.size)
-                }
-                MovementsChip.Person -> member?.displayName
-            }
-            FilterChipButton(
-                label = label,
-                activeText = activeText,
-                onClick = { onEvent(MovementsEvent.ChipClicked(chip)) },
-                onClear = { onEvent(MovementsEvent.ChipCleared(chip)) },
-                activeLeading = when (chip) {
-                    MovementsChip.Account -> account?.let {
-                        { EntityAvatar(it.name, iconFor(IconCategory.Account, it.icon), EntityColor.fromHex(it.color), size = 24.dp) }
-                    }
-                    MovementsChip.Envelope -> envelope?.let {
-                        {
-                            EntityAvatar(
-                                name = it.name,
-                                icon = if (it.kind == EnvelopeKind.System) Icons.Filled.Inbox else iconFor(IconCategory.Envelope, it.icon),
-                                color = EntityColor.fromHex(it.color),
-                                size = 24.dp,
-                            )
-                        }
-                    }
-                    MovementsChip.Person -> member?.let { { EntityAvatar(it.displayName, null, null, size = 24.dp) } }
-                    else -> null
-                },
-            )
-        }
+        items(movementChips(state), key = { it.name }) { chip -> MovementFilterChip(chip, state, onEvent) }
     }
+}
+
+/** The same chips wrapped over several lines: the left column of a wide pane. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun FilterChipsFlow(state: MovementsUiState, onEvent: (MovementsEvent) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        movementChips(state).forEach { chip -> MovementFilterChip(chip, state, onEvent) }
+    }
+}
+
+private fun movementChips(state: MovementsUiState): List<MovementsChip> = buildList {
+    // The level 3 list is one account's: there is nothing to choose
+    if (state.fixedAccountId == null) add(MovementsChip.Account)
+    if (state.fixedEnvelopeId == null) add(MovementsChip.Envelope)
+    add(MovementsChip.Type)
+    add(MovementsChip.Dates)
+    add(MovementsChip.Tags)
+    if (state.hasSeveralMembers) add(MovementsChip.Person)
+}
+
+@Composable
+private fun MovementFilterChip(chip: MovementsChip, state: MovementsUiState, onEvent: (MovementsEvent) -> Unit) {
+    val languageTag = Locale.current.toLanguageTag()
+    val filter = state.filter
+    val unassignedName = stringResource(Res.string.envelopes_unassigned)
+    val label = stringResource(chip.labelRes())
+    val account = state.accounts.firstOrNull { it.id == filter.accountId }
+    val envelope = state.envelope(filter.envelopeId)
+    val member = state.members.firstOrNull { it.userId == filter.createdBy }
+    val activeText: String? = when (chip) {
+        MovementsChip.Account -> account?.name
+        MovementsChip.Envelope -> envelope?.let { if (it.kind == EnvelopeKind.System) unassignedName else it.name }
+        MovementsChip.Type -> filter.type?.let { stringResource(it.labelRes()) }
+        MovementsChip.Dates -> if (filter.from != null && filter.to != null) {
+            stringResource(
+                Res.string.filter_date_range,
+                formatDayMonth(filter.from, languageTag),
+                formatDayMonth(filter.to, languageTag),
+            )
+        } else {
+            null
+        }
+        MovementsChip.Tags -> when (filter.tagIds.size) {
+            0 -> null
+            1 -> state.tags.firstOrNull { it.id in filter.tagIds }?.name
+                ?: stringResource(Res.string.filter_tags_count, 1)
+            else -> stringResource(Res.string.filter_tags_count, filter.tagIds.size)
+        }
+        MovementsChip.Person -> member?.displayName
+    }
+    FilterChipButton(
+        label = label,
+        activeText = activeText,
+        onClick = { onEvent(MovementsEvent.ChipClicked(chip)) },
+        onClear = { onEvent(MovementsEvent.ChipCleared(chip)) },
+        activeLeading = when (chip) {
+            MovementsChip.Account -> account?.let {
+                { EntityAvatar(it.name, iconFor(IconCategory.Account, it.icon), EntityColor.fromHex(it.color), size = 24.dp) }
+            }
+            MovementsChip.Envelope -> envelope?.let {
+                {
+                    EntityAvatar(
+                        name = it.name,
+                        icon = if (it.kind == EnvelopeKind.System) Icons.Filled.Inbox else iconFor(IconCategory.Envelope, it.icon),
+                        color = EntityColor.fromHex(it.color),
+                        size = 24.dp,
+                    )
+                }
+            }
+            MovementsChip.Person -> member?.let { { EntityAvatar(it.displayName, null, null, size = 24.dp) } }
+            else -> null
+        },
+    )
 }
 
 // List -------------------------------------------------------------------------------------------------------------
 
 @Composable
-private fun MovementList(state: MovementsUiState, onEvent: (MovementsEvent) -> Unit) {
+private fun MovementList(
+    state: MovementsUiState,
+    onEvent: (MovementsEvent) -> Unit,
+    withTotals: Boolean,
+    contentPadding: PaddingValues,
+) {
     val languageTag = Locale.current.toLanguageTag()
     // Not saved: a row is always drawn closed when its screen is composed again
     var openId by remember { mutableStateOf<String?>(null) }
@@ -258,9 +314,10 @@ private fun MovementList(state: MovementsUiState, onEvent: (MovementsEvent) -> U
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
+        if (withTotals && state.showsTotals) item(key = "totals") { TotalsCard(state, onEvent) }
         if (state.actionError != null) {
             item(key = "action-error") {
                 ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))

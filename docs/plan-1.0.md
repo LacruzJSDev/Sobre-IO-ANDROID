@@ -79,7 +79,7 @@ aparece como mucho un instante y no se repiten peticiones idénticas (comprobarl
 
 ## Fase 2 · Tiempo real entre miembros (M en la base de datos + M en la app, después de la 1.1)
 
-**2.1 Base de datos (PR en `Sobre-IO-DB`, decisión D-54).** Recomiendo **Broadcast desde la base de datos** en lugar de
+**2.1 Base de datos (PR en `Sobre-IO-DB`, decisión D-55).** Recomiendo **Broadcast desde la base de datos** en lugar de
 `postgres_changes`:
 - Un trigger `after insert or update` en las tablas del grupo (`transactions`, `account_transfers`, `envelope_transfers`,
   `accounts`, `envelopes`, `commitments`, `commitment_versions`, `commitment_occurrences`, `tags`, `transaction_tags`,
@@ -224,7 +224,7 @@ Fase 6 ── dentro de cada PR, más un PR final de reorganización y documenta
 Fase 7 ── al final
 ```
 
-Los PRs de base de datos (D-54 tiempo real, `search_movements_summary`, la lectura de `audit_log`) son independientes y pueden
+Los PRs de base de datos (D-55 tiempo real, `search_movements_summary`, la lectura de `audit_log`) son independientes y pueden
 ir en paralelo en `Sobre-IO-DB` desde el principio.
 
 ## Decisiones (2026-11-18)
@@ -244,3 +244,4 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 5.1 (gráficas a pantalla completa con animación de zoom y la tabla de valores): hecha.
 - Columnas izquierdas de Cuentas y Sobres llenas y € junto al importe (#32).
 - Fase 5.4 (textos de ayuda: etiqueta al mantener pulsado en todos los iconos e ⓘ en las cifras clave): hecha.
+- Fase 5.3 (informes con cualquier filtro o etiqueta: totales, informe por periodo y por sobre, movimientos de una etiqueta; D-54 en la base de datos): hecha. El tiempo real (Fase 2) usará D-55.
