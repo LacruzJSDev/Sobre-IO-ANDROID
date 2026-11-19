@@ -1,5 +1,14 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.format.formatDate
+import dev.lacruzjs.sobreio.generated.resources.chart_enlarge
+import dev.lacruzjs.sobreio.generated.resources.chart_table_balance
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
+import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
+import dev.lacruzjs.sobreio.ui.components.charts.DayLineChart
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.generated.resources.accounts_row_end_of_period
 import dev.lacruzjs.sobreio.generated.resources.accounts_row_shortfall
@@ -211,22 +220,40 @@ private fun AccountsHero(state: AccountsUiState) {
         if (showChart) {
             val series = state.balanceSeries
             val points = remember(series) { series.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) } }
-            // Only the past: today is its last point, so there is no dashed projection
-            FreeProjectionChart(
-                points = points,
-                todayX = points.last().x,
-                lineColor = ink,
-                negativeColor = hero.negativeOnContainer,
-                ringColor = hero.container,
-                height = 56.dp,
-                contentDescription = stringResource(
-                    Res.string.accounts_hero_chart_description,
-                    formatDayMonth(series.first().day, languageTag),
-                    formatDayMonth(series.last().day, languageTag),
-                    formatMoney(series.first().balanceCents, state.currencyCode, languageTag),
-                    formatMoney(series.last().balanceCents, state.currencyCode, languageTag),
-                ),
+            val description = stringResource(
+                Res.string.accounts_hero_chart_description,
+                formatDayMonth(series.first().day, languageTag),
+                formatDayMonth(series.last().day, languageTag),
+                formatMoney(series.first().balanceCents, state.currencyCode, languageTag),
+                formatMoney(series.last().balanceCents, state.currencyCode, languageTag),
             )
+            // A tap opens the chart full screen: axes, crosshair and every point's figure
+            val zoom = rememberChartZoom(ZOOM_ACCOUNTS_TOTAL, stringResource(Res.string.accounts_total)) {
+                SoftTile {
+                    DayLineChart(points, points.last().x, stringResource(Res.string.chart_table_balance), state.currencyCode, languageTag, description)
+                }
+                ChartTable(
+                    columns = listOf(stringResource(Res.string.chart_table_balance)),
+                    rows = series.asReversed().map { ChartTableRow(formatDate(it.day, languageTag), listOf(it.balanceCents)) },
+                    currencyCode = state.currencyCode,
+                    role = MoneyRole.Balance,
+                )
+            }
+            ZoomableChart(
+                ZOOM_ACCOUNTS_TOTAL,
+                Modifier.clickable(onClickLabel = stringResource(Res.string.chart_enlarge), role = Role.Button, onClick = zoom),
+            ) {
+                // Only the past: today is its last point, so there is no dashed projection
+                FreeProjectionChart(
+                    points = points,
+                    todayX = points.last().x,
+                    lineColor = ink,
+                    negativeColor = hero.negativeOnContainer,
+                    ringColor = hero.container,
+                    height = 56.dp,
+                    contentDescription = description,
+                )
+            }
         }
         if (state.outsideEnvelopes.isNotEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -342,3 +369,5 @@ private fun AccountRow(account: Account, state: AccountsUiState, languageTag: St
         )
     }
 }
+
+private const val ZOOM_ACCOUNTS_TOTAL = "accounts-total"

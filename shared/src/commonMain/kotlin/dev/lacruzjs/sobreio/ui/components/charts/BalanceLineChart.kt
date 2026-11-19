@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components.charts
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,6 +77,8 @@ fun BalanceLineChart(
     contentDescription: String,
     modifier: Modifier = Modifier,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    /** Taller on the zoomed page. */
+    height: Dp = BalanceChartHeight,
 ) {
     val ink = MaterialTheme.colorScheme.primary
     // The part of the line (and its area) below zero is drawn in the negative colour
@@ -97,7 +100,7 @@ fun BalanceLineChart(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(CHART_HEIGHT)
+            .height(height)
             .semantics { this.contentDescription = contentDescription }
             // A press anywhere outside the chart clears the selection (app-wide outside-press host)
             .closeOnOutsidePress(selectedDay != null) { selectedDay = null }
@@ -211,7 +214,8 @@ fun BalanceLineChart(
     }
 }
 
-private val CHART_HEIGHT = 220.dp
+/** Default height of the chart on a card. */
+val BalanceChartHeight = 220.dp
 
 /** Horizontal gridlines with their labels at the left; the zero line is stronger when the axis goes below zero. */
 internal fun DrawScope.drawGrid(

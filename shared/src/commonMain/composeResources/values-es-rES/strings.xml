@@ -884,4 +884,7 @@
     <string name="history_field_account">la cuenta</string>
     <string name="history_field_voided">su eliminación</string>
     <string name="history_field_details">otros datos</string>
+    <string name="chart_enlarge">Ampliar gráfica</string>
+    <string name="chart_table_balance">Saldo</string>
+    <string name="chart_table_free">Libre</string>
 </resources>

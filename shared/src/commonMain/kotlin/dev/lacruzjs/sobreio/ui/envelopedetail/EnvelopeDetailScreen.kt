@@ -1,5 +1,15 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.generated.resources.envelope_detail_left
+import dev.lacruzjs.sobreio.generated.resources.envelope_detail_activity
+import androidx.compose.ui.unit.Dp
+import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
+import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomedChartHeight
+import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
+import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
+import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_section_free_until
 import dev.lacruzjs.sobreio.generated.resources.outlook_until_note
 import dev.lacruzjs.sobreio.generated.resources.outlook_until_period_end
@@ -337,31 +347,54 @@ private fun OutlookSection(outlook: EnvelopeOutlook, until: LocalDate?, currency
 
 @Composable
 private fun ChartSection(state: EnvelopeDetailUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.envelope_detail_section_chart)) {
-        SoftTile {
-            val groups = state.chartPeriods.map { ColumnGroup(formatMonthShort(it.startDate, languageTag), it.chartColumns()) }
-            val periods = state.chartPeriods.map {
-                val (assigned, spent) = it.chartColumns()
-                stringResource(
-                    Res.string.envelope_chart_period,
-                    formatMonthShort(it.startDate, languageTag),
-                    formatMoney(assigned, state.currencyCode, languageTag),
-                    formatMoney(spent, state.currencyCode, languageTag),
-                )
-            }.joinToString(" ")
-            GroupedColumnChart(
-                series = listOf(
-                    ColumnSeries(stringResource(Res.string.chart_legend_assigned), LocalMoneyColors.current.inflow),
-                    ColumnSeries(stringResource(Res.string.chart_legend_spent), LocalMoneyColors.current.outflow),
-                ),
-                groups = groups,
-                formatY = { compactAmount(it, languageTag) },
-                formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-                contentDescription = stringResource(Res.string.envelope_chart_description, state.chartPeriods.size, periods),
-            )
-        }
+    val title = stringResource(Res.string.envelope_detail_section_chart)
+    // The zoomed page: the chart taller and each period as the database has it (assigned, movements, what was left)
+    val zoom = rememberChartZoom(ZOOM_ENVELOPE_CHART, title) {
+        SoftTile { EnvelopeChart(state, languageTag, ZoomedChartHeight) }
+        ChartTable(
+            columns = listOf(
+                stringResource(Res.string.chart_legend_assigned),
+                stringResource(Res.string.envelope_detail_activity),
+                stringResource(Res.string.envelope_detail_left),
+            ),
+            rows = state.chartPeriods.asReversed().map {
+                ChartTableRow(formatMonthShort(it.startDate, languageTag), listOf(it.assignedCents, it.activityCents, it.closingCents))
+            },
+            currencyCode = state.currencyCode,
+            role = MoneyRole.Flow,
+        )
+    }
+    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+        ZoomableChart(ZOOM_ENVELOPE_CHART) { SoftTile { EnvelopeChart(state, languageTag) } }
     }
 }
+
+@Composable
+private fun EnvelopeChart(state: EnvelopeDetailUiState, languageTag: String, height: Dp = FlowsChartHeight) {
+    val groups = state.chartPeriods.map { ColumnGroup(formatMonthShort(it.startDate, languageTag), it.chartColumns()) }
+    val periods = state.chartPeriods.map {
+        val (assigned, spent) = it.chartColumns()
+        stringResource(
+            Res.string.envelope_chart_period,
+            formatMonthShort(it.startDate, languageTag),
+            formatMoney(assigned, state.currencyCode, languageTag),
+            formatMoney(spent, state.currencyCode, languageTag),
+        )
+    }.joinToString(" ")
+    GroupedColumnChart(
+        series = listOf(
+            ColumnSeries(stringResource(Res.string.chart_legend_assigned), LocalMoneyColors.current.inflow),
+            ColumnSeries(stringResource(Res.string.chart_legend_spent), LocalMoneyColors.current.outflow),
+        ),
+        groups = groups,
+        formatY = { compactAmount(it, languageTag) },
+        formatValue = { formatMoney(it, state.currencyCode, languageTag) },
+        contentDescription = stringResource(Res.string.envelope_chart_description, state.chartPeriods.size, periods),
+        height = height,
+    )
+}
+
+private const val ZOOM_ENVELOPE_CHART = "envelope-chart"
 
 /** The commitments that reserve money for the envelope, read only: tapping one opens its detail. */
 @Composable

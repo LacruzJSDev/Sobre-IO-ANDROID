@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components.charts
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +56,8 @@ fun GroupedColumnChart(
     formatValue: (Long) -> String,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    /** Taller on the zoomed page. */
+    height: Dp = FlowsChartHeight,
 ) {
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -71,7 +74,7 @@ fun GroupedColumnChart(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(CHART_HEIGHT)
+                .height(height)
                 .semantics { this.contentDescription = contentDescription }
                 // A press anywhere outside the chart clears the selection (app-wide outside-press host)
                 .closeOnOutsidePress(selected != null) { selected = null }
@@ -156,7 +159,8 @@ fun GroupedColumnChart(
     }
 }
 
-private val CHART_HEIGHT = 200.dp
+/** Default height of the chart on a card. */
+val FlowsChartHeight = 200.dp
 
 /** Where the columns of one group sit inside its slot: [groupStart] from the slot's left edge. */
 internal class ColumnLayout(val barWidth: Float, val gap: Float, val groupStart: Float)
