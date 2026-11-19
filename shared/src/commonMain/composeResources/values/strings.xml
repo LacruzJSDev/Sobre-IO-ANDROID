@@ -924,4 +924,6 @@
     <string name="movements_report_loading">Reading the report…</string>
     <string name="movements_report_by_period">By period</string>
     <string name="movements_report_by_envelope">By envelope</string>
+    <string name="account_chart_more_hint">Enlarge it to change the range or see the balance on a given day</string>
+    <string name="envelope_outlook_more">Tap to look until another day or see the balance on a given day</string>
 </resources>

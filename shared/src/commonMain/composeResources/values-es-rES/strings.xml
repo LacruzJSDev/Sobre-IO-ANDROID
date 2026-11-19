@@ -923,4 +923,6 @@
     <string name="movements_report_loading">Leyendo el informe…</string>
     <string name="movements_report_by_period">Por periodo</string>
     <string name="movements_report_by_envelope">Por sobre</string>
+    <string name="account_chart_more_hint">Amplíala para cambiar el rango o ver el saldo de un día concreto</string>
+    <string name="envelope_outlook_more">Toca para mirar hasta otro día o ver el saldo de un día concreto</string>
 </resources>

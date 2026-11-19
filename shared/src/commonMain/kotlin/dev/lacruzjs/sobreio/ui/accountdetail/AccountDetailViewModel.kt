@@ -322,7 +322,8 @@ class AccountDetailViewModel(
     companion object {
         const val COMPARE_DEBOUNCE_MILLIS = 400L
         const val FLOW_PERIODS = 6
-        const val LATEST_MOVEMENTS = 5
+        /** The detail shows few; the movements icon opens all of them. */
+        const val LATEST_MOVEMENTS = 3
         const val UPCOMING_ITEMS = 3
         private const val UPCOMING_MONTHS = 3
     }

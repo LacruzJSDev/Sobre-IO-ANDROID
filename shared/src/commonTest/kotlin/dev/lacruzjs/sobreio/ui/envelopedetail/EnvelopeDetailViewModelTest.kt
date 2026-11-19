@@ -262,24 +262,24 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun onlyTheLatestFiveMovesAreReadAndNoneCanBeChangedHere() {
+    fun onlyTheLatestThreeMovesAreReadAndNoneCanBeChangedHere() {
         detail.transfers = (1..8).map { transfer(it) }
         val state = loaded().state.value
 
-        assertTrue(detail.calls.contains("getTransfers(e1, 0, 5)"))
-        assertEquals(listOf("t1", "t2", "t3", "t4", "t5"), state.transfers.map { it.transfer.id })
+        assertTrue(detail.calls.contains("getTransfers(e1, 0, 3)"))
+        assertEquals(listOf("t1", "t2", "t3"), state.transfers.map { it.transfer.id })
     }
 
     @Test
-    fun theLatestFiveMovementsOfTheEnvelopeAreRead() {
+    fun theLatestThreeMovementsOfTheEnvelopeAreRead() {
         ledger.all = (1..8).map { movement(it) }
         val state = loaded().state.value
 
         val call = ledger.searches.last()
         assertEquals("e1", call.filter.envelopeId)
-        assertEquals(5, call.limit)
+        assertEquals(3, call.limit)
         assertEquals(0, call.offset)
-        assertEquals(5, state.latestMovements.size)
+        assertEquals(3, state.latestMovements.size)
         assertEquals("Bank", state.accountNames["a1"])
     }
 

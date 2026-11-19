@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.generated.resources.envelope_outlook_more
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_2
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_1
 import dev.lacruzjs.sobreio.generated.resources.info_envelope_period_2
@@ -247,25 +248,10 @@ private fun DetailContent(
         top = { ErrorText(state.actionError, modifier = Modifier.fillMaxWidth()) },
         left = {
             AvailableSection(envelope, state, languageTag)
-            BalanceOnDay(
-                day = state.balanceDay,
-                balanceCents = state.balanceOnDayCents,
-                currencyCode = state.currencyCode,
-                today = state.today,
-                onDaySelected = { onEvent(EnvelopeDetailEvent.BalanceDaySelected(it)) },
-            )
+            // Without an outlook (Unassigned, archived) there is no card to open, so "Balance on" stays here
+            if (state.outlook == null) EnvelopeBalanceOnDay(state, onEvent)
             state.period?.let { PeriodSection(it, state.currencyCode) }
-            state.outlook?.let { periodOutlook ->
-                OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
-                DateFormTile(
-                    label = stringResource(Res.string.outlook_until_label),
-                    date = state.outlookUntil,
-                    onDateSelected = { onEvent(EnvelopeDetailEvent.OutlookUntilSelected(it)) },
-                    emptyText = stringResource(Res.string.outlook_until_period_end),
-                    onClear = if (state.outlookUntil != null) ({ onEvent(EnvelopeDetailEvent.OutlookUntilCleared) }) else null,
-                    note = stringResource(Res.string.outlook_until_note),
-                )
-            }
+            state.outlook?.let { periodOutlook -> ZoomableOutlook(state, periodOutlook, languageTag, onEvent) }
             if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
         },
         right = {
@@ -329,6 +315,59 @@ private fun PeriodSection(period: EnvelopePeriod, currencyCode: String) {
 }
 
 /** What is left once the commitments to the end of the period are paid (`envelope_outlook_current`). */
+/**
+ * "Really free" on the detail is just the card; a tap grows it into a page with the tools to explore it: the same
+ * figures up to a chosen day ("Look until") and the balance on a past day.
+ */
+@Composable
+private fun ZoomableOutlook(
+    state: EnvelopeDetailUiState,
+    periodOutlook: EnvelopeOutlook,
+    languageTag: String,
+    onEvent: (EnvelopeDetailEvent) -> Unit,
+) {
+    val title = stringResource(Res.string.envelope_detail_section_free)
+    val open = rememberChartZoom(ZOOM_OUTLOOK, title) {
+        OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
+        DateFormTile(
+            label = stringResource(Res.string.outlook_until_label),
+            date = state.outlookUntil,
+            onDateSelected = { onEvent(EnvelopeDetailEvent.OutlookUntilSelected(it)) },
+            emptyText = stringResource(Res.string.outlook_until_period_end),
+            onClear = if (state.outlookUntil != null) ({ onEvent(EnvelopeDetailEvent.OutlookUntilCleared) }) else null,
+            note = stringResource(Res.string.outlook_until_note),
+        )
+        EnvelopeBalanceOnDay(state, onEvent)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        ZoomableChart(
+            ZOOM_OUTLOOK,
+            Modifier.clickable(onClickLabel = stringResource(Res.string.envelope_outlook_more), role = Role.Button, onClick = open),
+        ) {
+            OutlookSection(state.outlookUntilFigures ?: periodOutlook, state.outlookUntil, state.currencyCode, languageTag)
+        }
+        Text(
+            text = stringResource(Res.string.envelope_outlook_more),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun EnvelopeBalanceOnDay(state: EnvelopeDetailUiState, onEvent: (EnvelopeDetailEvent) -> Unit) {
+    BalanceOnDay(
+        day = state.balanceDay,
+        balanceCents = state.balanceOnDayCents,
+        currencyCode = state.currencyCode,
+        today = state.today,
+        onDaySelected = { onEvent(EnvelopeDetailEvent.BalanceDaySelected(it)) },
+    )
+}
+
+private const val ZOOM_OUTLOOK = "envelope-outlook"
+
 @Composable
 private fun OutlookSection(outlook: EnvelopeOutlook, until: LocalDate?, currencyCode: String, languageTag: String) {
     StatCard(
