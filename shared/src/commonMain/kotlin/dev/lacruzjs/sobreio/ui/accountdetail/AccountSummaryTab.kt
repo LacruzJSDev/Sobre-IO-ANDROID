@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
 
+import dev.lacruzjs.sobreio.generated.resources.account_chart_more_hint
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_2
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_1
 import androidx.compose.ui.unit.Dp
@@ -128,13 +129,6 @@ internal fun AccountSummaryTab(
         top = { ErrorText(state.actionError, modifier = Modifier.fillMaxWidth()) },
         left = {
             BalanceSection(account, state, languageTag)
-            BalanceOnDay(
-                day = state.balanceDay,
-                balanceCents = state.balanceOnDayCents,
-                currencyCode = state.currencyCode,
-                today = state.today,
-                onDaySelected = { onEvent(AccountDetailEvent.BalanceDaySelected(it)) },
-            )
             BalanceChartSection(state, languageTag, onEvent)
             state.forecast?.let { ForecastSection(state, it.scheduledInCents, it.scheduledOutCents, it.projectedEndCents, it.shortfallCents, languageTag) }
         },
@@ -245,10 +239,18 @@ private fun BalanceSection(account: Account, state: AccountDetailUiState, langua
 @Composable
 private fun BalanceChartSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
     val title = stringResource(Res.string.detail_section_balance_chart)
-    // The zoomed page: the same range chips and chart, taller, and every point of the series as a figure
+    // The detail keeps the chart only; exploring it (the range, the balance on a chosen day, every point as a figure) is
+    // the zoomed page's job
     val zoom = rememberChartZoom(ZOOM_BALANCE, title) {
         RangeChips(state, onEvent)
         SoftTile { BalanceChart(state, languageTag, ZoomedChartHeight) }
+        BalanceOnDay(
+            day = state.balanceDay,
+            balanceCents = state.balanceOnDayCents,
+            currencyCode = state.currencyCode,
+            today = state.today,
+            onDaySelected = { onEvent(AccountDetailEvent.BalanceDaySelected(it)) },
+        )
         ChartTable(
             columns = listOf(stringResource(Res.string.chart_table_balance)),
             rows = state.balanceSeries.asReversed().map { ChartTableRow(formatDate(it.day, languageTag), listOf(it.balanceCents)) },
@@ -257,8 +259,13 @@ private fun BalanceChartSection(state: AccountDetailUiState, languageTag: String
         )
     }
     FormSection(title = title, action = { ChartZoomButton(zoom) }) {
-        RangeChips(state, onEvent)
         ZoomableChart(ZOOM_BALANCE) { SoftTile { BalanceChart(state, languageTag) } }
+        Text(
+            text = stringResource(Res.string.account_chart_more_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
     }
 }
 

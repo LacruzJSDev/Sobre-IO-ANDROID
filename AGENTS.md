@@ -491,6 +491,11 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Lighter details (plan phase 5.2): a detail shows the essentials and leaves exploring to the zoomed page. Account detail: the
+  balance chart has no range chips on the detail (a muted line says to enlarge it); its zoomed page holds the range chips,
+  the chart, "Balance on" and every point; the latest movements are 3 (`LATEST_MOVEMENTS`). Envelope detail: the "Really free"
+  card is tappable (`ZoomableOutlook`, a muted line says so) and grows into a page with the card, "Look until" and "Balance on";
+  without an outlook (Unassigned, archived) "Balance on" stays on the detail; the latest moves and movements are 3 each.
 - Movement reports (plan phase 5.3, D-54 in the DB repo): `MovementRepository.getTotals` (`search_movements_summary`) and
   `getReport` (`search_movements_by_period` + `search_movements_by_envelope`) take the screen's `MovementFilter`
   (`domain/model/MovementReport.kt`). `MovementsViewModel` reads the totals after each first page (secondary: a failure hides

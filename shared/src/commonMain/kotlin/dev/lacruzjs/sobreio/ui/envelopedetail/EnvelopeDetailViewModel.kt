@@ -226,7 +226,8 @@ class EnvelopeDetailViewModel(
 
     companion object {
         const val CHART_PERIODS = 6
-        const val LATEST_TRANSFERS = 5
-        const val LATEST_MOVEMENTS = 5
+        /** The detail shows few of each; the icons of their sections open all of them. */
+        const val LATEST_TRANSFERS = 3
+        const val LATEST_MOVEMENTS = 3
     }
 }
