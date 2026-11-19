@@ -1,5 +1,13 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import dev.lacruzjs.sobreio.ui.components.SingleColumnPadding
+import dev.lacruzjs.sobreio.ui.components.RightColumnPadding
+import dev.lacruzjs.sobreio.ui.components.LeftColumnPadding
+import dev.lacruzjs.sobreio.ui.components.TwoColumnSplit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,11 +49,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,6 +96,29 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> Unit) {
+    // Wide pane: the money to distribute stays on the left while the envelopes scroll on the right
+    TwoColumnSplit(
+        narrow = { EnvelopeRows(state, onEvent, withHero = true, contentPadding = SingleColumnPadding) },
+        left = {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding)) {
+                if (state.unassigned != null && state.summary != null) {
+                    EnvelopesHero(state = state, onClick = { onEvent(EnvelopesEvent.OpenClicked(state.unassigned.id)) })
+                }
+            }
+        },
+        right = { EnvelopeRows(state, onEvent, withHero = false, contentPadding = RightColumnPadding) },
+        leftWeight = 5f,
+        rightWeight = 6f,
+    )
+}
+
+@Composable
+private fun EnvelopeRows(
+    state: EnvelopesUiState,
+    onEvent: (EnvelopesEvent) -> Unit,
+    withHero: Boolean,
+    contentPadding: PaddingValues,
+) {
     // Not saved: a row is always drawn closed when its screen is composed again
     var openEnvelopeId by remember { mutableStateOf<String?>(null) }
     var archivedExpanded by rememberSaveable { mutableStateOf(false) }
@@ -133,10 +162,10 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        if (state.unassigned != null && state.summary != null) {
+        if (withHero && state.unassigned != null && state.summary != null) {
             item(key = "hero") {
                 EnvelopesHero(
                     state = state,

@@ -1,4 +1,13 @@
 package dev.lacruzjs.sobreio.ui.groupsettings
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import dev.lacruzjs.sobreio.ui.components.ContentWidth
+import dev.lacruzjs.sobreio.ui.components.SingleColumnPadding
+import dev.lacruzjs.sobreio.ui.components.RightColumnPadding
+import dev.lacruzjs.sobreio.ui.components.LeftColumnPadding
+import dev.lacruzjs.sobreio.ui.components.TwoColumnSplit
 import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -32,11 +41,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -89,7 +95,6 @@ import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
-import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.SwipeActionsRow
 import dev.lacruzjs.sobreio.ui.components.changeRoleAction
 import dev.lacruzjs.sobreio.ui.components.removeMemberAction
@@ -150,7 +155,7 @@ fun GroupSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().contentMaxWidth()) {
+        Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.TwoColumns)) {
             ScreenHeader(
                 isRefreshing = state.isRefreshing,
                 title = stringResource(Res.string.group_settings_title),
@@ -200,6 +205,30 @@ fun GroupSettingsScreen(
 
 @Composable
 private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: (GroupSettingsEvent) -> Unit) {
+    // Wide pane: what the group is (details and tags) on the left, who is in it (members and invitations) on the right
+    TwoColumnSplit(
+        narrow = { SettingsList(group, state, onEvent, withSummary = true, contentPadding = SingleColumnPadding) },
+        left = {
+            Column(
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                DetailsSection(group)
+                TagsSection(state.tags, state.canManageTags, onEvent)
+            }
+        },
+        right = { SettingsList(group, state, onEvent, withSummary = false, contentPadding = RightColumnPadding) },
+    )
+}
+
+@Composable
+private fun SettingsList(
+    group: Group,
+    state: GroupSettingsUiState,
+    onEvent: (GroupSettingsEvent) -> Unit,
+    withSummary: Boolean,
+    contentPadding: PaddingValues,
+) {
     // Not saved: a row is always drawn closed when its screen is composed again
     var openKey by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
@@ -211,10 +240,10 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        item(key = "details") { DetailsSection(group) }
+        if (withSummary) item(key = "details") { DetailsSection(group) }
 
         if (state.actionError != null) {
             item(key = "error") {
@@ -246,7 +275,7 @@ private fun SettingsContent(group: Group, state: GroupSettingsUiState, onEvent: 
             }
         }
 
-        item(key = "tags") { TagsSection(state.tags, state.canManageTags, onEvent) }
+        if (withSummary) item(key = "tags") { TagsSection(state.tags, state.canManageTags, onEvent) }
 
         if (state.canInvite) {
             item(key = "invitations-title") {

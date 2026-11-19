@@ -237,4 +237,6 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 
 ## Estado
 
-- Fase 1 (caché, carga en dos pasadas, esqueletos y barra fina): hecha en la rama `feat/data-stores`.
+- Fase 0 (anular aportaciones): hecha (#26).
+- Fase 1 (caché, carga en dos pasadas, esqueletos y barra fina): hecha (#27).
+- Fase 3 (dos columnas con scroll independiente): Grupo, Cuentas, Sobres, detalles de cuenta, sobre y compromiso, y ajustes del grupo. Movimientos sigue en una columna hasta la 5.3 (resumen del filtro); la revisión de la importación del banco y el perfil se quedan en una columna.

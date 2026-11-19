@@ -1,7 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import dev.lacruzjs.sobreio.ui.components.ContentWidth
 
 import androidx.compose.foundation.background
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -33,13 +30,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
@@ -95,6 +89,7 @@ import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.TwoColumnLayout
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.HeroCard
 import dev.lacruzjs.sobreio.ui.components.HeroFigure
@@ -148,49 +143,21 @@ fun GroupSummaryPane(
 @Composable
 private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, onEvent: (GroupSummaryEvent) -> Unit) {
     val languageTag = Locale.current.toLanguageTag()
-    // The pane's own width decides, not the window's: beside a detail the pane is narrow and stays one column
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val twoColumns = maxWidth >= ContentWidth.TwoColumnsMinPane
-        val scroll = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)
-        if (twoColumns) {
-            Column(modifier = scroll, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
-                // Rows of pieces of a similar size, so neither side runs on alone: first what needs attention now (the
-                // free money beside what to review and the warnings), then the period's two charts side by side, and the
-                // next due items across the whole width, where their horizontal row has room
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Box(modifier = Modifier.weight(1f)) { GroupHero(state, outlook, languageTag) }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        ReviewCard(state, languageTag, onEvent)
-                        if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
-                    }
-                }
-                val hasSpending = state.spending.isNotEmpty()
-                val hasFlows = state.flows.isNotEmpty()
-                if (hasSpending && hasFlows) {
-                    // Side by side the two cards share one height, the taller one's
-                    Row(modifier = Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        SpendingSection(state, onEvent, modifier = Modifier.weight(1f).fillMaxHeight(), fillHeight = true)
-                        FlowsSection(state, languageTag, modifier = Modifier.weight(1f).fillMaxHeight(), fillHeight = true)
-                    }
-                } else {
-                    if (hasSpending) SpendingSection(state, onEvent)
-                    if (hasFlows) FlowsSection(state, languageTag)
-                }
-                UpcomingSection(state, languageTag)
-            }
-        } else {
-            Column(modifier = scroll, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
-                GroupHero(state, outlook, languageTag)
-                ReviewCard(state, languageTag, onEvent)
-                if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
-                if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
-                if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
-                UpcomingSection(state, languageTag)
-            }
-        }
-    }
+    // What needs attention now on the left (the free money, what to review, the warnings); how the period went and
+    // what comes next on the right. Each column scrolls by itself on a wide pane.
+    TwoColumnLayout(
+        top = { ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp)) },
+        left = {
+            GroupHero(state, outlook, languageTag)
+            ReviewCard(state, languageTag, onEvent)
+            if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
+        },
+        right = {
+            if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
+            if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
+            UpcomingSection(state, languageTag)
+        },
+    )
 }
 
 /**
@@ -449,10 +416,9 @@ private fun SpendingSection(
     state: GroupSummaryUiState,
     onEvent: (GroupSummaryEvent) -> Unit,
     modifier: Modifier = Modifier,
-    fillHeight: Boolean = false,
 ) {
     FormSection(title = stringResource(Res.string.group_summary_spending_title), modifier = modifier) {
-        SoftTile(modifier = if (fillHeight) Modifier.weight(1f) else Modifier) {
+        SoftTile {
             val bar = LocalMoneyColors.current.outflow
             state.spending.forEach { item ->
                 val name = if (item.envelope.kind == EnvelopeKind.System) stringResource(Res.string.envelopes_unassigned) else item.envelope.name
@@ -497,10 +463,9 @@ private fun FlowsSection(
     state: GroupSummaryUiState,
     languageTag: String,
     modifier: Modifier = Modifier,
-    fillHeight: Boolean = false,
 ) {
     FormSection(title = stringResource(Res.string.group_summary_flows_title), modifier = modifier) {
-        SoftTile(modifier = if (fillHeight) Modifier.weight(1f) else Modifier) {
+        SoftTile {
             val groups = state.flows.map {
                 ColumnGroup(formatMonthShort(it.startDate, languageTag), listOf(it.inflowCents, it.outflowCents))
             }

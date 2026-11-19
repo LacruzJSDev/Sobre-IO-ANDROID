@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -18,18 +20,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.Group
@@ -367,10 +365,11 @@ fun GroupScreen(
         },
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            // Lists keep a readable width; the Group tab lays out two columns on a wide pane, so it gets more room
             Column(
+                // Group, Accounts and Envelopes lay out two columns on a wide pane; Movements stays one readable column until
+                // its filter summary gives the left side something to hold
                 modifier = Modifier.fillMaxSize().contentMaxWidth(
-                    if (state.selectedTab == GroupTab.Group) ContentWidth.TwoColumns else ContentWidth.List,
+                    if (state.selectedTab == GroupTab.Movements) ContentWidth.List else ContentWidth.TwoColumns,
                 ),
             ) {
                 // Same header on every tab. The right side is free for the actions of each section.

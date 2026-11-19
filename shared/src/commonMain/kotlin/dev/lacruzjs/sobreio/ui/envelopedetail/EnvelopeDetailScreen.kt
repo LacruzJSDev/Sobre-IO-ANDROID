@@ -1,9 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inbox
@@ -26,7 +24,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,11 +80,11 @@ import dev.lacruzjs.sobreio.generated.resources.transfer_to
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
-import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.DetailSkeleton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
+import dev.lacruzjs.sobreio.ui.components.TwoColumnLayout
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.IconCategory
@@ -99,7 +96,6 @@ import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
 import dev.lacruzjs.sobreio.ui.components.charts.GroupedColumnChart
 import dev.lacruzjs.sobreio.ui.components.charts.compactAmount
-import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 import dev.lacruzjs.sobreio.ui.components.iconFor
 import dev.lacruzjs.sobreio.ui.envelopes.labelRes
 import dev.lacruzjs.sobreio.ui.envelopetransfers.originLabel
@@ -224,46 +220,23 @@ private fun DetailContent(
     languageTag: String,
     onEvent: (EnvelopeDetailEvent) -> Unit,
 ) {
-    // The pane's own width decides the layout, not the window's
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val twoColumns = maxWidth >= ContentWidth.TwoColumnsMinPane
-        val scroll = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .contentMaxWidth(if (twoColumns) ContentWidth.TwoColumns else ContentWidth.List)
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-        val spacing = Arrangement.spacedBy(12.dp)
-        if (twoColumns) {
-            Column(modifier = scroll, verticalArrangement = spacing) {
-                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    // The envelope's figures on the left; its history and what funds it on the right
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
-                        AvailableSection(envelope, state, languageTag)
-                        state.period?.let { PeriodSection(it, state.currencyCode) }
-                        state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = spacing) {
-                        if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
-                        if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
-                        TransfersSection(state, languageTag, onEvent)
-                        LatestMovementsSection(state, languageTag, onEvent)
-                    }
-                }
-            }
-        } else {
-            Column(modifier = scroll, verticalArrangement = spacing) {
-                ErrorText(state.actionError, modifier = Modifier.fillMaxWidth())
-                AvailableSection(envelope, state, languageTag)
-                state.period?.let { PeriodSection(it, state.currencyCode) }
-                state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
-                if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
-                if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
-                TransfersSection(state, languageTag, onEvent)
-                LatestMovementsSection(state, languageTag, onEvent)
-            }
-        }
-    }
+    // The envelope's figures and their history on the left; what moves money in and out on the right, each with its
+    // own scroll on a wide pane
+    TwoColumnLayout(
+        spacing = 12.dp,
+        top = { ErrorText(state.actionError, modifier = Modifier.fillMaxWidth()) },
+        left = {
+            AvailableSection(envelope, state, languageTag)
+            state.period?.let { PeriodSection(it, state.currencyCode) }
+            state.outlook?.let { OutlookSection(it, state.currencyCode, languageTag) }
+            if (state.chartPeriods.isNotEmpty()) ChartSection(state, languageTag)
+        },
+        right = {
+            if (state.funding.isNotEmpty()) FundingSection(state, languageTag, onEvent)
+            TransfersSection(state, languageTag, onEvent)
+            LatestMovementsSection(state, languageTag, onEvent)
+        },
+    )
 }
 
 @Composable
