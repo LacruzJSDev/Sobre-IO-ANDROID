@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import org.jetbrains.compose.resources.StringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,8 @@ fun StatCard(
     modifier: Modifier = Modifier,
     title: String? = null,
     warning: String? = null,
+    /** Paragraphs of the ⓘ next to [title] that explains the card; none, no ⓘ. */
+    info: List<StringResource> = emptyList(),
 ) {
     Column(
         modifier = modifier
@@ -50,7 +53,10 @@ fun StatCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (title != null) {
-            Text(text = title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (info.isNotEmpty()) InfoButton(title = title, paragraphs = info)
+            }
         }
         rows.forEachIndexed { index, row ->
             Row(

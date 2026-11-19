@@ -63,8 +63,10 @@ fun FormScaffold(
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onClose, enabled = !isSaving) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                LabelTooltip(stringResource(Res.string.action_close)) {
+                    IconButton(onClick = onClose, enabled = !isSaving) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                    }
                 }
                 Text(
                     text = title,

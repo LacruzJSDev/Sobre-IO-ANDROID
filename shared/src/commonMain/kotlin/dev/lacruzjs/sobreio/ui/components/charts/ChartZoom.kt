@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.components.charts
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -193,8 +194,10 @@ private fun ZoomedPage(state: ChartZoomState, request: ZoomRequest, scope: Share
                     modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = { state.close() }) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                    LabelTooltip(stringResource(Res.string.action_close)) {
+                        IconButton(onClick = { state.close() }) {
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                        }
                     }
                     Text(
                         text = request.title,

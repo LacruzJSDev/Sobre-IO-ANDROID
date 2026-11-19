@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.generated.resources.info_accounts_total_2
+import dev.lacruzjs.sobreio.generated.resources.info_accounts_total_1
+import dev.lacruzjs.sobreio.ui.components.HeroLabelWithInfo
 import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.generated.resources.chart_enlarge
@@ -218,7 +221,12 @@ private fun AccountsHero(state: AccountsUiState) {
     HeroCard(modifier = Modifier.padding(bottom = 8.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HeroLabel(stringResource(Res.string.accounts_total), modifier = Modifier.weight(1f))
+                HeroLabelWithInfo(
+                    text = stringResource(Res.string.accounts_total),
+                    infoTitle = stringResource(Res.string.accounts_total),
+                    paragraphs = listOf(Res.string.info_accounts_total_1, Res.string.info_accounts_total_2),
+                    modifier = Modifier.weight(1f),
+                )
                 if (showChart) HeroLabel(stringResource(Res.string.accounts_hero_last_months))
             }
             HeroFigure(amountCents = state.totalCents, currencyCode = state.currencyCode)

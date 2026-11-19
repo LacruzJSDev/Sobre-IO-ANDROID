@@ -896,4 +896,19 @@
     <string name="envelopes_payments_title">Payments until %1$s</string>
     <string name="envelopes_payments_empty">No envelope has anything else to pay this period</string>
     <string name="envelopes_latest_moves_title">Latest moves between envelopes</string>
+    <string name="action_what_is_this">What is %1$s?</string>
+    <string name="info_free_today_1">What you could spend today without taking it from any envelope: the money in Unassigned minus what the envelopes have gone below zero.</string>
+    <string name="info_free_today_2">The line shows how it moves day by day until the end of the period as due dates are paid and expected income comes in; dashed is the future.</string>
+    <string name="info_free_today_3">“Projected” is where it will end. The figure beside it is what explains the difference: commitments the envelopes cannot cover, contributions to other groups or expected income.</string>
+    <string name="info_free_to_distribute_1">The money in your accounts that is not in any envelope yet (Unassigned). Give it a job by assigning it to envelopes.</string>
+    <string name="info_free_to_distribute_2">The rows show how it is made: what is in your accounts, minus the payments of this period, what is set aside for later and the rest of the envelopes.</string>
+    <string name="info_free_to_distribute_3">Below zero means the envelopes hold more than your accounts have: move money out of an envelope or wait for the income that covers it.</string>
+    <string name="info_accounts_total_1">The sum of the balances of every live account of the group, as the database computes it.</string>
+    <string name="info_accounts_total_2">Accounts outside the envelopes (savings, investments) count here but their money is not distributed into envelopes.</string>
+    <string name="info_forecast_1">What the commitments will bring in and take out of this account until the end of the period, overdue ones included, and the balance it will end with.</string>
+    <string name="info_forecast_2">If it goes below zero on the way, the warning says by how much and on which day, so you can move money in before.</string>
+    <string name="info_envelope_period_1">How the envelope\'s period went: what it brought from the last period, what was assigned to it, what was spent from it and what is left.</string>
+    <string name="info_envelope_period_2">What is left is carried to the next period.</string>
+    <string name="info_envelope_free_1">The envelope\'s balance minus what pending commitments will still take from it until the end of the period (or the day you choose).</string>
+    <string name="info_envelope_free_2">When the commitments need more than the envelope has, the difference will have to come from elsewhere.</string>
 </resources>

@@ -1,6 +1,10 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
 
+import dev.lacruzjs.sobreio.generated.resources.info_free_today_3
+import dev.lacruzjs.sobreio.generated.resources.info_free_today_2
+import dev.lacruzjs.sobreio.generated.resources.info_free_today_1
+import dev.lacruzjs.sobreio.ui.components.HeroLabelWithInfo
 import dev.lacruzjs.sobreio.generated.resources.chart_enlarge
 import dev.lacruzjs.sobreio.generated.resources.chart_table_free
 import dev.lacruzjs.sobreio.ui.components.charts.DayLineChart
@@ -236,7 +240,12 @@ private fun GroupHero(state: GroupSummaryUiState, outlook: GroupOutlook, languag
     val paper = hero.onContainer
     HeroCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            HeroLabel(text = stringResource(Res.string.group_summary_free_today), modifier = Modifier.weight(1f))
+            HeroLabelWithInfo(
+                text = stringResource(Res.string.group_summary_free_today),
+                infoTitle = stringResource(Res.string.group_summary_free_today),
+                paragraphs = listOf(Res.string.info_free_today_1, Res.string.info_free_today_2, Res.string.info_free_today_3),
+                modifier = Modifier.weight(1f),
+            )
             state.daysLeft?.let { left ->
                 HeroLabel(
                     text = if (left == 0) {

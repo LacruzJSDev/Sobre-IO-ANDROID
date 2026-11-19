@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopedetail
 
+import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_2
+import dev.lacruzjs.sobreio.generated.resources.info_envelope_free_1
+import dev.lacruzjs.sobreio.generated.resources.info_envelope_period_2
+import dev.lacruzjs.sobreio.generated.resources.info_envelope_period_1
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_left
 import dev.lacruzjs.sobreio.generated.resources.envelope_detail_activity
 import androidx.compose.ui.unit.Dp
@@ -313,6 +317,7 @@ private fun AvailableSection(envelope: Envelope, state: EnvelopeDetailUiState, l
 private fun PeriodSection(period: EnvelopePeriod, currencyCode: String) {
     StatCard(
         title = stringResource(Res.string.envelope_detail_section_period),
+        info = listOf(Res.string.info_envelope_period_1, Res.string.info_envelope_period_2),
         currencyCode = currencyCode,
         rows = listOf(
             StatRow(stringResource(Res.string.envelope_detail_brought), period.openingCents, MoneyRole.Balance),
@@ -332,6 +337,7 @@ private fun OutlookSection(outlook: EnvelopeOutlook, until: LocalDate?, currency
         } else {
             stringResource(Res.string.envelope_detail_section_free_until, formatDate(until, languageTag))
         },
+        info = listOf(Res.string.info_envelope_free_1, Res.string.info_envelope_free_2),
         currencyCode = currencyCode,
         rows = listOf(
             StatRow(stringResource(Res.string.envelope_detail_committed), -outlook.committedCents, MoneyRole.Flow),

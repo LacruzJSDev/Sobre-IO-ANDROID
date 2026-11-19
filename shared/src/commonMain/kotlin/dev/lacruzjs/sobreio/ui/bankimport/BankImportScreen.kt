@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.bankimport
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -226,8 +227,10 @@ private fun Header(state: BankImportUiState, onEvent: (BankImportEvent) -> Unit)
         onBack = if (closes) null else ({ onEvent(BankImportEvent.BackPressed) }),
         navigation = if (closes) {
             {
-                IconButton(onClick = { onEvent(BankImportEvent.CloseClicked) }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                LabelTooltip(stringResource(Res.string.action_close)) {
+                    IconButton(onClick = { onEvent(BankImportEvent.CloseClicked) }) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_close))
+                    }
                 }
             }
         } else {

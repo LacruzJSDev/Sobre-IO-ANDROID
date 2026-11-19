@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import dev.lacruzjs.sobreio.ui.export.ExportEvent
 import dev.lacruzjs.sobreio.ui.export.ExportHost
 import dev.lacruzjs.sobreio.ui.export.ExportViewModel
@@ -421,11 +422,13 @@ private fun HeaderAction(
     movementsAction: @Composable () -> Unit,
 ) {
     when (state.selectedTab) {
-        GroupTab.Group -> IconButton(onClick = { onEvent(GroupEvent.SettingsClicked) }) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_settings),
-                contentDescription = stringResource(Res.string.group_settings_title),
-            )
+        GroupTab.Group -> LabelTooltip(stringResource(Res.string.group_settings_title)) {
+            IconButton(onClick = { onEvent(GroupEvent.SettingsClicked) }) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_settings),
+                    contentDescription = stringResource(Res.string.group_settings_title),
+                )
+            }
         }
         GroupTab.Accounts -> accountsAction()
         GroupTab.Envelopes -> envelopesAction()

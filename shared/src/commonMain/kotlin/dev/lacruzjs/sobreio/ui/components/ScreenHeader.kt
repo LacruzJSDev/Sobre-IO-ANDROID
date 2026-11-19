@@ -30,19 +30,23 @@ import dev.lacruzjs.sobreio.generated.resources.ic_arrow_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Back arrow of every header; the label is for screen readers. */
+/** Back arrow of every header; its label is read by screen readers and shown on long press. */
 @Composable
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = stringResource(Res.string.action_back))
+    LabelTooltip(stringResource(Res.string.action_back)) {
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = stringResource(Res.string.action_back))
+        }
     }
 }
 
 /** Menu button of a group's header: opens the Groups screen (a group is a root, so it has no back arrow). */
 @Composable
 fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(imageVector = Icons.Filled.Menu, contentDescription = stringResource(Res.string.action_open_groups))
+    LabelTooltip(stringResource(Res.string.action_open_groups)) {
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(imageVector = Icons.Filled.Menu, contentDescription = stringResource(Res.string.action_open_groups))
+        }
     }
 }
 

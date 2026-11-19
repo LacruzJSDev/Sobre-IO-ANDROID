@@ -51,13 +51,14 @@ fun PasswordField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
         onKeyboardAction = { onImeAction() },
         trailingIcon = {
-            IconButton(onClick = { visible = !visible }) {
-                Icon(
-                    painter = painterResource(if (visible) Res.drawable.ic_visibility_off else Res.drawable.ic_visibility),
-                    contentDescription = stringResource(
-                        if (visible) Res.string.action_hide_password else Res.string.action_show_password,
-                    ),
-                )
+            val label = stringResource(if (visible) Res.string.action_hide_password else Res.string.action_show_password)
+            LabelTooltip(label) {
+                IconButton(onClick = { visible = !visible }) {
+                    Icon(
+                        painter = painterResource(if (visible) Res.drawable.ic_visibility_off else Res.drawable.ic_visibility),
+                        contentDescription = label,
+                    )
+                }
             }
         },
     )
