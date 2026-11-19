@@ -58,7 +58,6 @@ import dev.lacruzjs.sobreio.generated.resources.action_close
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.bank_import_choose_file
 import dev.lacruzjs.sobreio.generated.resources.bank_import_columns_title
-import dev.lacruzjs.sobreio.generated.resources.bank_import_continue
 import dev.lacruzjs.sobreio.generated.resources.bank_import_discard
 import dev.lacruzjs.sobreio.generated.resources.bank_import_discard_text
 import dev.lacruzjs.sobreio.generated.resources.bank_import_discard_title
@@ -108,7 +107,7 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_tag_name
 import dev.lacruzjs.sobreio.generated.resources.bank_import_title
 import dev.lacruzjs.sobreio.generated.resources.bank_import_undo_import
 import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.bankimport.picker.rememberStatementFilePicker
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.EmptyState

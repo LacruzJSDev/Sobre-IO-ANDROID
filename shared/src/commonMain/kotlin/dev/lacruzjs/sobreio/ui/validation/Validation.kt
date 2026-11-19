@@ -1,24 +1,37 @@
-package dev.lacruzjs.sobreio.ui.auth
+package dev.lacruzjs.sobreio.ui.validation
 
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_code_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_email_invalid
+import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_password_short
 import dev.lacruzjs.sobreio.generated.resources.validation_passwords_mismatch
 import dev.lacruzjs.sobreio.generated.resources.validation_required
 import org.jetbrains.compose.resources.StringResource
 
-// UI-level checks only: they save a round trip for obvious typos. The server stays the authority (D-43).
+/*
+ * Checks of what the user typed, shared by every form. Each returns the string resource of the problem, or null when the
+ * value is fine. They only save a round trip for obvious mistakes: the database stays the authority (its constraints and
+ * FZ codes).
+ */
 
 internal const val MIN_PASSWORD_LENGTH = 6
+
+/** Length of the codes the auth emails send (D-43). */
 internal const val CODE_LENGTH = 6
 
 // Deliberately loose; the confirmation code is what proves the address is real
 private val EmailShape = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
 
-/** Each function returns the string resource of the problem, or null when the value is fine. */
 internal fun validateRequired(value: String): StringResource? =
     if (value.isBlank()) Res.string.validation_required else null
+
+/** A name the user typed: present and at most [maxLength] characters (the database's limit for that column). */
+internal fun validateName(name: String, maxLength: Int): StringResource? = when {
+    name.isEmpty() -> validateRequired(name)
+    name.length > maxLength -> Res.string.validation_name_too_long
+    else -> null
+}
 
 internal fun validateEmail(value: String): StringResource? = when {
     value.isBlank() -> Res.string.validation_required

@@ -99,7 +99,7 @@ import dev.lacruzjs.sobreio.generated.resources.ic_list
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.transfer_from
 import dev.lacruzjs.sobreio.generated.resources.transfer_to
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.accountdetail.labelRes
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.components.DetailSkeleton

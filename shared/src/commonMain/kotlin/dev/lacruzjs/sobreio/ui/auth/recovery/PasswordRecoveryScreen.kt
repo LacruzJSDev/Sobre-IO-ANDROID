@@ -30,7 +30,7 @@ import dev.lacruzjs.sobreio.generated.resources.recovery_title
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormTextField
-import dev.lacruzjs.sobreio.ui.auth.CODE_LENGTH
+import dev.lacruzjs.sobreio.ui.validation.CODE_LENGTH
 import dev.lacruzjs.sobreio.ui.components.digitsOnly
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.PasswordField

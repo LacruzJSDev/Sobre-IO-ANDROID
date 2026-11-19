@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accountform
 
+import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
@@ -13,8 +14,6 @@ import dev.lacruzjs.sobreio.domain.model.hasSeveralMembers
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.error_account_scope_movements
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -164,7 +163,7 @@ class AccountFormViewModel(
         val current = _state.value
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val name = current.name.trim()
-        val nameError = validateName(name)
+        val nameError = validateName(name, MAX_ACCOUNT_NAME_LENGTH)
         val editing = accountId != null
         val openingBalance = if (editing) 0L else parseMoneyInput(current.openingBalance)?.let { if (current.openingBalanceIsDebt) -abs(it) else abs(it) }
         val balanceError = if (openingBalance == null) Res.string.validation_amount_invalid else null
@@ -212,11 +211,6 @@ class AccountFormViewModel(
 
     private fun fail(e: Throwable) = _state.update { it.copy(isSubmitting = false, submitError = e.asAppError()) }
 
-    private fun validateName(name: String): StringResource? = when {
-        name.isEmpty() -> validateRequired(name)
-        name.length > MAX_ACCOUNT_NAME_LENGTH -> Res.string.validation_name_too_long
-        else -> null
-    }
 
     private companion object {
         /** SQLSTATE of "the account has movements from today on" (and of other incoherent scopes). */

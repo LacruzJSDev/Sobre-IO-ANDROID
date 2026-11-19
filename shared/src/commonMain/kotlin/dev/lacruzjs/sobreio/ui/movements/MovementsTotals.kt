@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.components.displayName
 import dev.lacruzjs.sobreio.generated.resources.envelope_transfer_unknown_envelope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,13 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_period
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_in
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_out
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.movements_report_by_envelope
 import dev.lacruzjs.sobreio.generated.resources.movements_report_by_period
 import dev.lacruzjs.sobreio.generated.resources.movements_report_loading
@@ -35,7 +34,7 @@ import dev.lacruzjs.sobreio.generated.resources.movements_totals_in
 import dev.lacruzjs.sobreio.generated.resources.movements_totals_net
 import dev.lacruzjs.sobreio.generated.resources.movements_totals_out
 import dev.lacruzjs.sobreio.generated.resources.movements_totals_title
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
@@ -158,18 +157,13 @@ private fun ReportPage(state: MovementsUiState) {
         }
     }
     if (report.envelopes.isNotEmpty()) {
-        val unassigned = stringResource(Res.string.envelopes_unassigned)
         val unknown = stringResource(Res.string.envelope_transfer_unknown_envelope)
         val biggest = report.envelopes.maxOf { maxOf(it.outflowCents, it.inflowCents) }.coerceAtLeast(1)
         FormSection(title = stringResource(Res.string.movements_report_by_envelope)) {
             SoftTile {
                 report.envelopes.forEach { row ->
                     val envelope = state.envelope(row.envelopeId)
-                    val name = when {
-                        envelope == null -> unknown
-                        envelope.kind == EnvelopeKind.System -> unassigned
-                        else -> envelope.name
-                    }
+                    val name = envelope?.displayName() ?: unknown
                     val spent = row.outflowCents >= row.inflowCents
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

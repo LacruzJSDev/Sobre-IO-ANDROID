@@ -14,7 +14,7 @@ import dev.lacruzjs.sobreio.generated.resources.group_deleted
 import dev.lacruzjs.sobreio.generated.resources.group_deletion_cancelled
 import dev.lacruzjs.sobreio.generated.resources.group_reopened
 import dev.lacruzjs.sobreio.generated.resources.group_left
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
+import dev.lacruzjs.sobreio.ui.validation.validateRequired
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction

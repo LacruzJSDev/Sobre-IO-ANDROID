@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
 
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.generated.resources.account_chart_more_hint
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_2
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_1
@@ -15,10 +16,8 @@ import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
 import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
 import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
 import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -33,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -187,20 +185,6 @@ private fun BankSection(state: AccountDetailUiState, languageTag: String, onEven
             }
         }
     }
-}
-
-/** Soft rounded surface the content of a section sits on. */
-@Composable
-internal fun SoftTile(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        content = content,
-    )
 }
 
 @Composable

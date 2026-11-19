@@ -1,20 +1,17 @@
 package dev.lacruzjs.sobreio.ui.profile
 
+import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
-import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 
 class ProfileViewModel(
     private val auth: AuthRepository,
@@ -58,7 +55,7 @@ class ProfileViewModel(
         val current = _state.value
         if (current.isSaving || current.user == null) return
         val name = current.name.trim()
-        val nameError = validateName(name)
+        val nameError = validateName(name, MAX_DISPLAY_NAME_LENGTH)
         if (nameError != null) {
             _state.update { it.copy(nameError = nameError) }
             return
@@ -80,9 +77,4 @@ class ProfileViewModel(
         }
     }
 
-    private fun validateName(name: String): StringResource? = when {
-        name.isEmpty() -> validateRequired(name)
-        name.length > MAX_DISPLAY_NAME_LENGTH -> Res.string.validation_name_too_long
-        else -> null
-    }
 }

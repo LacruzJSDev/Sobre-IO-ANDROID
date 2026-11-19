@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.commitments
 
+import dev.lacruzjs.sobreio.ui.components.ListSectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,7 +52,6 @@ import dev.lacruzjs.sobreio.ui.components.editAction
 import dev.lacruzjs.sobreio.ui.components.reopenAction
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatDayMonth
-import dev.lacruzjs.sobreio.ui.format.formatSignedMoney
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -108,12 +108,7 @@ internal fun CommitmentList(state: AccountCommitmentsUiState, onEvent: (Commitme
         }
         state.sections.forEach { (section, list) ->
             item(key = "title-${section.name}") {
-                Text(
-                    text = stringResource(section.titleRes()),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp),
-                )
+                ListSectionTitle(stringResource(section.titleRes()))
             }
             rows(list, false)
         }

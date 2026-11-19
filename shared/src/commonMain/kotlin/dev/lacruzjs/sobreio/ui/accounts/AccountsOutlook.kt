@@ -4,7 +4,6 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +19,7 @@ import dev.lacruzjs.sobreio.generated.resources.accounts_plan_uncovered
 import dev.lacruzjs.sobreio.generated.resources.accounts_upcoming_empty
 import dev.lacruzjs.sobreio.generated.resources.accounts_upcoming_title
 import dev.lacruzjs.sobreio.generated.resources.transfer_action
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton

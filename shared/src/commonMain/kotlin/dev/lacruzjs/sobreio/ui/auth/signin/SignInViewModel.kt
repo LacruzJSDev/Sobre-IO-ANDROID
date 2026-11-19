@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
-import dev.lacruzjs.sobreio.ui.auth.validateEmail
-import dev.lacruzjs.sobreio.ui.auth.validateRequired
+import dev.lacruzjs.sobreio.ui.validation.validateEmail
+import dev.lacruzjs.sobreio.ui.validation.validateRequired
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -38,7 +38,7 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_decimal_dot
 import dev.lacruzjs.sobreio.generated.resources.bank_import_decimal_mark
 import dev.lacruzjs.sobreio.generated.resources.bank_import_format_section
 import dev.lacruzjs.sobreio.generated.resources.bank_import_preview_title
-import dev.lacruzjs.sobreio.ui.accountdetail.SoftTile
+import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.ChipFormTile
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip

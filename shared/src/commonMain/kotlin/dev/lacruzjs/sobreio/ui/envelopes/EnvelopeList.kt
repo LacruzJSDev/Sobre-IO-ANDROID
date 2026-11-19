@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.ui.components.ListSectionTitle
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.rememberScrollState
@@ -136,12 +137,7 @@ private fun EnvelopeRows(
 
     val section: LazyListScope.(EnvelopePurpose, List<Envelope>) -> Unit = { purpose, list ->
         item(key = "section-$purpose") {
-            Text(
-                text = stringResource(purpose.labelRes()),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp),
-            )
+            ListSectionTitle(stringResource(purpose.labelRes()))
         }
         items(list, key = { it.id }) { envelope ->
             val actions = buildList {
