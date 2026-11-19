@@ -15,6 +15,7 @@ import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeBankFormatStore
 import dev.lacruzjs.sobreio.fake.FakeBankImportRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
@@ -39,10 +40,11 @@ class BankImportViewModelTest : MainDispatcherTest() {
     private val accounts = FakeAccountRepository(listOf(bank, savings))
     private val envelopes = FakeEnvelopeRepository(listOf(unassigned, food))
     private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val imports = FakeBankImportRepository()
     private val formats = FakeBankFormatStore()
 
-    private val viewModel by lazy { BankImportViewModel("g1", "a1", groups, accounts, envelopes, detail, imports, formats) }
+    private val viewModel by lazy { BankImportViewModel("g1", "a1", groups, accounts, envelopes, detail, imports, formats, calendar) }
 
     private val statement = """
         F.Operativa;Concepto;Importe;Saldo
@@ -112,7 +114,7 @@ class BankImportViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(BankImportEvent.DiscardConfirmed)
         settle()
 
-        val second = BankImportViewModel("g1", "a1", groups, accounts, envelopes, detail, imports, formats)
+        val second = BankImportViewModel("g1", "a1", groups, accounts, envelopes, detail, imports, formats, calendar)
         settle()
         second.onEvent(BankImportEvent.FilePicked(PickResult.Picked(PickedFile("nov.csv", statement.encodeToByteArray()))))
         settle()

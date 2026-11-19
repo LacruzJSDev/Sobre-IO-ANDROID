@@ -61,7 +61,7 @@ val uiModule = module {
     viewModel { params ->
         MovementHistoryViewModel(params.get<String>(0), params.get<String>(1), params.get<String?>(2), audit = get(), members = get())
     }
-    viewModel { params -> ExportViewModel(groupId = params.get(), exports = get(), groups = get()) }
+    viewModel { params -> ExportViewModel(groupId = params.get(), exports = get(), groups = get(), calendar = get()) }
     viewModel { params -> TagsViewModel(groupId = params.get(), tags = get(), groups = get()) }
     viewModel { params -> GroupFormViewModel(groupId = params.get<String?>(0), groups = get()) }
     viewModel { params -> AccountFormViewModel(
@@ -76,7 +76,7 @@ val uiModule = module {
             envelopeId = params.get<String?>(1),
             envelopes = get(),
             members = get(),
-            dates = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -108,6 +108,7 @@ val uiModule = module {
             envelopes = get(),
             detail = get(),
             imports = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -118,6 +119,7 @@ val uiModule = module {
             groups = get(),
             detail = get(),
             accounts = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -127,9 +129,9 @@ val uiModule = module {
             commitmentId = params.get<String>(2),
             commitments = get(),
             groups = get(),
-            detail = get(),
             accounts = get(),
             envelopes = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -141,7 +143,7 @@ val uiModule = module {
             groups = get(),
             accounts = get(),
             envelopes = get(),
-            detail = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -151,6 +153,7 @@ val uiModule = module {
             detail = get(),
             accounts = get(),
             envelopes = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -158,9 +161,9 @@ val uiModule = module {
             groupId = params.get(),
             groups = get(),
             summary = get(),
-            detail = get(),
             accounts = get(),
             envelopes = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -173,16 +176,17 @@ val uiModule = module {
             detail = get(),
             imports = get(),
             formats = get(),
+            calendar = get(),
         )
     }
-    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get(), summary = get()) }
+    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get(), summary = get(), calendar = get()) }
     viewModel { params -> EnvelopesViewModel(
             groupId = params.get(),
             envelopes = get(),
             members = get(),
-            dates = get(),
             transfers = get(),
             summary = get(),
+            calendar = get(),
         ) }
     viewModel { params ->
         EnvelopeDetailViewModel(
@@ -195,6 +199,7 @@ val uiModule = module {
             movements = get(),
             commitments = get(),
             detail = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -210,6 +215,7 @@ val uiModule = module {
             envelopes = get(),
             members = get(),
             tags = get(),
+            calendar = get(),
         )
     }
     viewModel { params ->
@@ -224,11 +230,11 @@ val uiModule = module {
             accounts = get(),
             envelopes = get(),
             tags = get(),
-            detail = get(),
             auth = get(),
             lastAccount = get(),
             commitments = get(),
             summary = get(),
+            calendar = get(),
         )
     }
 }

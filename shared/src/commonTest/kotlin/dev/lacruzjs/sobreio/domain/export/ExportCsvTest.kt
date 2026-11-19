@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.domain.export
 
+import dev.lacruzjs.sobreio.domain.model.GroupPeriod
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,7 +48,7 @@ class ExportCsvTest {
 
     @Test
     fun theFileNameIsSafeAndSaysThePeriod() {
-        val period = ExportPeriod("p1", LocalDate(2026, 10, 25), LocalDate(2026, 11, 24))
+        val period = GroupPeriod("p1", LocalDate(2026, 10, 25), LocalDate(2026, 11, 24))
         assertEquals("sobreio-casa-y-coche-2026-10-25_2026-11-24.csv", exportFileName("Casa y coche!", period))
         assertEquals("sobreio-group-2026-10-25_2026-11-24.csv", exportFileName("  ", period))
     }

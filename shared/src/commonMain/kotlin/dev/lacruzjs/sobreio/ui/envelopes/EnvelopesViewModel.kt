@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import kotlinx.datetime.plus
 import kotlinx.datetime.DateTimeUnit
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
@@ -7,7 +8,6 @@ import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeTransferRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.model.Envelope
@@ -17,7 +17,6 @@ import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_deleted
 import dev.lacruzjs.sobreio.generated.resources.envelope_reopened
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_negative
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_source_invalid
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
@@ -38,9 +37,9 @@ class EnvelopesViewModel(
     private val groupId: String,
     private val envelopes: EnvelopeRepository,
     private val members: MemberRepository,
-    private val dates: AccountDetailRepository,
     private val transfers: EnvelopeTransferRepository,
     private val summary: GroupSummaryRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopesUiState())
@@ -131,15 +130,15 @@ class EnvelopesViewModel(
         // Only needed to name holders; without them the rows simply show no holder
         members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         // Only tells which targets start in a later period (D-53); without it the rows show their bar as usual
-        dates.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
+        calendar.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
         loadSideColumn()
     }
 
     /** The wide layout's left column; secondary, a failure leaves that block out. */
     private suspend fun loadSideColumn() {
         transfers.getTransfers(groupId, null, 0, LATEST_MOVES).onSuccess { page -> _state.update { it.copy(latestMoves = page.items) } }
-        val today = dates.getToday(groupId).getOrNull() ?: return
-        val period = dates.getCurrentPeriod(groupId).getOrNull() ?: return
+        val today = calendar.getToday(groupId).getOrNull() ?: return
+        val period = calendar.getCurrentPeriod(groupId).getOrNull() ?: return
         val from = today.plus(1, DateTimeUnit.DAY)
         if (from > period.end) {
             _state.update { it.copy(upcomingPayments = emptyList(), periodEnd = period.end) }

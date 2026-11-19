@@ -1,9 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopeform
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
@@ -127,7 +127,7 @@ class EnvelopeFormViewModel(
     private val envelopeId: String?,
     private val envelopes: EnvelopeRepository,
     private val members: MemberRepository,
-    private val dates: AccountDetailRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopeFormUiState(isLoading = envelopeId != null, isEditing = envelopeId != null))
@@ -168,8 +168,8 @@ class EnvelopeFormViewModel(
     /** A failure only hides the "Start next period" switch: the database then starts the target today. */
     private fun loadDates() {
         viewModelScope.launch {
-            val today = dates.getToday(groupId).getOrNull() ?: return@launch
-            val period = dates.getCurrentPeriod(groupId).getOrNull() ?: return@launch
+            val today = calendar.getToday(groupId).getOrNull() ?: return@launch
+            val period = calendar.getCurrentPeriod(groupId).getOrNull() ?: return@launch
             _state.update { it.copy(today = today, nextPeriodStart = period.end.plus(DatePeriod(days = 1))) }
         }
     }

@@ -1,14 +1,10 @@
 package dev.lacruzjs.sobreio.data.repository
 
 import dev.lacruzjs.sobreio.data.remote.safeCall
-import dev.lacruzjs.sobreio.domain.export.ExportPeriod
 import dev.lacruzjs.sobreio.domain.export.ExportRecordType
 import dev.lacruzjs.sobreio.domain.export.ExportRow
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,18 +15,6 @@ class SupabaseExportRepository(client: SupabaseClient) : ExportRepository {
 
     private val postgrest = client.postgrest
 
-    override suspend fun getPeriods(groupId: String, limit: Int): Result<List<ExportPeriod>> = safeCall {
-        // Periods are created as the calendar reaches them (D-08): there is none in the future
-        postgrest.from("periods")
-            .select(Columns.raw("id,start_date,end_date")) {
-                filter { eq("group_id", groupId) }
-                order("start_date", Order.DESCENDING)
-                limit(limit.toLong())
-            }
-            .decodeList<PeriodRowDto>()
-            .map { ExportPeriod(it.id, LocalDate.parse(it.startDate), LocalDate.parse(it.endDate)) }
-    }
-
     override suspend fun exportPeriod(groupId: String, periodId: String): Result<List<ExportRow>> = safeCall {
         postgrest.rpc(
             "export_period",
@@ -40,13 +24,6 @@ class SupabaseExportRepository(client: SupabaseClient) : ExportRepository {
             },
         ).decodeList<ExportRowDto>().map { it.toDomain() }
     }
-
-    @Serializable
-    private data class PeriodRowDto(
-        val id: String,
-        @SerialName("start_date") val startDate: String,
-        @SerialName("end_date") val endDate: String,
-    )
 
     @Serializable
     private data class ExportRowDto(

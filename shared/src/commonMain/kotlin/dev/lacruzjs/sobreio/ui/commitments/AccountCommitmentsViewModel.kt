@@ -1,16 +1,14 @@
 package dev.lacruzjs.sobreio.ui.commitments
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
-import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
-import dev.lacruzjs.sobreio.domain.model.Commitment
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
-import dev.lacruzjs.sobreio.domain.model.CommitmentLink
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.commitment_deleted
 import dev.lacruzjs.sobreio.generated.resources.commitment_reopened
@@ -38,6 +36,7 @@ class AccountCommitmentsViewModel(
     private val groups: GroupRepository,
     private val detail: AccountDetailRepository,
     private val accounts: AccountRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountCommitmentsUiState())
@@ -87,7 +86,7 @@ class AccountCommitmentsViewModel(
     private suspend fun read() {
         run {
             val groupResult = groups.getGroup(groupId)
-            val todayResult = detail.getToday(groupId)
+            val todayResult = calendar.getToday(groupId)
             val listResult = commitments.getAccountCommitments(accountId)
             val failure = groupResult.exceptionOrNull() ?: todayResult.exceptionOrNull() ?: listResult.exceptionOrNull()
             if (failure != null) {
@@ -113,7 +112,7 @@ class AccountCommitmentsViewModel(
                 .mapValues { (_, items) -> items.minOf { it.dueDate } }
 
             // Registered this period: only to say "Paid this period"; without it the row shows its next date as before
-            val period = detail.getCurrentPeriod(groupId).getOrNull()
+            val period = calendar.getCurrentPeriod(groupId).getOrNull()
             val paid = if (period == null) emptySet() else commitments
                 .getPaidCommitmentIds(mine.filter { (c, _) -> !c.isArchived }.map { it.first.id }, period.start, period.end)
                 .getOrDefault(emptySet())

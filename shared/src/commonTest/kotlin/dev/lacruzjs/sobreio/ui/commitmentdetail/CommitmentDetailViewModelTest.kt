@@ -16,8 +16,8 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.OccurrencePage
 import dev.lacruzjs.sobreio.domain.model.OccurrenceStatus
-import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
@@ -55,7 +55,7 @@ class CommitmentDetailViewModelTest : MainDispatcherTest() {
 
     private val repository = FakeCommitmentRepository(listOf(rent))
     private val groups = FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner)))
-    private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val accounts = FakeAccountRepository(
         listOf(Account("acc", "g1", "Bank", AccountKind.Bank, true, 0), Account("other", "g1", "Cash", AccountKind.Cash, true, 0)),
     )
@@ -67,7 +67,7 @@ class CommitmentDetailViewModelTest : MainDispatcherTest() {
     )
 
     private fun viewModel(commitment: String = "c1", account: String = "acc") =
-        CommitmentDetailViewModel("g1", account, commitment, repository, groups, detail, accounts, envelopes)
+        CommitmentDetailViewModel("g1", account, commitment, repository, groups, accounts, envelopes, calendar)
             .also { it.onEvent(CommitmentDetailEvent.Refresh) }
 
     @Test

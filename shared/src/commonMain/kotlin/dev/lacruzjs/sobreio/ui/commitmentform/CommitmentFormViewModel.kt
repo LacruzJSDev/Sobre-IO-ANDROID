@@ -1,9 +1,9 @@
 package dev.lacruzjs.sobreio.ui.commitmentform
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
@@ -55,7 +55,7 @@ class CommitmentFormViewModel(
     private val groups: GroupRepository,
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
-    private val detail: AccountDetailRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CommitmentFormUiState(isEditing = commitmentId != null, isLoading = true))
@@ -137,7 +137,7 @@ class CommitmentFormViewModel(
         _state.update { it.copy(isLoading = true, loadError = null) }
         viewModelScope.launch {
             val groupResult = groups.getGroup(groupId)
-            val todayResult = detail.getToday(groupId)
+            val todayResult = calendar.getToday(groupId)
             val accountsResult = accounts.getAccounts(groupId)
             val envelopesResult = envelopes.getEnvelopes(groupId)
             val failure = groupResult.exceptionOrNull()

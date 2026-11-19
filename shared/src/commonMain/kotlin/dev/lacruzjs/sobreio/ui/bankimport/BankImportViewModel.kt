@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.bankimport
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.BankFormatStore
@@ -60,6 +61,7 @@ class BankImportViewModel(
     private val detail: AccountDetailRepository,
     private val imports: BankImportRepository,
     private val formats: BankFormatStore,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BankImportUiState())
@@ -157,7 +159,7 @@ class BankImportViewModel(
             val group = async { groups.getGroup(groupId) }
             val accountList = async { accounts.getAccounts(groupId) }
             val envelopeList = async { envelopes.getEnvelopes(groupId) }
-            val today = async { detail.getToday(groupId) }
+            val today = async { calendar.getToday(groupId) }
             val last = async { imports.getLastImport(accountId) }
             val g = group.await().getOrElse { e -> return@launch fail(e) }
             val all = accountList.await().getOrElse { e -> return@launch fail(e) }

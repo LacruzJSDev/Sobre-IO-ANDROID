@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.groupsummary
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -45,6 +46,7 @@ class GroupSummaryViewModel(
     private val detail: AccountDetailRepository,
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupSummaryUiState())
@@ -97,7 +99,7 @@ class GroupSummaryViewModel(
 
     private suspend fun read() {
         val reads = coroutineScope {
-            val todayD = async { detail.getToday(groupId) }
+            val todayD = async { calendar.getToday(groupId) }
             val outlookD = async { summary.getOutlook(groupId) }
             val pendingD = async { summary.getPending(groupId) }
             val accountsD = async { accounts.getAccounts(groupId) }

@@ -1,11 +1,12 @@
 package dev.lacruzjs.sobreio.ui.export
 
 import dev.lacruzjs.sobreio.data.repository.ExportRepository
-import dev.lacruzjs.sobreio.domain.export.ExportPeriod
 import dev.lacruzjs.sobreio.domain.export.ExportRecordType
 import dev.lacruzjs.sobreio.domain.export.ExportRow
 import dev.lacruzjs.sobreio.domain.model.Group
+import dev.lacruzjs.sobreio.domain.model.GroupPeriod
 import dev.lacruzjs.sobreio.domain.model.GroupRole
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.datetime.LocalDate
@@ -17,20 +18,21 @@ import kotlin.test.assertTrue
 
 class ExportViewModelTest : MainDispatcherTest() {
 
-    private val current = ExportPeriod("p2", LocalDate(2026, 10, 25), LocalDate(2026, 11, 24))
-    private val previous = ExportPeriod("p1", LocalDate(2026, 9, 25), LocalDate(2026, 10, 24))
+    private val current = GroupPeriod("p2", LocalDate(2026, 10, 25), LocalDate(2026, 11, 24))
+    private val previous = GroupPeriod("p1", LocalDate(2026, 9, 25), LocalDate(2026, 10, 24))
     private val row = ExportRow(ExportRecordType.Transaction, LocalDate(2026, 11, 3), "expense", -4_510, "Bank", null, "Food", null, null, null, "Ana")
 
     private val exports = object : ExportRepository {
         val exported = mutableListOf<String>()
-        override suspend fun getPeriods(groupId: String, limit: Int) = Result.success(listOf(current, previous))
         override suspend fun exportPeriod(groupId: String, periodId: String): Result<List<ExportRow>> {
             exported += periodId
             return Result.success(listOf(row))
         }
     }
 
-    private fun vm() = ExportViewModel("g1", exports, FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner))))
+    private val calendar = FakeCalendarRepository().apply { periods = listOf(current, previous) }
+
+    private fun vm() = ExportViewModel("g1", exports, FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner))), calendar)
 
     @Test
     fun openingReadsThePeriodsAndChoosesTheNewest() {

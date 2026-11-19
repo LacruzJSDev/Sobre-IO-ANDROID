@@ -5,7 +5,6 @@ import dev.lacruzjs.sobreio.data.remote.dto.BankComparisonDto
 import dev.lacruzjs.sobreio.data.remote.dto.ForecastDto
 import dev.lacruzjs.sobreio.data.remote.dto.MovementDto
 import dev.lacruzjs.sobreio.data.remote.dto.PeriodFlowDto
-import dev.lacruzjs.sobreio.data.remote.dto.PeriodRangeDto
 import dev.lacruzjs.sobreio.data.remote.dto.ProjectionPointDto
 import dev.lacruzjs.sobreio.data.remote.dto.UpcomingDto
 import dev.lacruzjs.sobreio.data.remote.mapper.toDomain
@@ -17,7 +16,6 @@ import dev.lacruzjs.sobreio.domain.model.AccountMovement
 import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.BankComparison
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
-import dev.lacruzjs.sobreio.domain.model.PeriodRange
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
 import io.github.jan.supabase.SupabaseClient
@@ -38,20 +36,6 @@ import kotlin.time.Clock
 class SupabaseAccountDetailRepository(client: SupabaseClient) : AccountDetailRepository {
 
     private val postgrest = client.postgrest
-
-    override suspend fun getToday(groupId: String): Result<LocalDate> = safeCall {
-        LocalDate.parse(
-            postgrest.rpc("group_today", buildJsonObject { put("p_group_id", groupId) }).decodeAs<String>(),
-        )
-    }
-
-    override suspend fun getCurrentPeriod(groupId: String): Result<PeriodRange> = safeCall {
-        postgrest.rpc("current_period", buildJsonObject { put("p_group_id", groupId) })
-            .decodeList<PeriodRangeDto>()
-            .firstOrNull()
-            ?.toDomain()
-            ?: throw AppError.NotFound
-    }
 
     override suspend fun getForecast(groupId: String, accountId: String): Result<AccountForecast?> = safeCall {
         postgrest.rpc("account_forecast", buildJsonObject { put("p_group_id", groupId) })

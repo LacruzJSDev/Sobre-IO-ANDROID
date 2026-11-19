@@ -12,6 +12,7 @@ import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
 import dev.lacruzjs.sobreio.fake.FakeAccountDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -58,13 +59,14 @@ class AccountCommitmentsViewModelTest : MainDispatcherTest() {
         .also { it.links = listOf(link) }
     private val groups = FakeGroupRepository(listOf(Group("g1", "Casa", "EUR", GroupRole.Owner)))
     private val detail = FakeAccountDetailRepository()
+    private val calendar = FakeCalendarRepository()
     private val accountRepository = FakeAccountRepository(
         listOf(
             Account("acc", "g1", "Bank", AccountKind.Bank, true, 0),
             Account("other", "g1", "Cash", AccountKind.Cash, true, 0),
         ),
     )
-    private val viewModel by lazy { AccountCommitmentsViewModel("g1", "acc", repository, groups, detail, accountRepository) }
+    private val viewModel by lazy { AccountCommitmentsViewModel("g1", "acc", repository, groups, detail, accountRepository, calendar) }
 
     private fun loaded(): AccountCommitmentsViewModel = viewModel.also { it.onEvent(CommitmentsEvent.Refresh) }
 

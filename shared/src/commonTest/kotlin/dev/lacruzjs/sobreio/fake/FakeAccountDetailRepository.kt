@@ -6,7 +6,6 @@ import dev.lacruzjs.sobreio.domain.model.AccountMovement
 import dev.lacruzjs.sobreio.domain.model.BalancePoint
 import dev.lacruzjs.sobreio.domain.model.BankComparison
 import dev.lacruzjs.sobreio.domain.model.PeriodFlow
-import dev.lacruzjs.sobreio.domain.model.PeriodRange
 import dev.lacruzjs.sobreio.domain.model.ProjectionPoint
 import dev.lacruzjs.sobreio.domain.model.UpcomingItem
 import kotlinx.datetime.LocalDate
@@ -16,8 +15,6 @@ class FakeAccountDetailRepository : AccountDetailRepository {
 
     val calls = mutableListOf<String>()
 
-    var today = LocalDate(2026, 11, 14)
-    var period = PeriodRange(LocalDate(2026, 11, 1), LocalDate(2026, 11, 30))
     var forecast: AccountForecast? = AccountForecast(100_000, 0, 0, 100_000, 100_000, 0)
     var series = listOf(BalancePoint(LocalDate(2026, 8, 14), 50_000), BalancePoint(LocalDate(2026, 11, 14), 100_000))
     var projection = listOf(ProjectionPoint(LocalDate(2026, 11, 14), 100_000, 0))
@@ -25,19 +22,11 @@ class FakeAccountDetailRepository : AccountDetailRepository {
     var upcoming = emptyList<UpcomingItem>()
     var movements = emptyList<AccountMovement>()
 
-    var todayResult: Result<LocalDate>? = null
     var forecastResult: Result<AccountForecast?>? = null
     var seriesResult: Result<List<BalancePoint>>? = null
     var compareResult: ((Long) -> Result<BankComparison>)? = null
     var adjustmentResult: Result<String> = Result.success("tx-1")
     var voidResult: Result<Unit> = Result.success(Unit)
-
-    override suspend fun getToday(groupId: String): Result<LocalDate> {
-        calls += "getToday($groupId)"
-        return todayResult ?: Result.success(today)
-    }
-
-    override suspend fun getCurrentPeriod(groupId: String): Result<PeriodRange> = Result.success(period)
 
     override suspend fun getForecast(groupId: String, accountId: String): Result<AccountForecast?> {
         calls += "getForecast($accountId)"

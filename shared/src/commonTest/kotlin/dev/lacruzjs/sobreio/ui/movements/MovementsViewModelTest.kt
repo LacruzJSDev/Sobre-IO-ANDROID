@@ -14,6 +14,7 @@ import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.MovementType
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
@@ -50,6 +51,7 @@ class MovementsViewModelTest : MainDispatcherTest() {
     private val groups = FakeGroupRepository(listOf(Group("g1", "Casa", "USD", role = GroupRole.Owner)))
     private val accounts = FakeAccountRepository(listOf(main, savings))
     private val members = FakeMemberRepository(listOf(ana, luis))
+    private val calendar = FakeCalendarRepository()
 
     private fun viewModel(fixedAccountId: String? = null, fixedEnvelopeId: String? = null) = MovementsViewModel(
         groupId = "g1",
@@ -61,6 +63,7 @@ class MovementsViewModelTest : MainDispatcherTest() {
         envelopes = FakeEnvelopeRepository(),
         members = members,
         tags = FakeTagRepository(),
+        calendar = calendar,
     )
 
     private fun loaded(fixedAccountId: String? = null, fixedEnvelopeId: String? = null): MovementsViewModel =

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
@@ -47,6 +48,7 @@ class MovementsViewModel(
     /** Tags the list starts filtered by (a bank import's tag); the Tags chip can clear them. */
     initialTagIds: Set<String> = emptySet(),
     private val searchDebounceMillis: Long = SEARCH_DEBOUNCE_MILLIS,
+    private val calendar: CalendarRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -161,7 +163,7 @@ class MovementsViewModel(
         envelopes.getEnvelopes(groupId).onSuccess { list -> _state.update { it.copy(envelopes = list) } }
         members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         tags.getTags(groupId).onSuccess { list -> _state.update { it.copy(tags = list) } }
-        movements.getDateContext(groupId).onSuccess { context -> _state.update { it.copy(dateContext = context) } }
+        calendar.getDateContext(groupId).onSuccess { context -> _state.update { it.copy(dateContext = context) } }
         readFirstPage(++generation)
     }
 

@@ -10,7 +10,6 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeOutlook
 import dev.lacruzjs.sobreio.domain.model.EnvelopePeriod
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
-import dev.lacruzjs.sobreio.domain.model.EnvelopeTransferPage
 import dev.lacruzjs.sobreio.domain.model.FundingCommitment
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
@@ -20,14 +19,13 @@ import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.domain.model.MovementSource
 import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
+import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
 import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeDetailRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeMemberRepository
 import dev.lacruzjs.sobreio.fake.FakeMovementRepository
-import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.transfer_deleted
 import dev.lacruzjs.sobreio.testing.MainDispatcherTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.datetime.LocalDate
@@ -55,6 +53,7 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
     private val members = FakeMemberRepository(listOf(ana, leo))
     private val accounts = FakeAccountRepository(listOf(bank, cash))
     private val ledger = FakeMovementRepository()
+    private val calendar = FakeCalendarRepository()
     private val commitments = FakeCommitmentRepository()
     private val detail = FakeEnvelopeDetailRepository(listOf(unassigned, food, trip, old))
 
@@ -96,6 +95,7 @@ class EnvelopeDetailViewModelTest : MainDispatcherTest() {
         movements = ledger,
         commitments = commitments,
         detail = detail,
+        calendar = calendar,
     )
 
     private fun loaded(envelopeId: String = "e1"): EnvelopeDetailViewModel =

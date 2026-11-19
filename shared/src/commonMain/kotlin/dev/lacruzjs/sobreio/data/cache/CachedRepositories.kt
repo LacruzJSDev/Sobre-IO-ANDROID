@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.data.cache
 
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
+import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import dev.lacruzjs.sobreio.data.repository.BankImportRepository
 import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeDetailRepository
@@ -45,8 +46,6 @@ class CachedAccountDetailRepository(
     private val remote: AccountDetailRepository,
     private val cache: QueryCache,
 ) : AccountDetailRepository by remote {
-    override suspend fun getToday(groupId: String) = cache.get("today", groupId) { remote.getToday(groupId) }
-    override suspend fun getCurrentPeriod(groupId: String) = cache.get("currentPeriod", groupId) { remote.getCurrentPeriod(groupId) }
     override suspend fun getForecast(groupId: String, accountId: String) =
         cache.get("account.forecast", groupId, accountId) { remote.getForecast(groupId, accountId) }
     override suspend fun getBalanceAt(accountId: String, day: LocalDate) =
@@ -141,7 +140,6 @@ class CachedCommitmentRepository(private val remote: CommitmentRepository, priva
 class CachedMovementRepository(private val remote: MovementRepository, private val cache: QueryCache) : MovementRepository by remote {
     override suspend fun search(groupId: String, filter: MovementFilter, limit: Int, offset: Int, withTotal: Boolean) =
         cache.get("movements", groupId, filter, limit, offset, withTotal) { remote.search(groupId, filter, limit, offset, withTotal) }
-    override suspend fun getDateContext(groupId: String) = cache.get("dateContext", groupId) { remote.getDateContext(groupId) }
     override suspend fun getTotals(groupId: String, filter: MovementFilter) =
         cache.get("movements.totals", groupId, filter) { remote.getTotals(groupId, filter) }
     override suspend fun getReport(groupId: String, filter: MovementFilter) =
@@ -164,4 +162,11 @@ class CachedTagRepository(private val remote: TagRepository, private val cache: 
 
 class CachedBankImportRepository(private val remote: BankImportRepository, private val cache: QueryCache) : BankImportRepository by remote {
     override suspend fun getLastImport(accountId: String) = cache.get("bank.lastImport", accountId) { remote.getLastImport(accountId) }
+}
+
+class CachedCalendarRepository(private val remote: CalendarRepository, private val cache: QueryCache) : CalendarRepository by remote {
+    override suspend fun getToday(groupId: String) = cache.get("today", groupId) { remote.getToday(groupId) }
+    override suspend fun getCurrentPeriod(groupId: String) = cache.get("currentPeriod", groupId) { remote.getCurrentPeriod(groupId) }
+    override suspend fun getDateContext(groupId: String) = cache.get("dateContext", groupId) { remote.getDateContext(groupId) }
+    override suspend fun getPeriods(groupId: String, limit: Int) = cache.get("periods", groupId, limit) { remote.getPeriods(groupId, limit) }
 }

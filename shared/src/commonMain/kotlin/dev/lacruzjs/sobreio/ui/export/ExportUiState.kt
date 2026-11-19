@@ -1,14 +1,14 @@
 package dev.lacruzjs.sobreio.ui.export
 
 import dev.lacruzjs.sobreio.domain.error.AppError
-import dev.lacruzjs.sobreio.domain.export.ExportPeriod
+import dev.lacruzjs.sobreio.domain.model.GroupPeriod
 import dev.lacruzjs.sobreio.domain.export.ExportRow
 
 /** The "Export a period" sheet of the Movements tab. */
 data class ExportUiState(
     val open: Boolean = false,
     /** The group's periods, newest first; the newest is chosen when they arrive. */
-    val periods: List<ExportPeriod> = emptyList(),
+    val periods: List<GroupPeriod> = emptyList(),
     val selectedPeriodId: String? = null,
     val isLoadingPeriods: Boolean = false,
     val isExporting: Boolean = false,
@@ -23,6 +23,6 @@ data class ExportUiState(
     val saveFailed: Boolean = false,
     val error: AppError? = null,
 ) {
-    val selectedPeriod: ExportPeriod? get() = periods.firstOrNull { it.id == selectedPeriodId }
+    val selectedPeriod: GroupPeriod? get() = periods.firstOrNull { it.id == selectedPeriodId }
     val canExport: Boolean get() = selectedPeriod != null && !isExporting && pendingRows == null
 }

@@ -88,5 +88,3 @@ data class TagUsage(
     fun toTag(groupId: String) = Tag(id, groupId, name, color)
 }
 
-/** Today (the group's time zone) and the group's periods, to turn "This period" and the like into dates. */
-data class DateContext(val today: LocalDate, val currentPeriod: PeriodRange, val previousPeriod: PeriodRange?)
