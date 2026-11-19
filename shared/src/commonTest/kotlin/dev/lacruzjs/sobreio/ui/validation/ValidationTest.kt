@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.validation
 
+import dev.lacruzjs.sobreio.domain.MAX_TAG_NAME_LENGTH
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
@@ -9,6 +10,7 @@ import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_password_short
 import dev.lacruzjs.sobreio.generated.resources.validation_passwords_mismatch
 import dev.lacruzjs.sobreio.generated.resources.validation_required
+import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -56,5 +58,12 @@ class ValidationTest {
         assertEquals(Res.string.validation_amount_positive, validatePositiveAmount(0))
         assertEquals(Res.string.validation_amount_positive, validatePositiveAmount(-1))
         assertNull(validatePositiveAmount(1))
+    }
+
+    @Test
+    fun aTagNameIsPresentAndWithinTheLimit() {
+        assertEquals(Res.string.validation_required, validateTagName(""))
+        assertEquals(Res.string.validation_tag_name_too_long, validateTagName("x".repeat(MAX_TAG_NAME_LENGTH + 1)))
+        assertNull(validateTagName("x".repeat(MAX_TAG_NAME_LENGTH)))
     }
 }

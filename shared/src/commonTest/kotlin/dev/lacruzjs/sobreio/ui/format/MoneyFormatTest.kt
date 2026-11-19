@@ -59,4 +59,12 @@ class MoneyFormatTest {
     fun extremeAmountsDoNotOverflow() {
         assertEquals(euros("-92.233.720.368.547.758,08"), formatMoney(Long.MIN_VALUE, "EUR", spanish))
     }
+
+    @Test
+    fun aSignedAmountShowsThePlusOnlyWhenPositive() {
+        assertEquals("+€12.00", formatSignedMoney(1_200, "EUR", english))
+        assertEquals("-€12.00", formatSignedMoney(-1_200, "EUR", english))
+        assertEquals("€0.00", formatSignedMoney(0, "EUR", english))
+        assertEquals("+${euros("12,00")}", formatSignedMoney(1_200, "EUR", spanish))
+    }
 }
