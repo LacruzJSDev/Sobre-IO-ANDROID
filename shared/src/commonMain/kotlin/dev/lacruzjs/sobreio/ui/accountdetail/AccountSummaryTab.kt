@@ -1,6 +1,8 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
 
+import dev.lacruzjs.sobreio.generated.resources.info_forecast_2
+import dev.lacruzjs.sobreio.generated.resources.info_forecast_1
 import androidx.compose.ui.unit.Dp
 import dev.lacruzjs.sobreio.generated.resources.chart_table_balance
 import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
@@ -355,6 +357,7 @@ private fun ForecastSection(
     val date = state.shortfallDate ?: state.periodEnd ?: state.today
     StatCard(
         title = stringResource(Res.string.detail_section_forecast),
+        info = listOf(Res.string.info_forecast_1, Res.string.info_forecast_2),
         currencyCode = state.currencyCode,
         rows = listOf(
             StatRow(stringResource(Res.string.forecast_scheduled_in), scheduledIn, MoneyRole.Flow),

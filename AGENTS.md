@@ -491,6 +491,12 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Help texts (plan phase 5.4): every icon-only button shows its accessible name on long press (`LabelTooltip`; `BackButton`,
+  `MenuButton`, `AddIconButton`, the header gear, search and close, steppers, clear date, password eye and the zoom's X were
+  wrapped). `ui/components/InfoButton.kt`: `InfoButton(title, paragraphs)` is a 16 dp ⓘ (32 dp target) that opens a
+  `FlatBottomSheet` with string-resource paragraphs; `HeroLabelWithInfo` puts one after a hero label in the card's colours, and
+  `StatCard(info = …)` after its title. Used for really free today, free to distribute, total in accounts, the account forecast,
+  an envelope's "This period" and "Really free" (`info_*` strings).
 - Wide left columns (2026-11-19): on a pane of 720 dp or more the Accounts tab's left column holds, under the hero card,
   "To keep every account above zero" (`transfer_plan` via `GroupSummaryRepository.getTransferPlan`: "Move X from A to B
   before D" and a compact "Transfer" that the Route turns into the prefilled movement form, `AccountsEvent.TransferClicked`;

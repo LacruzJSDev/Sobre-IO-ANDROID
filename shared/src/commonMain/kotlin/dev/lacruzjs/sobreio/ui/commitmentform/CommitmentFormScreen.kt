@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.commitmentform
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -488,8 +489,10 @@ private fun FrequencyUnit.labelRes() = when (this) {
 @Composable
 private fun EveryStepper(value: Int, enabled: Boolean, onChange: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { onChange(value - 1) }, enabled = enabled && value > MIN_EVERY_N) {
-            Icon(Icons.Filled.Remove, contentDescription = stringResource(Res.string.every_previous))
+        LabelTooltip(stringResource(Res.string.every_previous)) {
+            IconButton(onClick = { onChange(value - 1) }, enabled = enabled && value > MIN_EVERY_N) {
+                Icon(Icons.Filled.Remove, contentDescription = stringResource(Res.string.every_previous))
+            }
         }
         Text(
             text = stringResource(Res.string.every_value, value),
@@ -497,8 +500,10 @@ private fun EveryStepper(value: Int, enabled: Boolean, onChange: (Int) -> Unit) 
             textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(min = 48.dp),
         )
-        IconButton(onClick = { onChange(value + 1) }, enabled = enabled && value < MAX_EVERY_N) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.every_next))
+        LabelTooltip(stringResource(Res.string.every_next)) {
+            IconButton(onClick = { onChange(value + 1) }, enabled = enabled && value < MAX_EVERY_N) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.every_next))
+            }
         }
     }
 }

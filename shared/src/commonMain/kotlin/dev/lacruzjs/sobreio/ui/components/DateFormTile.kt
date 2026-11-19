@@ -62,8 +62,10 @@ fun DateFormTile(
     ) {
         FormTileValue(text = date?.let { formatDate(it, languageTag) } ?: emptyText)
         if (onClear != null && date != null) {
-            IconButton(onClick = onClear, enabled = enabled) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_clear_date))
+            LabelTooltip(stringResource(Res.string.action_clear_date)) {
+                IconButton(onClick = onClear, enabled = enabled) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(Res.string.action_clear_date))
+                }
             }
         }
     }

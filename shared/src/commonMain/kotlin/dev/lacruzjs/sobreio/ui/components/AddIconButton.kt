@@ -11,7 +11,9 @@ import org.jetbrains.compose.resources.painterResource
 /** The "+" on the right of a list header: how every list creates its items. */
 @Composable
 fun AddIconButton(contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(painter = painterResource(Res.drawable.ic_add), contentDescription = contentDescription)
+    LabelTooltip(contentDescription) {
+        IconButton(onClick = onClick, modifier = modifier) {
+            Icon(painter = painterResource(Res.drawable.ic_add), contentDescription = contentDescription)
+        }
     }
 }

@@ -895,4 +895,19 @@
     <string name="envelopes_payments_title">Pagos hasta el %1$s</string>
     <string name="envelopes_payments_empty">Ningún sobre tiene más pagos este periodo</string>
     <string name="envelopes_latest_moves_title">Últimos movimientos entre sobres</string>
+    <string name="action_what_is_this">¿Qué es «%1$s»?</string>
+    <string name="info_free_today_1">Lo que podrías gastar hoy sin quitárselo a ningún sobre: el dinero de «Sin asignar» menos lo que los sobres han quedado por debajo de cero.</string>
+    <string name="info_free_today_2">La línea muestra cómo cambia día a día hasta fin de periodo, según se pagan los vencimientos y entran los ingresos previstos; la parte discontinua es el futuro.</string>
+    <string name="info_free_today_3">«Previsto» es cómo acabará. La cifra de al lado explica la diferencia: compromisos que los sobres no cubren, aportaciones a otros grupos o ingresos previstos.</string>
+    <string name="info_free_to_distribute_1">El dinero de tus cuentas que aún no está en ningún sobre («Sin asignar»). Dale un destino asignándolo a los sobres.</string>
+    <string name="info_free_to_distribute_2">Las filas muestran de dónde sale: lo que hay en tus cuentas, menos los pagos de este periodo, lo reservado para más adelante y el resto de los sobres.</string>
+    <string name="info_free_to_distribute_3">Por debajo de cero significa que los sobres tienen más de lo que hay en tus cuentas: saca dinero de algún sobre o espera el ingreso que lo cubra.</string>
+    <string name="info_accounts_total_1">La suma de los saldos de todas las cuentas activas del grupo, tal como la calcula la base de datos.</string>
+    <string name="info_accounts_total_2">Las cuentas fuera de los sobres (ahorro, inversión) cuentan aquí, pero su dinero no se reparte en sobres.</string>
+    <string name="info_forecast_1">Lo que los compromisos meterán y sacarán de esta cuenta hasta fin de periodo, también los atrasados, y el saldo con el que acabará.</string>
+    <string name="info_forecast_2">Si baja de cero por el camino, el aviso dice cuánto y qué día, para que puedas pasarle dinero antes.</string>
+    <string name="info_envelope_period_1">Cómo va el periodo del sobre: lo que traía del anterior, lo que se le ha asignado, lo que se ha gastado de él y lo que queda.</string>
+    <string name="info_envelope_period_2">Lo que queda pasa al siguiente periodo.</string>
+    <string name="info_envelope_free_1">El saldo del sobre menos lo que los compromisos pendientes aún le quitarán hasta fin de periodo (o hasta el día que elijas).</string>
+    <string name="info_envelope_free_2">Cuando los compromisos necesitan más de lo que tiene el sobre, la diferencia tendrá que salir de otro sitio.</string>
 </resources>

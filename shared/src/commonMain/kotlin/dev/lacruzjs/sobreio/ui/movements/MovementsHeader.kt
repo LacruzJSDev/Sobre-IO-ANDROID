@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import dev.lacruzjs.sobreio.generated.resources.export_open
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import androidx.compose.material.icons.filled.FileDownload
@@ -44,8 +45,10 @@ fun MovementsHeaderActions(onSearch: () -> Unit, onNew: () -> Unit, onExport: ((
     if (onExport != null) {
         IconActionButton(icon = Icons.Filled.FileDownload, label = stringResource(Res.string.export_open), onClick = onExport)
     }
-    IconButton(onClick = onSearch) {
-        Icon(imageVector = Icons.Filled.Search, contentDescription = stringResource(Res.string.action_search))
+    LabelTooltip(stringResource(Res.string.action_search)) {
+        IconButton(onClick = onSearch) {
+            Icon(imageVector = Icons.Filled.Search, contentDescription = stringResource(Res.string.action_search))
+        }
     }
     AddIconButton(contentDescription = stringResource(Res.string.action_new_movement), onClick = onNew)
 }
@@ -87,8 +90,10 @@ private fun SearchRow(text: String, onTextChange: (String) -> Unit, onClose: () 
             imeAction = ImeAction.Search,
             modifier = Modifier.weight(1f).focusRequester(focus).padding(vertical = 4.dp),
         )
-        IconButton(onClick = onClose) {
-            Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(Res.string.action_search_close))
+        LabelTooltip(stringResource(Res.string.action_search_close)) {
+            IconButton(onClick = onClose) {
+                Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(Res.string.action_search_close))
+            }
         }
     }
 }

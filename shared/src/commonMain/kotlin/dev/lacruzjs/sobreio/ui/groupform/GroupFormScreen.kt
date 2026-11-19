@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.groupform
 
+import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -252,8 +253,10 @@ private fun CurrencyChips(selected: String, enabled: Boolean, onSelect: (String)
 @Composable
 private fun DayStepper(day: Int, enabled: Boolean, onChange: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { onChange(day - 1) }, enabled = enabled && day > MIN_PERIOD_START_DAY) {
-            Icon(Icons.Filled.Remove, contentDescription = stringResource(Res.string.period_day_previous))
+        LabelTooltip(stringResource(Res.string.period_day_previous)) {
+            IconButton(onClick = { onChange(day - 1) }, enabled = enabled && day > MIN_PERIOD_START_DAY) {
+                Icon(Icons.Filled.Remove, contentDescription = stringResource(Res.string.period_day_previous))
+            }
         }
         Text(
             text = stringResource(Res.string.period_day_value, day),
@@ -261,8 +264,10 @@ private fun DayStepper(day: Int, enabled: Boolean, onChange: (Int) -> Unit) {
             textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(min = 64.dp),
         )
-        IconButton(onClick = { onChange(day + 1) }, enabled = enabled && day < MAX_PERIOD_START_DAY) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.period_day_next))
+        LabelTooltip(stringResource(Res.string.period_day_next)) {
+            IconButton(onClick = { onChange(day + 1) }, enabled = enabled && day < MAX_PERIOD_START_DAY) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.period_day_next))
+            }
         }
     }
 }

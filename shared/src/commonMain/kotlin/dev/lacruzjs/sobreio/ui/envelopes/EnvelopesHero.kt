@@ -1,5 +1,9 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.generated.resources.info_free_to_distribute_3
+import dev.lacruzjs.sobreio.generated.resources.info_free_to_distribute_2
+import dev.lacruzjs.sobreio.generated.resources.info_free_to_distribute_1
+import dev.lacruzjs.sobreio.ui.components.HeroLabelWithInfo
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -95,7 +99,11 @@ internal fun EnvelopesHero(state: EnvelopesUiState, onClick: () -> Unit, modifie
             .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onClick),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            HeroLabel(stringResource(Res.string.envelopes_hero_free))
+            HeroLabelWithInfo(
+                text = stringResource(Res.string.envelopes_hero_free),
+                infoTitle = stringResource(Res.string.envelopes_hero_free),
+                paragraphs = listOf(Res.string.info_free_to_distribute_1, Res.string.info_free_to_distribute_2, Res.string.info_free_to_distribute_3),
+            )
             HeroFigure(amountCents = summary.unassignedCents, currencyCode = currency)
         }
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
