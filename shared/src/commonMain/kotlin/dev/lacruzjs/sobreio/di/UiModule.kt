@@ -47,7 +47,7 @@ val uiModule = module {
     // are not in a SavedStateHandle, so the screen's argument has to be handed over explicitly.
     viewModel { params -> ConfirmEmailViewModel(email = params.get(), auth = get()) }
     viewModel { params ->
-        GroupViewModel(groupId = params.get(), groups = get(), lastGroup = get(), auth = get())
+        GroupViewModel(groupId = params.get(), groups = get(), lastGroup = get(), auth = get(), changes = get())
     }
     viewModel { params ->
         GroupSettingsViewModel(

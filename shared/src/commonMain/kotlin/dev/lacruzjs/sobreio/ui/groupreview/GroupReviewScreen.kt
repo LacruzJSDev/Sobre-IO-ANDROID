@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.groupreview
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -70,6 +71,8 @@ fun GroupReviewRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(GroupReviewEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(GroupReviewEvent.Refresh) }
     val leave = {
         viewModel.onEvent(GroupReviewEvent.BackClicked)
         onBack()

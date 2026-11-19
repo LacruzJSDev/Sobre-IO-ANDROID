@@ -246,3 +246,4 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 5.4 (textos de ayuda: etiqueta al mantener pulsado en todos los iconos e ⓘ en las cifras clave): hecha.
 - Fase 5.3 (informes con cualquier filtro o etiqueta: totales, informe por periodo y por sobre, movimientos de una etiqueta; D-54 en la base de datos): hecha. El tiempo real (Fase 2) usará D-55.
 - Fase 5.2 (detalles más ligeros: rango y saldo de un día en la gráfica ampliada, «Libre de verdad» ampliable, 3 filas en las listas): hecha.
+- Fase 2 (tiempo real, D-55 en la base de datos): hecha; lo de otro miembro aparece en unos 3 s.

@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import androidx.compose.foundation.layout.fillMaxHeight
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -96,6 +97,9 @@ fun AccountDetailRoute(
 
     // Shown again after the edit form: the name, colour or figures may have changed
     LaunchedEffect(Unit) { viewModel.onEvent(AccountDetailEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55), each list once its Undo is settled
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(AccountDetailEvent.Refresh) }
+    RefreshOnRemoteChange(paused = commitmentsState.undoMessage != null) { commitmentsViewModel.onEvent(CommitmentsEvent.Refresh) }
     val leave = {
         viewModel.onEvent(AccountDetailEvent.BackClicked)
         onBack()

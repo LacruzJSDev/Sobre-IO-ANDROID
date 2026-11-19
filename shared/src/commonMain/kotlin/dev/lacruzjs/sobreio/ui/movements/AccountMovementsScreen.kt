@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.movements
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -39,6 +40,8 @@ fun AccountMovementsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(MovementsEvent.Refresh) }
     AccountMovementsScreen(
         state = state,
         onEvent = { event ->

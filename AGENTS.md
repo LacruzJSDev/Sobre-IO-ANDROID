@@ -17,7 +17,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Navigation | Navigation 3 (`androidx.navigation3-runtime` 1.2 + JetBrains `navigation3-ui`), keys are `@Serializable` `NavKey`s registered in `NavSavedStateConfiguration`; ViewModels scoped per entry with `lifecycle-viewmodel-navigation3` |
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
-| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`, `realtime-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
 | Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~70 icons of `IconCatalog` are referenced, so R8 strips the rest) |
 | Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user, last account, bank CSV formats per account); `kotlinx-datetime` 0.8 (device time zone) |
 | Files | Android: `androidx.activity:activity-compose` (in `:shared` androidMain) for the system document picker; iOS: `UIDocumentPickerViewController` from Kotlin (no Swift) |
@@ -491,6 +491,17 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Realtime (plan phase 2, D-55 in the DB repo): `buildSupabaseClient` installs `Realtime`. `data/realtime/GroupChangeFeed`
+  (`SupabaseGroupChangeFeed`): `follow(groupId)` joins the private channel `group:<id>` and listens to its `change` broadcasts
+  (the database sends one per group and transaction, with no data); notices are debounced 500 ms, then `QueryCache.invalidateAll()`
+  and an emission of `remoteChanges`; after a reconnection (a second SUBSCRIBED) everything is read again; a failure retries every
+  5 s and the channel is removed when collection stops. `GroupViewModel` keeps `follow` collected while the group's entry is in
+  the back stack (so it keeps listening under a detail) and reads the group again on each notice. Routes place
+  `ui/realtime/RefreshOnRemoteChange(paused) { Refresh }`: while the screen is on display a notice sends its Refresh, and
+  `paused` (an Undo snackbar waiting) holds it until the snackbar ends, so a reload never takes the snackbar away. Used by the
+  group shell (the Group tab and the tab on display), account detail (and its Commitments tab), envelope and commitment details,
+  review, group settings and the account, envelope and tag movement lists. Checked on an emulator against the local stack: a
+  movement inserted elsewhere showed within 3 s.
 - Lighter details (plan phase 5.2): a detail shows the essentials and leaves exploring to the zoomed page. Account detail: the
   balance chart has no range chips on the detail (a muted line says to enlarge it); its zoomed page holds the range chips,
   the chart, "Balance on" and every point; the latest movements are 3 (`LATEST_MOVEMENTS`). Envelope detail: the "Really free"

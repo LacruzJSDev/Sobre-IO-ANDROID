@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.group
 
+import dev.lacruzjs.sobreio.data.realtime.GroupChangeFeed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.LastGroupStore
@@ -26,6 +27,7 @@ class GroupViewModel(
     private val groups: GroupRepository,
     private val lastGroup: LastGroupStore,
     private val auth: AuthRepository,
+    changes: GroupChangeFeed,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupUiState())
@@ -33,6 +35,9 @@ class GroupViewModel(
 
     init {
         load()
+        // While the group is open (its entry stays in the back stack under any detail), other members' changes arrive
+        // live: the feed makes the cache stale and the screen on display reads again
+        viewModelScope.launch { changes.follow(groupId).collect { refresh() } }
     }
 
     fun onEvent(event: GroupEvent) {

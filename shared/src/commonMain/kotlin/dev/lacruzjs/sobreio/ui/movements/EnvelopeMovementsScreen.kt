@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.movements
 
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.runtime.Composable
@@ -35,6 +36,8 @@ fun EnvelopeMovementsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(MovementsEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = state.undoMessage != null) { viewModel.onEvent(MovementsEvent.Refresh) }
     EnvelopeMovementsScreen(
         state = state,
         onEvent = { event ->

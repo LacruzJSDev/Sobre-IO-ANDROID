@@ -1,4 +1,5 @@
 package dev.lacruzjs.sobreio.ui.commitmentdetail
+import dev.lacruzjs.sobreio.ui.realtime.RefreshOnRemoteChange
 import androidx.compose.runtime.getValue
 import dev.lacruzjs.sobreio.ui.components.TwoColumnLayout
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
@@ -95,6 +96,8 @@ fun CommitmentDetailRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onEvent(CommitmentDetailEvent.Refresh) }
+    // Changes made elsewhere in the group are read as they happen (D-55)
+    RefreshOnRemoteChange(paused = false) { viewModel.onEvent(CommitmentDetailEvent.Refresh) }
     CommitmentDetailScreen(
         state = state,
         onEvent = { event ->
