@@ -142,10 +142,18 @@ fun rememberChartZoom(key: String, title: String, content: @Composable ColumnSco
     return remember(state, key) { { state?.open(key, latestTitle) { latestContent() } } }
 }
 
-/** The "Enlarge" icon at the right of a chart section's title (`FormSection(action = …)`). */
+/**
+ * The "Enlarge" icon at the right of a chart section's title (`FormSection(action = …)`). Section icons are 24 dp; this
+ * glyph's diagonal arrows fill more of their box than the others, so it is drawn at 20 dp to look the same size.
+ */
 @Composable
 fun ChartZoomButton(onClick: () -> Unit) {
-    IconActionButton(icon = Icons.Filled.OpenInFull, label = stringResource(Res.string.chart_enlarge), onClick = onClick)
+    IconActionButton(
+        icon = Icons.Filled.OpenInFull,
+        label = stringResource(Res.string.chart_enlarge),
+        onClick = onClick,
+        iconSize = 20.dp,
+    )
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
