@@ -888,4 +888,12 @@
     <string name="chart_enlarge">Enlarge chart</string>
     <string name="chart_table_balance">Balance</string>
     <string name="chart_table_free">Free</string>
+    <string name="accounts_plan_title">To keep every account above zero</string>
+    <string name="accounts_plan_move">Move %1$s from %2$s to %3$s before %4$s</string>
+    <string name="accounts_plan_uncovered">No other account can cover %1$s for %2$s</string>
+    <string name="accounts_upcoming_title">Coming up until %1$s</string>
+    <string name="accounts_upcoming_empty">Nothing else is due until the end of the period</string>
+    <string name="envelopes_payments_title">Payments until %1$s</string>
+    <string name="envelopes_payments_empty">No envelope has anything else to pay this period</string>
+    <string name="envelopes_latest_moves_title">Latest moves between envelopes</string>
 </resources>

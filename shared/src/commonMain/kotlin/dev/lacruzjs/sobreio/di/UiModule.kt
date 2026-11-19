@@ -175,8 +175,15 @@ val uiModule = module {
             formats = get(),
         )
     }
-    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get()) }
-    viewModel { params -> EnvelopesViewModel(groupId = params.get(), envelopes = get(), members = get(), dates = get()) }
+    viewModel { params -> AccountsViewModel(groupId = params.get(), accounts = get(), members = get(), detail = get(), summary = get()) }
+    viewModel { params -> EnvelopesViewModel(
+            groupId = params.get(),
+            envelopes = get(),
+            members = get(),
+            dates = get(),
+            transfers = get(),
+            summary = get(),
+        ) }
     viewModel { params ->
         EnvelopeDetailViewModel(
             groupId = params.get<String>(0),

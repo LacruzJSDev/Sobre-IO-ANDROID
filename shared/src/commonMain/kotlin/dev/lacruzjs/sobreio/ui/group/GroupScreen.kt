@@ -134,7 +134,7 @@ fun GroupRoute(
     val summaryState by summaryViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.group) {
         state.group?.let {
-            accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit))
+            accountsViewModel.onEvent(AccountsEvent.GroupLoaded(it.currencyCode, it.canEdit, !it.isArchived && !it.isPendingDeletion))
             envelopesViewModel.onEvent(EnvelopesEvent.GroupLoaded(it.currencyCode, it.canEdit))
             // Any member may review a due date, but not in an archived group or one pending deletion
             summaryViewModel.onEvent(GroupSummaryEvent.GroupLoaded(it.currencyCode, !it.isArchived && !it.isPendingDeletion))
@@ -218,6 +218,7 @@ fun GroupRoute(
                     when (event) {
                         is AccountsEvent.EditClicked -> onOpenAccountForm(event.accountId)
                         is AccountsEvent.OpenClicked -> onOpenAccount(event.accountId)
+                        is AccountsEvent.TransferClicked -> onOpenTransferForm(event.suggestion)
                         else -> accountsViewModel.onEvent(event)
                     }
                 },
@@ -246,6 +247,7 @@ fun GroupRoute(
                     when (event) {
                         is EnvelopesEvent.EditClicked -> onOpenEnvelopeForm(event.envelopeId)
                         is EnvelopesEvent.OpenClicked -> onOpenEnvelope(event.envelopeId)
+                        EnvelopesEvent.TransfersClicked -> onOpenEnvelopeTransfers()
                         else -> envelopesViewModel.onEvent(event)
                     }
                 },

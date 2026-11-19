@@ -4,6 +4,9 @@ sealed interface EnvelopesEvent {
     /** The open group loaded: its currency and whether the user may edit. Sent by the Route. */
     data class GroupLoaded(val currencyCode: String, val canEdit: Boolean) : EnvelopesEvent
 
+    /** The swap icon of "Latest moves": the Route opens the group's moves between envelopes. */
+    data object TransfersClicked : EnvelopesEvent
+
     /** Load the summary and the list; sent each time the tab is shown. */
     data object Refresh : EnvelopesEvent
 

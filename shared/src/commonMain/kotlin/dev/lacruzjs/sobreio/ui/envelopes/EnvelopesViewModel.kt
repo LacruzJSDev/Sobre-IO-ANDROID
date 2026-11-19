@@ -1,5 +1,10 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import kotlinx.datetime.plus
+import kotlinx.datetime.DateTimeUnit
+import dev.lacruzjs.sobreio.domain.model.CommitmentKind
+import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
+import dev.lacruzjs.sobreio.data.repository.EnvelopeTransferRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -34,6 +39,8 @@ class EnvelopesViewModel(
     private val envelopes: EnvelopeRepository,
     private val members: MemberRepository,
     private val dates: AccountDetailRepository,
+    private val transfers: EnvelopeTransferRepository,
+    private val summary: GroupSummaryRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EnvelopesUiState())
@@ -55,8 +62,8 @@ class EnvelopesViewModel(
                 load()
             }
             is EnvelopesEvent.AssignClicked -> openAssign(event.envelopeId)
-            // Handled by the Route, which opens the form
-            is EnvelopesEvent.EditClicked, is EnvelopesEvent.OpenClicked -> Unit
+            // Handled by the Route, which opens the form, the detail or the moves
+            is EnvelopesEvent.EditClicked, is EnvelopesEvent.OpenClicked, EnvelopesEvent.TransfersClicked -> Unit
             is EnvelopesEvent.DeleteClicked -> delete(event.envelopeId)
             is EnvelopesEvent.ReopenClicked -> reopen(event.envelopeId)
             EnvelopesEvent.UndoClicked -> undo.undo()
@@ -125,6 +132,23 @@ class EnvelopesViewModel(
         members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
         // Only tells which targets start in a later period (D-53); without it the rows show their bar as usual
         dates.getToday(groupId).onSuccess { day -> _state.update { it.copy(today = day) } }
+        loadSideColumn()
+    }
+
+    /** The wide layout's left column; secondary, a failure leaves that block out. */
+    private suspend fun loadSideColumn() {
+        transfers.getTransfers(groupId, null, 0, LATEST_MOVES).onSuccess { page -> _state.update { it.copy(latestMoves = page.items) } }
+        val today = dates.getToday(groupId).getOrNull() ?: return
+        val period = dates.getCurrentPeriod(groupId).getOrNull() ?: return
+        val from = today.plus(1, DateTimeUnit.DAY)
+        if (from > period.end) {
+            _state.update { it.copy(upcomingPayments = emptyList(), periodEnd = period.end) }
+            return
+        }
+        summary.getUpcoming(groupId, from, period.end).onSuccess { list ->
+            val payments = list.filter { it.kind == CommitmentKind.Expense && it.envelopeId != null }.sortedBy { it.dueDate }
+            _state.update { it.copy(upcomingPayments = payments, periodEnd = period.end) }
+        }
     }
 
     private fun List<Envelope>.sortedByName() = sortedBy { it.name.lowercase() }
@@ -257,4 +281,8 @@ class EnvelopesViewModel(
         isSubmitting = false,
         submitError = null,
     )
+
+    private companion object {
+        const val LATEST_MOVES = 5
+    }
 }

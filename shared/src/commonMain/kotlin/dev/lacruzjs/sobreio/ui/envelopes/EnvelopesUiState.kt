@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.domain.model.EnvelopeTransfer
+import dev.lacruzjs.sobreio.domain.model.DueOccurrence
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
@@ -35,6 +37,13 @@ data class EnvelopesUiState(
     val currencyCode: String = "EUR",
     /** Owner or admin: they can create, edit and delete. Any member can assign. */
     val canEdit: Boolean = false,
+    /**
+     * The wide layout's left column: the expenses due from tomorrow to the end of the period that leave an envelope
+     * (`upcoming_occurrences`), and the latest moves between envelopes of the group.
+     */
+    val upcomingPayments: List<DueOccurrence> = emptyList(),
+    val periodEnd: LocalDate? = null,
+    val latestMoves: List<EnvelopeTransfer> = emptyList(),
     /** True until the first load ends (a skeleton); later refreshes keep showing the list. */
     val isLoading: Boolean = true,
     /** Reading again from the database with the list on screen: the thin bar under the header. */
