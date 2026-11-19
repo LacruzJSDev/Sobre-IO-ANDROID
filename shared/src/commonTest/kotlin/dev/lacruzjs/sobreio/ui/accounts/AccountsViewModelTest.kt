@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
@@ -31,7 +32,7 @@ class AccountsViewModelTest : MainDispatcherTest() {
         .also { it.summary = AccountsSummary(totalCents = 105_000, inEnvelopesCents = 105_000, outsideCents = 0) }
     private val memberRepository = FakeMemberRepository()
     private val detail = FakeAccountDetailRepository()
-    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository, detail) }
+    private val viewModel by lazy { AccountsViewModel("g1", repository, memberRepository, detail, FakeGroupSummaryRepository()) }
 
     private fun loaded(canEdit: Boolean = true): AccountsViewModel = viewModel.also {
         it.onEvent(AccountsEvent.GroupLoaded("USD", canEdit))

@@ -100,10 +100,16 @@ internal fun EnvelopeList(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> 
     TwoColumnSplit(
         narrow = { EnvelopeRows(state, onEvent, withHero = true, contentPadding = SingleColumnPadding) },
         left = {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding)) {
+            // Under the hero, the payments to come and the latest moves between envelopes
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
                 if (state.unassigned != null && state.summary != null) {
                     EnvelopesHero(state = state, onClick = { onEvent(EnvelopesEvent.OpenClicked(state.unassigned.id)) })
                 }
+                PaymentsSection(state)
+                LatestMovesSection(state, onEvent)
             }
         },
         right = { EnvelopeRows(state, onEvent, withHero = false, contentPadding = RightColumnPadding) },

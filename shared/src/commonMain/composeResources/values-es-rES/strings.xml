@@ -887,4 +887,12 @@
     <string name="chart_enlarge">Ampliar gráfica</string>
     <string name="chart_table_balance">Saldo</string>
     <string name="chart_table_free">Libre</string>
+    <string name="accounts_plan_title">Para que ninguna cuenta baje de cero</string>
+    <string name="accounts_plan_move">Pasa %1$s de %2$s a %3$s antes del %4$s</string>
+    <string name="accounts_plan_uncovered">Ninguna otra cuenta puede cubrir %1$s de %2$s</string>
+    <string name="accounts_upcoming_title">Próximos movimientos hasta el %1$s</string>
+    <string name="accounts_upcoming_empty">No vence nada más hasta fin de periodo</string>
+    <string name="envelopes_payments_title">Pagos hasta el %1$s</string>
+    <string name="envelopes_payments_empty">Ningún sobre tiene más pagos este periodo</string>
+    <string name="envelopes_latest_moves_title">Últimos movimientos entre sobres</string>
 </resources>

@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import kotlinx.datetime.plus
+import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountDetailRepository
@@ -30,6 +32,7 @@ class AccountsViewModel(
     private val accounts: AccountRepository,
     private val members: MemberRepository,
     private val detail: AccountDetailRepository,
+    private val summary: GroupSummaryRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountsUiState())
@@ -44,7 +47,7 @@ class AccountsViewModel(
     fun onEvent(event: AccountsEvent) {
         when (event) {
             is AccountsEvent.GroupLoaded ->
-                _state.update { it.copy(currencyCode = event.currencyCode, canEdit = event.canEdit) }
+                _state.update { it.copy(currencyCode = event.currencyCode, canEdit = event.canEdit, canRecord = event.canRecord) }
             AccountsEvent.Refresh -> {
                 // A delete still waiting for its snackbar must be final before the list is read again
                 undo.commit()
@@ -55,7 +58,7 @@ class AccountsViewModel(
             AccountsEvent.UndoClicked -> undo.undo()
             AccountsEvent.UndoExpired -> undo.commit()
             // Handled by the Route, which opens the form or the detail
-            is AccountsEvent.EditClicked, is AccountsEvent.OpenClicked -> Unit
+            is AccountsEvent.EditClicked, is AccountsEvent.OpenClicked, is AccountsEvent.TransferClicked -> Unit
         }
     }
 
@@ -108,6 +111,7 @@ class AccountsViewModel(
         // Each row's end of period; without it the rows simply leave that line out
         detail.getForecasts(groupId).onSuccess { map -> _state.update { it.copy(forecasts = map) } }
         loadBalanceSeries()
+        loadOutlook()
         // Only needed to name holders; without them the rows simply show no holder
         members.getMembers(groupId).onSuccess { list -> _state.update { it.copy(members = list) } }
     }
@@ -118,6 +122,24 @@ class AccountsViewModel(
         val from = today.minus(CHART_MONTHS, DateTimeUnit.MONTH)
         accounts.getBalanceSeries(groupId, from, today, CHART_POINTS)
             .onSuccess { series -> _state.update { it.copy(balanceSeries = series.sortedBy { p -> p.day }) } }
+    }
+
+    /**
+     * The wide layout's left column: what the plan suggests moving and what is due in the accounts until the end of the
+     * period. Secondary: a failure leaves that block out.
+     */
+    private suspend fun loadOutlook() {
+        summary.getTransferPlan(groupId).onSuccess { list -> _state.update { it.copy(plan = list) } }
+        val today = detail.getToday(groupId).getOrNull() ?: return
+        val period = detail.getCurrentPeriod(groupId).getOrNull() ?: return
+        val from = today.plus(1, DateTimeUnit.DAY)
+        if (from > period.end) {
+            _state.update { it.copy(upcoming = emptyList(), periodEnd = period.end) }
+            return
+        }
+        summary.getUpcoming(groupId, from, period.end).onSuccess { list ->
+            _state.update { it.copy(upcoming = list.sortedBy { o -> o.dueDate }, periodEnd = period.end) }
+        }
     }
 
     private fun List<Account>.sortedByName() = sortedBy { it.name.lowercase() }

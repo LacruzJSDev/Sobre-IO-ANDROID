@@ -1,5 +1,7 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
+import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
+import dev.lacruzjs.sobreio.fake.FakeEnvelopeTransferRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
@@ -39,7 +41,7 @@ class EnvelopesViewModelTest : MainDispatcherTest() {
     private val memberRepository = FakeMemberRepository()
     private val old = Envelope("4", "g1", "Old", EnvelopeKind.Saving, 0, 0, archivedAt = "2026-11-01T10:00:00Z", purpose = EnvelopePurpose.Savings)
     private val dates = FakeAccountDetailRepository()
-    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository, dates) }
+    private val viewModel by lazy { EnvelopesViewModel("g1", repository, memberRepository, dates, FakeEnvelopeTransferRepository(), FakeGroupSummaryRepository()) }
 
     private fun EnvelopesUiState.section(purpose: EnvelopePurpose): List<Envelope> =
         sections.firstOrNull { it.first == purpose }?.second.orEmpty()

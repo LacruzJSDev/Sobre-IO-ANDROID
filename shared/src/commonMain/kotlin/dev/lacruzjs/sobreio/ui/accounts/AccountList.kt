@@ -95,8 +95,14 @@ internal fun AccountList(state: AccountsUiState, onEvent: (AccountsEvent) -> Uni
     TwoColumnSplit(
         narrow = { AccountRows(state, onEvent, withHero = true, contentPadding = SingleColumnPadding) },
         left = {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding)) {
+            // Under the hero, what the accounts need before the end of the period
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(LeftColumnPadding),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
                 AccountsHero(state)
+                PlanSection(state, onEvent)
+                AccountsUpcomingSection(state)
             }
         },
         right = { AccountRows(state, onEvent, withHero = false, contentPadding = RightColumnPadding) },

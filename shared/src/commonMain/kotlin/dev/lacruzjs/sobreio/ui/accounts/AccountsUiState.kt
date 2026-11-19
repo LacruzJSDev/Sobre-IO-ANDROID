@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.accounts
 
+import kotlinx.datetime.LocalDate
+import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountForecast
@@ -23,6 +26,14 @@ data class AccountsUiState(
     val balanceSeries: List<BalancePoint> = emptyList(),
     /** `account_forecast` by account id: each live row's projected balance at the end of the period and its shortfall. */
     val forecasts: Map<String, AccountForecast> = emptyMap(),
+    /** `transfer_plan`: moves between accounts so none goes below zero before the end of the period. */
+    val plan: List<TransferSuggestion> = emptyList(),
+    /** `upcoming_occurrences` from tomorrow to the end of the period, by date (the wide layout's left column). */
+    val upcoming: List<DueOccurrence> = emptyList(),
+    /** Last day of the current period, for the "until" of the upcoming section. */
+    val periodEnd: LocalDate? = null,
+    /** Any member of a live group: the plan's "Transfer" buttons. */
+    val canRecord: Boolean = false,
     /** The active members: holder names are shown only when there are several. */
     val members: List<Member> = emptyList(),
     /** Set by [AccountsEvent.GroupLoaded]; money is formatted with it. */

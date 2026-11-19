@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
@@ -145,8 +148,9 @@ private fun dismissKeyboard(focusManager: FocusManager, keyboard: SoftwareKeyboa
 
 /**
  * The amount of a movement, big and centred: the one thing the form is about. Same rules as [AmountField] (decimal
- * keypad, no minus sign); with [focusRequester] the form can open the keypad by itself. [currencyCode] is shown muted
- * under the number and [placeholder] when empty.
+ * keypad, no minus sign); with [focusRequester] the form can open the keypad by itself. [currencySymbol] sits right
+ * next to the number, muted, where money is written in the user's language (after it in Spanish, `12,50 €`; before it
+ * otherwise, `€12.50`), and [placeholder] shows when empty.
  */
 @Composable
 fun LargeAmountField(
@@ -167,15 +171,27 @@ fun LargeAmountField(
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         color = amountColor,
     )
+    val symbolAfter = Locale.current.language == "es"
+    val symbol: @Composable () -> Unit = {
+        Text(text = currencySymbol, style = style.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+    }
     androidx.compose.foundation.layout.Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
     ) {
+        // The field is as wide as what it shows, so the symbol stays next to the figure as it grows
+        androidx.compose.foundation.layout.Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+        if (!symbolAfter) symbol()
         BasicTextField(
             state = state,
             modifier = Modifier
-                .fillMaxWidth()
+                .width(androidx.compose.foundation.layout.IntrinsicSize.Min)
+                .widthIn(min = 32.dp)
                 .let { if (focusRequester != null) it.focusRequester(focusRequester) else it }
                 .semantics { contentDescription = label },
             enabled = enabled,
@@ -186,7 +202,7 @@ fun LargeAmountField(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
             onKeyboardAction = rememberKeyboardActionHandler(ImeAction.Done) {},
             decorator = TextFieldDecorator { inner ->
-                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
                     if (state.text.isEmpty()) {
                         Text(text = placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
                     }
@@ -194,7 +210,8 @@ fun LargeAmountField(
                 }
             },
         )
-        Text(text = currencySymbol, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (symbolAfter) symbol()
+        }
         if (errorRes != null) {
             Text(text = stringResource(errorRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }

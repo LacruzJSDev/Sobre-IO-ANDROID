@@ -491,6 +491,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
   `LinearScale`, `nearestIndex`, `evenPositions`, `slotAt`), unit tested. Series colours are the money colours (`LocalMoneyColors`): In = `inflow`, Out =
   `outflow` (ink); the balance line uses `primary` and the part of the line and its area below zero is drawn in
   `negative` (clipped at the zero line). Gridlines are `outlineVariant`; axis text is muted, never in the series colour.
+- Wide left columns (2026-11-19): on a pane of 720 dp or more the Accounts tab's left column holds, under the hero card,
+  "To keep every account above zero" (`transfer_plan` via `GroupSummaryRepository.getTransferPlan`: "Move X from A to B
+  before D" and a compact "Transfer" that the Route turns into the prefilled movement form, `AccountsEvent.TransferClicked`;
+  "No other account can cover X for B" without a source; hidden when empty) and "Coming up until <period end>"
+  (`upcoming_occurrences` from tomorrow: name, weekday and account, signed `MoneyText` Flow) in `ui/accounts/AccountsOutlook.kt`;
+  the Envelopes tab's left column holds "Payments until <period end>" (the expenses of `upcoming_occurrences` with an envelope)
+  and "Latest moves between envelopes" (5 newest, read only, swap icon to `EnvelopeTransfers`) in
+  `ui/envelopes/EnvelopesOutlook.kt`. Phones (one column) do not show these blocks. The movement form's `LargeAmountField`
+  writes the currency symbol next to the figure, muted at the same size: after it in Spanish, before it otherwise.
 - Chart zoom (plan phase 5.1, `ui/components/charts/ChartZoom.kt`): `App` installs `ChartZoomHost` once around the navigation
   (a `SharedTransitionLayout` and one full-screen page drawn above everything). A chart card is wrapped in
   `ZoomableChart(key)`; `rememberChartZoom(key, title) { content }` returns the function that opens the page; the card and the
