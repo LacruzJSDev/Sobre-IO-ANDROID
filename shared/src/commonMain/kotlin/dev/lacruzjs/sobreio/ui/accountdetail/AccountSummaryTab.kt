@@ -1,43 +1,28 @@
 package dev.lacruzjs.sobreio.ui.accountdetail
 
-
 import dev.lacruzjs.sobreio.ui.components.SoftTile
-import dev.lacruzjs.sobreio.generated.resources.account_chart_more_hint
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_2
 import dev.lacruzjs.sobreio.generated.resources.info_forecast_1
 import androidx.compose.ui.unit.Dp
-import dev.lacruzjs.sobreio.generated.resources.chart_table_balance
 import dev.lacruzjs.sobreio.ui.components.charts.FlowsChartHeight
-import dev.lacruzjs.sobreio.ui.components.charts.BalanceChartHeight
 import dev.lacruzjs.sobreio.ui.components.charts.ChartTableRow
 import dev.lacruzjs.sobreio.ui.components.charts.ChartTable
 import dev.lacruzjs.sobreio.ui.components.charts.ZoomedChartHeight
 import dev.lacruzjs.sobreio.ui.components.charts.ZoomableChart
 import dev.lacruzjs.sobreio.ui.components.charts.ChartZoomButton
 import dev.lacruzjs.sobreio.ui.components.charts.rememberChartZoom
-import dev.lacruzjs.sobreio.ui.components.BalanceOnDay
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Account
-import dev.lacruzjs.sobreio.domain.model.MovementKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.ui.format.formatShortDate
 import dev.lacruzjs.sobreio.generated.resources.bank_import_action_import
@@ -48,64 +33,39 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_last_import
 import dev.lacruzjs.sobreio.generated.resources.bank_import_section_bank
 import dev.lacruzjs.sobreio.generated.resources.accounts_in_envelopes_title
 import dev.lacruzjs.sobreio.generated.resources.accounts_outside_envelopes_title
-import dev.lacruzjs.sobreio.generated.resources.action_see_all_movements
-import dev.lacruzjs.sobreio.generated.resources.ic_list
-import dev.lacruzjs.sobreio.generated.resources.chart_balance_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_period
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_in
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_out
-import dev.lacruzjs.sobreio.generated.resources.chart_no_data
-import dev.lacruzjs.sobreio.generated.resources.chart_projected
-import dev.lacruzjs.sobreio.generated.resources.chart_today
-import dev.lacruzjs.sobreio.generated.resources.detail_no_movements
 import dev.lacruzjs.sobreio.generated.resources.detail_section_balance
-import dev.lacruzjs.sobreio.generated.resources.detail_section_balance_chart
 import dev.lacruzjs.sobreio.generated.resources.detail_section_flows
 import dev.lacruzjs.sobreio.generated.resources.detail_section_forecast
-import dev.lacruzjs.sobreio.generated.resources.detail_section_latest
-import dev.lacruzjs.sobreio.generated.resources.detail_section_upcoming
-import dev.lacruzjs.sobreio.generated.resources.envelopes_unassigned
 import dev.lacruzjs.sobreio.generated.resources.forecast_projected_end
 import dev.lacruzjs.sobreio.generated.resources.forecast_scheduled_in
 import dev.lacruzjs.sobreio.generated.resources.forecast_scheduled_out
 import dev.lacruzjs.sobreio.generated.resources.forecast_shortfall
 import dev.lacruzjs.sobreio.generated.resources.holder_joint
-import dev.lacruzjs.sobreio.generated.resources.movement_from_account
-import dev.lacruzjs.sobreio.generated.resources.movement_to_account
-import dev.lacruzjs.sobreio.generated.resources.range_1m
-import dev.lacruzjs.sobreio.generated.resources.range_1y
-import dev.lacruzjs.sobreio.generated.resources.range_3m
-import dev.lacruzjs.sobreio.generated.resources.range_6m
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle
 import dev.lacruzjs.sobreio.generated.resources.row_subtitle_three
 import dev.lacruzjs.sobreio.ui.accounts.labelRes
-import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.TwoColumnLayout
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.StatCard
 import dev.lacruzjs.sobreio.ui.components.StatRow
-import dev.lacruzjs.sobreio.ui.components.charts.BalanceLineChart
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnGroup
 import dev.lacruzjs.sobreio.ui.components.charts.ColumnSeries
 import dev.lacruzjs.sobreio.ui.components.charts.GroupedColumnChart
-import dev.lacruzjs.sobreio.ui.components.charts.LineChartPoint
-import dev.lacruzjs.sobreio.ui.components.charts.LineChartTexts
 import dev.lacruzjs.sobreio.ui.components.charts.compactAmount
-import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.format.formatDayMonth
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import dev.lacruzjs.sobreio.ui.format.formatMonthShort
 import dev.lacruzjs.sobreio.ui.theme.LocalMoneyColors
 import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import dev.lacruzjs.sobreio.ui.components.MoneyText
-import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
-import dev.lacruzjs.sobreio.ui.components.IconActionButton
 
 /**
  * The Summary tab: balance, balance chart with its projection, forecast to the end of the period, in and out by period,
@@ -221,122 +181,6 @@ private fun BalanceSection(account: Account, state: AccountDetailUiState, langua
 }
 
 @Composable
-private fun BalanceChartSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
-    val title = stringResource(Res.string.detail_section_balance_chart)
-    // The detail keeps the chart only; exploring it (the range, the balance on a chosen day, every point as a figure) is
-    // the zoomed page's job
-    val zoom = rememberChartZoom(ZOOM_BALANCE, title) {
-        RangeChips(state, onEvent)
-        SoftTile { BalanceChart(state, languageTag, ZoomedChartHeight) }
-        BalanceOnDay(
-            day = state.balanceDay,
-            balanceCents = state.balanceOnDayCents,
-            currencyCode = state.currencyCode,
-            today = state.today,
-            onDaySelected = { onEvent(AccountDetailEvent.BalanceDaySelected(it)) },
-        )
-        ChartTable(
-            columns = listOf(stringResource(Res.string.chart_table_balance)),
-            rows = state.balanceSeries.asReversed().map { ChartTableRow(formatDate(it.day, languageTag), listOf(it.balanceCents)) },
-            currencyCode = state.currencyCode,
-            role = MoneyRole.Balance,
-        )
-    }
-    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
-        ZoomableChart(ZOOM_BALANCE) { SoftTile { BalanceChart(state, languageTag) } }
-        Text(
-            text = stringResource(Res.string.account_chart_more_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RangeChips(state: AccountDetailUiState, onEvent: (AccountDetailEvent) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        BalanceRange.entries.forEach { range ->
-            FilterChip(
-                selected = range == state.range,
-                onClick = { onEvent(AccountDetailEvent.RangeSelected(range)) },
-                label = { Text(stringResource(range.labelRes())) },
-                shape = MaterialTheme.shapes.medium,
-                colors = FilterChipDefaults.filterChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-                border = null,
-            )
-        }
-    }
-}
-
-@Composable
-private fun BalanceChart(state: AccountDetailUiState, languageTag: String, height: Dp = BalanceChartHeight) {
-    val today = state.today
-    if (today == null || state.balanceSeries.size < 2) {
-        Text(
-            text = stringResource(Res.string.chart_no_data),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    } else {
-        val past = remember(state.balanceSeries) {
-            state.balanceSeries.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) }
-        }
-        val projection = remember(state.projection, state.periodEnd) { projectionPoints(state) }
-        val first = state.balanceSeries.first()
-        val last = state.balanceSeries.last()
-        val texts = LineChartTexts(
-            formatY = { compactAmount(it, languageTag) },
-            formatXAxis = { formatDayMonth(LocalDate.fromEpochDays(it), languageTag) },
-            formatXTooltip = { formatDate(LocalDate.fromEpochDays(it), languageTag) },
-            formatValue = { formatMoney(it, state.currencyCode, languageTag) },
-            todayLabel = stringResource(Res.string.chart_today),
-            projectedLabel = stringResource(Res.string.chart_projected),
-            seriesLabel = stringResource(Res.string.detail_section_balance),
-        )
-        BalanceLineChart(
-            past = past,
-            projection = projection,
-            todayX = today.toEpochDays(),
-            texts = texts,
-            contentDescription = stringResource(
-                Res.string.chart_balance_description,
-                formatDayMonth(first.day, languageTag),
-                formatDayMonth(last.day, languageTag),
-                formatMoney(first.balanceCents, state.currencyCode, languageTag),
-                formatMoney(last.balanceCents, state.currencyCode, languageTag),
-            ),
-            // A new range is on its way: the old one stays, faded
-            modifier = Modifier.alpha(if (state.isSeriesLoading) 0.5f else 1f),
-            height = height,
-        )
-    }
-}
-
-/**
- * The database's projection (one row per day with something due, starting today) as chart points, extended with a last
- * point at the end of the period so the dashed line reaches it: the balance stays what it was after the last due item.
- */
-internal fun projectionPoints(state: AccountDetailUiState): List<LineChartPoint> {
-    val points = state.projection.map { LineChartPoint(it.day.toEpochDays(), it.balanceCents) }
-    val end = state.periodEnd?.toEpochDays() ?: return points
-    val last = points.lastOrNull() ?: return points
-    return if (end > last.x) points + LineChartPoint(end, last.y) else points
-}
-
-private fun BalanceRange.labelRes() = when (this) {
-    BalanceRange.OneMonth -> Res.string.range_1m
-    BalanceRange.ThreeMonths -> Res.string.range_3m
-    BalanceRange.SixMonths -> Res.string.range_6m
-    BalanceRange.OneYear -> Res.string.range_1y
-}
-
-@Composable
 private fun ForecastSection(
     state: AccountDetailUiState,
     scheduledIn: Long,
@@ -412,103 +256,4 @@ private fun FlowsChart(state: AccountDetailUiState, languageTag: String, height:
     )
 }
 
-private const val ZOOM_BALANCE = "account-balance"
 private const val ZOOM_FLOWS = "account-flows"
-
-@Composable
-private fun UpcomingSection(state: AccountDetailUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.detail_section_upcoming)) {
-        SoftTile {
-            state.upcoming.forEach { item ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(
-                            text = formatDate(item.dueDate, languageTag),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    MoneyText(
-                        amountCents = item.amountCents,
-                        currencyCode = state.currencyCode,
-                        role = MoneyRole.Flow,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.End,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LatestMovementsSection(state: AccountDetailUiState, languageTag: String, onEvent: (AccountDetailEvent) -> Unit) {
-    FormSection(
-        title = stringResource(Res.string.detail_section_latest),
-        action = {
-            IconActionButton(
-                icon = vectorResource(Res.drawable.ic_list),
-                iconSize = 24.dp,
-                label = stringResource(Res.string.action_see_all_movements),
-                onClick = { onEvent(AccountDetailEvent.SeeAllClicked) },
-            )
-        },
-    ) {
-        SoftTile {
-            if (state.movements.isEmpty()) {
-                Text(
-                    text = stringResource(Res.string.detail_no_movements),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                state.movements.forEach { MovementRow(it, state.currencyCode, languageTag) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MovementRow(row: MovementRowState, currencyCode: String, languageTag: String) {
-    val movement = row.movement
-    val primary = movement.notes ?: stringResource(movement.kind.labelRes())
-    val secondary = when {
-        row.counterAccountName != null && movement.kind == MovementKind.TransferOut ->
-            stringResource(Res.string.movement_to_account, row.counterAccountName)
-        row.counterAccountName != null && movement.kind == MovementKind.TransferIn ->
-            stringResource(Res.string.movement_from_account, row.counterAccountName)
-        row.envelopeIsUnassigned -> stringResource(Res.string.envelopes_unassigned)
-        else -> row.envelopeName
-    }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        EntityAvatar(name = row.authorName.orEmpty(), icon = null, color = null, size = 32.dp)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = primary, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (secondary != null) {
-                Text(
-                    text = secondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            MoneyText(
-                amountCents = movement.amountCents,
-                currencyCode = currencyCode,
-                role = MoneyRole.Flow,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-            )
-            Text(
-                text = formatDayMonth(movement.date, languageTag),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
