@@ -22,3 +22,13 @@ fun parseMoneyInput(text: String): Long? {
     val cents = (units.ifEmpty { "0" }.toLong() * 100) + decimals.padEnd(2, '0').toLong()
     return if (negative) -cents else cents
 }
+
+/**
+ * Cents as the text a user would type, to prefill an amount field: `12.50` with a plain point, `12` for whole units, and
+ * empty for zero or less (nothing to prefill). [parseMoneyInput] reads it back to the same cents.
+ */
+fun formatMoneyInput(cents: Long): String = when {
+    cents <= 0 -> ""
+    cents % 100 == 0L -> (cents / 100).toString()
+    else -> "${cents / 100}.${(cents % 100).toString().padStart(2, '0')}"
+}

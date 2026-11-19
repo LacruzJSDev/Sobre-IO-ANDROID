@@ -12,11 +12,11 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeTransferDraft
 import dev.lacruzjs.sobreio.domain.model.TransferOrigin
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_envelopes_differ
 import dev.lacruzjs.sobreio.generated.resources.validation_required
+import dev.lacruzjs.sobreio.ui.format.formatMoneyInput
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
+import dev.lacruzjs.sobreio.ui.validation.validatePositiveAmount
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,7 +129,7 @@ class EnvelopeTransferFormViewModel(
                         currencyCode = groupResult.getOrThrow().currencyCode,
                         envelopes = choices,
                         origin = transfer?.origin ?: TransferOrigin.Manual,
-                        amount = transfer?.amountCents?.toInputText() ?: it.amount,
+                        amount = transfer?.amountCents?.let(::formatMoneyInput) ?: it.amount,
                         // A new move starts from "Unassigned", like the Assign sheet
                         fromId = transfer?.fromEnvelopeId ?: it.fromId ?: unassigned?.id,
                         toId = transfer?.toEnvelopeId ?: it.toId ?: initialToId?.takeIf { id -> choices.any { e -> e.id == id && e.id != unassigned?.id } },
@@ -146,11 +146,7 @@ class EnvelopeTransferFormViewModel(
         val current = _state.value
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val amount = parseMoneyInput(current.amount)
-        val amountError = when {
-            amount == null -> Res.string.validation_amount_invalid
-            amount <= 0 -> Res.string.validation_amount_positive
-            else -> null
-        }
+        val amountError = validatePositiveAmount(amount)
         val fromError = if (current.fromId == null) Res.string.validation_required else null
         val toError = when {
             current.toId == null -> Res.string.validation_required
@@ -173,9 +169,4 @@ class EnvelopeTransferFormViewModel(
         }
     }
 
-    /** Cents as the text the user would type, `12.50` style with a plain point. */
-    private fun Long.toInputText(): String = when {
-        this % 100 == 0L -> (this / 100).toString()
-        else -> "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
-    }
 }

@@ -9,15 +9,10 @@ import dev.lacruzjs.sobreio.data.repository.AccountRepository
 import dev.lacruzjs.sobreio.data.repository.BankImportRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
-import dev.lacruzjs.sobreio.domain.bankimport.AmountMode
 import dev.lacruzjs.sobreio.domain.bankimport.ColumnMapping
-import dev.lacruzjs.sobreio.domain.bankimport.DateOrder
-import dev.lacruzjs.sobreio.domain.bankimport.DecimalMark
 import dev.lacruzjs.sobreio.domain.bankimport.StatementTable
 import dev.lacruzjs.sobreio.domain.bankimport.decodeStatement
 import dev.lacruzjs.sobreio.domain.bankimport.detectSeparator
-import dev.lacruzjs.sobreio.domain.bankimport.guessDateOrder
-import dev.lacruzjs.sobreio.domain.bankimport.guessDecimalMark
 import dev.lacruzjs.sobreio.domain.bankimport.guessMapping
 import dev.lacruzjs.sobreio.domain.bankimport.headerSignature
 import dev.lacruzjs.sobreio.domain.bankimport.isComplete
@@ -25,10 +20,6 @@ import dev.lacruzjs.sobreio.domain.bankimport.parseCsv
 import dev.lacruzjs.sobreio.domain.bankimport.readStatementRows
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.BankRowAction
-import dev.lacruzjs.sobreio.domain.model.BankRowChoice
-import dev.lacruzjs.sobreio.domain.model.BankRowPreview
-import dev.lacruzjs.sobreio.domain.model.BankRowStatus
-import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.bank_import_columns_incomplete
@@ -210,37 +201,18 @@ class BankImportViewModel(
                         _state.update { it.copy(cameThroughColumns = false) }
                         preview(table, remembered)
                     } else {
-                        showColumns(table, mapping ?: blankMapping(table))
+                        showColumns(table, mapping ?: BlankMapping)
                     }
                 }
             }
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun blankMapping(table: StatementTable) = ColumnMapping(
-        headerRow = 0, dateColumn = -1, descriptionColumn = -1, amountMode = AmountMode.OneColumn, amountColumn = -1,
-        dateOrder = DateOrder.DayMonthYear, decimalMark = DecimalMark.Comma,
-    )
-
     // Columns ----------------------------------------------------------------------------------------------------------
 
     private fun showColumns(table: StatementTable, mapping: ColumnMapping) {
-        val body = table.body(mapping.headerRow).take(50)
-        val dates = if (mapping.dateColumn >= 0) body.mapNotNull { it.getOrNull(mapping.dateColumn) } else emptyList()
-        val amountColumns = listOf(mapping.amountColumn, mapping.chargeColumn, mapping.creditColumn).filter { it >= 0 }
-        val amounts = body.flatMap { row -> amountColumns.mapNotNull { row.getOrNull(it) } }
         _state.update {
-            it.copy(
-                isWorking = false,
-                step = ImportStep.Columns,
-                cameThroughColumns = true,
-                columns = ColumnsState(
-                    mapping = mapping,
-                    askDateOrder = dates.isEmpty() || guessDateOrder(dates).ambiguous,
-                    askDecimalMark = amounts.isEmpty() || guessDecimalMark(amounts).ambiguous,
-                ),
-            )
+            it.copy(isWorking = false, step = ImportStep.Columns, cameThroughColumns = true, columns = columnsStateFor(table, mapping))
         }
     }
 
@@ -264,7 +236,7 @@ class BankImportViewModel(
     private fun editColumns() {
         val s = _state.value
         val table = s.table ?: return
-        val mapping = s.columns?.mapping ?: guessMapping(table) ?: blankMapping(table)
+        val mapping = s.columns?.mapping ?: guessMapping(table) ?: BlankMapping
         // The decisions are kept until a new mapping reads the rows again
         showColumns(table, formats.get(accountId, headerSignature(table.header(mapping.headerRow))) ?: mapping)
     }
@@ -287,7 +259,7 @@ class BankImportViewModel(
         imports.preview(accountId, read.rows)
             .onSuccess { previews ->
                 val byIndex = previews.associateBy { it.index }
-                val rows = read.rows.map { row -> importRow(row, byIndex[row.index]) }
+                val rows = read.rows.map { row -> importRowOf(row, byIndex[row.index]) }
                     .sortedByDescending { it.row.date }
                 _state.update {
                     it.copy(
@@ -303,22 +275,6 @@ class BankImportViewModel(
             .onFailure { e -> _state.update { it.copy(isWorking = false, importError = e.asAppError(), step = ImportStep.Review, rows = emptyList()) } }
     }
 
-    private fun importRow(row: dev.lacruzjs.sobreio.domain.bankimport.StatementRow, preview: BankRowPreview?): ImportRow {
-        if (preview == null) return ImportRow(row = row, status = BankRowStatus.Imported, action = BankRowAction.Ignore)
-        return ImportRow(
-            row = row,
-            status = preview.status,
-            action = preview.suggestedAction,
-            envelopeId = preview.envelopeId,
-            commitmentId = preview.commitmentId,
-            dueDate = preview.dueDate,
-            linkSource = preview.matchSource,
-            linkId = preview.matchId,
-            pending = preview.pending,
-            existing = preview.existing,
-        )
-    }
-
     // Review -----------------------------------------------------------------------------------------------------------
 
     private fun openSheet(index: Int) {
@@ -331,36 +287,10 @@ class BankImportViewModel(
         _state.update { s -> s.sheet?.let { s.copy(sheet = it.copy(draft = transform(it.draft))) } ?: s }
     }
 
-    /** Other new rows with the same description and direction: choosing an envelope for one chooses it for them. */
-    private fun similarRows(rows: List<ImportRow>, index: Int): List<Int> {
-        val row = rows.getOrNull(index) ?: return emptyList()
-        val key = row.row.description.lowercase()
-        if (key.isBlank()) return emptyList()
-        return rows.indices.filter { i ->
-            val other = rows[i]
-            i != index && other.isEditable && other.action == BankRowAction.Create && !other.isTransfer &&
-                other.row.description.lowercase() == key && (other.row.amountCents < 0) == (row.row.amountCents < 0)
-        }
-    }
-
     private fun applySheet() {
         _state.update { s ->
             val sheet = s.sheet ?: return@update s
-            var draft = sheet.draft
-            // A choice without its target falls back to recording the row
-            if (draft.action == BankRowAction.Confirm && draft.pendingChosen == null) draft = draft.copy(action = BankRowAction.Create)
-            if (draft.action == BankRowAction.Link && draft.existingChosen == null) draft = draft.copy(action = BankRowAction.Create)
-            if (draft.action == BankRowAction.Create && draft.isTransfer && draft.otherAccountId == null) draft = draft.copy(isTransfer = false)
-            val previous = s.rows[sheet.index]
-            val envelopeChanged = draft.action == BankRowAction.Create && !draft.isTransfer && draft.envelopeId != previous.envelopeId
-            val similar = if (envelopeChanged) similarRows(s.rows, sheet.index).toSet() else emptySet()
-            val rows = s.rows.mapIndexed { i, row ->
-                when {
-                    i == sheet.index -> draft
-                    i in similar -> row.copy(envelopeId = draft.envelopeId)
-                    else -> row
-                }
-            }
+            val rows = applyRowSheet(s.rows, sheet)
             s.copy(rows = rows, sheet = null)
         }
     }
@@ -404,22 +334,6 @@ class BankImportViewModel(
                 .onFailure { e -> _state.update { it.copy(isImporting = false, importError = e.asAppError()) } }
         }
     }
-
-    private fun ImportRow.toChoice() = BankRowChoice(
-        ref = row.ref,
-        date = row.date,
-        amountCents = row.amountCents,
-        description = row.description,
-        action = action,
-        kind = if (isTransfer) EntryKind.Transfer else if (row.amountCents < 0) EntryKind.Expense else EntryKind.Income,
-        envelopeId = envelopeId.takeIf { !isTransfer },
-        otherAccountId = otherAccountId.takeIf { isTransfer },
-        notes = notes.trim().takeIf { it.isNotEmpty() },
-        commitmentId = commitmentId,
-        dueDate = dueDate,
-        linkSource = linkSource,
-        linkId = linkId,
-    )
 
     // Result -----------------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.movementform
 
 import dev.lacruzjs.sobreio.data.repository.CalendarRepository
+import dev.lacruzjs.sobreio.ui.validation.validateTagName
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
@@ -14,30 +15,19 @@ import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.MovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.TagRepository
-import dev.lacruzjs.sobreio.domain.MAX_TAG_NAME_LENGTH
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
-import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.EntryKind
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.GroupTransferDraft
 import dev.lacruzjs.sobreio.domain.model.MovementSource
-import dev.lacruzjs.sobreio.domain.model.TransactionDraft
 import dev.lacruzjs.sobreio.domain.model.TransferDraft
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
-import dev.lacruzjs.sobreio.generated.resources.validation_account_required
-import dev.lacruzjs.sobreio.generated.resources.validation_accounts_differ
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
-import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
-import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
-import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
-import dev.lacruzjs.sobreio.generated.resources.validation_required
-import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
 import dev.lacruzjs.sobreio.domain.normalizeTagName
+import dev.lacruzjs.sobreio.ui.format.formatMoneyInput
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.theme.TagColor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,8 +76,8 @@ class MovementFormViewModel(
     private val _state = MutableStateFlow(MovementFormUiState(isEditing = movementId != null))
     val state: StateFlow<MovementFormUiState> = _state.asStateFlow()
 
-    /** Tags the movement had when loaded: the sync inserts and deletes the difference. */
-    private var storedTagIds: Set<String> = emptySet()
+    /** Tags the movement has in the database: Save inserts and deletes the difference. */
+    private val tagSync = TagSync()
 
     /** Set once the movement exists in the database, so a retry after a tag failure does not create it again. */
     private var createdId: String? = null
@@ -251,11 +241,7 @@ class MovementFormViewModel(
         val current = _state.value
         if (current.isCreatingTag) return
         val name = normalizeTagName(current.tagQuery)
-        val error = when {
-            name.isEmpty() -> Res.string.validation_required
-            name.length > MAX_TAG_NAME_LENGTH -> Res.string.validation_tag_name_too_long
-            else -> null
-        }
+        val error = validateTagName(name)
         if (error != null) {
             _state.update { it.copy(tagError = error) }
             return
@@ -327,7 +313,7 @@ class MovementFormViewModel(
                 val userId = auth.authState.filterIsInstance<AuthState.SignedIn>().first().user.id
                 val preselected = listOfNotNull(fixedAccountId, lastAccount.get(userId, groupId))
                     .firstOrNull { id -> liveAccounts.any { it.id == id } }
-                _state.update { applyPrefill(base.copy(accountId = preselected)) }
+                _state.update { base.copy(accountId = preselected).withPrefill(prefill) }
                 return@launch
             }
             when (source) {
@@ -336,21 +322,6 @@ class MovementFormViewModel(
                 else -> loadFailed(AppError.NotFound)
             }
         }
-    }
-
-    /** Only accounts that are live choices are taken; the date stays the group's today. */
-    private fun applyPrefill(base: MovementFormUiState): MovementFormUiState {
-        val p = prefill ?: return base
-        val live = base.accounts.map { it.id }.toSet()
-        val from = p.fromAccountId?.takeIf { it in live }
-        val to = p.toAccountId?.takeIf { it in live && it != from }
-        return base.copy(
-            kind = p.kind,
-            accountId = from ?: base.accountId.takeIf { p.fromAccountId == null },
-            toAccountId = if (p.kind == EntryKind.Transfer) to else null,
-            envelopeId = if (p.kind == EntryKind.Income) base.unassigned?.id else null,
-            amount = p.amountCents?.toInputText().orEmpty(),
-        )
     }
 
     private suspend fun loadTransaction(
@@ -368,11 +339,11 @@ class MovementFormViewModel(
         // An archived envelope of the stored row stays a choice; the hidden "Outside envelopes" one is not in the list
         val envelope = allEnvelopes.firstOrNull { it.id == stored.envelopeId }
         val envelopeList = (base.envelopes + listOfNotNull(envelope)).distinctBy { it.id }
-        storedTagIds = tagIds
+        tagSync.synced(tagIds)
         _state.update {
             base.copy(
                 kind = stored.kind,
-                amount = stored.amountCents.toInputText(),
+                amount = formatMoneyInput(stored.amountCents),
                 storedAmountCents = stored.amountCents,
                 accounts = choices,
                 accountId = stored.accountId,
@@ -394,7 +365,7 @@ class MovementFormViewModel(
         _state.update {
             base.copy(
                 kind = EntryKind.Transfer,
-                amount = stored.amountCents.toInputText(),
+                amount = formatMoneyInput(stored.amountCents),
                 storedAmountCents = stored.amountCents,
                 accounts = choices,
                 accountId = stored.fromAccountId,
@@ -419,39 +390,10 @@ class MovementFormViewModel(
             return
         }
         val cents = parseMoneyInput(s.amount)
-        val amountError = when {
-            cents == null -> Res.string.validation_amount_invalid
-            cents <= 0 -> Res.string.validation_amount_positive
-            else -> null
-        }
-        val accountError = if (s.accountId == null) Res.string.validation_account_required else null
-        val envelopeError = if (s.showsEnvelope && s.kind == EntryKind.Expense && s.envelopeId == null) {
-            Res.string.validation_envelope_required
-        } else null
-        val toAccountError = when {
-            !s.isTransfer || s.crossGroup -> null
-            s.toAccountId == null -> Res.string.validation_destination_account
-            s.toAccountId == s.accountId -> Res.string.validation_accounts_differ
-            else -> null
-        }
-        val destGroupError = if (s.isTransfer && s.crossGroup && s.destGroupId == null) Res.string.validation_destination_group else null
-        val destAccountError = if (s.isTransfer && s.crossGroup && s.destGroupId != null && s.destAccountId == null) {
-            Res.string.validation_destination_account
-        } else null
+        val errors = validateMovementForm(s, cents)
         val date = s.date
-        if (amountError != null || accountError != null || envelopeError != null || toAccountError != null ||
-            destGroupError != null || destAccountError != null || cents == null || date == null
-        ) {
-            _state.update {
-                it.copy(
-                    amountError = amountError,
-                    accountError = accountError,
-                    envelopeError = envelopeError,
-                    toAccountError = toAccountError,
-                    destGroupError = destGroupError,
-                    destAccountError = destAccountError,
-                )
-            }
+        if (!errors.isValid || cents == null || date == null) {
+            _state.update { it.withErrors(errors) }
             return
         }
         val accountId = s.accountId ?: return
@@ -472,17 +414,7 @@ class MovementFormViewModel(
             result.onSuccess { if (movementId == null) rememberAccount(accountId); finish() }.onFailure { fail(it) }
             return
         }
-        // An account outside the envelopes has no envelope to send: the database uses the hidden one
-        val envelopeId = if (s.accountInEnvelopes) s.envelopeId ?: s.unassigned?.id else null
-        val cover = if (s.showsCoverNote) {
-            s.coverEnvelopeId
-                ?.let { id -> s.envelopes.firstOrNull { it.id == id } }
-                ?.let { listOf(CoverItem(it.id, it.balanceCents)) }
-                .orEmpty()
-        } else {
-            emptyList()
-        }
-        val draft = TransactionDraft(accountId, s.kind, cents, envelopeId, date, notes, cover)
+        val draft = transactionDraftOf(s, accountId, cents, date)
         val saved = if (movementId != null) form.updateTransaction(movementId, draft).map { movementId } else form.createTransaction(draft)
         val id = saved.getOrElse { return fail(it) }
         if (movementId == null) {
@@ -494,10 +426,8 @@ class MovementFormViewModel(
 
     private suspend fun syncTags(transactionId: String): Result<Unit> {
         val selected = _state.value.selectedTagIds
-        val added = selected - storedTagIds
-        val removed = storedTagIds - selected
-        if (added.isEmpty() && removed.isEmpty()) return Result.success(Unit)
-        return form.syncTags(groupId, transactionId, added, removed).onSuccess { storedTagIds = selected }
+        val changes = tagSync.changesFor(selected) ?: return Result.success(Unit)
+        return form.syncTags(groupId, transactionId, changes.added, changes.removed).onSuccess { tagSync.synced(selected) }
     }
 
     /** The account used last, to preselect it next time; a failure to read the session only skips the memory. */
@@ -514,10 +444,4 @@ class MovementFormViewModel(
         const val MATCH_DEBOUNCE_MS = 400L
     }
 
-    /** Cents as the text the user would type: `12.50` style with a plain point. */
-    private fun Long.toInputText(): String = when {
-        this <= 0 -> ""
-        this % 100 == 0L -> (this / 100).toString()
-        else -> "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
-    }
 }

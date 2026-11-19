@@ -1,6 +1,7 @@
 package dev.lacruzjs.sobreio.ui.envelopes
 
 import dev.lacruzjs.sobreio.data.repository.CalendarRepository
+import dev.lacruzjs.sobreio.ui.validation.validatePositiveAmount
 import kotlinx.datetime.plus
 import kotlinx.datetime.DateTimeUnit
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
@@ -16,8 +17,6 @@ import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.envelope_deleted
 import dev.lacruzjs.sobreio.generated.resources.envelope_reopened
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
 import dev.lacruzjs.sobreio.generated.resources.validation_source_invalid
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import dev.lacruzjs.sobreio.ui.undo.PendingUndoCommits
@@ -169,11 +168,7 @@ class EnvelopesViewModel(
         if (current.isSubmitting || current.sheet != EnvelopesSheet.Assign) return
         val target = current.assignTarget ?: return
         val amount = parseMoneyInput(current.amount)
-        val amountError = when {
-            amount == null -> Res.string.validation_amount_invalid
-            amount <= 0 -> Res.string.validation_amount_positive
-            else -> null
-        }
+        val amountError = validatePositiveAmount(amount)
         val sourceId = current.sourceId
         val sourceError = if (sourceId == null || sourceId == target.id) Res.string.validation_source_invalid else null
         if (amountError != null || sourceError != null || amount == null || sourceId == null) {

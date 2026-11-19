@@ -49,4 +49,19 @@ class MoneyInputTest {
     fun rejectsAmountsTooBigForCents() {
         assertNull(parseMoneyInput("1234567890123"))
     }
+
+    @Test
+    fun formatsCentsAsTypedTextThatReadsBack() {
+        assertEquals("12.50", formatMoneyInput(1_250))
+        assertEquals("12.05", formatMoneyInput(1_205))
+        assertEquals("12", formatMoneyInput(1_200))
+        assertEquals("0.07", formatMoneyInput(7))
+        listOf(7L, 1_205L, 1_200L, 129_815L).forEach { assertEquals(it, parseMoneyInput(formatMoneyInput(it))) }
+    }
+
+    @Test
+    fun formatsNothingForZeroOrLess() {
+        assertEquals("", formatMoneyInput(0))
+        assertEquals("", formatMoneyInput(-500))
+    }
 }

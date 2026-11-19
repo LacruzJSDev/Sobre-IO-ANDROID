@@ -1,7 +1,6 @@
 package dev.lacruzjs.sobreio.ui.commitmentform
 
 import dev.lacruzjs.sobreio.data.repository.CalendarRepository
-import dev.lacruzjs.sobreio.ui.validation.validateName
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
@@ -10,34 +9,19 @@ import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
-import dev.lacruzjs.sobreio.domain.model.Commitment
-import dev.lacruzjs.sobreio.domain.model.CommitmentChange
-import dev.lacruzjs.sobreio.domain.model.CommitmentDraft
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CommitmentLink
-import dev.lacruzjs.sobreio.domain.model.CommitmentVersion
-import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeKind
-import dev.lacruzjs.sobreio.domain.model.EnvelopePurpose
-import dev.lacruzjs.sobreio.domain.model.FrequencyUnit
-import dev.lacruzjs.sobreio.domain.model.LinkedCommitmentDraft
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
-import dev.lacruzjs.sobreio.generated.resources.validation_accounts_differ
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_invalid
-import dev.lacruzjs.sobreio.generated.resources.validation_amount_positive
-import dev.lacruzjs.sobreio.generated.resources.validation_destination_account
-import dev.lacruzjs.sobreio.generated.resources.validation_destination_group
-import dev.lacruzjs.sobreio.generated.resources.validation_end_date_before_start
-import dev.lacruzjs.sobreio.generated.resources.validation_envelope_required
 import dev.lacruzjs.sobreio.generated.resources.validation_funded_needs_bills
-import dev.lacruzjs.sobreio.generated.resources.validation_funded_no_bills
 import dev.lacruzjs.sobreio.ui.format.parseMoneyInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 /**
  * The create and edit form of a commitment of one account ([accountId]); [commitmentId] null creates.
@@ -105,27 +89,7 @@ class CommitmentFormViewModel(
         val current = _state.value
         val chosen = current.accounts.firstOrNull { it.id == id }
         if (!current.canChangeAccount || chosen == null || chosen.id == current.accountId) return
-        edit {
-            it.copy(
-                accountId = id,
-                // A transfer cannot go to its own source
-                toAccountId = it.toAccountId.takeUnless { to -> to == id },
-                envelopeId = if (chosen.inEnvelopes) it.envelopeId else null,
-                funded = it.funded && chosen.inEnvelopes,
-                envelopeError = null,
-                toAccountError = null,
-            )
-        }
-    }
-
-    /** Turning the reserve on keeps the envelope only when it is a Bills one: the list no longer offers any other. */
-    private fun CommitmentFormUiState.withFunded(value: Boolean): CommitmentFormUiState {
-        val chosenIsBills = envelopes.firstOrNull { it.id == envelopeId }?.purpose == EnvelopePurpose.Bills
-        return copy(
-            funded = value,
-            envelopeId = if (value && !chosenIsBills) null else envelopeId,
-            envelopeError = null,
-        )
+        edit { it.withAccount(chosen) }
     }
 
     private fun edit(touchRules: Boolean = true, change: (CommitmentFormUiState) -> CommitmentFormUiState) {
@@ -203,34 +167,6 @@ class CommitmentFormViewModel(
         }
     }
 
-    private fun CommitmentFormUiState.fromVersion(
-        commitment: Commitment,
-        version: CommitmentVersion,
-        liveEnvelopes: List<Envelope>,
-    ): CommitmentFormUiState {
-        // An envelope that is no longer a choice (archived, or the hidden "Outside envelopes") must be picked again
-        val envelope = when (version.kind) {
-            CommitmentKind.Expense -> version.envelopeId?.takeIf { id -> accountInEnvelopes && liveEnvelopes.any { it.id == id } }
-            else -> version.envelopeId
-        }
-        return copy(
-            isLoading = false,
-            name = commitment.name,
-            kind = version.kind,
-            amount = version.amountCents.toInputText(),
-            toAccountId = version.toAccountId,
-            envelopeId = envelope,
-            firstDueDate = version.firstDueDate,
-            isRecurring = version.isRecurring,
-            everyN = version.everyN ?: 1,
-            unit = version.unit ?: FrequencyUnit.Month,
-            endDate = version.endDate,
-            autoRegister = version.autoRegister,
-            funded = version.funded,
-            notes = version.notes.orEmpty(),
-        )
-    }
-
     private fun loadFailed(error: AppError) = _state.update { it.copy(isLoading = false, loadError = error) }
 
     private fun selectDestGroup(id: String) {
@@ -278,111 +214,28 @@ class CommitmentFormViewModel(
         if (current.isSubmitting || current.isLoading || current.loadError != null) return
         val name = current.name.trim()
         val cents = parseMoneyInput(current.amount)
-        val nameError = validateName(name, MAX_COMMITMENT_NAME_LENGTH)
-        val amountError = when {
-            cents == null -> Res.string.validation_amount_invalid
-            cents <= 0 -> Res.string.validation_amount_positive
-            else -> null
-        }
-        val editing = commitmentId != null
-        val rules = !current.isLinkedEdit
-        val toAccountError = when {
-            !rules || current.kind != CommitmentKind.Transfer -> null
-            current.toAccountId == null -> Res.string.validation_destination_account
-            current.toAccountId == current.accountId -> Res.string.validation_accounts_differ
-            else -> null
-        }
-        // A reserve needs a Bills envelope; a name-only edit of an old commitment is not held back by it
-        val fundedEnvelopeError = if (rules && current.fundedEffective && (!editing || rulesTouched)) {
-            when {
-                !current.hasBillsEnvelope -> Res.string.validation_funded_no_bills
-                current.envelopes.firstOrNull { it.id == current.envelopeId }?.purpose != EnvelopePurpose.Bills ->
-                    Res.string.validation_funded_needs_bills
-                else -> null
-            }
-        } else null
-        val envelopeError = fundedEnvelopeError ?: if (rules && current.showsExpenseEnvelope && current.envelopeId == null) {
-            Res.string.validation_envelope_required
-        } else null
-        val creatingContribution = !editing && current.isContribution
-        val destGroupError = if (creatingContribution && current.destGroupId == null) Res.string.validation_destination_group else null
-        val destAccountError = if (creatingContribution && current.destGroupId != null && current.destAccountId == null) {
-            Res.string.validation_destination_account
-        } else null
-        val endDateError = if (rules && current.isRecurring && current.endDate != null &&
-            current.firstDueDate != null && current.endDate < current.firstDueDate
-        ) {
-            Res.string.validation_end_date_before_start
-        } else null
+        val errors = validateCommitmentForm(current, name, cents, rulesTouched)
         val firstDueDate = current.firstDueDate
-        val effectiveFrom = current.effectiveFrom
-        if (nameError != null || amountError != null || toAccountError != null || envelopeError != null ||
-            destGroupError != null || destAccountError != null || endDateError != null ||
-            cents == null || firstDueDate == null || (editing && effectiveFrom == null)
-        ) {
-            _state.update {
-                it.copy(
-                    nameError = nameError,
-                    amountError = amountError,
-                    toAccountError = toAccountError,
-                    envelopeError = envelopeError,
-                    destGroupError = destGroupError,
-                    destAccountError = destAccountError,
-                    endDateError = endDateError,
-                )
-            }
+        if (!errors.isValid || cents == null || firstDueDate == null || (current.isEditing && current.effectiveFrom == null)) {
+            _state.update { it.withErrors(errors) }
             return
         }
         _state.update { it.copy(isSubmitting = true, submitError = null) }
         viewModelScope.launch {
-            if (!editing) create(current, name, cents, firstDueDate) else update(current, name, cents, firstDueDate)
+            if (!current.isEditing) create(current, name, cents, firstDueDate) else update(current, name, cents, firstDueDate)
         }
     }
 
-    private suspend fun create(s: CommitmentFormUiState, name: String, cents: Long, firstDueDate: kotlinx.datetime.LocalDate) {
-        val endDate = s.endDate.takeIf { s.isRecurring }
+    private suspend fun create(s: CommitmentFormUiState, name: String, cents: Long, firstDueDate: LocalDate) {
         val result = if (s.isContribution) {
-            commitments.createLinkedCommitment(
-                LinkedCommitmentDraft(
-                    name = name,
-                    outAccountId = s.accountId,
-                    inAccountId = s.destAccountId.orEmpty(),
-                    amountCents = cents,
-                    firstDueDate = firstDueDate,
-                    isRecurring = s.isRecurring,
-                    everyN = s.everyN,
-                    unit = s.unit,
-                    endDate = endDate,
-                    outEnvelopeId = s.envelopeId,
-                    inEnvelopeId = s.destEnvelopeId,
-                    funded = s.fundedEffective,
-                    autoRegister = s.autoRegister,
-                ),
-            )
+            commitments.createLinkedCommitment(linkedCommitmentDraftOf(s, name, cents, firstDueDate))
         } else {
-            commitments.createCommitment(
-                CommitmentDraft(
-                    name = name,
-                    kind = s.kind,
-                    amountCents = cents,
-                    accountId = s.accountId,
-                    firstDueDate = firstDueDate,
-                    toAccountId = s.toAccountId.takeIf { s.kind == CommitmentKind.Transfer },
-                    envelopeId = s.envelopeId.takeIf { s.showsExpenseEnvelope },
-                    isRecurring = s.isRecurring,
-                    everyN = s.everyN,
-                    unit = s.unit,
-                    endDate = endDate,
-                    funded = s.fundedEffective,
-                    autoRegister = s.autoRegister,
-                    notes = s.notes.trim().ifEmpty { null },
-                ),
-            )
+            commitments.createCommitment(commitmentDraftOf(s, name, cents, firstDueDate))
         }
         result.onSuccess { finish() }.onFailure { fail(it) }
     }
 
-    private suspend fun update(s: CommitmentFormUiState, name: String, cents: Long, firstDueDate: kotlinx.datetime.LocalDate) {
+    private suspend fun update(s: CommitmentFormUiState, name: String, cents: Long, firstDueDate: LocalDate) {
         val id = commitmentId ?: return
         if (name != storedName) {
             val renamed = commitments.renameCommitment(id, name)
@@ -397,24 +250,7 @@ class CommitmentFormViewModel(
             } else {
                 Result.success(Unit)
             }
-            rulesTouched -> commitments.changeCommitment(
-                id,
-                CommitmentChange(
-                    amountCents = cents,
-                    accountId = s.accountId,
-                    firstDueDate = firstDueDate,
-                    toAccountId = s.toAccountId.takeIf { s.kind == CommitmentKind.Transfer },
-                    envelopeId = s.envelopeId.takeIf { s.showsExpenseEnvelope },
-                    isRecurring = s.isRecurring,
-                    everyN = s.everyN,
-                    unit = s.unit,
-                    endDate = s.endDate.takeIf { s.isRecurring },
-                    funded = s.fundedEffective,
-                    autoRegister = s.autoRegister,
-                    notes = s.notes.trim().ifEmpty { null },
-                    effectiveFrom = s.effectiveFrom,
-                ),
-            )
+            rulesTouched -> commitments.changeCommitment(id, commitmentChangeOf(s, cents, firstDueDate))
             else -> Result.success(Unit)
         }
         result.onSuccess { finish() }.onFailure { fail(it) }
@@ -436,11 +272,4 @@ class CommitmentFormViewModel(
         }
     }
 
-
-    /** Cents as the text the user would type: `12.50` style with a plain point. */
-    private fun Long.toInputText(): String = when {
-        this <= 0 -> ""
-        this % 100 == 0L -> (this / 100).toString()
-        else -> "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
-    }
 }

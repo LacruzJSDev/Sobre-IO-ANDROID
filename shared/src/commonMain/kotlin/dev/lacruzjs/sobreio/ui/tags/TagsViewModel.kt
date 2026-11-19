@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.TagRepository
-import dev.lacruzjs.sobreio.domain.MAX_TAG_NAME_LENGTH
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.TagUsage
@@ -14,13 +13,12 @@ import dev.lacruzjs.sobreio.generated.resources.error_duplicate_name
 import dev.lacruzjs.sobreio.generated.resources.tag_deleted
 import dev.lacruzjs.sobreio.generated.resources.tag_reopened
 import dev.lacruzjs.sobreio.generated.resources.tags_merged
-import dev.lacruzjs.sobreio.generated.resources.validation_required
 import dev.lacruzjs.sobreio.generated.resources.validation_tag_merge_target
-import dev.lacruzjs.sobreio.generated.resources.validation_tag_name_too_long
 import dev.lacruzjs.sobreio.ui.theme.TagColor
 import dev.lacruzjs.sobreio.ui.undo.UndoController
 import dev.lacruzjs.sobreio.ui.undo.UndoableAction
 import dev.lacruzjs.sobreio.ui.loading.revalidate
+import dev.lacruzjs.sobreio.ui.validation.validateTagName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -123,11 +121,7 @@ class TagsViewModel(
         val s = _state.value
         if (s.isSubmitting || s.sheet != TagsSheet.Edit) return
         val name = normalizeTagName(s.name)
-        val error = when {
-            name.isEmpty() -> Res.string.validation_required
-            name.length > MAX_TAG_NAME_LENGTH -> Res.string.validation_tag_name_too_long
-            else -> null
-        }
+        val error = validateTagName(name)
         if (error != null) {
             _state.update { it.copy(nameError = error) }
             return
