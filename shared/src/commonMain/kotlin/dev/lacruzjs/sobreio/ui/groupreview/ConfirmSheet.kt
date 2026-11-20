@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_confirm
+import dev.lacruzjs.sobreio.generated.resources.confirm_reserve_exact
+import dev.lacruzjs.sobreio.generated.resources.confirm_reserve_less
+import dev.lacruzjs.sobreio.generated.resources.confirm_reserve_more
 import dev.lacruzjs.sobreio.generated.resources.field_amount
 import dev.lacruzjs.sobreio.generated.resources.field_cover_also
 import dev.lacruzjs.sobreio.generated.resources.field_date
@@ -25,13 +28,15 @@ import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
+import dev.lacruzjs.sobreio.ui.components.displayName
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.format.formatMoney
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * One-step sheet that registers a due date: the amount and date start as expected, and an expense whose envelope cannot
- * cover it shows the same cover note and optional "Also cover from" envelope as the movement form.
+ * One-step sheet that registers a due date: the amount and date start as expected and can be changed to what was really
+ * charged. A funded payment says what was set aside for it and what happens to the difference (D-56); an expense whose
+ * envelope cannot cover it shows the same cover note and optional "Also cover from" envelope as the movement form.
  */
 @Composable
 internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent) -> Unit) {
@@ -56,6 +61,22 @@ internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent)
             enabled = !busy,
             maxDate = state.today,
         )
+        val reserve = state.reserveNote(draft)
+        if (reserve != null) {
+            val money = { cents: Long -> formatMoney(cents, state.currencyCode, languageTag) }
+            val envelopeName = state.envelopes.firstOrNull { it.id == draft.occurrence.envelopeId }?.displayName().orEmpty()
+            FormNote(
+                when (reserve) {
+                    is ReserveNote.Exact -> stringResource(Res.string.confirm_reserve_exact, money(reserve.reservedCents))
+                    is ReserveNote.Less -> stringResource(
+                        Res.string.confirm_reserve_less, money(reserve.reservedCents), money(reserve.leftCents), envelopeName,
+                    )
+                    is ReserveNote.More -> stringResource(
+                        Res.string.confirm_reserve_more, money(reserve.reservedCents), money(reserve.extraCents), envelopeName,
+                    )
+                },
+            )
+        }
         val short = state.coverShortEnvelope(draft)
         if (short != null) {
             FormNote(

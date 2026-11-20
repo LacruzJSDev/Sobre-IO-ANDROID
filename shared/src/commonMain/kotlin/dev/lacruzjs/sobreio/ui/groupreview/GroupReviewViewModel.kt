@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.data.repository.CalendarRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AccountRepository
+import dev.lacruzjs.sobreio.data.repository.CommitmentRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
@@ -41,6 +42,7 @@ class GroupReviewViewModel(
     private val accounts: AccountRepository,
     private val envelopes: EnvelopeRepository,
     private val calendar: CalendarRepository,
+    private val commitments: CommitmentRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupReviewUiState())
@@ -146,6 +148,18 @@ class GroupReviewViewModel(
                     date = if (occurrence.dueDate < limit) occurrence.dueDate else limit,
                 ),
             )
+        }
+        loadReserve(occurrence)
+    }
+
+    /** Reads what is set aside for the payment; the sheet works without it, so a failure only hides the line. */
+    private fun loadReserve(occurrence: DueOccurrence) {
+        viewModelScope.launch {
+            val funding = commitments.getFundingStatus(occurrence.commitmentId).getOrNull()
+            val reserved = reservedForDue(occurrence, funding) ?: return@launch
+            _state.update { s ->
+                s.copy(sheet = s.sheet?.takeIf { it.occurrence.key == occurrence.key }?.copy(reservedCents = reserved) ?: s.sheet)
+            }
         }
     }
 
