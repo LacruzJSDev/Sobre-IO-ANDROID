@@ -34,7 +34,7 @@ class ProfileViewModel(
                 _state.update {
                     val loadName = !nameLoaded && user != null
                     if (loadName) nameLoaded = true
-                    it.copy(user = user, name = if (loadName) user?.displayName.orEmpty() else it.name)
+                    it.copy(user = user, name = if (loadName) user.displayName.orEmpty() else it.name)
                 }
             }
         }

@@ -34,7 +34,6 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
 
     override suspend fun materializeThroughToday(groupId: String): Result<Unit> = safeCall {
         postgrest.rpc("materialize_through_today", buildJsonObject { put("p_group_id", groupId) })
-        Unit
     }
 
     override suspend fun getEnvelopes(groupId: String): Result<List<Envelope>> = safeCall {
@@ -120,7 +119,6 @@ class SupabaseEnvelopeRepository(client: SupabaseClient) : EnvelopeRepository {
                 put("amount", amountCents)
             },
         )
-        Unit
     }
 
     private suspend fun update(id: String, changes: PostgrestUpdate.() -> Unit) {

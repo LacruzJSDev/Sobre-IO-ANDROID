@@ -121,7 +121,6 @@ class SupabaseMovementRepository(client: SupabaseClient) : MovementRepository {
             ?.id
             ?: throw AppError.BusinessRule("FZ016")
         postgrest.rpc("void_group_transfer", buildJsonObject { put("p_link_id", linkId) })
-        Unit
     }
 
     @Serializable

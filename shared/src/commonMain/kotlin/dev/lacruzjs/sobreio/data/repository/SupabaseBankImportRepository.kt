@@ -55,7 +55,6 @@ class SupabaseBankImportRepository(client: SupabaseClient) : BankImportRepositor
 
     override suspend fun undo(importId: String): Result<Unit> = safeCall {
         postgrest.rpc("void_bank_import", buildJsonObject { put("p_import_id", importId) })
-        Unit
     }
 
     override suspend fun getLastImport(accountId: String): Result<BankImportSummary?> = safeCall {

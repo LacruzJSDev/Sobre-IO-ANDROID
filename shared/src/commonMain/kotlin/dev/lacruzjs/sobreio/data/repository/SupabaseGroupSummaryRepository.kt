@@ -146,7 +146,6 @@ class SupabaseGroupSummaryRepository(client: SupabaseClient) : GroupSummaryRepos
                 put("p_due_date", dueDate.toString())
             },
         )
-        Unit
     }
 
     override suspend fun voidConfirmed(fact: ConfirmedFact): Result<Unit> = safeCall {

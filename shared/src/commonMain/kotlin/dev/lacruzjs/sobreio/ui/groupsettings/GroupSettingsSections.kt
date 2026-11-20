@@ -19,11 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +55,8 @@ import dev.lacruzjs.sobreio.ui.components.AddIconButton
 import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.IconCategory
 import dev.lacruzjs.sobreio.ui.components.iconFor
+import dev.lacruzjs.sobreio.ui.components.plainTextClipEntry
+import kotlinx.coroutines.launch
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
 import org.jetbrains.compose.resources.stringResource
@@ -208,12 +210,13 @@ internal fun MemberRow(member: Member, isYou: Boolean) {
 
 @Composable
 internal fun PendingInvitationRow(invitation: Invitation, languageTag: String) {
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .fillMaxWidth()
             // Tapping the row copies the code
-            .clickable(role = Role.Button) { clipboard.setText(AnnotatedString(invitation.code)) }
+            .clickable(role = Role.Button) { scope.launch { clipboard.setClipEntry(plainTextClipEntry(invitation.code)) } }
             .padding(horizontal = 8.dp, vertical = 10.dp),
     ) {
         Text(

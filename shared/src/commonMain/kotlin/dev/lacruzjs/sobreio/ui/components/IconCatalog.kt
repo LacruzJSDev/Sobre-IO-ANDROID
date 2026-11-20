@@ -1,6 +1,9 @@
 package dev.lacruzjs.sobreio.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Apartment
@@ -42,7 +45,6 @@ import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Luggage
 import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Paid
 import androidx.compose.material.icons.filled.Payments
@@ -55,14 +57,12 @@ import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.Train
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.Work
@@ -189,8 +189,8 @@ object IconCatalog {
             "wallet" to IconOption("wallet", Res.string.icon_wallet, Icons.Filled.AccountBalanceWallet),
             "cash" to IconOption("cash", Res.string.icon_cash, Icons.Filled.Payments),
             "atm" to IconOption("atm", Res.string.icon_atm, Icons.Filled.LocalAtm),
-            "chart" to IconOption("chart", Res.string.icon_chart, Icons.Filled.ShowChart),
-            "trending_up" to IconOption("trending_up", Res.string.icon_trending_up, Icons.Filled.TrendingUp),
+            "chart" to IconOption("chart", Res.string.icon_chart, Icons.AutoMirrored.Filled.ShowChart),
+            "trending_up" to IconOption("trending_up", Res.string.icon_trending_up, Icons.AutoMirrored.Filled.TrendingUp),
             "candlestick" to IconOption("candlestick", Res.string.icon_candlestick, Icons.Filled.CandlestickChart),
             "bitcoin" to IconOption("bitcoin", Res.string.icon_bitcoin, Icons.Filled.CurrencyBitcoin),
             "diamond" to IconOption("diamond", Res.string.icon_diamond, Icons.Filled.Diamond),
@@ -222,7 +222,7 @@ object IconCatalog {
             "kids" to IconOption("kids", Res.string.icon_kids, Icons.Filled.ChildFriendly),
             "cinema" to IconOption("cinema", Res.string.icon_cinema, Icons.Filled.Movie),
             "games" to IconOption("games", Res.string.icon_games, Icons.Filled.SportsEsports),
-            "books" to IconOption("books", Res.string.icon_books, Icons.Filled.MenuBook),
+            "books" to IconOption("books", Res.string.icon_books, Icons.AutoMirrored.Filled.MenuBook),
             "travel" to IconOption("travel", Res.string.icon_travel, Icons.Filled.Luggage),
             "gifts" to IconOption("gifts", Res.string.icon_gifts, Icons.Filled.CardGiftcard),
             "insurance" to IconOption("insurance", Res.string.icon_insurance, Icons.Filled.Security),
