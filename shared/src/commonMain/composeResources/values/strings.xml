@@ -428,7 +428,7 @@
     <string name="field_auto_register">Register automatically</string>
     <string name="commitment_register_note">On: it is recorded by itself on the due date, like a bank standing order. Off: it waits in the Group tab to be confirmed with the real amount or skipped.</string>
     <string name="field_funded">Set aside each period</string>
-    <string name="commitment_funded_note">Each period the money moves from Unassigned to the envelope in advance, so it is there on the due date.</string>
+    <string name="commitment_funded_note">Each period the envelope is filled from Unassigned with what it still lacks for the payment, so the money is there on the due date. If a payment comes in for less, what is left lowers the next reserve.</string>
     <string name="field_notes">Notes</string>
     <string name="field_effective_from">Apply from</string>
     <string name="commitment_effective_note">Due dates before this day keep the old values.</string>
@@ -534,6 +534,9 @@
     <string name="form_section_details">Details</string>
     <string name="movement_cover_none">None</string>
     <string name="movement_cover_note">%1$s has %2$s: whatever is missing will be covered from Unassigned.</string>
+    <string name="confirm_reserve_exact">%1$s set aside for this payment.</string>
+    <string name="confirm_reserve_less">%1$s set aside for this payment. The %2$s left stay in %3$s and lower the next reserve.</string>
+    <string name="confirm_reserve_more">%1$s set aside for this payment. The %2$s more come from what %3$s already had.</string>
     <string name="movement_outside_note">This account is outside the envelopes, so the movement doesn't touch any envelope.</string>
     <string name="movement_edit_extra_note">The extra amount isn't covered automatically: the envelope may go negative.</string>
     <string name="movement_boundary_note">This transfer crosses the envelopes' boundary, so the money passes through Unassigned.</string>
@@ -573,7 +576,7 @@
     <string name="envelope_transfer_edit_title">Edit move</string>
     <string name="envelope_transfer_unknown_envelope">Envelope</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
-    <string name="envelope_transfer_automatic_note">Made by the monthly target: it always goes from Unassigned to its envelope. You can change the amount or delete it; it is not made again this period.</string>
+    <string name="envelope_transfer_automatic_note">Made by the monthly target: it always goes from Unassigned to its envelope, with what the envelope lacked to reach its target. You can change the amount or delete it; it is not made again this period.</string>
     <string name="form_section_envelope_transfer">Envelopes</string>
     <string name="validation_envelopes_differ">The destination must be a different envelope.</string>
     <string name="field_envelope_start_next_period">Start next period</string>
@@ -587,8 +590,8 @@
     <string name="envelope_purpose_savings">Savings</string>
     <string name="envelope_purpose_free">Free</string>
     <string name="field_monthly_contribution">Monthly contribution</string>
-    <string name="envelope_purpose_note_monthly">Each period the target is assigned from Unassigned. The bar shows what is left of the month.</string>
-    <string name="envelope_purpose_note_bills">Commitments with a reserve set aside here, little by little, the money of each payment. Choose this envelope when you create the commitment.</string>
+    <string name="envelope_purpose_note_monthly">Each period it is refilled from Unassigned up to the target: what was left last period counts. The bar shows what is left of the month.</string>
+    <string name="envelope_purpose_note_bills">Commitments with a reserve set aside here, little by little, the money of each payment; each period only what is missing comes from Unassigned. Choose this envelope when you create the commitment.</string>
     <string name="envelope_purpose_note_savings">Keeps money for later. If you set a monthly contribution, it is assigned by itself each period.</string>
     <string name="envelope_purpose_note_free">It only receives what you assign by hand.</string>
     <string name="envelope_type_has_funded">It has commitments with a reserve: move them to another Bills envelope or remove the reserve first.</string>
@@ -907,7 +910,7 @@
     <string name="info_forecast_1">What the commitments will bring in and take out of this account until the end of the period, overdue ones included, and the balance it will end with.</string>
     <string name="info_forecast_2">If it goes below zero on the way, the warning says by how much and on which day, so you can move money in before.</string>
     <string name="info_envelope_period_1">How the envelope\'s period went: what it brought from the last period, what was assigned to it, what was spent from it and what is left.</string>
-    <string name="info_envelope_period_2">What is left is carried to the next period.</string>
+    <string name="info_envelope_period_2">What is left is carried to the next period. In monthly and bills envelopes it also lowers what the next period takes from Unassigned.</string>
     <string name="info_envelope_free_1">The envelope\'s balance minus what pending commitments will still take from it until the end of the period (or the day you choose).</string>
     <string name="info_envelope_free_2">When the commitments need more than the envelope has, the difference will have to come from elsewhere.</string>
     <plurals name="movements_totals_title">

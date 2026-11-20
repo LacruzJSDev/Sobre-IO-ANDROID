@@ -5,14 +5,19 @@
 The only place where pending due dates are confirmed or skipped.
 
 - Group review (`ui/groupreview`, route `GroupReview(groupId)`, level 2 of the Group tab, `GroupReviewViewModel(groupId)` with
-  `GroupRepository`, `GroupSummaryRepository`, `AccountRepository`, `EnvelopeRepository`, `CalendarRepository`; `GroupReviewScreen`,
+  `GroupRepository`, `GroupSummaryRepository`, `AccountRepository`, `EnvelopeRepository`, `CalendarRepository`, `CommitmentRepository`; `GroupReviewScreen`,
   `ConfirmSheet`): the ONLY place where pending occurrences are reviewed. `ScreenHeader` with back arrow, title "To review" and the
   group as subtitle. One `SoftTile` per `pending_occurrences` row (kind-icon avatar in ink, name, "<account> - was due on <date>", `MoneyText`
   Flow signed by `DueOccurrence.signedCents`) with compact "Skip" (`SecondaryButton(compact)`) and "Confirm" buttons for any member
   of a live group (archived or pending-deletion groups are read only: no buttons). Confirm opens `ConfirmSheet` (`FlatBottomSheet`):
-  `AmountField` with the expected amount, `DateFormTile` (due date, or today when it is later; `maxDate` = group today), and, for an
+  `AmountField` with the expected amount (editable: the real charge, for example the electricity bill), `DateFormTile` (due date, or today when it is later; `maxDate` = group today), and, for an
   expense whose envelope (not Unassigned) on an account inside the envelopes has less than the amount, the movement form's cover note and
-  optional "Also cover from" `EntitySelect` (`p_cover` = that envelope's full balance). `confirm_occurrence` returns the created fact;
+  optional "Also cover from" `EntitySelect` (`p_cover` = that envelope's full balance). Opening the sheet also reads
+  `CommitmentRepository.getFundingStatus`; when the commitment's next payment is this due date and its reserve is in the same
+  envelope (`reservedForDue` in `GroupReviewRules.kt`), a `FormNote` above the cover note says what was set aside for it and, for the
+  amount typed (`reserveNoteOf`, `ReserveNote`): "X set aside for this payment", "…The Y left stay in <envelope> and lower the next
+  reserve" (less), or "…The Y more come from what <envelope> already had" (more, when the envelope covers it; otherwise the cover note
+  explains). A failure of that read only hides the line. The difference is only a sentence: the database refills the envelope (D-56). `confirm_occurrence` returns the created fact;
   the row goes and an Undo snackbar "<name> registered" voids that fact (`transactions` / `account_transfers` `voided_at`,
   `void_group_transfer` for a contribution), after which the database frees the due date. Skip hides the row at once, shows "<name>
   skipped" and writes `skip_occurrence` only when the snackbar ends without Undo (`UndoController`; `hiddenKeys` stop a reload bringing

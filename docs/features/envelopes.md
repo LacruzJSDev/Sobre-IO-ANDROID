@@ -5,7 +5,9 @@
 Free to distribute and the envelopes by type, with their progress.
 
 - Envelopes tab (`ui/envelopes`, `EnvelopesViewModel` with the group id as Koin parameter, same shape as Accounts): each time
-  the tab shows, `materialize_through_today` runs first (failure ignored) so monthly targets are assigned, then the
+  the tab shows, `materialize_through_today` runs first (failure ignored) so the period's automatic assignments are made (D-56 in the database: a
+  monthly envelope is refilled up to its target and a bills envelope up to what its commitments need, counting what each already
+  held; savings add their whole contribution; the app computes none of it), then the
   `envelope_balances` view (colour, icon and `purpose` from `envelopes`, joined by id), the `envelopes_summary(p_group_id)` RPC
   (one row, `EnvelopeSummary`: `unassigned`, `in_envelopes_total`, `due_this_period`, `reserved_later`, `other_assigned`,
   `overspent`, `covered_on`, `covering_income` (the sum of the expected incomes into Unassigned until `covered_on`); never summed or derived in the app), `envelope_progress` (failure ignored: rows just have no bar)

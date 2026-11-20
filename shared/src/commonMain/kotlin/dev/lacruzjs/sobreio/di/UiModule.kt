@@ -164,6 +164,7 @@ val uiModule = module {
             accounts = get(),
             envelopes = get(),
             calendar = get(),
+            commitments = get(),
         )
     }
     viewModel { params ->

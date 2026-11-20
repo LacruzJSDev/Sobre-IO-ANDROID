@@ -3,6 +3,7 @@ package dev.lacruzjs.sobreio.ui.groupreview
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.model.Account
 import dev.lacruzjs.sobreio.domain.model.AccountKind
+import dev.lacruzjs.sobreio.domain.model.CommitmentFunding
 import dev.lacruzjs.sobreio.domain.model.CommitmentKind
 import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
@@ -12,6 +13,7 @@ import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.domain.model.GroupRole
 import dev.lacruzjs.sobreio.fake.FakeAccountRepository
 import dev.lacruzjs.sobreio.fake.FakeCalendarRepository
+import dev.lacruzjs.sobreio.fake.FakeCommitmentRepository
 import dev.lacruzjs.sobreio.fake.FakeEnvelopeRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupRepository
 import dev.lacruzjs.sobreio.fake.FakeGroupSummaryRepository
@@ -47,7 +49,8 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
     private val calendar = FakeCalendarRepository()
     private val accounts = FakeAccountRepository(listOf(checking, cash))
     private val envelopes = FakeEnvelopeRepository(listOf(unassigned, bills, food, empty, old))
-    private val viewModel by lazy { GroupReviewViewModel("g1", groupRepo, summary, accounts, envelopes, calendar) }
+    private val commitments = FakeCommitmentRepository()
+    private val viewModel by lazy { GroupReviewViewModel("g1", groupRepo, summary, accounts, envelopes, calendar, commitments) }
 
     private fun due(
         id: String,
@@ -146,6 +149,38 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
         val sheet = viewModel.state.value.sheet
         assertEquals("120.50", sheet?.amount)
         assertEquals(LocalDate(2026, 11, 10), sheet?.date)
+    }
+
+    @Test
+    fun confirmSheetReadsWhatIsSetAsideForThisPayment() {
+        summary.pending = listOf(due("c1", amount = 6_000, envelope = "e1"))
+        commitments.funding = CommitmentFunding(
+            envelopeId = "e1", nextDueDate = LocalDate(2026, 11, 10), cycleAmountCents = 6_000,
+            cycleStart = LocalDate(2026, 11, 1), reservedInCycleCents = 3_000, thisPeriodCents = 3_000,
+            periodsInCycle = 1, periodsLeft = 0,
+        )
+        loaded()
+
+        viewModel.onEvent(GroupReviewEvent.ConfirmClicked("c1|2026-11-10"))
+        viewModel.onEvent(GroupReviewEvent.AmountChanged("25"))
+
+        val state = viewModel.state.value
+        assertEquals(3_000, state.sheet?.reservedCents)
+        assertEquals(ReserveNote.Less(3_000, 500), state.sheet?.let(state::reserveNote))
+        assertTrue(commitments.calls.contains("getFundingStatus(c1)"))
+    }
+
+    @Test
+    fun confirmSheetWithoutAReserveShowsNoLine() {
+        summary.pending = listOf(due("c1", amount = 6_000, envelope = "e1"))
+        commitments.funding = null
+        loaded()
+
+        viewModel.onEvent(GroupReviewEvent.ConfirmClicked("c1|2026-11-10"))
+
+        val state = viewModel.state.value
+        assertNull(state.sheet?.reservedCents)
+        assertNull(state.sheet?.let(state::reserveNote))
     }
 
     @Test

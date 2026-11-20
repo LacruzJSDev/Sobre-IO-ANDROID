@@ -17,6 +17,8 @@ data class ConfirmDraft(
     val amount: String,
     val date: LocalDate,
     val coverEnvelopeId: String? = null,
+    /** What the database says is set aside for this payment (D-56), read when the sheet opens; null when there is none. */
+    val reservedCents: Long? = null,
     val amountError: StringResource? = null,
     val isSubmitting: Boolean = false,
     val submitError: AppError? = null,
@@ -58,6 +60,10 @@ data class GroupReviewUiState(
         val cents = parseMoneyInput(draft.amount)?.takeIf { it > 0 } ?: return null
         return envelope.takeIf { cents > it.balanceCents }
     }
+
+    /** The line about the money set aside for this payment, for the amount being typed. */
+    fun reserveNote(draft: ConfirmDraft): ReserveNote? =
+        reserveNoteOf(draft.reservedCents, parseMoneyInput(draft.amount), coverShortEnvelope(draft) != null)
 
     /** Envelopes that can also cover: live, with money, not the chosen one and not "Unassigned". */
     fun coverCandidates(draft: ConfirmDraft): List<Envelope> =

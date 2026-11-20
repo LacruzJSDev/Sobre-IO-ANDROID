@@ -427,7 +427,7 @@
     <string name="field_auto_register">Registrar automáticamente</string>
     <string name="commitment_register_note">Activado: se registra solo el día del vencimiento, como una orden periódica del banco. Desactivado: espera en la pestaña Grupo a que lo confirmes con el importe real o lo saltes.</string>
     <string name="field_funded">Reservar cada periodo</string>
-    <string name="commitment_funded_note">Cada periodo el dinero pasa de Sin asignar al sobre por adelantado, para que esté ahí el día del vencimiento.</string>
+    <string name="commitment_funded_note">Cada periodo el sobre recibe de Sin asignar lo que aún le falta para el pago, para que el dinero esté ahí el día del vencimiento. Si un pago llega por menos, lo que sobra rebaja la reserva siguiente.</string>
     <string name="field_notes">Notas</string>
     <string name="field_effective_from">Aplicar desde</string>
     <string name="commitment_effective_note">Los vencimientos anteriores a este día conservan los valores antiguos.</string>
@@ -533,6 +533,9 @@
     <string name="form_section_details">Detalles</string>
     <string name="movement_cover_none">Ninguno</string>
     <string name="movement_cover_note">%1$s tiene %2$s: lo que falte se cubrirá desde Sin asignar.</string>
+    <string name="confirm_reserve_exact">%1$s apartados para este pago.</string>
+    <string name="confirm_reserve_less">%1$s apartados para este pago. Los %2$s que sobran se quedan en %3$s y rebajan la próxima reserva.</string>
+    <string name="confirm_reserve_more">%1$s apartados para este pago. Los %2$s de más salen de lo que ya tenía %3$s.</string>
     <string name="movement_outside_note">Esta cuenta está fuera de los sobres, así que el movimiento no toca ningún sobre.</string>
     <string name="movement_edit_extra_note">La parte añadida no se cubre automáticamente: el sobre puede quedar en negativo.</string>
     <string name="movement_boundary_note">Esta transferencia cruza la frontera de los sobres, así que el dinero pasa por Sin asignar.</string>
@@ -572,7 +575,7 @@
     <string name="envelope_transfer_edit_title">Editar movimiento</string>
     <string name="envelope_transfer_unknown_envelope">Sobre</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
-    <string name="envelope_transfer_automatic_note">Lo hizo el objetivo mensual: siempre va de Sin asignar a su sobre. Puedes cambiar el importe o eliminarlo; no se vuelve a hacer este periodo.</string>
+    <string name="envelope_transfer_automatic_note">Lo hizo el objetivo mensual: siempre va de Sin asignar a su sobre, con lo que le faltaba para llegar al objetivo. Puedes cambiar el importe o eliminarlo; no se vuelve a hacer este periodo.</string>
     <string name="form_section_envelope_transfer">Sobres</string>
     <string name="validation_envelopes_differ">El destino debe ser otro sobre.</string>
     <string name="field_envelope_start_next_period">Empezar el periodo siguiente</string>
@@ -586,8 +589,8 @@
     <string name="envelope_purpose_savings">Ahorro</string>
     <string name="envelope_purpose_free">Libre</string>
     <string name="field_monthly_contribution">Aportación mensual</string>
-    <string name="envelope_purpose_note_monthly">Cada periodo se asigna el objetivo desde Sin asignar. La barra muestra lo que te queda del mes.</string>
-    <string name="envelope_purpose_note_bills">Los compromisos con reserva van apartando aquí, poco a poco, el dinero de cada pago. Elige este sobre al crear el compromiso.</string>
+    <string name="envelope_purpose_note_monthly">Cada periodo se rellena desde Sin asignar hasta el objetivo: lo que sobró el periodo anterior cuenta. La barra muestra lo que te queda del mes.</string>
+    <string name="envelope_purpose_note_bills">Los compromisos con reserva van apartando aquí, poco a poco, el dinero de cada pago; cada periodo solo llega de Sin asignar lo que falta. Elige este sobre al crear el compromiso.</string>
     <string name="envelope_purpose_note_savings">Guarda dinero para más adelante. Si pones una aportación mensual, se asigna sola cada periodo.</string>
     <string name="envelope_purpose_note_free">Solo recibe lo que le asignes a mano.</string>
     <string name="envelope_type_has_funded">Tiene compromisos con reserva: muévelos a otro sobre de Recibos o quita la reserva antes.</string>
@@ -906,7 +909,7 @@
     <string name="info_forecast_1">Lo que los compromisos meterán y sacarán de esta cuenta hasta fin de periodo, también los atrasados, y el saldo con el que acabará.</string>
     <string name="info_forecast_2">Si baja de cero por el camino, el aviso dice cuánto y qué día, para que puedas pasarle dinero antes.</string>
     <string name="info_envelope_period_1">Cómo va el periodo del sobre: lo que traía del anterior, lo que se le ha asignado, lo que se ha gastado de él y lo que queda.</string>
-    <string name="info_envelope_period_2">Lo que queda pasa al siguiente periodo.</string>
+    <string name="info_envelope_period_2">Lo que queda pasa al siguiente periodo. En los sobres mensuales y de recibos, además, rebaja lo que el siguiente periodo toma de Sin asignar.</string>
     <string name="info_envelope_free_1">El saldo del sobre menos lo que los compromisos pendientes aún le quitarán hasta fin de periodo (o hasta el día que elijas).</string>
     <string name="info_envelope_free_2">Cuando los compromisos necesitan más de lo que tiene el sobre, la diferencia tendrá que salir de otro sitio.</string>
     <plurals name="movements_totals_title">
