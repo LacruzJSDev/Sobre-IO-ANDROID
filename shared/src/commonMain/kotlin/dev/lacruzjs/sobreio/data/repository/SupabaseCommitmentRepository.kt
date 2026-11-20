@@ -188,7 +188,6 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
                 put("p_effective_from", change.effectiveFrom?.toString())
             },
         )
-        Unit
     }
 
     override suspend fun renameCommitment(id: String, name: String): Result<Unit> = safeCall {
@@ -234,12 +233,10 @@ class SupabaseCommitmentRepository(client: SupabaseClient) : CommitmentRepositor
                     put("p_effective_from", effectiveFrom?.toString())
                 },
             )
-            Unit
         }
 
     override suspend fun archiveLinkedCommitment(linkId: String): Result<Unit> = safeCall {
         postgrest.rpc("archive_linked_commitment", buildJsonObject { put("p_link_id", linkId) })
-        Unit
     }
 
     override suspend fun unarchiveLinkedCommitment(link: CommitmentLink): Result<Unit> = safeCall {

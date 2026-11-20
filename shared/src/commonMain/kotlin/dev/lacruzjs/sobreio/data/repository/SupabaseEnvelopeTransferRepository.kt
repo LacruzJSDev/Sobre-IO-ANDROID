@@ -72,7 +72,6 @@ class SupabaseEnvelopeTransferRepository(client: SupabaseClient) : EnvelopeTrans
                 put("notes", draft.notes?.takeIf { it.isNotBlank() })
             },
         )
-        Unit
     }
 
     override suspend fun updateTransfer(id: String, draft: EnvelopeTransferDraft): Result<Unit> = safeCall {

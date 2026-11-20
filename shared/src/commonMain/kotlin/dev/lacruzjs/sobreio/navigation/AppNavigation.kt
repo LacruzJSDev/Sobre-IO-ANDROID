@@ -2,7 +2,7 @@ package dev.lacruzjs.sobreio.navigation
 
 import dev.lacruzjs.sobreio.ui.movements.TagMovementsRoute
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth
 import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.Composable
@@ -70,8 +70,10 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
     // List-detail (AdaptiveListDetail): from a medium window (a tablet in portrait, an open foldable) the group (or Groups)
     // is the list pane and its detail screens open beside it; the directive keeps the panes off a vertical hinge. Beside a
     // detail the list takes half of a medium window and a fixed width from expanded. Phones show one pane as before
-    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    // V2 adds the large and extra-large widths, which would allow a third pane from 1200 dp; the layout stays at two
     val directive = calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(adaptiveInfo)
+        .let { it.copy(maxHorizontalPartitions = minOf(it.maxHorizontalPartitions, 2)) }
     val isExpanded = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val listDetail = remember(directive, isExpanded) {
         AdaptiveListDetail<NavKey>(directive = directive, listWidth = if (isExpanded) ListPaneWidth else null)
@@ -89,7 +91,12 @@ fun AppNavigation(userId: String, modifier: Modifier = Modifier) {
         entryProvider = entryProvider {
             // Groups replaces the stack, so NavDisplay sees a forward move; it sits "behind" a group in the user's mind
             // (the menu button), so it arrives with the platform's back animation instead
-            entry<Groups>(metadata = listPane + NavDisplay.transitionSpec { defaultPopTransitionSpec<NavKey>().invoke(this as AnimatedContentTransitionScope<Scene<NavKey>>) }) {
+            // transitionSpec hands a Scene<*> scope; every scene of this NavDisplay is a Scene<NavKey>, so the cast holds
+            @Suppress("UNCHECKED_CAST")
+            val popTransition = NavDisplay.transitionSpec {
+                defaultPopTransitionSpec<NavKey>().invoke(this as AnimatedContentTransitionScope<Scene<NavKey>>)
+            }
+            entry<Groups>(metadata = listPane + popTransition) {
                 GroupsRoute(
                     onOpenGroup = { groupId -> backStack.openGroup(groupId) },
                     onOpenProfile = { backStack.openDetail(Profile) },

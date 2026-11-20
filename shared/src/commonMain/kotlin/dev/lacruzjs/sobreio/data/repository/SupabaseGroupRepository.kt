@@ -107,12 +107,10 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
 
     override suspend fun requestGroupDeletion(id: String): Result<Unit> = safeCall {
         postgrest.rpc("request_group_purge", groupParam(id))
-        Unit
     }
 
     override suspend fun cancelGroupDeletion(id: String): Result<Unit> = safeCall {
         postgrest.rpc("cancel_group_purge", groupParam(id))
-        Unit
     }
 
     override suspend fun leaveGroup(id: String): Result<Unit> = safeCall {
@@ -122,7 +120,6 @@ class SupabaseGroupRepository(client: SupabaseClient) : GroupRepository {
                 eq("user_id", currentUserId())
             }
         }
-        Unit
     }
 
     override suspend fun createInvitation(groupId: String, role: GroupRole): Result<Invitation> = safeCall {

@@ -65,12 +65,10 @@ class SupabaseAuthRepository(client: SupabaseClient) : AuthRepository {
             this.password = password
             data = buildJsonObject { put("name", name) }
         }
-        Unit
     }
 
     override suspend fun confirmSignUp(email: String, code: String): Result<Unit> = safeCall {
         auth.verifyEmailOtp(type = OtpType.Email.SIGNUP, email = email, token = code)
-        Unit
     }
 
     override suspend fun resendSignUpCode(email: String): Result<Unit> = safeCall {
@@ -116,6 +114,5 @@ class SupabaseAuthRepository(client: SupabaseClient) : AuthRepository {
         // The profile is what the other members see; the session's metadata is what this app shows as the user's name
         postgrest.from("profiles").update({ set("display_name", name) }) { filter { eq("id", userId) } }
         auth.updateUser { data = buildJsonObject { put("name", name) } }
-        Unit
     }
 }

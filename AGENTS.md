@@ -12,7 +12,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Concern | Choice |
 | --- | --- |
 | Language / UI | Kotlin 2.4 Multiplatform, Compose Multiplatform 1.12 (Material 3 and `material3-adaptive` JetBrains builds) |
-| Targets | Android (minSdk 24, targetSdk 37), `iosArm64`, `iosSimulatorArm64` (iOS 17+) |
+| Targets | Android (minSdk 24, targetSdk 37), `iosArm64`, `iosSimulatorArm64` (iOS 18.5+, the version Compose's bundled ICU data is built for) |
 | Architecture | MVVM with repositories, UI state in `StateFlow`; JetBrains `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose` |
 | Navigation | Navigation 3 (`androidx.navigation3-runtime` 1.2 + JetBrains `navigation3-ui`), keys are `@Serializable` `NavKey`s registered in `NavSavedStateConfiguration`; ViewModels scoped per entry with `lifecycle-viewmodel-navigation3` |
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |

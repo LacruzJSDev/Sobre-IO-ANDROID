@@ -78,7 +78,6 @@ class SupabaseTagRepository(client: SupabaseClient) : TagRepository {
                 put("p_target", targetId)
             },
         )
-        Unit
     }
 
     private suspend fun update(tagId: String, changes: PostgrestUpdate.() -> Unit) {

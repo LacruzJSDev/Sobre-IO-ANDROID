@@ -20,7 +20,7 @@ What every screen relies on. The screens themselves are described in `docs/featu
 ## Adaptive layout
 
 - Adaptive layout (tablet and foldable): `AppNavigation` passes `sceneStrategies = listOf(AdaptiveListDetail(directive, listWidth),
-  SinglePaneSceneStrategy())` to `NavDisplay`, with `directive = calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(currentWindowAdaptiveInfo())`
+  SinglePaneSceneStrategy())` to `NavDisplay`, with `directive = calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(currentWindowAdaptiveInfoV2())` capped at two horizontal partitions (V2 would allow a third from 1200 dp)
   (`adaptive-layout` 1.3, experimental opt-in). `AdaptiveListDetail` (`navigation/AdaptiveListDetail.kt`) is our own scene on
   `ListDetailPaneScaffold`, not the library's `ListDetailSceneStrategy` (dropped: a lone list kept an empty detail pane, and
   switching to a single-pane scene to avoid it made NavDisplay cross-fade and reload the list on every close). It is ONE scene

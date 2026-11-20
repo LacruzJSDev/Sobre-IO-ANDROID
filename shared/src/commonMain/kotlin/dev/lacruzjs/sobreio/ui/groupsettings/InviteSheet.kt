@@ -9,8 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +26,7 @@ import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.FlatSnackbarHost
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
+import dev.lacruzjs.sobreio.ui.components.plainTextClipEntry
 import dev.lacruzjs.sobreio.ui.format.formatDate
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -38,7 +38,7 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun InviteSheet(state: GroupSettingsUiState, onEvent: (GroupSettingsEvent) -> Unit) {
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val invitation = state.createdInvitation
@@ -87,8 +87,10 @@ internal fun InviteSheet(state: GroupSettingsUiState, onEvent: (GroupSettingsEve
             PrimaryButton(
                 text = stringResource(Res.string.action_copy_code),
                 onClick = {
-                    clipboard.setText(AnnotatedString(invitation.code))
-                    scope.launch { snackbar.showSnackbar(getString(Res.string.code_copied)) }
+                    scope.launch {
+                        clipboard.setClipEntry(plainTextClipEntry(invitation.code))
+                        snackbar.showSnackbar(getString(Res.string.code_copied))
+                    }
                 },
             )
         }

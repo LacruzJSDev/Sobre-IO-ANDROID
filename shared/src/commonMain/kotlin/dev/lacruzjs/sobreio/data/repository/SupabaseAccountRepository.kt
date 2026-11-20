@@ -108,7 +108,6 @@ class SupabaseAccountRepository(client: SupabaseClient) : AccountRepository {
                 put("p_in_envelopes", inEnvelopes)
             },
         )
-        Unit
     }
 
     override suspend fun archiveAccount(id: String): Result<Unit> = safeCall {
