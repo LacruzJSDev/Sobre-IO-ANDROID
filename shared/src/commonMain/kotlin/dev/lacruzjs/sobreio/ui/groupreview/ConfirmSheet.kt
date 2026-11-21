@@ -90,6 +90,7 @@ internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent)
             if (candidates.isNotEmpty()) {
                 var open by rememberSaveable { mutableStateOf(false) }
                 EntitySelect(
+                    insideSheet = true,
                     label = stringResource(Res.string.field_cover_also),
                     options = listOf(EntityOption(null, stringResource(Res.string.movement_cover_none))) +
                         candidates.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) },

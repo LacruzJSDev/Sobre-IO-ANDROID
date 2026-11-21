@@ -114,6 +114,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 }
                 when {
                     draft.isTransfer -> EntitySelect(
+                        insideSheet = true,
                         label = stringResource(if (isCharge) Res.string.field_to_account else Res.string.field_from_account),
                         options = state.otherAccounts.map { it.toEntityOption() },
                         selectedId = draft.otherAccountId,
@@ -124,6 +125,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                     state.account?.inEnvelopes == false -> InlineNotice(stringResource(Res.string.bank_import_outside_note))
                     else -> {
                         EntitySelect(
+                            insideSheet = true,
                             label = stringResource(Res.string.field_envelope),
                             options = listOf(unassignedOption(stringResource(Res.string.envelopes_unassigned))) +
                                 state.envelopes.map { it.toEntityOption() },
@@ -146,6 +148,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 if (draft.status == BankRowStatus.BeforeOpening) InlineNotice(stringResource(Res.string.bank_import_before_opening_note), tone = NoticeTone.Warning)
             }
             BankRowAction.Confirm -> EntitySelect(
+                insideSheet = true,
                 label = stringResource(Res.string.bank_import_field_due),
                 options = draft.pending.map {
                     EntityOption(
@@ -160,6 +163,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 onToggle = { onEvent(BankImportEvent.SheetSelectToggled(RowSelect.Pending)) },
             )
             BankRowAction.Link -> EntitySelect(
+                insideSheet = true,
                 label = stringResource(Res.string.bank_import_field_movement),
                 options = draft.existing.map {
                     EntityOption(

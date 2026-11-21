@@ -36,6 +36,7 @@ internal fun MergeSheet(state: TagsUiState, onEvent: (TagsEvent) -> Unit) {
     ) {
         var open by rememberSaveable { mutableStateOf(false) }
         EntitySelect(
+            insideSheet = true,
             label = stringResource(Res.string.field_tag_merge_into),
             options = state.mergeCandidates.map { tag ->
                 val count = tag.movements.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

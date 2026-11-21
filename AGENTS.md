@@ -156,7 +156,8 @@ plus `movementform` (the new / edit movement form).
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
 - Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
   up to 8 options the list opens inside the same grey surface, under a divider, with its own scroll and no search; with
-  more the tap opens a bottom sheet with search (`EntityPickerSheet`), `EntityOption` with optional special first options such as
+  more the tap opens a bottom sheet with search (`EntityPickerSheet`); a select that already sits in a bottom sheet passes
+  `insideSheet = true` and keeps a long list inline with a search box, never a sheet over a sheet; `EntityOption` with optional special first options such as
   "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
 - A detail screen shows, never manages: a section of items that are edited elsewhere shows the latest few, read only, and
   an icon at the right of its title (`FormSection(action = …)`, an `IconActionButton` of 24 dp) opens the screen where they

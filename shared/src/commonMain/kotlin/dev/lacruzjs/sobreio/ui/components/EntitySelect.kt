@@ -1,5 +1,10 @@
 package dev.lacruzjs.sobreio.ui.components
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -102,10 +107,15 @@ fun EntitySelect(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     error: StringResource? = null,
+    /** True when the select already sits in a bottom sheet: a long list then stays inline with a search box, never a sheet over a sheet. */
+    insideSheet: Boolean = false,
 ) {
     val selected = options.firstOrNull { it.id == selectedId }
     val open = expanded && enabled
-    val asSheet = options.size > ENTITY_SELECT_SEARCH_THRESHOLD
+    val longList = options.size > ENTITY_SELECT_SEARCH_THRESHOLD
+    val asSheet = longList && !insideSheet
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(expanded) { if (!expanded) query = "" }
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         ExpandableSurface(
@@ -134,9 +144,18 @@ fun EntitySelect(
                 }
             },
         ) {
+            if (longList) {
+                SearchField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = stringResource(Res.string.entity_select_search),
+                    containerColor = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+            }
             // Bounded height: it scrolls on its own inside the scrolling form
             LazyColumn(modifier = Modifier.heightIn(max = ListMaxHeight)) {
-                items(options, key = { it.id ?: "" }) { option ->
+                items(filterEntityOptions(options, query), key = { it.id ?: "" }) { option ->
                     OptionRow(
                         option,
                         selected = option.id == selectedId,

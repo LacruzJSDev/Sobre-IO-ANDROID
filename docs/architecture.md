@@ -140,7 +140,7 @@ What every screen relies on. The screens themselves are described in `docs/featu
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
 - Expand and collapse: one pattern, `ExpandableSurface` (`ui/components`, corners `large` 14 dp): header (label, preview, chevron) and body are
   the same grey surface, the body starts under a divider. `ExpandableFormTile`, `EntitySelect` (up to 8 options inline without search;
-  more open an `EntityPickerSheet` with search), `TagPicker` (chosen tags as chips in the header, removable chips in the body) and
+  more open an `EntityPickerSheet` with search, or stay inline with a search box when `insideSheet`), `TagPicker` (chosen tags as chips in the header, removable chips in the body) and
   `CollapsibleListSection` are built on it. The selected option is marked with a primary check and a medium-weight name, no grey row.
 - Hero card (`ui/components/HeroCard.kt`, tokens in `ui/theme/HeroColors.kt`): the main figure of a tab (Group: really free money;
   Accounts: total in accounts; Envelopes: free to distribute, i.e. Unassigned) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
