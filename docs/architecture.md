@@ -158,8 +158,8 @@ What every screen relies on. The screens themselves are described in `docs/featu
   in the prototype, no hardcoded colours in composables). Fonts: Lexend with `ss01`/`zero`, Inter with tabular figures; the typography is built in a
   composable because fonts are Compose resources).
 - Appearance components (colour and icon are inline in the group form; accounts and envelopes will use them too): `ui/theme/EntityColor` is the fixed 24-colour palette (the DB
-  `color` column stores the light `#RRGGBB`, `fromHex` is case-insensitive and null for unknown; `dark` is a lighter
-  variant); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 34, Account 32, Envelope 90, in sections such as Food, Home, Transport, Health and care, Family and pets, Shopping, Leisure, Finance, Work and education; a key may sit in several sections of different categories, and may move between sections of one category;
+  `color` column stores the light `#RRGGBB`, `fromHex` is case-insensitive, also reads a retuned colour's `legacyHexes` (Mustard's old `#B08A2E`) and is null for unknown; `dark` is a lighter
+  variant; white content keeps at least 3:1 on both, checked by `EntityColorTest`); `ui/components/IconCatalog` holds the icon sections per `IconCategory` (Group 34, Account 32, Envelope 90, in sections such as Food, Home, Transport, Health and care, Family and pets, Shopping, Leisure, Finance, Work and education; a key may sit in several sections of different categories, and may move between sections of one category;
   keys are snake_case English, stored in the DB `icon` column, never rename them; `iconFor` is null for unknown keys).
   Components: `EntityAvatar` (`GroupAvatar` delegates to it), `ColorPicker`, `IconPicker` (used directly in the
   forms, no sheet) and `EntitySelect` (see the Rules of `AGENTS.md`; the holder is "Joint"/"Common" plus one option per member, hidden with a single member). Members come from `MemberRepository.getMembers` (`account_group_members`

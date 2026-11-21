@@ -5,10 +5,16 @@ import androidx.compose.ui.graphics.Color
 /**
  * The 24 muted colours an entity (group, account, envelope) can take. The database stores [hex], the light value
  * (`#RRGGBB`); [dark] is a slightly lighter, softer variant that reads better on the dark paper. White content stays
- * readable on both. Tag colours are a separate palette. The order is the order
+ * readable on both (at least 3:1, `EntityColorTest`). Tag colours are a separate palette. The order is the order
  * of the picker: a hue wheel (blues, greens, yellows, oranges, reds, purples, neutrals); it is display only.
  */
-enum class EntityColor(val hex: String, val light: Color, val dark: Color) {
+enum class EntityColor(
+    val hex: String,
+    val light: Color,
+    val dark: Color,
+    /** Hexes this colour was stored with before it was retuned; they still read as this colour. */
+    val legacyHexes: List<String> = emptyList(),
+) {
     Navy("#2E4A73", Color(0xFF2E4A73), Color(0xFF4B6387)),
     Blue("#3B6E8F", Color(0xFF3B6E8F), Color(0xFF5C8FB0)),
     Sky("#3D84C6", Color(0xFF3D84C6), Color(0xFF5895CE)),
@@ -16,8 +22,9 @@ enum class EntityColor(val hex: String, val light: Color, val dark: Color) {
     Forest("#2F6B4A", Color(0xFF2F6B4A), Color(0xFF4C8063)),
     Green("#4F7A5A", Color(0xFF4F7A5A), Color(0xFF70987B)),
     Moss("#5A6E3A", Color(0xFF5A6E3A), Color(0xFF718256)),
-    Olive("#7A7A3F", Color(0xFF7A7A3F), Color(0xFF9A9A5C)),
-    Mustard("#B08A2E", Color(0xFFB08A2E), Color(0xFFC4A04D)),
+    Olive("#7A7A3F", Color(0xFF7A7A3F), Color(0xFF8C8C4C)),
+    // Darkened for white content (was #B08A2E, 3.2:1 light and 2.5:1 dark)
+    Mustard("#9A7A22", Color(0xFF9A7A22), Color(0xFFA98B3C), legacyHexes = listOf("#B08A2E")),
     Ochre("#A36A12", Color(0xFFA36A12), Color(0xFFB07F33)),
     Orange("#B8673A", Color(0xFFB8673A), Color(0xFFCC8359)),
     Rust("#9C4A28", Color(0xFF9C4A28), Color(0xFFAA6346)),
@@ -36,7 +43,11 @@ enum class EntityColor(val hex: String, val light: Color, val dark: Color) {
     ;
 
     companion object {
-        /** Case-insensitive; null for no colour or one this version does not know. */
-        fun fromHex(hex: String?): EntityColor? = hex?.let { value -> entries.firstOrNull { it.hex.equals(value, ignoreCase = true) } }
+        /** Case-insensitive, legacy hexes included; null for no colour or one this version does not know. */
+        fun fromHex(hex: String?): EntityColor? = hex?.let { value ->
+            entries.firstOrNull { color ->
+                color.hex.equals(value, ignoreCase = true) || color.legacyHexes.any { it.equals(value, ignoreCase = true) }
+            }
+        }
     }
 }
