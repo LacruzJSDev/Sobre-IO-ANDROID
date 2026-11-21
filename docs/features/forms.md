@@ -17,7 +17,7 @@ The shared form layout and the group, account and envelope forms.
   (`ColorPicker`, `IconPicker` with paper cells); "Currency and period" with the currency (expandable chips when
   creating, read-only tile when editing), the period start day (a "-" / "Day N" / "+" stepper in its tile, 1-28, with
   a note that it only affects periods not created yet, D-29) and the time zone, a tile
-  that opens `TimeZonePicker(current)` (`ui/timezone`: back arrow, autofocused search field, the current zone first and
+  that opens `TimeZonePicker(current)` (`ui/timezone`: back arrow, autofocused `SearchField`, the current zone first and
   highlighted, then every `TimeZone.availableZoneIds` filtered case-insensitively, spaces matching underscores). The
   picked id travels back through a `pickedTimeZone` holder in `AppNavigation` (saved state, above both entries): the
   picker sets it and pops, the still-alive form ViewModel takes it once (`TimeZonePicked`) and clears it. Creating a
@@ -39,11 +39,11 @@ The shared form layout and the group, account and envelope forms.
   `current_period`'s end (dates from `CalendarRepository.getToday`/`getCurrentPeriod`; a failed read hides the switch), off
   on an envelope that started later sends today, otherwise nothing is sent and the database keeps its rule. The Envelopes rows
   of an envelope whose target starts later show "Target X a month from <date>" instead of the bar (`Envelope.targetStartsAfter`,
-  `EnvelopesUiState.today`). A `FormNote` at the very end explains the chosen type. Create inserts and edit updates all fields of
+  `EnvelopesUiState.today`). An `InlineNotice` at the very end explains the chosen type. Create inserts and edit updates all fields of
   `envelopes` (`EnvelopeDraft`: `purpose` and the kind that follows it, savings is `saving` and the rest `spending`); the type can
   be changed when editing, and FZ021 (leaving Bills while funded commitments point to it) shows "It has commitments with a
   reserve..." under the type (`purposeError`). Commitment form: when "Set aside each period" is on, the envelope `EntitySelect`
-  lists only Bills envelopes (and no "Unassigned" for a contribution), a `FormNote` says why, or says to create a Bills envelope
+  lists only Bills envelopes (and no "Unassigned" for a contribution), an `InlineNotice` says why, or says to create a Bills envelope
   first when there is none; saving with the reserve on and no Bills envelope chosen fails validation (`envelopeError`); the
   database's FZ021 maps to the same message. Unfunded commitments take any spending envelope.
 - `ui/components/DateFormTile`: a `FormTile` that opens a flat Material 3 `DatePickerDialog`; optional clear button for optional dates.

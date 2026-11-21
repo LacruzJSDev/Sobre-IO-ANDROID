@@ -15,3 +15,10 @@ val ColorScheme.leaveAction: Color
 
 val ColorScheme.onLeaveAction: Color
     @Composable get() = Color.White
+
+/** Flat muted amber behind a warning notice ([dev.lacruzjs.sobreio.ui.components.InlineNotice]) and the colour of its icon. */
+val ColorScheme.noticeWarningContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) Color(0xFF3A3020) else Color(0xFFFBF1DC)
+
+val ColorScheme.onNoticeWarning: Color
+    @Composable get() = if (isSystemInDarkTheme()) Color(0xFFE6C06A) else Color(0xFF8A5A00)

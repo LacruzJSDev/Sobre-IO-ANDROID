@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_apply
@@ -38,11 +37,10 @@ fun EntityPickerSheet(
     FlatBottomSheet(title = title, onDismiss = onDismiss) {
         var query by rememberSaveable { mutableStateOf("") }
         if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-            FormTextField(
+            SearchField(
                 value = query,
                 onValueChange = { query = it },
-                label = stringResource(Res.string.entity_select_search),
-                imeAction = ImeAction.Done,
+                placeholder = stringResource(Res.string.entity_select_search),
             )
         }
         val visible = filterEntityOptions(options, query)
@@ -78,11 +76,10 @@ fun EntityMultiPickerSheet(
             Text(text = emptyText, style = MaterialTheme.typography.bodyMedium)
         } else {
             if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-                FormTextField(
+                SearchField(
                     value = query,
                     onValueChange = { query = it },
-                    label = stringResource(Res.string.entity_select_search),
-                    imeAction = ImeAction.Done,
+                    placeholder = stringResource(Res.string.entity_select_search),
                 )
             }
             val visible = filterEntityOptions(options, query)

@@ -13,11 +13,12 @@ import dev.lacruzjs.sobreio.generated.resources.field_tag_merge_into
 import dev.lacruzjs.sobreio.generated.resources.tag_merge_note
 import dev.lacruzjs.sobreio.generated.resources.tag_merge_title
 import dev.lacruzjs.sobreio.generated.resources.tags_movements_count
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
+import dev.lacruzjs.sobreio.ui.components.NoticeTone
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -51,7 +52,7 @@ internal fun MergeSheet(state: TagsUiState, onEvent: (TagsEvent) -> Unit) {
             enabled = !state.isSubmitting,
             error = state.mergeTargetError,
         )
-        FormNote(stringResource(Res.string.tag_merge_note, source.name))
+        InlineNotice(stringResource(Res.string.tag_merge_note, source.name), tone = NoticeTone.Warning)
         ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
         PrimaryButton(
             text = stringResource(Res.string.action_merge),

@@ -130,6 +130,11 @@ plus `movementform` (the new / edit movement form).
   `FormTile` is for inputs only.
 - Funded commitments only point to Recibos (Bills) envelopes; the envelope type decides its fields and its progress bar (D-46).
   The app never decides progress: it draws what `envelope_progress` returns.
+- Search boxes are a `SearchField` (`ui/components/SearchField.kt`: 48 dp pill, magnifier, placeholder instead of a floating
+  label, clear X), never a `FormTextField`; pass `containerColor = background` on a grey tile.
+- Notices: a note that explains a consequence or a state (outside envelopes, cover, automatic move, locked fields, final
+  warnings) is an `InlineNotice` (`ui/components/InlineNotice.kt`, tones Info / Warning / Suggestion, optional title and
+  actions). `FormNote` is only for a one-line caption directly under a field.
 - Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator). The input components (`FormTextField`,
   `AmountField`, `LargeAmountField`, `PasswordField`) own a `TextFieldState` kept in step with the outside String by

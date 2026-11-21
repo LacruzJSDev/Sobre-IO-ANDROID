@@ -16,6 +16,6 @@ Every move between envelopes of the group, or of one envelope.
   `EnvelopeTransferRepository.getTransfers(groupId, envelopeId, …)` filters from or to it; the subtitle names the envelope and
   its "+" starts the form with that envelope as the destination). `EnvelopeTransferForm(groupId, transferId?, toEnvelopeId?)`
   (`EnvelopeTransferFormViewModel`, full screen, `FormScaffold`): amount, From and To `EntitySelect`s ("Unassigned" first, each
-  with its balance; a new move starts from Unassigned, and on `toEnvelopeId` when it is a live envelope) and notes; an automatic move (monthly target) shows its envelopes read only with a note, only amount and notes
+  with its balance; a new move starts from Unassigned, and on `toEnvelopeId` when it is a live envelope) and notes; an automatic move (monthly target) shows its envelopes read only with an `InlineNotice`, only amount and notes
   change (D-16). Create inserts a manual row, edit is a plain update of `envelope_transfers`. `EnvelopeTransferRepository`
   (`SupabaseEnvelopeTransferRepository`) reads and writes the table; `voidTransfer` only touches `VOIDABLE_ORIGINS`.

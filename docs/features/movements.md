@@ -8,7 +8,7 @@ The ledger with filters, search, totals, reports and export.
   tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
-  (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
+  (`MovementsHeaderActions`). Search turns the header into a compact `SearchField` pill with autofocus and an X
   (`MovementsSearchHeader`, drawn by `MovementsTabRoute` instead of the shell's header), debounced 300 ms, matching notes
   or an amount ("42,30" or "42.30"). "+" opens the movement form (`NewClicked`, intercepted by the Route; on an account's list it preselects that account). Expense and income rows and account transfer rows swipe Edit (`Movement.canEdit`: not adjustments or contribution legs; `EditClicked(id, source)` opens `MovementForm`) and Delete.
   Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person

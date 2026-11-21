@@ -67,7 +67,8 @@ import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FormChip
-import dev.lacruzjs.sobreio.ui.components.FormNote
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
+import dev.lacruzjs.sobreio.ui.components.NoticeTone
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTextField
@@ -214,7 +215,7 @@ fun MovementFormScreen(
                     } else if (state.showsEnvelope) {
                         EnvelopeTiles(state, open, ::toggle, onEvent, unassignedName, money, enabled)
                     } else {
-                        FormNote(stringResource(Res.string.movement_outside_note))
+                        InlineNotice(stringResource(Res.string.movement_outside_note))
                     }
                 }
 
@@ -286,7 +287,7 @@ private fun EnvelopeTiles(
     )
     val chosen = state.chosenEnvelope
     if (state.showsCoverNote && chosen != null) {
-        FormNote(stringResource(Res.string.movement_cover_note, chosen.name, money(chosen.balanceCents)))
+        InlineNotice(stringResource(Res.string.movement_cover_note, chosen.name, money(chosen.balanceCents)))
         if (state.coverCandidates.isNotEmpty()) {
             EntitySelect(
                 label = stringResource(Res.string.field_cover_also),
@@ -300,7 +301,7 @@ private fun EnvelopeTiles(
             )
         }
     }
-    if (state.showsEditExtraNote) FormNote(stringResource(Res.string.movement_edit_extra_note))
+    if (state.showsEditExtraNote) InlineNotice(stringResource(Res.string.movement_edit_extra_note), tone = NoticeTone.Warning)
 }
 
 /** "To" (or the destination group and account), the other-group switch and the boundary note. */
@@ -324,7 +325,7 @@ private fun TransferTiles(
         }
     }
     if (state.crossGroup) {
-        if (state.groups.isEmpty()) FormNote(stringResource(Res.string.movement_no_groups_note))
+        if (state.groups.isEmpty()) InlineNotice(stringResource(Res.string.movement_no_groups_note))
         EntitySelect(
             label = stringResource(Res.string.field_dest_group),
             options = state.groups.map { it.toEntityOption() },
@@ -359,7 +360,7 @@ private fun TransferTiles(
             enabled = enabled,
             error = state.toAccountError,
         )
-        if (state.passesThroughUnassigned) FormNote(stringResource(Res.string.movement_boundary_note))
+        if (state.passesThroughUnassigned) InlineNotice(stringResource(Res.string.movement_boundary_note))
     }
 }
 

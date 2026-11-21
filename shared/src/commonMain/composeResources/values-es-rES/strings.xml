@@ -489,6 +489,7 @@
     <string name="action_apply">Aplicar</string>
     <string name="action_search">Buscar</string>
     <string name="action_search_close">Cerrar búsqueda</string>
+    <string name="action_clear_search">Borrar búsqueda</string>
     <string name="filter_account">Cuenta</string>
     <string name="filter_envelope">Sobre</string>
     <string name="filter_type">Tipo</string>
@@ -575,7 +576,7 @@
     <string name="envelope_transfer_edit_title">Editar movimiento</string>
     <string name="envelope_transfer_unknown_envelope">Sobre</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
-    <string name="envelope_transfer_automatic_note">Lo hizo el objetivo mensual: siempre va de Sin asignar a su sobre, con lo que le faltaba para llegar al objetivo. Puedes cambiar el importe o eliminarlo; no se vuelve a hacer este periodo.</string>
+    <string name="envelope_transfer_automatic_note">Lo hizo el objetivo mensual desde Sin asignar. Puedes cambiar el importe o eliminarlo; no se repite este periodo.</string>
     <string name="form_section_envelope_transfer">Sobres</string>
     <string name="validation_envelopes_differ">El destino debe ser otro sobre.</string>
     <string name="field_envelope_start_next_period">Empezar el periodo siguiente</string>
@@ -590,7 +591,7 @@
     <string name="envelope_purpose_free">Libre</string>
     <string name="field_monthly_contribution">Aportación mensual</string>
     <string name="envelope_purpose_note_monthly">Cada periodo se rellena desde Sin asignar hasta el objetivo: lo que sobró el periodo anterior cuenta. La barra muestra lo que te queda del mes.</string>
-    <string name="envelope_purpose_note_bills">Los compromisos con reserva van apartando aquí, poco a poco, el dinero de cada pago; cada periodo solo llega de Sin asignar lo que falta. Elige este sobre al crear el compromiso.</string>
+    <string name="envelope_purpose_note_bills">Los compromisos con reserva apartan aquí el dinero de cada pago; cada periodo solo llega de Sin asignar lo que falta. Elige este sobre al crear el compromiso.</string>
     <string name="envelope_purpose_note_savings">Guarda dinero para más adelante. Si pones una aportación mensual, se asigna sola cada periodo.</string>
     <string name="envelope_purpose_note_free">Solo recibe lo que le asignes a mano.</string>
     <string name="envelope_type_has_funded">Tiene compromisos con reserva: muévelos a otro sobre de Recibos o quita la reserva antes.</string>

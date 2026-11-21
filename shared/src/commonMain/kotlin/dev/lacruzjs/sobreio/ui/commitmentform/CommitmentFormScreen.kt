@@ -62,6 +62,7 @@ import dev.lacruzjs.sobreio.generated.resources.form_section_registration
 import dev.lacruzjs.sobreio.generated.resources.end_date_never
 import dev.lacruzjs.sobreio.ui.commitments.icon
 import dev.lacruzjs.sobreio.ui.commitments.labelRes
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
@@ -70,7 +71,6 @@ import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTextField
@@ -194,7 +194,7 @@ fun CommitmentFormScreen(
                         errorRes = state.amountError,
                         enabled = enabled,
                     )
-                    if (state.fieldsLocked) FormNote(stringResource(Res.string.commitment_linked_note))
+                    if (state.fieldsLocked) InlineNotice(stringResource(Res.string.commitment_linked_note))
                 }
 
                 FormSection(title = stringResource(Res.string.form_section_money)) {
@@ -209,10 +209,10 @@ fun CommitmentFormScreen(
                         enabled = enabled && state.canChangeAccount,
                     )
                     if (state.isLinkedEdit) {
-                        FormNote(stringResource(Res.string.commitment_account_linked_note))
+                        InlineNotice(stringResource(Res.string.commitment_account_linked_note))
                     } else if (state.accountMoved) {
                         val oldName = state.accounts.firstOrNull { it.id == state.storedAccountId }?.name.orEmpty()
-                        FormNote(
+                        InlineNotice(
                             stringResource(
                                 Res.string.commitment_account_change_note,
                                 state.effectiveFrom?.let { formatDate(it, languageTag) }.orEmpty(),
@@ -247,7 +247,7 @@ fun CommitmentFormScreen(
                             )
                             if (state.fundedEffective) FundedEnvelopeNote(state.hasBillsEnvelope)
                         } else {
-                            FormNote(stringResource(Res.string.commitment_outside_note))
+                            InlineNotice(stringResource(Res.string.commitment_outside_note))
                         }
                     }
                     if (state.isContribution) {

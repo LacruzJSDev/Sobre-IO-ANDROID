@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Account
@@ -226,11 +225,11 @@ private fun OptionList(
             .padding(vertical = 4.dp),
     ) {
         if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-            FormTextField(
+            SearchField(
                 value = query,
                 onValueChange = onQueryChange,
-                label = stringResource(Res.string.entity_select_search),
-                imeAction = ImeAction.Done,
+                placeholder = stringResource(Res.string.entity_select_search),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }

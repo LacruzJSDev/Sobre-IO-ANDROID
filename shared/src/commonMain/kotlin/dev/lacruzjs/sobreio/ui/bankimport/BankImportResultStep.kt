@@ -27,9 +27,9 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_result_mismatch_note
 import dev.lacruzjs.sobreio.generated.resources.bank_import_result_undone
 import dev.lacruzjs.sobreio.generated.resources.bank_import_see_movements
 import dev.lacruzjs.sobreio.generated.resources.bank_import_undo_import
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.SecondaryButton
 import dev.lacruzjs.sobreio.ui.components.StatCard
@@ -73,7 +73,7 @@ internal fun ResultStep(state: BankImportUiState, onEvent: (BankImportEvent) -> 
     ) {
         if (state.undone) {
             // The counts described the import that no longer exists: only say what undoing did
-            FormNote(stringResource(Res.string.bank_import_result_undone))
+            InlineNotice(stringResource(Res.string.bank_import_result_undone))
             return@StepColumn
         }
         SoftTile {

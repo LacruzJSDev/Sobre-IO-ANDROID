@@ -36,7 +36,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
@@ -44,7 +43,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_time_zone
 import dev.lacruzjs.sobreio.generated.resources.time_zone_current
 import dev.lacruzjs.sobreio.generated.resources.time_zone_no_results
 import dev.lacruzjs.sobreio.generated.resources.time_zone_search
-import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.components.SearchField
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
 import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
@@ -74,14 +73,14 @@ fun TimeZonePickerRoute(current: String, onBack: () -> Unit, onPicked: (String) 
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().contentMaxWidth(ContentWidth.Form)) {
             ScreenHeader(title = stringResource(Res.string.field_time_zone), onBack = onBack)
-            FormTextField(
+            SearchField(
                 value = query,
                 onValueChange = { query = it },
-                label = stringResource(Res.string.time_zone_search),
+                placeholder = stringResource(Res.string.time_zone_search),
+                focusRequester = focus,
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
-                    .focusRequester(focus),
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
             )
             if (zones.isEmpty()) {
                 Text(

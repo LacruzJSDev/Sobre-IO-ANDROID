@@ -127,6 +127,9 @@ What every screen relies on. The screens themselves are described in `docs/featu
 
 ## Look and feel
 
+- Search and notices: every search box is a `SearchField` (compact pill, placeholder, clear X); a note about a consequence
+  or state is an `InlineNotice` (flat tint, icon, tones Info / Warning / Suggestion, warning amber from
+  `noticeWarningContainer` in `RoleColors.kt`); `FormNote` stays for one-line captions under a field.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and

@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Tag
@@ -41,7 +40,7 @@ import dev.lacruzjs.sobreio.generated.resources.tag_remove
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.ExpandableFormTile
 import dev.lacruzjs.sobreio.ui.components.FormNote
-import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.components.SearchField
 import dev.lacruzjs.sobreio.ui.components.TagDot
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -83,15 +82,21 @@ internal fun TagPicker(
                 )
             },
         ) {
-            FormTextField(
+            SearchField(
                 value = state.tagQuery,
                 onValueChange = { onEvent(MovementFormEvent.TagQueryChanged(it)) },
-                label = stringResource(Res.string.tag_picker_search),
-                errorRes = state.tagError,
-                enabled = enabled,
-                imeAction = ImeAction.Done,
-                onImeAction = { options.createName?.let { onEvent(MovementFormEvent.TagCreateClicked) } },
+                placeholder = stringResource(Res.string.tag_picker_search),
+                containerColor = MaterialTheme.colorScheme.background,
+                onSearch = { if (enabled) options.createName?.let { onEvent(MovementFormEvent.TagCreateClicked) } },
             )
+            state.tagError?.let { error ->
+                Text(
+                    text = stringResource(error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+            }
             options.suggestion?.let { tag ->
                 Text(
                     text = stringResource(Res.string.tag_picker_suggestion, tag.name),
