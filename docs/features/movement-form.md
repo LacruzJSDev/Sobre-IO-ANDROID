@@ -17,7 +17,7 @@ Create and edit an expense, an income or a transfer.
   Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
   expense and income, Tags: an expandable multi-select tile (`TagPicker`) with a `SearchField`, a "Did you mean X?" line, a first
   "Create <text>" row (`TagRepository.createTag` with the default colour, selected at once) and the live tags with a colour dot and
-  a check; the chosen ones show as removable chips under the tile. Writes go through
+  a check; closed, the header shows the chosen tags as small chips (two, then "+N"); the chosen ones show as removable chips at the bottom of the open body. Writes go through
   `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
   of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of

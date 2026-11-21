@@ -148,19 +148,21 @@ plus `movementform` (the new / edit movement form).
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
   avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
-  options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time; long lists open a
+  options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time (header and content are ONE grey surface, `ExpandableSurface`, the building
+  block of `ExpandableFormTile`, `EntitySelect`, `TagPicker` and `CollapsibleListSection`: no second card, no gap, no border); long lists open a
   picker screen with search (`TimeZonePicker`). Settings screens edit with a pencil `IconActionButton` at the top
   right, never a large button.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
 - Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
-  inline list under the tile with its own scroll, a search box over 8 options, `EntityOption` with optional special first options such as
+  up to 8 options the list opens inside the same grey surface, under a divider, with its own scroll and no search; with
+  more the tap opens a bottom sheet with search (`EntityPickerSheet`), `EntityOption` with optional special first options such as
   "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
 - A detail screen shows, never manages: a section of items that are edited elsewhere shows the latest few, read only, and
   an icon at the right of its title (`FormSection(action = …)`, an `IconActionButton` of 24 dp) opens the screen where they
   are all listed and managed. No "See all" button under a section, and no item managed in two places.
-- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, bounded height with
-  their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
+- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, rows inside the same surface under the divider
+  with thin inset lines between them and no background of their own, bounded height with their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
   Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
   grey, Ignore eye-off in soft grey (a bank statement row), Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,

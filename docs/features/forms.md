@@ -12,7 +12,7 @@ The shared form layout and the group, account and envelope forms.
   screen reloads when shown again (`Refresh`). Forms are laid out with `ui/components/FormSections.kt`:
   `FormSection` (small muted title), `FormTile` (soft tile, label left, value or control right, optional note),
   `ChipFormTile` (label and a row of `FormChip`s for a short fixed choice, optional error under it) and
-  `ExpandableFormTile` (header with a preview of the choice and an arrow; content opens under it, one open at a time).
+  `ExpandableFormTile` (header with a preview of the choice and an arrow; content opens inside the same grey surface under a divider, one open at a time; all expandables are built on `ExpandableSurface`).
   Group form: the avatar next to the name field; "Appearance" with Colour and Icon as separate expandable tiles
   (`ColorPicker`, `IconPicker` with paper cells); "Currency and period" with the currency (expandable chips when
   creating, read-only tile when editing), the period start day (a "-" / "Day N" / "+" stepper in its tile, 1-28, with

@@ -14,7 +14,7 @@ The ledger with filters, search, totals, reports and export.
   Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
   only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
   (small avatar for account, envelope, member) and an X that clears it. A chip opens an `EntityPickerSheet` (`FlatBottomSheet`,
-  `EntitySelect` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
+  `EntityPickerSheet` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
   multiple choice (`EntityMultiPickerSheet`, "Apply"). Type: Expenses, Income, Transfers, Adjustments, Contributions
   (`MovementType`, sent as `p_kinds` group names). Dates: This period, Previous period (read from `periods`), Last 3 months,
   This year and Custom (`CustomRangeDialog`, a flat `DateRangePicker`); `DatePreset` and `datePresetRange` are pure. Filters

@@ -23,16 +23,16 @@ private val PickerMaxHeight = 420.dp
 /**
  * A bottom sheet that lists [options] as rows (avatar, name, a check on the selected one), the same look as the list of an
  * [EntitySelect], with a search box from [ENTITY_SELECT_SEARCH_THRESHOLD] options on. [allOption] is the first row, the
- * one that clears the filter (null id). Tapping a row calls [onSelect] and the caller closes the sheet.
+ * one that clears the filter (null id); without it the list starts at the options. Tapping a row calls [onSelect] and the caller closes the sheet.
  */
 @Composable
 fun EntityPickerSheet(
     title: String,
-    allOption: EntityOption,
     options: List<EntityOption>,
     selectedId: String?,
     onSelect: (String?) -> Unit,
     onDismiss: () -> Unit,
+    allOption: EntityOption? = null,
 ) {
     FlatBottomSheet(title = title, onDismiss = onDismiss) {
         var query by rememberSaveable { mutableStateOf("") }
@@ -46,7 +46,7 @@ fun EntityPickerSheet(
         val visible = filterEntityOptions(options, query)
         // Bounded height: the list scrolls on its own inside the sheet
         LazyColumn(modifier = Modifier.heightIn(max = PickerMaxHeight)) {
-            if (query.isBlank()) {
+            if (query.isBlank() && allOption != null) {
                 item(key = "all") { OptionRow(allOption, selected = selectedId == null, onClick = { onSelect(null) }) }
             }
             items(visible, key = { it.id ?: "" }) { option ->

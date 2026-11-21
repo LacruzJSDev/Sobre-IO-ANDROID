@@ -185,8 +185,8 @@ fun FormTileValue(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * A tile that opens its [content] under the header when tapped. The header shows [label], a [preview] of the current
- * choice and an arrow that turns when open. The caller keeps [expanded], so a form can keep only one open at a time.
+ * A tile that opens its [content] inside the same surface, under a divider, when tapped (an [ExpandableSurface]). The
+ * header shows [label], a [preview] of the current choice and an arrow that turns when open. The caller keeps [expanded], so a form can keep only one open at a time.
  */
 @Composable
 fun ExpandableFormTile(
@@ -198,41 +198,15 @@ fun ExpandableFormTile(
     preview: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
-    val dismissKeyboard = rememberDismissKeyboard()
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .clickable(role = Role.Button) { dismissKeyboard(); onToggle() }
-                .semantics { if (expandedDescription != null) stateDescription = expandedDescription }
-                .padding(start = 16.dp, end = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            preview()
-            Icon(
-                imageVector = Icons.Filled.ExpandMore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp).rotate(arrowRotation),
-            )
-        }
-        AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                content = content,
-            )
-        }
-    }
+    ExpandableSurface(
+        label = label,
+        expanded = expanded,
+        onToggle = onToggle,
+        modifier = modifier,
+        expandedDescription = expandedDescription,
+        preview = preview,
+        content = content,
+    )
 }
 
 /** Short muted explanation under a tile or a field. */

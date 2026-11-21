@@ -1,16 +1,9 @@
 package dev.lacruzjs.sobreio.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -19,25 +12,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.domain.model.Account
@@ -101,10 +86,10 @@ fun filterEntityOptions(options: List<EntityOption>, query: String): List<Entity
 /**
  * A form row to choose one thing of the group (account, envelope, group, member). Closed it looks like a [FormTile]: the
  * [label] on the left and, on the right, the avatar and name of the selected option and a chevron (a muted placeholder
- * when nothing is selected). Open, the list of [options] appears under it, inline, with its own scroll and, from
- * [ENTITY_SELECT_SEARCH_THRESHOLD] options on, a search box. The caller keeps [expanded] so a form can keep one open at
- * a time. Tapping an option calls [onSelect] and closes the list through [onToggle]. A disabled select only shows its
- * value (no chevron).
+ * when nothing is selected). Open, up to [ENTITY_SELECT_SEARCH_THRESHOLD] options show as a list inside the same surface,
+ * under a divider, with its own scroll; with more options the tap opens a bottom sheet with a search box
+ * ([EntityPickerSheet]) instead. The caller keeps [expanded] so a form can keep one open at a time. Choosing an option
+ * calls [onSelect] and closes through [onToggle]. A disabled select only shows its value (no chevron).
  */
 @Composable
 fun EntitySelect(
@@ -119,79 +104,48 @@ fun EntitySelect(
     error: StringResource? = null,
 ) {
     val selected = options.firstOrNull { it.id == selectedId }
-    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
-    var query by remember { mutableStateOf("") }
-    LaunchedEffect(expanded) { if (!expanded) query = "" }
     val open = expanded && enabled
-    val expandedText = expandedStateText(expanded)
-    val dismissKeyboard = rememberDismissKeyboard()
+    val asSheet = options.size > ENTITY_SELECT_SEARCH_THRESHOLD
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .clickable(enabled = enabled, role = Role.Button) { dismissKeyboard(); onToggle() }
-                    .semantics { stateDescription = expandedText }
-                    .padding(start = 16.dp, end = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                ) {
-                    if (selected != null) {
-                        EntityAvatar(name = selected.name, icon = selected.icon, color = selected.color, size = 28.dp)
-                        Text(
-                            text = selected.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(Res.string.entity_select_placeholder),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (enabled) {
-                    Icon(
-                        imageVector = Icons.Filled.ExpandMore,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp).rotate(arrowRotation),
+        ExpandableSurface(
+            label = label,
+            expanded = open && !asSheet,
+            onToggle = onToggle,
+            enabled = enabled,
+            flushContent = true,
+            preview = {
+                if (selected != null) {
+                    EntityAvatar(name = selected.name, icon = selected.icon, color = selected.color, size = 28.dp)
+                    Text(
+                        text = selected.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                 } else {
-                    Spacer(Modifier.size(4.dp))
+                    Text(
+                        text = stringResource(Res.string.entity_select_placeholder),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-            }
-            AnimatedVisibility(visible = open, enter = expandVertically(), exit = shrinkVertically()) {
-                OptionList(
-                    options = options,
-                    selectedId = selectedId,
-                    query = query,
-                    onQueryChange = { query = it },
-                    onPick = {
-                        onSelect(it)
-                        onToggle()
-                    },
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+            },
+        ) {
+            // Bounded height: it scrolls on its own inside the scrolling form
+            LazyColumn(modifier = Modifier.heightIn(max = ListMaxHeight)) {
+                items(options, key = { it.id ?: "" }) { option ->
+                    OptionRow(
+                        option,
+                        selected = option.id == selectedId,
+                        onClick = {
+                            onSelect(option.id)
+                            onToggle()
+                        },
+                    )
+                }
             }
         }
         if (error != null) {
@@ -203,42 +157,17 @@ fun EntitySelect(
             )
         }
     }
-}
-
-@Composable
-private fun OptionList(
-    options: List<EntityOption>,
-    selectedId: String?,
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onPick: (String?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val shape = MaterialTheme.shapes.medium
-    val visible = filterEntityOptions(options, query)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.background)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-            .padding(vertical = 4.dp),
-    ) {
-        if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-            SearchField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = stringResource(Res.string.entity_select_search),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-        // Bounded height: it scrolls on its own inside the scrolling form
-        LazyColumn(modifier = Modifier.heightIn(max = ListMaxHeight)) {
-            items(visible, key = { it.id ?: "" }) { option ->
-                OptionRow(option, selected = option.id == selectedId, onClick = { onPick(option.id) })
-            }
-        }
+    if (open && asSheet) {
+        EntityPickerSheet(
+            title = label,
+            options = options,
+            selectedId = selectedId,
+            onSelect = {
+                onSelect(it)
+                onToggle()
+            },
+            onDismiss = onToggle,
+        )
     }
 }
 
@@ -247,10 +176,9 @@ internal fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> U
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 1.dp)
+            .padding(horizontal = 8.dp, vertical = 1.dp)
             .heightIn(min = 52.dp)
             .clip(MaterialTheme.shapes.medium)
-            .then(if (selected) Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh) else Modifier)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -260,6 +188,8 @@ internal fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> U
         Text(
             text = option.name,
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (selected) FontWeight.Medium else null,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -284,7 +214,7 @@ internal fun OptionRow(option: EntityOption, selected: Boolean, onClick: () -> U
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp),
             )
         }
