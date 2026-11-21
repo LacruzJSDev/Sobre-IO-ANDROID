@@ -9,9 +9,9 @@ import kotlin.test.assertTrue
 class TagColorTest {
 
     @Test
-    fun hasTenDistinctColours() {
-        assertEquals(10, TagColor.entries.size)
-        assertEquals(10, TagColor.entries.map { it.hex.lowercase() }.toSet().size)
+    fun hasTwentyDistinctColours() {
+        assertEquals(20, TagColor.entries.size)
+        assertEquals(20, TagColor.entries.map { it.hex.lowercase() }.toSet().size)
     }
 
     @Test
@@ -35,7 +35,8 @@ class TagColorTest {
     }
 
     @Test
-    fun theDefaultIsTheFirstOfThePalette() {
-        assertEquals(TagColor.entries.first(), TagColor.Default)
+    fun theDefaultIsSage() {
+        assertEquals(TagColor.Sage, TagColor.Default)
+        assertEquals("#8FB39B", TagColor.Default.hex)
     }
 }
