@@ -135,7 +135,7 @@ What every screen relies on. The screens themselves are described in `docs/featu
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
   Leave swipe action). No dividers and no settings-style rows with chevrons: separate with spacing (the one exception is the thin
   inset line inside an `ExpandableSurface` between its header and its body, and between the rows of a `CollapsibleListSection`). Corners come from
-  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
+  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, snackbars, swipe actions and fields outside a section (inside a `FormSection` tiles and fields take its inner 4 dp).
   Forms: a `FormSection` is one segmented block (tiles 2 dp apart, outer corners `large` 14 dp, inner corners 4 dp through `LocalTileShape` / `tileShape()`, 24 dp between sections); text fields are filled soft fields in the tile grey with no outline (`softTextFieldColors()`).
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
