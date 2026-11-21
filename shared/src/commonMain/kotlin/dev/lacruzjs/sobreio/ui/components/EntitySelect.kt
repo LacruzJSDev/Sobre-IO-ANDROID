@@ -117,7 +117,7 @@ fun EntitySelect(
     var query by remember { mutableStateOf("") }
     LaunchedEffect(expanded) { if (!expanded) query = "" }
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = modifier.fillMaxWidth()) {
         ExpandableSurface(
             label = label,
             expanded = open && !asSheet,
@@ -172,7 +172,7 @@ fun EntitySelect(
                 text = stringResource(error),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 4.dp),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
             )
         }
     }

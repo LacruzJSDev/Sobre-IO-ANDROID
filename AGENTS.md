@@ -135,7 +135,7 @@ plus `movementform` (the new / edit movement form).
 - Notices: a note that explains a consequence or a state (outside envelopes, cover, automatic move, locked fields, final
   warnings) is an `InlineNotice` (`ui/components/InlineNotice.kt`, tones Info / Warning / Suggestion, optional title and
   actions). `FormNote` is only for a one-line caption directly under a field.
-- Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
+- Text input: fields are filled soft fields (surfaceContainerHigh, no outline or indicator, `softTextFieldColors()`, shape `tileShape()`), never outlined. Every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator). The input components (`FormTextField`,
   `AmountField`, `LargeAmountField`, `PasswordField`) own a `TextFieldState` kept in step with the outside String by
   `rememberSyncedTextFieldState` / `TextSync` (`ui/components/TextSync.kt`): never hold the text in a value-based field
@@ -147,7 +147,10 @@ plus `movementform` (the new / edit movement form).
   (the default is none, for emails, codes and searches). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
-  avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
+  avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s. A section is ONE segmented block: tiles 2 dp apart,
+  outer corners 14 dp (the section clips its group with `shapes.large`), inner corners 4 dp (`LocalTileShape`, read by every tile through `tileShape()`,
+  which is `shapes.medium` outside a section; a new tile-like component must use it), 24 dp between sections; captions and errors between tiles keep 4 dp
+  of vertical padding. A section whose content is not tiles (a figure, plain rows, a chart) passes `segmented = false`; choices with many
   options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time (header and content are ONE grey surface, `ExpandableSurface`, the building
   block of `ExpandableFormTile`, `EntitySelect`, `TagPicker` and `CollapsibleListSection`: no second card, no gap, no border); long lists open a
   picker screen with search (`TimeZonePicker`). Settings screens edit with a pencil `IconActionButton` at the top

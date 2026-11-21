@@ -12,8 +12,10 @@ import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -23,6 +25,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -37,7 +40,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Outlined text field with an optional validation message ([errorRes]) as supporting text.
+ * Filled soft text field (the soft grey of the tiles, no outline) with an optional validation message ([errorRes]) as supporting text.
  *
  * The keyboard always goes away when it should: "Next" moves to the next field (or closes the keyboard on the last
  * one), "Done" and the other actions close it and then call [onImeAction]. Screens add [clearFocusOnTap] so a tap
@@ -60,19 +63,40 @@ fun FormTextField(
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
 ) {
     val state = rememberSyncedTextFieldState(value, onValueChange)
-    OutlinedTextField(
+    TextField(
         state = state,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
         lineLimits = TextFieldLineLimits.SingleLine,
-        shape = MaterialTheme.shapes.medium,
+        shape = tileShape(),
+        colors = softTextFieldColors(),
         isError = errorRes != null,
         leadingIcon = leadingIcon,
         supportingText = errorRes?.let { { Text(stringResource(it)) } },
         inputTransformation = inputTransformation,
         keyboardOptions = KeyboardOptions(capitalization = capitalization, keyboardType = keyboardType, imeAction = imeAction),
         onKeyboardAction = rememberKeyboardActionHandler(imeAction, onImeAction),
+    )
+}
+
+/** The colours of a filled soft field: the tile grey in every state, no indicator line, the error only in the texts. */
+@Composable
+internal fun softTextFieldColors(): TextFieldColors {
+    val scheme = MaterialTheme.colorScheme
+    return TextFieldDefaults.colors(
+        focusedContainerColor = scheme.surfaceContainerHigh,
+        unfocusedContainerColor = scheme.surfaceContainerHigh,
+        disabledContainerColor = scheme.surfaceContainerHigh,
+        errorContainerColor = scheme.surfaceContainerHigh,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        disabledIndicatorColor = Color.Transparent,
+        errorIndicatorColor = Color.Transparent,
+        cursorColor = scheme.primary,
+        errorCursorColor = scheme.primary,
+        errorLabelColor = scheme.error,
+        errorSupportingTextColor = scheme.error,
     )
 }
 

@@ -6,6 +6,7 @@ import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_free_on
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_note
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_title
 import dev.lacruzjs.sobreio.ui.components.StatRow
+import dev.lacruzjs.sobreio.ui.components.tileShape
 import dev.lacruzjs.sobreio.ui.components.StatCard
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import androidx.compose.foundation.background
@@ -153,7 +154,7 @@ internal fun SoftCard(modifier: Modifier = Modifier, content: @Composable () -> 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+            .clip(tileShape())
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

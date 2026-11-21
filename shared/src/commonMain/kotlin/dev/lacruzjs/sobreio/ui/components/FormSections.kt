@@ -17,15 +17,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
@@ -42,15 +46,32 @@ import org.jetbrains.compose.resources.stringResource
  * content (colour palette, icon grid) opens under it. Flat: soft background, rounded corners, spacing, no dividers.
  */
 
+/** The shape a tile takes inside a segmented [FormSection] (small inner corners); null outside one. */
+val LocalTileShape = compositionLocalOf<Shape?> { null }
+
+/** The shape of a soft tile: the small inner corner of a segmented section, the medium corner anywhere else. */
+@Composable
+fun tileShape(): Shape = LocalTileShape.current ?: MaterialTheme.shapes.medium
+
+private val SegmentGap = 2.dp
+private val InnerTileShape = RoundedCornerShape(4.dp)
+
 /**
  * A titled group of tiles. [action] sits at the right of the title: in a read-only detail, the icon that opens the
  * screen where that section's items are all listed and managed (never a "See all" button under the section).
+ *
+ * A [segmented] section (the default) is one block: its tiles are [SegmentGap] apart, the outer corners of the first and
+ * last are the large shape and the inner ones are small ([LocalTileShape]). Captions and error texts between tiles are
+ * transparent, so they just sit in the gaps. A section whose content is not made of tiles (a figure, plain rows, a
+ * chart) passes `segmented = false` and keeps the plain spacing and no clip. The space between sections is the 16 dp of
+ * the scaffold plus the 8 dp on top of each section.
  */
 @Composable
 fun FormSection(
     title: String,
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
+    segmented: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -63,7 +84,17 @@ fun FormSection(
             )
             action?.invoke()
         }
-        content()
+        if (segmented) {
+            CompositionLocalProvider(LocalTileShape provides InnerTileShape) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large),
+                    verticalArrangement = Arrangement.spacedBy(SegmentGap),
+                    content = content,
+                )
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+        }
     }
 }
 
@@ -80,12 +111,12 @@ fun FormTile(
     enabled: Boolean = true,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .clip(MaterialTheme.shapes.medium)
+                .clip(tileShape())
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .then(
                     if (onClick != null) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -122,7 +153,7 @@ fun FormInfoTile(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+            .clip(tileShape())
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -148,11 +179,11 @@ fun ChipFormTile(
     error: StringResource? = null,
     chips: @Composable () -> Unit,
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
+                .clip(tileShape())
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -165,7 +196,7 @@ fun ChipFormTile(
                 text = stringResource(error),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 4.dp),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
             )
         }
     }
@@ -216,6 +247,6 @@ fun FormNote(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(horizontal = 4.dp),
+        modifier = modifier.padding(horizontal = 4.dp, vertical = 4.dp),
     )
 }

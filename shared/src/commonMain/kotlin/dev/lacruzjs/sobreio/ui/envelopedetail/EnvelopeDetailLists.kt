@@ -55,7 +55,7 @@ import org.jetbrains.compose.resources.vectorResource
 /** The commitments that reserve money for the envelope, read only: tapping one opens its detail. */
 @Composable
 internal fun FundingSection(state: EnvelopeDetailUiState, languageTag: String, onEvent: (EnvelopeDetailEvent) -> Unit) {
-    FormSection(title = stringResource(Res.string.envelope_detail_section_commitments)) {
+    FormSection(title = stringResource(Res.string.envelope_detail_section_commitments), segmented = false) {
         state.funding.forEach { row ->
             Row(
                 modifier = Modifier

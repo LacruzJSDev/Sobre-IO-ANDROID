@@ -193,7 +193,7 @@ private fun GroupSection(
     emphasised: Boolean = false,
 ) {
     if (items.isEmpty()) return
-    FormSection(title = title, modifier = modifier) {
+    FormSection(title = title, modifier = modifier, segmented = false) {
         if (emphasised) {
             Text(
                 text = note,

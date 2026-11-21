@@ -53,7 +53,7 @@ fun InlineNotice(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(background, MaterialTheme.shapes.medium)
+            .background(background, tileShape())
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {

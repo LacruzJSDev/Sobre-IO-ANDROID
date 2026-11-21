@@ -61,7 +61,7 @@ internal fun ExpandableSurface(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
+            .clip(LocalTileShape.current ?: MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Row(

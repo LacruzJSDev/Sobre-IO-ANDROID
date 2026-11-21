@@ -219,7 +219,7 @@ fun AccountFormScreen(
                             text = stringResource(error),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 4.dp),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                         )
                     }
                     if (!isEditing) {

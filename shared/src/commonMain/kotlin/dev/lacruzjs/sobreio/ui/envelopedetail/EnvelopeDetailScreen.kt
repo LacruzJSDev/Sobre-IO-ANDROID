@@ -211,7 +211,7 @@ private fun DetailContent(
 
 @Composable
 private fun AvailableSection(envelope: Envelope, state: EnvelopeDetailUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.envelope_detail_available)) {
+    FormSection(title = stringResource(Res.string.envelope_detail_available), segmented = false) {
         MoneyText(
             amountCents = envelope.balanceCents,
             currencyCode = state.currencyCode,
