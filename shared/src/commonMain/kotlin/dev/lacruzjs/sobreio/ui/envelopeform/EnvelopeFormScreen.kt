@@ -41,6 +41,7 @@ import dev.lacruzjs.sobreio.generated.resources.field_monthly_contribution
 import dev.lacruzjs.sobreio.generated.resources.field_envelope_start_next_period
 import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note
 import dev.lacruzjs.sobreio.generated.resources.envelope_start_next_period_note_off
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.FormTile
 import dev.lacruzjs.sobreio.ui.format.formatDate
@@ -49,7 +50,6 @@ import dev.lacruzjs.sobreio.ui.components.EntityAvatar
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.ChipFormTile
 import dev.lacruzjs.sobreio.ui.components.FormChip
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.AmountField
@@ -230,7 +230,7 @@ fun EnvelopeFormScreen(
                     }
                 }
                 // What the chosen type does, at the end so the choices above stay close together
-                FormNote(stringResource(state.purpose.noteRes()))
+                InlineNotice(stringResource(state.purpose.noteRes()))
                 ErrorText(state.submitError, modifier = Modifier.fillMaxWidth())
             }
         }

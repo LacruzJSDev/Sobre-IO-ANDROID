@@ -37,12 +37,13 @@ import dev.lacruzjs.sobreio.generated.resources.bank_import_field_kind
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_expense
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_income
 import dev.lacruzjs.sobreio.generated.resources.movement_kind_transfer
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
+import dev.lacruzjs.sobreio.ui.components.NoticeTone
 import dev.lacruzjs.sobreio.ui.components.ChipFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
 import dev.lacruzjs.sobreio.ui.components.FormChip
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.FormTextField
 import dev.lacruzjs.sobreio.ui.components.MoneyText
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
@@ -113,6 +114,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 }
                 when {
                     draft.isTransfer -> EntitySelect(
+                        insideSheet = true,
                         label = stringResource(if (isCharge) Res.string.field_to_account else Res.string.field_from_account),
                         options = state.otherAccounts.map { it.toEntityOption() },
                         selectedId = draft.otherAccountId,
@@ -120,9 +122,10 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                         expanded = sheet.openSelect == RowSelect.OtherAccount,
                         onToggle = { onEvent(BankImportEvent.SheetSelectToggled(RowSelect.OtherAccount)) },
                     )
-                    state.account?.inEnvelopes == false -> FormNote(stringResource(Res.string.bank_import_outside_note))
+                    state.account?.inEnvelopes == false -> InlineNotice(stringResource(Res.string.bank_import_outside_note))
                     else -> {
                         EntitySelect(
+                            insideSheet = true,
                             label = stringResource(Res.string.field_envelope),
                             options = listOf(unassignedOption(stringResource(Res.string.envelopes_unassigned))) +
                                 state.envelopes.map { it.toEntityOption() },
@@ -132,7 +135,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                             onToggle = { onEvent(BankImportEvent.SheetSelectToggled(RowSelect.Envelope)) },
                         )
                         if (sheet.similarCount > 0) {
-                            FormNote(pluralStringResource(Res.plurals.bank_import_similar_note, sheet.similarCount, sheet.similarCount))
+                            InlineNotice(pluralStringResource(Res.plurals.bank_import_similar_note, sheet.similarCount, sheet.similarCount))
                         }
                     }
                 }
@@ -142,9 +145,10 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                     label = stringResource(Res.string.field_notes),
                     capitalization = KeyboardCapitalization.Sentences,
                 )
-                if (draft.status == BankRowStatus.BeforeOpening) FormNote(stringResource(Res.string.bank_import_before_opening_note))
+                if (draft.status == BankRowStatus.BeforeOpening) InlineNotice(stringResource(Res.string.bank_import_before_opening_note), tone = NoticeTone.Warning)
             }
             BankRowAction.Confirm -> EntitySelect(
+                insideSheet = true,
                 label = stringResource(Res.string.bank_import_field_due),
                 options = draft.pending.map {
                     EntityOption(
@@ -159,6 +163,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 onToggle = { onEvent(BankImportEvent.SheetSelectToggled(RowSelect.Pending)) },
             )
             BankRowAction.Link -> EntitySelect(
+                insideSheet = true,
                 label = stringResource(Res.string.bank_import_field_movement),
                 options = draft.existing.map {
                     EntityOption(
@@ -172,7 +177,7 @@ internal fun RowSheet(state: BankImportUiState, onEvent: (BankImportEvent) -> Un
                 expanded = sheet.openSelect == RowSelect.Existing,
                 onToggle = { onEvent(BankImportEvent.SheetSelectToggled(RowSelect.Existing)) },
             )
-            BankRowAction.Ignore -> FormNote(stringResource(Res.string.bank_import_ignore_note))
+            BankRowAction.Ignore -> InlineNotice(stringResource(Res.string.bank_import_ignore_note))
         }
         PrimaryButton(text = stringResource(Res.string.bank_import_done), onClick = { onEvent(BankImportEvent.SheetDoneClicked) })
     }

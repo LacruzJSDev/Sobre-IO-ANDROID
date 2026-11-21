@@ -1,12 +1,5 @@
 package dev.lacruzjs.sobreio.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,12 +8,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,11 +25,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_retry
@@ -51,9 +37,9 @@ private val BodyMaxHeight = 260.dp
 private const val LOAD_MORE_DISTANCE = 3
 
 /**
- * A long list inside a detail screen, folded under a header: a soft tile with the [title], a muted [count] and a
- * chevron. Open, the rows ([itemContent]) sit under it in a box of bounded height with its own scroll, separated by
- * spacing. When [onLoadMore] is given, it is called as the user scrolls near the end; [isLoadingMore] shows a small
+ * A long list inside a detail screen, folded under a header: an [ExpandableSurface] with the [title], a muted [count] and a
+ * chevron. Open, the rows ([itemContent], no background of their own, they pad themselves 16 dp) sit inside the same
+ * surface under the divider, in a box of bounded height with its own scroll, separated by thin inset lines. When [onLoadMore] is given, it is called as the user scrolls near the end; [isLoadingMore] shows a small
  * progress row and [loadMoreFailed] a message with a retry ([onLoadMore] again). [emptyText] shows instead of the rows
  * when there are none.
  */
@@ -72,45 +58,29 @@ fun <T> CollapsibleListSection(
     itemContent: @Composable (T) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
-    val expandedText = expandedStateText(expanded)
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .clip(MaterialTheme.shapes.medium)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .clickable(role = Role.Button) { expanded = !expanded }
-                .semantics { stateDescription = expandedText }
-                .padding(start = 16.dp, end = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+    ExpandableSurface(
+        label = title,
+        expanded = expanded,
+        onToggle = { expanded = !expanded },
+        modifier = modifier,
+        flushContent = true,
+        preview = {
             Text(
                 text = count.toString(),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Icon(
-                imageVector = Icons.Filled.ExpandMore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp).rotate(arrowRotation),
+        },
+    ) {
+        if (items.isEmpty() && emptyText != null) {
+            Text(
+                text = emptyText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
-        }
-        AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-            if (items.isEmpty() && emptyText != null) {
-                Text(
-                    text = emptyText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                )
-            } else {
-                SectionRows(items, itemKey, isLoadingMore, loadMoreFailed, onLoadMore, itemContent)
-            }
+        } else {
+            SectionRows(items, itemKey, isLoadingMore, loadMoreFailed, onLoadMore, itemContent)
         }
     }
 }
@@ -137,16 +107,16 @@ private fun <T> SectionRows(
     LaunchedEffect(nearEnd, items.size) {
         if (nearEnd && onLoadMore != null && !loadMoreFailed) onLoadMore()
     }
+    val rowKey: ((Int, T) -> Any)? = itemKey?.let { key -> { _, item -> key(item) } }
     // Bounded height: it scrolls on its own inside the scrolling screen
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxWidth().heightIn(max = BodyMaxHeight),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (itemKey != null) {
-            items(items, key = itemKey) { item -> itemContent(item) }
-        } else {
-            items(items) { item -> itemContent(item) }
+        // The rows sit on the section's own surface, split by a thin inset line
+        itemsIndexed(items, key = rowKey) { index, item ->
+            if (index > 0) SectionDivider()
+            itemContent(item)
         }
         if (isLoadingMore) {
             item(key = "loading-more") {
@@ -158,7 +128,7 @@ private fun <T> SectionRows(
         if (loadMoreFailed) {
             item(key = "load-more-failed") {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -172,4 +142,13 @@ private fun <T> SectionRows(
             }
         }
     }
+}
+
+@Composable
+private fun SectionDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
 }

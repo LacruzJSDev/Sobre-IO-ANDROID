@@ -130,7 +130,12 @@ plus `movementform` (the new / edit movement form).
   `FormTile` is for inputs only.
 - Funded commitments only point to Recibos (Bills) envelopes; the envelope type decides its fields and its progress bar (D-46).
   The app never decides progress: it draws what `envelope_progress` returns.
-- Text input: every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
+- Search boxes are a `SearchField` (`ui/components/SearchField.kt`: 48 dp pill, magnifier, placeholder instead of a floating
+  label, clear X), never a `FormTextField`; pass `containerColor = background` on a grey tile.
+- Notices: a note that explains a consequence or a state (outside envelopes, cover, automatic move, locked fields, final
+  warnings) is an `InlineNotice` (`ui/components/InlineNotice.kt`, tones Info / Warning / Suggestion, optional title and
+  actions). `FormNote` is only for a one-line caption directly under a field.
+- Text input: fields are filled soft fields (surfaceContainerHigh, no outline or indicator, `softTextFieldColors()`, shape `tileShape()`), never outlined. Every field is a `FormTextField` (keyboard closes on Done, Next moves to the next field) and every
   money amount an `AmountField` (numeric pad with decimal separator). The input components (`FormTextField`,
   `AmountField`, `LargeAmountField`, `PasswordField`) own a `TextFieldState` kept in step with the outside String by
   `rememberSyncedTextFieldState` / `TextSync` (`ui/components/TextSync.kt`): never hold the text in a value-based field
@@ -142,20 +147,26 @@ plus `movementform` (the new / edit movement form).
   (the default is none, for emails, codes and searches). Screens with fields add `Modifier.clearFocusOnTap()` (already in `FormScaffold`, `AuthScaffold`,
   `FlatBottomSheet` and Profile) so a tap outside any field closes the keyboard.
 - Every create/edit form uses the same layout, built only from `ui/components/FormSections.kt` and `FormScaffold`:
-  avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s; choices with many
-  options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time; long lists open a
+  avatar (colour + icon) next to the name field at the top, then `FormSection`s of `FormTile`s. A section is ONE segmented block: tiles 2 dp apart,
+  outer corners 14 dp (the section clips its group with `shapes.large`), inner corners 4 dp (`LocalTileShape`, read by every tile through `tileShape()`,
+  which is `shapes.medium` outside a section; a new tile-like component must use it), 24 dp between sections; captions and errors between tiles keep 4 dp
+  of vertical padding. A section whose content is not tiles (a figure, plain rows, a chart) passes `segmented = false`; choices with many
+  options (colour, icon, kind, currency, holder) are `ExpandableFormTile`s, one open at a time (header and content are ONE grey surface, `ExpandableSurface`, the building
+  block of `ExpandableFormTile`, `EntitySelect`, `TagPicker` and `CollapsibleListSection`: no second card, no gap, no border); long lists open a
   picker screen with search (`TimeZonePicker`). Settings screens edit with a pencil `IconActionButton` at the top
   right, never a large button.
 - Create and edit are full-screen forms (Navigation 3 routes with their own ViewModel, `FormScaffold`); bottom sheets are
   only for short one-step actions (Assign, role change, invite plus code, join with a code).
 - Choosing one thing of the group (account, envelope, group, member) is an `EntitySelect` (`ui/components/EntitySelect.kt`: avatar + name,
-  inline list under the tile with its own scroll, a search box over 8 options, `EntityOption` with optional special first options such as
+  up to 8 options the list opens inside the same grey surface, under a divider, with its own scroll and no search; with
+  more the tap opens a bottom sheet with search (`EntityPickerSheet`); a select that already sits in a bottom sheet passes
+  `insideSheet = true` and keeps a long list inline with a search box, never a sheet over a sheet; `EntityOption` with optional special first options such as
   "Unassigned" via `unassignedOption`; filter in `filterEntityOptions`); `FormChip` only for fixed short enums (kind, unit, role, currency, period).
 - A detail screen shows, never manages: a section of items that are edited elsewhere shows the latest few, read only, and
   an icon at the right of its title (`FormSection(action = …)`, an `IconActionButton` of 24 dp) opens the screen where they
   are all listed and managed. No "See all" button under a section, and no item managed in two places.
-- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, bounded height with
-  their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
+- Long lists inside a detail screen are `CollapsibleListSection`s (`ui/components/CollapsibleListSection.kt`: count in the header, rows inside the same surface under the divider
+  with thin inset lines between them and no background of their own, bounded height with their own scroll, paginated with `onLoadMore`, `isLoadingMore` and `loadMoreFailed`).
 - Swipe actions are icons without text, defined once in `ui/components/SwipeActions.kt` (factory functions: Edit pencil,
   Archive, Reopen unarchive, Cancel deletion restore-from-trash, Change role admin shield, Assign move-to-inbox in soft
   grey, Ignore eye-off in soft grey (a bank statement row), Leave logout in the muted orange `ColorScheme.leaveAction` from `ui/theme/RoleColors.kt`, Delete bin in red,

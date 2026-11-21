@@ -2,6 +2,8 @@
 
 package dev.lacruzjs.sobreio.ui.commitmentform
 
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
+import dev.lacruzjs.sobreio.ui.components.NoticeTone
 import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -40,7 +42,6 @@ import dev.lacruzjs.sobreio.generated.resources.unit_years
 import dev.lacruzjs.sobreio.ui.commitments.labelRes
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.components.toEntityOption
 import dev.lacruzjs.sobreio.ui.components.unassignedOption
@@ -50,10 +51,11 @@ import org.jetbrains.compose.resources.stringResource
 /** Why the envelope list only has Bills envelopes while the reserve is on, or what to do when there are none. */
 @Composable
 internal fun FundedEnvelopeNote(hasBillsEnvelope: Boolean) {
-    FormNote(
+    InlineNotice(
         stringResource(
             if (hasBillsEnvelope) Res.string.commitment_funded_bills_note else Res.string.commitment_funded_no_bills_note,
         ),
+        tone = if (hasBillsEnvelope) NoticeTone.Info else NoticeTone.Warning,
     )
 }
 
@@ -75,7 +77,7 @@ internal fun ContributionTiles(
         if (id == null || name == null || any { it.id == id }) this else listOf(EntityOption(id, name)) + this
     val money = { cents: Long -> formatMoney(cents, state.currencyCode, languageTag) }
 
-    if (creating && state.groups.isEmpty()) FormNote(stringResource(Res.string.commitment_no_groups_note))
+    if (creating && state.groups.isEmpty()) InlineNotice(stringResource(Res.string.commitment_no_groups_note))
     EntitySelect(
         label = stringResource(Res.string.field_dest_group),
         options = state.groups.map { it.toEntityOption() }.withSelected(state.destGroupId, state.destGroupName),

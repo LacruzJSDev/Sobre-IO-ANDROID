@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_apply
@@ -24,31 +23,30 @@ private val PickerMaxHeight = 420.dp
 /**
  * A bottom sheet that lists [options] as rows (avatar, name, a check on the selected one), the same look as the list of an
  * [EntitySelect], with a search box from [ENTITY_SELECT_SEARCH_THRESHOLD] options on. [allOption] is the first row, the
- * one that clears the filter (null id). Tapping a row calls [onSelect] and the caller closes the sheet.
+ * one that clears the filter (null id); without it the list starts at the options. Tapping a row calls [onSelect] and the caller closes the sheet.
  */
 @Composable
 fun EntityPickerSheet(
     title: String,
-    allOption: EntityOption,
     options: List<EntityOption>,
     selectedId: String?,
     onSelect: (String?) -> Unit,
     onDismiss: () -> Unit,
+    allOption: EntityOption? = null,
 ) {
     FlatBottomSheet(title = title, onDismiss = onDismiss) {
         var query by rememberSaveable { mutableStateOf("") }
         if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-            FormTextField(
+            SearchField(
                 value = query,
                 onValueChange = { query = it },
-                label = stringResource(Res.string.entity_select_search),
-                imeAction = ImeAction.Done,
+                placeholder = stringResource(Res.string.entity_select_search),
             )
         }
         val visible = filterEntityOptions(options, query)
         // Bounded height: the list scrolls on its own inside the sheet
         LazyColumn(modifier = Modifier.heightIn(max = PickerMaxHeight)) {
-            if (query.isBlank()) {
+            if (query.isBlank() && allOption != null) {
                 item(key = "all") { OptionRow(allOption, selected = selectedId == null, onClick = { onSelect(null) }) }
             }
             items(visible, key = { it.id ?: "" }) { option ->
@@ -78,11 +76,10 @@ fun EntityMultiPickerSheet(
             Text(text = emptyText, style = MaterialTheme.typography.bodyMedium)
         } else {
             if (options.size > ENTITY_SELECT_SEARCH_THRESHOLD) {
-                FormTextField(
+                SearchField(
                     value = query,
                     onValueChange = { query = it },
-                    label = stringResource(Res.string.entity_select_search),
-                    imeAction = ImeAction.Done,
+                    placeholder = stringResource(Res.string.entity_select_search),
                 )
             }
             val visible = filterEntityOptions(options, query)

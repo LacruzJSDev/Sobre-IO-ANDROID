@@ -14,7 +14,7 @@ The only place where pending due dates are confirmed or skipped.
   expense whose envelope (not Unassigned) on an account inside the envelopes has less than the amount, the movement form's cover note and
   optional "Also cover from" `EntitySelect` (`p_cover` = that envelope's full balance). Opening the sheet also reads
   `CommitmentRepository.getFundingStatus`; when the commitment's next payment is this due date and its reserve is in the same
-  envelope (`reservedForDue` in `GroupReviewRules.kt`), a `FormNote` above the cover note says what was set aside for it and, for the
+  envelope (`reservedForDue` in `GroupReviewRules.kt`), an `InlineNotice` (Info) above the cover note says what was set aside for it and, for the
   amount typed (`reserveNoteOf`, `ReserveNote`): "X set aside for this payment", "…The Y left stay in <envelope> and lower the next
   reserve" (less), or "…The Y more come from what <envelope> already had" (more, when the envelope covers it; otherwise the cover note
   explains). A failure of that read only hides the line. The difference is only a sentence: the database refills the envelope (D-56). `confirm_occurrence` returns the created fact;

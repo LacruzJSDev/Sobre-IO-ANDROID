@@ -18,7 +18,7 @@ fun SoftTile(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+            .clip(tileShape())
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

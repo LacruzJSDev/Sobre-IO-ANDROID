@@ -156,7 +156,7 @@ internal fun ChartSection(state: EnvelopeDetailUiState, languageTag: String) {
             role = MoneyRole.Flow,
         )
     }
-    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+    FormSection(title = title, action = { ChartZoomButton(zoom) }, segmented = false) {
         ZoomableChart(ZOOM_ENVELOPE_CHART) { SoftTile { EnvelopeChart(state, languageTag) } }
     }
 }

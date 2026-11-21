@@ -19,13 +19,13 @@ import dev.lacruzjs.sobreio.generated.resources.field_date
 import dev.lacruzjs.sobreio.generated.resources.group_summary_confirm_title
 import dev.lacruzjs.sobreio.generated.resources.movement_cover_none
 import dev.lacruzjs.sobreio.generated.resources.movement_cover_note
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.DateFormTile
 import dev.lacruzjs.sobreio.ui.components.EntityOption
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.ui.components.FlatBottomSheet
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.MoneyAmount
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.displayName
@@ -65,7 +65,7 @@ internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent)
         if (reserve != null) {
             val money = { cents: Long -> formatMoney(cents, state.currencyCode, languageTag) }
             val envelopeName = state.envelopes.firstOrNull { it.id == draft.occurrence.envelopeId }?.displayName().orEmpty()
-            FormNote(
+            InlineNotice(
                 when (reserve) {
                     is ReserveNote.Exact -> stringResource(Res.string.confirm_reserve_exact, money(reserve.reservedCents))
                     is ReserveNote.Less -> stringResource(
@@ -79,7 +79,7 @@ internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent)
         }
         val short = state.coverShortEnvelope(draft)
         if (short != null) {
-            FormNote(
+            InlineNotice(
                 stringResource(
                     Res.string.movement_cover_note,
                     short.name,
@@ -90,6 +90,7 @@ internal fun ConfirmSheet(state: GroupReviewUiState, onEvent: (GroupReviewEvent)
             if (candidates.isNotEmpty()) {
                 var open by rememberSaveable { mutableStateOf(false) }
                 EntitySelect(
+                    insideSheet = true,
                     label = stringResource(Res.string.field_cover_also),
                     options = listOf(EntityOption(null, stringResource(Res.string.movement_cover_none))) +
                         candidates.map { it.toEntityOption(balance = MoneyAmount(it.balanceCents, state.currencyCode)) },

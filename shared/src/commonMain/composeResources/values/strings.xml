@@ -490,6 +490,7 @@
     <string name="action_apply">Apply</string>
     <string name="action_search">Search</string>
     <string name="action_search_close">Close search</string>
+    <string name="action_clear_search">Clear search</string>
     <string name="filter_account">Account</string>
     <string name="filter_envelope">Envelope</string>
     <string name="filter_type">Type</string>
@@ -576,7 +577,7 @@
     <string name="envelope_transfer_edit_title">Edit move</string>
     <string name="envelope_transfer_unknown_envelope">Envelope</string>
     <string name="envelope_transfers_route">%1$s → %2$s</string>
-    <string name="envelope_transfer_automatic_note">Made by the monthly target: it always goes from Unassigned to its envelope, with what the envelope lacked to reach its target. You can change the amount or delete it; it is not made again this period.</string>
+    <string name="envelope_transfer_automatic_note">Made by the monthly target from Unassigned. You can change the amount or delete it; it won't be made again this period.</string>
     <string name="form_section_envelope_transfer">Envelopes</string>
     <string name="validation_envelopes_differ">The destination must be a different envelope.</string>
     <string name="field_envelope_start_next_period">Start next period</string>
@@ -591,7 +592,7 @@
     <string name="envelope_purpose_free">Free</string>
     <string name="field_monthly_contribution">Monthly contribution</string>
     <string name="envelope_purpose_note_monthly">Each period it is refilled from Unassigned up to the target: what was left last period counts. The bar shows what is left of the month.</string>
-    <string name="envelope_purpose_note_bills">Commitments with a reserve set aside here, little by little, the money of each payment; each period only what is missing comes from Unassigned. Choose this envelope when you create the commitment.</string>
+    <string name="envelope_purpose_note_bills">Commitments with a reserve set aside the money of each payment here; each period only what is missing comes from Unassigned. Pick this envelope when you create the commitment.</string>
     <string name="envelope_purpose_note_savings">Keeps money for later. If you set a monthly contribution, it is assigned by itself each period.</string>
     <string name="envelope_purpose_note_free">It only receives what you assign by hand.</string>
     <string name="envelope_type_has_funded">It has commitments with a reserve: move them to another Bills envelope or remove the reserve first.</string>

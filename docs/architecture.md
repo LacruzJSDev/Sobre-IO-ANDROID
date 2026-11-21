@@ -127,13 +127,22 @@ What every screen relies on. The screens themselves are described in `docs/featu
 
 ## Look and feel
 
+- Search and notices: every search box is a `SearchField` (compact pill, placeholder, clear X); a note about a consequence
+  or state is an `InlineNotice` (flat tint, icon, tones Info / Warning / Suggestion, warning amber from
+  `noticeWarningContainer` in `RoleColors.kt`); `FormNote` stays for one-line captions under a field.
 - Visual style: flat, no shadows or tonal elevation (`surfaceTint` equals the paper colour, sheets and dialogs set
   elevation 0); one white/paper background everywhere and the brand black clearly present (`PrimaryButton`, avatars, the
   selected tab with an ink indicator); red (`error`) only for destructive actions (`DestructiveButton`, the Delete and
-  Leave swipe action). No dividers and no settings-style rows with chevrons: separate with spacing. Corners come from
-  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, fields, snackbars and swipe actions.
+  Leave swipe action). No dividers and no settings-style rows with chevrons: separate with spacing (the one exception is the thin
+  inset line inside an `ExpandableSurface` between its header and its body, and between the rows of a `CollapsibleListSection`). Corners come from
+  `SobreioShapes` (`medium`, 10 dp, is the group avatar's radius at 40 dp) for buttons, snackbars, swipe actions and fields outside a section (inside a `FormSection` tiles and fields take its inner 4 dp).
+  Forms: a `FormSection` is one segmented block (tiles 2 dp apart, outer corners `large` 14 dp, inner corners 4 dp through `LocalTileShape` / `tileShape()`, 24 dp between sections); text fields are filled soft fields in the tile grey with no outline (`softTextFieldColors()`).
   There is no FAB anywhere. Components: `PrimaryButton`, `SecondaryButton` (soft grey), `DestructiveButton` (all on
   `FlatButton`, with `isLoading`), `FlatBottomSheet`, `FlatSnackbarHost`, `UndoSnackbarHost`, `SwipeActionsRow`.
+- Expand and collapse: one pattern, `ExpandableSurface` (`ui/components`, corners `large` 14 dp alone, the section's inner 4 dp inside a `FormSection`): header (label, preview, chevron) and body are
+  the same grey surface, the body starts under a divider. `ExpandableFormTile`, `EntitySelect` (up to 8 options inline without search;
+  more open an `EntityPickerSheet` with search, or stay inline with a search box when `insideSheet`), `TagPicker` (chosen tags as chips in the header, removable chips in the body) and
+  `CollapsibleListSection` are built on it. The selected option is marked with a primary check and a medium-weight name, no grey row.
 - Hero card (`ui/components/HeroCard.kt`, tokens in `ui/theme/HeroColors.kt`): the main figure of a tab (Group: really free money;
   Accounts: total in accounts; Envelopes: free to distribute, i.e. Unassigned) lives in a `HeroCard`, never in a loose header. `HeroCard` is a fixed `HeroCardHeight` (232 dp, the
   Group tab's content decides it) dark card with `SobreioShapes.large` that spreads its content top to bottom; `HeroLabel` is the

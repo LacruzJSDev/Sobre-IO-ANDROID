@@ -129,7 +129,7 @@ internal fun FlowsSection(
             role = MoneyRole.Flow,
         )
     }
-    FormSection(title = title, modifier = modifier, action = { ChartZoomButton(zoom) }) {
+    FormSection(title = title, modifier = modifier, action = { ChartZoomButton(zoom) }, segmented = false) {
         ZoomableChart(ZOOM_GROUP_FLOWS) { SoftTile { GroupFlowsChart(state, languageTag) } }
     }
 }
@@ -164,7 +164,7 @@ private const val ZOOM_GROUP_FLOWS = "group-flows"
 /** A row of small cards, one per due date until the end of the period; one muted card when there is none. */
 @Composable
 internal fun UpcomingSection(state: GroupSummaryUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.detail_section_upcoming)) {
+    FormSection(title = stringResource(Res.string.detail_section_upcoming), segmented = false) {
         if (state.upcoming.isEmpty()) {
             SoftTile {
                 Text(

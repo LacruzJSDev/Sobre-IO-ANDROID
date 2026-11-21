@@ -73,7 +73,7 @@ internal fun BalanceChartSection(state: AccountDetailUiState, languageTag: Strin
             role = MoneyRole.Balance,
         )
     }
-    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+    FormSection(title = title, action = { ChartZoomButton(zoom) }, segmented = false) {
         ZoomableChart(ZOOM_BALANCE) { SoftTile { BalanceChart(state, languageTag) } }
         Text(
             text = stringResource(Res.string.account_chart_more_hint),

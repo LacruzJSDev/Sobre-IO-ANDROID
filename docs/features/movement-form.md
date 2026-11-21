@@ -15,9 +15,9 @@ Create and edit an expense, an income or a transfer.
   takes only what is needed. Editing a higher expense shows a note that nothing is covered. Transfer: From / To (different), a
   "To another group" switch on create (destination group of the same currency + its account, `create_group_transfer`, both envelopes
   Unassigned) and a note when it crosses the envelope boundary. Common: Date (`DateFormTile(maxDate = group today)`), Notes and, for
-  expense and income, Tags: an expandable multi-select tile (`TagPicker`) with a search field, a "Did you mean X?" line, a first
+  expense and income, Tags: an expandable multi-select tile (`TagPicker`) with a `SearchField`, a "Did you mean X?" line, a first
   "Create <text>" row (`TagRepository.createTag` with the default colour, selected at once) and the live tags with a colour dot and
-  a check; the chosen ones show as removable chips under the tile. Writes go through
+  a check; closed, the header shows the chosen tags as small chips (two, then "+N"); the chosen ones show as removable chips at the bottom of the open body. Writes go through
   `MovementFormRepository`: create = `create_transaction` / `create_account_transfer` / `create_group_transfer`; edit = plain update
   of `transactions` (account, signed amount, date, notes, and envelope: "Unassigned" is sent as the system envelope id, an account
   outside the envelopes sends none so the hidden one stays; the account choices keep the stored account's side of the boundary) or of
@@ -26,7 +26,7 @@ Create and edit an expense, an income or a transfer.
 - Pending match (`match_pending`): while
   creating an expense or income, 400 ms after the amount, account, date or kind change, `PendingMatcher` (`ui/movementform`)
   asks `CommitmentRepository.matchPending` and keeps the first match whose `upcoming_occurrences` row has the same kind;
-  `SuggestionCard` ("Is it <name>?", due date and amount, "No" / "It's this one") under the Money section; yes calls
+  `SuggestionCard` (an `InlineNotice` with the Suggestion tone: "Is it <name>?", due date and amount, "No" / "It's this one") under the Money section; yes calls
   `confirm_occurrence` with the typed amount and date (the commitment's envelope) and then the tag step; no is remembered for the
   form.
 - History (`ui/history`, D-41): editing a movement ends with `MovementHistorySection` from `MovementHistoryViewModel(groupId,

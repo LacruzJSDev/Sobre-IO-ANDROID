@@ -26,8 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.action_new_movement
@@ -35,7 +33,7 @@ import dev.lacruzjs.sobreio.generated.resources.action_search
 import dev.lacruzjs.sobreio.generated.resources.action_search_close
 import dev.lacruzjs.sobreio.generated.resources.movements_search_label
 import dev.lacruzjs.sobreio.ui.components.AddIconButton
-import dev.lacruzjs.sobreio.ui.components.FormTextField
+import dev.lacruzjs.sobreio.ui.components.SearchField
 import org.jetbrains.compose.resources.stringResource
 
 /** The two icons on the right of the Movements header: search and "+" (the header allows at most two). */
@@ -83,12 +81,12 @@ private fun SearchRow(text: String, onTextChange: (String) -> Unit, onClose: () 
             .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FormTextField(
+        SearchField(
             value = text,
             onValueChange = onTextChange,
-            label = stringResource(Res.string.movements_search_label),
-            imeAction = ImeAction.Search,
-            modifier = Modifier.weight(1f).focusRequester(focus).padding(vertical = 4.dp),
+            placeholder = stringResource(Res.string.movements_search_label),
+            focusRequester = focus,
+            modifier = Modifier.weight(1f),
         )
         LabelTooltip(stringResource(Res.string.action_search_close)) {
             IconButton(onClick = onClose) {

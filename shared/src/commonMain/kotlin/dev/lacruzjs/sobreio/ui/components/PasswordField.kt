@@ -5,8 +5,7 @@ import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedSecureTextField
+import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,12 +38,13 @@ fun PasswordField(
 ) {
     var visible by rememberSaveable { mutableStateOf(false) }
     val state = rememberSyncedTextFieldState(value, onValueChange)
-    OutlinedSecureTextField(
+    SecureTextField(
         state = state,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        shape = MaterialTheme.shapes.medium,
+        shape = tileShape(),
+        colors = softTextFieldColors(),
         isError = errorRes != null,
         supportingText = errorRes?.let { { Text(stringResource(it)) } },
         textObfuscationMode = if (visible) TextObfuscationMode.Visible else TextObfuscationMode.RevealLastTyped,

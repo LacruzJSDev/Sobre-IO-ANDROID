@@ -50,6 +50,8 @@ import dev.lacruzjs.sobreio.generated.resources.delete_account_leave_note
 import dev.lacruzjs.sobreio.generated.resources.delete_account_leave_title
 import dev.lacruzjs.sobreio.generated.resources.delete_account_no_groups
 import dev.lacruzjs.sobreio.generated.resources.delete_account_title
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
+import dev.lacruzjs.sobreio.ui.components.NoticeTone
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
 import dev.lacruzjs.sobreio.ui.components.DestructiveButton
 import dev.lacruzjs.sobreio.ui.components.EmptyState
@@ -143,7 +145,7 @@ private fun Content(state: DeleteAccountUiState, onEvent: (DeleteAccountEvent) -
             style = MaterialTheme.typography.bodyLarge,
         )
         if (state.items.orEmpty().isEmpty()) {
-            FormNote(stringResource(Res.string.delete_account_no_groups))
+            InlineNotice(stringResource(Res.string.delete_account_no_groups))
         }
         GroupSection(
             title = stringResource(Res.string.delete_account_blocked_title),
@@ -162,7 +164,7 @@ private fun Content(state: DeleteAccountUiState, onEvent: (DeleteAccountEvent) -
             note = stringResource(Res.string.delete_account_leave_note),
             items = state.left,
         )
-        FormNote(stringResource(Res.string.delete_account_final_note))
+        InlineNotice(stringResource(Res.string.delete_account_final_note), tone = NoticeTone.Warning)
         FormTile(label = stringResource(Res.string.delete_account_confirm_label)) {
             Switch(
                 checked = state.confirmed,
@@ -191,7 +193,7 @@ private fun GroupSection(
     emphasised: Boolean = false,
 ) {
     if (items.isEmpty()) return
-    FormSection(title = title, modifier = modifier) {
+    FormSection(title = title, modifier = modifier, segmented = false) {
         if (emphasised) {
             Text(
                 text = note,

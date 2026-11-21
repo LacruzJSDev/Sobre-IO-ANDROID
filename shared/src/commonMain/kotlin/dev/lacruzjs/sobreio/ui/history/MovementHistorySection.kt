@@ -54,7 +54,7 @@ fun MovementHistorySection(lines: List<HistoryLine>) {
     val languageTag = Locale.current.toLanguageTag()
     val former = stringResource(Res.string.member_former)
     val automatic = stringResource(Res.string.history_automatic)
-    FormSection(title = stringResource(Res.string.history_title)) {
+    FormSection(title = stringResource(Res.string.history_title), segmented = false) {
         lines.forEach { line ->
             val who = when {
                 line.entry.changedBy == null -> automatic

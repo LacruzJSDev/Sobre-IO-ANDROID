@@ -34,7 +34,7 @@ import dev.lacruzjs.sobreio.ui.components.FormSkeleton
 import dev.lacruzjs.sobreio.ui.components.AmountField
 import dev.lacruzjs.sobreio.ui.components.EntitySelect
 import dev.lacruzjs.sobreio.ui.components.ErrorText
-import dev.lacruzjs.sobreio.ui.components.FormNote
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.FormScaffold
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.FormTextField
@@ -140,7 +140,7 @@ fun EnvelopeTransferFormScreen(
                         enabled = editable && !state.envelopesLocked,
                         error = state.toError,
                     )
-                    if (state.envelopesLocked) FormNote(stringResource(Res.string.envelope_transfer_automatic_note))
+                    if (state.envelopesLocked) InlineNotice(stringResource(Res.string.envelope_transfer_automatic_note))
                 }
                 FormTextField(
                     value = state.notes,

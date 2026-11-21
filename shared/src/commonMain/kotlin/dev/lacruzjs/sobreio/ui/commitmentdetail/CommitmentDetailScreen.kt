@@ -248,7 +248,7 @@ private fun FundingBlock(funding: CommitmentFunding, envelopeName: String?, curr
 @Composable
 private fun OccurrenceItem(row: OccurrenceRow, currencyCode: String, languageTag: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Text(
@@ -304,7 +304,7 @@ private fun VersionItem(row: VersionRow, currencyCode: String, languageTag: Stri
             else -> null
         },
     ).reduce { acc, part -> stringResource(Res.string.row_subtitle, acc, part) }
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = range, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             MoneyText(

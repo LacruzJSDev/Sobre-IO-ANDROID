@@ -149,7 +149,7 @@ private fun BankSection(state: AccountDetailUiState, languageTag: String, onEven
 
 @Composable
 private fun BalanceSection(account: Account, state: AccountDetailUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.detail_section_balance)) {
+    FormSection(title = stringResource(Res.string.detail_section_balance), segmented = false) {
         MoneyText(
             amountCents = account.balanceCents,
             currencyCode = state.currencyCode,
@@ -225,7 +225,7 @@ private fun FlowsSection(state: AccountDetailUiState, languageTag: String) {
             role = MoneyRole.Flow,
         )
     }
-    FormSection(title = title, action = { ChartZoomButton(zoom) }) {
+    FormSection(title = title, action = { ChartZoomButton(zoom) }, segmented = false) {
         ZoomableChart(ZOOM_FLOWS) { SoftTile { FlowsChart(state, languageTag) } }
     }
 }

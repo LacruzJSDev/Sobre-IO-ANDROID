@@ -8,13 +8,13 @@ The ledger with filters, search, totals, reports and export.
   tab (account null: the whole ledger) and the level 3 route `AccountMovements(groupId, accountId)` that "See all" in the
   account detail pushes above it (title = account name, subtitle = group, back arrow, no Account chip; back returns to the
   detail). Both show `MovementsPane`; the header is the holder's. Right side of the header: only search (magnifier) and "+"
-  (`MovementsHeaderActions`). Search turns the header into a `FormTextField` with autofocus and an X
+  (`MovementsHeaderActions`). Search turns the header into a compact `SearchField` pill with autofocus and an X
   (`MovementsSearchHeader`, drawn by `MovementsTabRoute` instead of the shell's header), debounced 300 ms, matching notes
   or an amount ("42,30" or "42.30"). "+" opens the movement form (`NewClicked`, intercepted by the Route; on an account's list it preselects that account). Expense and income rows and account transfer rows swipe Edit (`Movement.canEdit`: not adjustments or contribution legs; `EditClicked(id, source)` opens `MovementForm`) and Delete.
   Under the header a horizontally scrolling row of `FilterChipButton`s: Account, Envelope, Type, Dates, Tags, Person (Person
   only with several members, Account hidden on level 3). Idle = soft grey with a chevron; active = ink, the chosen value
   (small avatar for account, envelope, member) and an X that clears it. A chip opens an `EntityPickerSheet` (`FlatBottomSheet`,
-  `EntitySelect` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
+  `EntityPickerSheet` rows with a check, search box above 8 options, "All" first; tapping applies and closes); Tags is the only
   multiple choice (`EntityMultiPickerSheet`, "Apply"). Type: Expenses, Income, Transfers, Adjustments, Contributions
   (`MovementType`, sent as `p_kinds` group names). Dates: This period, Previous period (read from `periods`), Last 3 months,
   This year and Custom (`CustomRangeDialog`, a flat `DateRangePicker`); `DatePreset` and `datePresetRange` are pure. Filters

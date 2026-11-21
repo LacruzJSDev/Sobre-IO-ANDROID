@@ -47,6 +47,7 @@ internal fun AssignSheet(state: EnvelopesUiState, onEvent: (EnvelopesEvent) -> U
         )
         var open by rememberSaveable { mutableStateOf(false) }
         EntitySelect(
+            insideSheet = true,
             label = stringResource(Res.string.field_assign_from),
             options = state.assignSources.map { source ->
                 val name = if (source.kind == EnvelopeKind.System) stringResource(Res.string.envelopes_unassigned) else source.name

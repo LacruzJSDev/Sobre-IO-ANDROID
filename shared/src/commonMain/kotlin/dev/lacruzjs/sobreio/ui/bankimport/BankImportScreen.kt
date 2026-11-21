@@ -1,5 +1,6 @@
 package dev.lacruzjs.sobreio.ui.bankimport
 
+import dev.lacruzjs.sobreio.ui.components.InlineNotice
 import dev.lacruzjs.sobreio.ui.components.LabelTooltip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,7 +66,6 @@ import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.bankimport.picker.rememberStatementFilePicker
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.EmptyState
-import dev.lacruzjs.sobreio.ui.components.FormNote
 import dev.lacruzjs.sobreio.ui.components.IconActionButton
 import dev.lacruzjs.sobreio.ui.components.PrimaryButton
 import dev.lacruzjs.sobreio.ui.components.ScreenHeader
@@ -240,7 +240,7 @@ private fun SourceStep(state: BankImportUiState, onEvent: (BankImportEvent) -> U
                 )
             }
         }
-        if (!state.canImport) FormNote(stringResource(Res.string.bank_import_read_only))
+        if (!state.canImport) InlineNotice(stringResource(Res.string.bank_import_read_only))
         state.sourceError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
     }
 }
