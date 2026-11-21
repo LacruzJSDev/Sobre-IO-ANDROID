@@ -11,9 +11,9 @@ class IconCatalogTest {
 
     @Test
     fun catalogueSizes() {
-        assertEquals(20, keys(IconCategory.Group).size)
-        assertEquals(20, keys(IconCategory.Account).size)
-        assertEquals(32, keys(IconCategory.Envelope).size)
+        assertEquals(34, keys(IconCategory.Group).size)
+        assertEquals(32, keys(IconCategory.Account).size)
+        assertEquals(90, keys(IconCategory.Envelope).size)
     }
 
     @Test

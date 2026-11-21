@@ -18,7 +18,7 @@ Human documentation (Spanish): [README.md](README.md).
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
 | Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`, `realtime-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
-| Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~70 icons of `IconCatalog` are referenced, so R8 strips the rest) |
+| Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~130 distinct icons of `IconCatalog` are referenced, so R8 strips the rest) |
 | Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user, last account, bank CSV formats per account); `kotlinx-datetime` 0.8 (device time zone) |
 | Files | Android: `androidx.activity:activity-compose` (in `:shared` androidMain) for the system document picker; iOS: `UIDocumentPickerViewController` from Kotlin (no Swift) |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |

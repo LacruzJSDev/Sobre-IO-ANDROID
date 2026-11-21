@@ -8,14 +8,15 @@ import kotlin.test.assertNull
 class EntityColorTest {
 
     @Test
-    fun hasTheTwelveAgreedHexesInOrder() {
-        assertEquals(
-            listOf(
-                "#3B6E8F", "#2F7F7A", "#4F7A5A", "#7A7A3F", "#B08A2E", "#B8673A",
-                "#A4503F", "#8E3B4A", "#8A5A83", "#5F5A99", "#5B6770", "#7A5E46",
-            ),
-            EntityColor.entries.map { it.hex },
+    fun keepsTheTwelveStoredHexesAndHas24Distinct() {
+        val stored = listOf(
+            "#3B6E8F", "#2F7F7A", "#4F7A5A", "#7A7A3F", "#B08A2E", "#B8673A",
+            "#A4503F", "#8E3B4A", "#8A5A83", "#5F5A99", "#5B6770", "#7A5E46",
         )
+        val hexes = EntityColor.entries.map { it.hex.lowercase() }
+        assertEquals(24, hexes.size)
+        assertEquals(24, hexes.toSet().size)
+        assertEquals(true, hexes.containsAll(stored.map { it.lowercase() }))
     }
 
     @Test
