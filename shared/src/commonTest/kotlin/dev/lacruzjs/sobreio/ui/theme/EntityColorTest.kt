@@ -1,5 +1,8 @@
 package dev.lacruzjs.sobreio.ui.theme
 
+import androidx.compose.ui.graphics.luminance
+import kotlin.test.assertTrue
+import kotlin.test.assertNotNull
 import androidx.compose.ui.graphics.toArgb
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,7 +19,19 @@ class EntityColorTest {
         val hexes = EntityColor.entries.map { it.hex.lowercase() }
         assertEquals(24, hexes.size)
         assertEquals(24, hexes.toSet().size)
-        assertEquals(true, hexes.containsAll(stored.map { it.lowercase() }))
+        // Every hex ever stored still reads as a colour (Mustard was retuned, its old hex is a legacy one)
+        stored.forEach { assertNotNull(EntityColor.fromHex(it), it) }
+        assertEquals(EntityColor.Mustard, EntityColor.fromHex("#b08a2e"))
+    }
+
+    @Test
+    fun whiteContentKeepsAtLeast3To1OnLightAndDark() {
+        EntityColor.entries.forEach { color ->
+            listOf(color.light, color.dark).forEach { fill ->
+                val ratio = 1.05 / (fill.luminance() + 0.05)
+                assertTrue(ratio >= 3.0, "${color.name} ${fill.toArgb().toUInt().toString(16)}: $ratio")
+            }
+        }
     }
 
     @Test
