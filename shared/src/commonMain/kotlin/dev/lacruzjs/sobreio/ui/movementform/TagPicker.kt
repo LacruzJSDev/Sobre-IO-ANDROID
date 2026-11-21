@@ -87,6 +87,7 @@ internal fun TagPicker(
                 onValueChange = { onEvent(MovementFormEvent.TagQueryChanged(it)) },
                 placeholder = stringResource(Res.string.tag_picker_search),
                 containerColor = MaterialTheme.colorScheme.background,
+                enabled = enabled,
                 onSearch = { if (enabled) options.createName?.let { onEvent(MovementFormEvent.TagCreateClicked) } },
             )
             state.tagError?.let { error ->

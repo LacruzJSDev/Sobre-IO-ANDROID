@@ -46,6 +46,7 @@ fun SearchField(
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    enabled: Boolean = true,
     onSearch: () -> Unit = {},
 ) {
     val state = rememberSyncedTextFieldState(value, onValueChange)
@@ -56,6 +57,7 @@ fun SearchField(
             .fillMaxWidth()
             .height(48.dp)
             .let { if (focusRequester != null) it.focusRequester(focusRequester) else it },
+        enabled = enabled,
         lineLimits = TextFieldLineLimits.SingleLine,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -77,7 +79,7 @@ fun SearchField(
                     }
                     inner()
                 }
-                if (state.text.isNotEmpty()) {
+                if (enabled && state.text.isNotEmpty()) {
                     IconButton(onClick = { state.clearText() }, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Filled.Close,
