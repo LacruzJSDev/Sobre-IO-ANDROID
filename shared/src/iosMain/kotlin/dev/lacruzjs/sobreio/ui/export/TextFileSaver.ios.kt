@@ -18,10 +18,10 @@ import platform.UIKit.UIViewController
 import platform.darwin.NSObject
 
 @Composable
-actual fun rememberCsvSaver(onResult: (SaveResult) -> Unit): (fileName: String, content: String) -> Unit {
+actual fun rememberTextFileSaver(mimeType: String, onResult: (SaveResult) -> Unit): (fileName: String, content: String) -> Unit {
     val latest = rememberUpdatedState(onResult)
     // The delegate is kept by the composition: UIKit holds it weakly
-    val delegate = remember { CsvSaveDelegate { latest.value(it) } }
+    val delegate = remember { TextFileSaveDelegate { latest.value(it) } }
     return { fileName, content ->
         val url = writeTemporary(fileName, content)
         if (url == null) {
@@ -35,7 +35,7 @@ actual fun rememberCsvSaver(onResult: (SaveResult) -> Unit): (fileName: String, 
     }
 }
 
-private class CsvSaveDelegate(private val onResult: (SaveResult) -> Unit) : NSObject(), UIDocumentPickerDelegateProtocol {
+private class TextFileSaveDelegate(private val onResult: (SaveResult) -> Unit) : NSObject(), UIDocumentPickerDelegateProtocol {
 
     override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
         onResult(if (didPickDocumentsAtURLs.isEmpty()) SaveResult.Cancelled else SaveResult.Saved)

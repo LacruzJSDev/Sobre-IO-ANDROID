@@ -1008,4 +1008,22 @@
     <string name="movements_report_by_envelope">Por sobre</string>
     <string name="account_chart_more_hint">Amplíala para cambiar el rango o ver el saldo de un día concreto</string>
     <string name="envelope_outlook_more">Toca para mirar hasta otro día o ver el saldo de un día concreto</string>
+
+    <!-- Términos y privacidad (D-57) y descargar mis datos (D-58) -->
+    <string name="action_continue">Continuar</string>
+    <string name="legal_gate_title">Términos y privacidad</string>
+    <string name="legal_gate_intro">Para usar Sobre-IO, lee y acepta sus términos de uso y su política de privacidad. En resumen: tus datos solo se usan para que la app funcione, y nunca se venden ni se ceden a nadie.</string>
+    <string name="legal_gate_updated">Los términos de uso o la política de privacidad han cambiado. Léelos y acéptalos para seguir.</string>
+    <string name="legal_gate_documents">Léelos aquí</string>
+    <string name="legal_terms">Términos de uso</string>
+    <string name="legal_privacy">Política de privacidad</string>
+    <string name="legal_accept_label">He leído y acepto los términos de uso y la política de privacidad</string>
+    <string name="legal_gate_sign_out_note">Si no los aceptas, cierra la sesión. Para borrar tu cuenta sin aceptarlos, escribe al contacto de la política de privacidad.</string>
+    <string name="sign_up_legal_notice">Para usar Sobre-IO aceptarás sus términos de uso y su política de privacidad:</string>
+    <string name="profile_privacy_section">Privacidad y tus datos</string>
+    <string name="profile_legal_accepted_on">Aceptados el %1$s</string>
+    <string name="profile_download_data">Descargar mis datos</string>
+    <string name="profile_download_data_note">Un archivo JSON con tu perfil y todo lo de tus grupos, para guardarlo o llevarlo a otro sitio.</string>
+    <string name="profile_data_file_name">sobre-io-datos-%1$s.json</string>
+    <string name="error_fz025_legal_version">Hay una versión más reciente de estos documentos. Léela y acéptala para seguir.</string>
 </resources>

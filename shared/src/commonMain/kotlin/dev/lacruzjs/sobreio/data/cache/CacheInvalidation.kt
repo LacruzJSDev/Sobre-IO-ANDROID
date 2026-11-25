@@ -15,7 +15,7 @@ enum class CacheEffect { None, Invalidate, Clear }
  */
 internal val READ_ONLY_RPCS = setOf(
     "account_balance_at", "account_balance_series", "account_deletion_preview", "envelope_balance_at",
-    "envelope_outlook", "export_period", "group_outlook", "match_pending", "account_forecast", "account_period_flows",
+    "envelope_outlook", "export_my_data", "export_period", "legal_documents_in_force", "legal_status", "group_outlook", "match_pending", "account_forecast", "account_period_flows",
     "account_projection", "bank_import_preview", "commitment_funding_status", "compare_with_bank", "current_period",
     "envelope_progress", "envelopes_summary", "group_balance_series", "group_free_projection", "group_period_flows",
     "group_today", "materialize_through_today", "pending_occurrences", "search_movements", "search_movements_by_envelope", "search_movements_by_period", "search_movements_count",

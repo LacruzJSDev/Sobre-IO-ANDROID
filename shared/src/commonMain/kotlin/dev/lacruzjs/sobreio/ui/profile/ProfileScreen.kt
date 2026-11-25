@@ -5,6 +5,25 @@ import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
 import dev.lacruzjs.sobreio.ui.components.clearFocusOnTap
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.intl.Locale
+import dev.lacruzjs.sobreio.domain.model.LegalDocumentStatus
+import dev.lacruzjs.sobreio.generated.resources.legal_privacy
+import dev.lacruzjs.sobreio.generated.resources.legal_terms
+import dev.lacruzjs.sobreio.generated.resources.profile_data_file_name
+import dev.lacruzjs.sobreio.generated.resources.profile_download_data
+import dev.lacruzjs.sobreio.generated.resources.profile_download_data_note
+import dev.lacruzjs.sobreio.generated.resources.profile_legal_accepted_on
+import dev.lacruzjs.sobreio.generated.resources.profile_privacy_section
+import dev.lacruzjs.sobreio.ui.export.rememberTextFileSaver
+import dev.lacruzjs.sobreio.ui.format.formatDate
+import dev.lacruzjs.sobreio.ui.legal.LegalDocumentTile
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -61,13 +80,24 @@ fun ProfileRoute(
     viewModel: ProfileViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
+    val saveFile = rememberTextFileSaver(mimeType = "application/json") { result ->
+        viewModel.onEvent(ProfileEvent.DataFileHandled(result))
+    }
+    val dataFileName = state.pendingData?.let { stringResource(Res.string.profile_data_file_name, it.day.toString()) }
+    // The data is read: open the save dialog once (navigation pattern: a result is state the Route consumes)
+    state.pendingData?.let { data ->
+        LaunchedEffect(data) { saveFile(dataFileName.orEmpty(), data.content) }
+    }
     ProfileScreen(
         state = state,
         appVersion = AppConfig.APP_VERSION,
+        languageTag = Locale.current.toLanguageTag(),
         onEvent = { event ->
             when (event) {
                 ProfileEvent.BackClicked -> onBack()
                 ProfileEvent.DeleteAccountClicked -> onDeleteAccount()
+                is ProfileEvent.OpenDocument -> uriHandler.openUri(event.url)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -82,6 +112,7 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     /** The installed version (sobreio.version), so a reported problem can be tied to a release. */
     appVersion: String = "",
+    languageTag: String = "en",
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.contentMaxWidth(ContentWidth.Form)) {
@@ -142,6 +173,45 @@ fun ProfileScreen(
                         )
                     }
                 }
+                FormSection(title = stringResource(Res.string.profile_privacy_section)) {
+                    val terms = state.terms
+                    val privacy = state.privacy
+                    if (terms != null && privacy != null) {
+                        LegalDocumentTile(
+                            label = stringResource(Res.string.legal_terms),
+                            note = acceptedNote(terms, languageTag),
+                        ) { onEvent(ProfileEvent.OpenDocument(terms.document.urlFor(languageTag))) }
+                        LegalDocumentTile(
+                            label = stringResource(Res.string.legal_privacy),
+                            note = acceptedNote(privacy, languageTag),
+                        ) { onEvent(ProfileEvent.OpenDocument(privacy.document.urlFor(languageTag))) }
+                    }
+                    FormTile(
+                        label = stringResource(Res.string.profile_download_data),
+                        note = stringResource(Res.string.profile_download_data_note),
+                        onClick = { onEvent(ProfileEvent.DownloadDataClicked) },
+                        enabled = !state.isDownloading,
+                    ) {
+                        if (state.isDownloading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Download,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+                }
+                ErrorText(state.downloadError, modifier = Modifier.fillMaxWidth())
+                state.downloadMessage?.let {
+                    Text(
+                        text = stringResource(it),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 DestructiveButton(
                     text = stringResource(Res.string.profile_delete_account),
                     onClick = { onEvent(ProfileEvent.DeleteAccountClicked) },
@@ -158,6 +228,14 @@ fun ProfileScreen(
             }
         }
     }
+}
+
+/** "Accepted on <day>", or nothing while the user has not accepted the version in force. */
+@Composable
+private fun acceptedNote(status: LegalDocumentStatus, languageTag: String): String? {
+    val acceptedAt = status.acceptedAt ?: return null
+    if (status.needsAcceptance) return null
+    return stringResource(Res.string.profile_legal_accepted_on, formatDate(acceptedAt, languageTag))
 }
 
 @PreviewLightDark

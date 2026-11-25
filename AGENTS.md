@@ -33,14 +33,15 @@ No Room, no offline cache, no custom server. The Ktor version must match the one
 - Features: sign-in (email and password with 6-digit codes, Google on Android and iOS); Groups (create, join with a code,
   archive, delete, leave); the group shell with the Group, Accounts, Envelopes and Movements tabs; account, envelope and
   commitment details; commitments, movements, moves between envelopes and the bank import; group settings with members,
-  invitations and tags; profile and account deletion. Root navigation follows the session (`SessionViewModel`).
+  invitations and tags; profile and account deletion; accepting the terms and privacy policy and downloading all of
+  one's data. Root navigation follows the session (`SessionViewModel`), with the legal gate between the session and the app.
 
 What the app does and how, in more detail, lives next to this file and follows the same rule (keep it true, change it
 in the same commit as the code):
 
 - `docs/architecture.md`: navigation and back stack, adaptive layout, configuration, data loading (cache, `revalidate`,
   skeletons, refresh bar), calendar, realtime, errors, money formatting and colours, look and feel, charts, help texts, CI.
-- `docs/features/<screen>.md`, one per screen or flow: [auth](docs/features/auth.md), [groups](docs/features/groups.md), [group-shell](docs/features/group-shell.md), [group-tab](docs/features/group-tab.md), [group-review](docs/features/group-review.md), [accounts](docs/features/accounts.md), [envelopes](docs/features/envelopes.md), [account-detail](docs/features/account-detail.md), [envelope-detail](docs/features/envelope-detail.md), [envelope-transfers](docs/features/envelope-transfers.md), [commitments](docs/features/commitments.md), [movements](docs/features/movements.md), [movement-form](docs/features/movement-form.md), [forms](docs/features/forms.md), [group-settings](docs/features/group-settings.md), [tags](docs/features/tags.md), [profile](docs/features/profile.md), [bank-import](docs/features/bank-import.md).
+- `docs/features/<screen>.md`, one per screen or flow: [auth](docs/features/auth.md), [groups](docs/features/groups.md), [group-shell](docs/features/group-shell.md), [group-tab](docs/features/group-tab.md), [group-review](docs/features/group-review.md), [accounts](docs/features/accounts.md), [envelopes](docs/features/envelopes.md), [account-detail](docs/features/account-detail.md), [envelope-detail](docs/features/envelope-detail.md), [envelope-transfers](docs/features/envelope-transfers.md), [commitments](docs/features/commitments.md), [movements](docs/features/movements.md), [movement-form](docs/features/movement-form.md), [forms](docs/features/forms.md), [group-settings](docs/features/group-settings.md), [tags](docs/features/tags.md), [profile](docs/features/profile.md), [legal](docs/features/legal.md), [bank-import](docs/features/bank-import.md).
 
 ## Target structure
 
@@ -70,7 +71,7 @@ iosApp/                       project.yml (XcodeGen) + generated iosApp.xcodepro
 ```
 
 Features follow the product navigation: `auth`, `groups`, `group` (shell), `groupsummary`, `groupreview`, `groupsettings`, `tags`, `groupform` / `accountform` / `envelopeform` / `timezone`, `profile` / `deleteaccount`, `accounts`, `envelopes`, `envelopedetail`, `envelopetransfers`, `movements`, `bankimport`,
-plus `movementform` (the new / edit movement form).
+plus `movementform` (the new / edit movement form) and `legal` (the acceptance gate).
 
 ## Rules
 
@@ -207,7 +208,8 @@ plus `movementform` (the new / edit movement form).
 - A result that leads to another screen (sign-up created -> code screen) is state: the ViewModel sets a field such as
   `navigateToConfirm: String?`; the Route reacts in a `LaunchedEffect`, calls the lambda and sends `NavigationHandled`
   to clear it, so rotation does not navigate twice.
-- A change of session is never handled by a screen: the root swaps `AuthNavigation` / `AppNavigation`.
+- A change of session is never handled by a screen: the root swaps `AuthNavigation` / `AppNavigation`. A signed-in user
+  passes `LegalGate` first (D-57, `docs/features/legal.md`); no screen checks the legal status itself.
 - Route arguments reach ViewModels as Koin parameters (`koinViewModel { parametersOf(...) }`), because Navigation 3 keys are not in a `SavedStateHandle`.
 
 ## Commands

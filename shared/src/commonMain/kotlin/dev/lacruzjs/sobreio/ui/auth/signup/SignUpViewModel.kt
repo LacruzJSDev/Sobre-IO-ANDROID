@@ -3,6 +3,9 @@ package dev.lacruzjs.sobreio.ui.auth.signup
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
+import dev.lacruzjs.sobreio.data.repository.LegalRepository
+import dev.lacruzjs.sobreio.domain.model.LegalDocumentKind
+import dev.lacruzjs.sobreio.ui.loading.revalidate
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.ui.validation.validateEmail
 import dev.lacruzjs.sobreio.ui.validation.validatePassword
@@ -13,10 +16,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SignUpViewModel(private val auth: AuthRepository) : ViewModel() {
+class SignUpViewModel(
+    private val auth: AuthRepository,
+    private val legal: LegalRepository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(SignUpUiState())
     val state: StateFlow<SignUpUiState> = _state.asStateFlow()
+
+    init {
+        // The links are read without a session (D-57); without them the form simply shows no notice
+        viewModelScope.launch {
+            revalidate(onRefreshing = {}) {
+                legal.getDocumentsInForce().onSuccess { documents ->
+                    _state.update {
+                        it.copy(
+                            terms = documents.firstOrNull { d -> d.kind == LegalDocumentKind.Terms },
+                            privacy = documents.firstOrNull { d -> d.kind == LegalDocumentKind.Privacy },
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun onEvent(event: SignUpEvent) {
         when (event) {
@@ -26,7 +48,7 @@ class SignUpViewModel(private val auth: AuthRepository) : ViewModel() {
                 _state.update { it.copy(password = event.value, passwordError = null, error = null) }
             SignUpEvent.SignUpClicked -> signUp()
             SignUpEvent.NavigationHandled -> _state.update { it.copy(navigateToConfirm = null) }
-            SignUpEvent.SignInClicked -> Unit // The Route navigates
+            SignUpEvent.SignInClicked, is SignUpEvent.OpenDocument -> Unit // The Route handles them
         }
     }
 

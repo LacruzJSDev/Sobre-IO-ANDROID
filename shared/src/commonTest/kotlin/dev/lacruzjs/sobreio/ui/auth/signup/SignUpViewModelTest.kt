@@ -2,6 +2,7 @@ package dev.lacruzjs.sobreio.ui.auth.signup
 
 import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
+import dev.lacruzjs.sobreio.fake.FakeLegalRepository
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_email_invalid
 import dev.lacruzjs.sobreio.generated.resources.validation_password_short
@@ -14,7 +15,8 @@ import kotlin.test.assertNull
 class SignUpViewModelTest : MainDispatcherTest() {
 
     private val auth = FakeAuthRepository()
-    private val viewModel = SignUpViewModel(auth)
+    // Lazy: init launches a coroutine, which needs Main replaced first
+    private val viewModel by lazy { SignUpViewModel(auth, FakeLegalRepository()) }
 
     private fun fill(name: String = " Ana ", email: String = "ana@example.com", password: String = "secret1") {
         viewModel.onEvent(SignUpEvent.NameChanged(name))

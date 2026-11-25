@@ -7,4 +7,7 @@ sealed interface SignUpEvent {
     data object SignUpClicked : SignUpEvent
     data object SignInClicked : SignUpEvent
     data object NavigationHandled : SignUpEvent
+
+    /** Handled by the Route: opens a legal document in the browser. */
+    data class OpenDocument(val url: String) : SignUpEvent
 }

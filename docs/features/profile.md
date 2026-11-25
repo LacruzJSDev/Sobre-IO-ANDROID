@@ -2,11 +2,12 @@
 
 <!-- Behaviour of the code as it is: keep it true. Change it in the same commit as the code it describes. -->
 
-The user's name, the accessibility switch, deleting the account and the app version.
+The user's name, the accessibility switch, the terms and privacy and "Download my data", deleting the account and the app version.
 
 - Profile: the name is a field with a Save button (not blank, at most 100); `AuthRepository.updateDisplayName` updates
   `profiles.display_name` (what other members see) and the session's `name` metadata (what the app shows), and the
-  screen shows the saved name at once. The email is read-only. At the very bottom a `DestructiveButton` "Delete account"
+  screen shows the saved name at once. The email is read-only. After the accessibility section, "Privacy and your data": the two legal documents and
+  "Download my data" (see [legal](legal.md)). At the very bottom a `DestructiveButton` "Delete account"
   pushes `DeleteAccount` (the column scrolls), and under it, centred and muted, "Version X.Y.Z": `ProfileRoute` passes
   `AppConfig.APP_VERSION` (generated from `sobreio.version` in `gradle.properties`, the same value as the Android
   `versionName` and the iOS `CFBundleShortVersionString`) as the screen's `appVersion`, so a reported problem can be tied

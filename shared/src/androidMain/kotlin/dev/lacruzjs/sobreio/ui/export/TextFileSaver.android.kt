@@ -13,13 +13,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-actual fun rememberCsvSaver(onResult: (SaveResult) -> Unit): (fileName: String, content: String) -> Unit {
+actual fun rememberTextFileSaver(mimeType: String, onResult: (SaveResult) -> Unit): (fileName: String, content: String) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val latest = rememberUpdatedState(onResult)
     // The contents wait here while the dialog is open; the dialog only returns where to write them
     val pending = remember { mutableStateOf<String?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(mimeType)) { uri ->
         val content = pending.value
         pending.value = null
         if (uri == null || content == null) {

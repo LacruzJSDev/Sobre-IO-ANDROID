@@ -1,12 +1,17 @@
 package dev.lacruzjs.sobreio.ui.auth.signup
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,6 +24,9 @@ import dev.lacruzjs.sobreio.generated.resources.action_have_account
 import dev.lacruzjs.sobreio.generated.resources.field_email
 import dev.lacruzjs.sobreio.generated.resources.field_name
 import dev.lacruzjs.sobreio.generated.resources.field_password
+import dev.lacruzjs.sobreio.generated.resources.legal_privacy
+import dev.lacruzjs.sobreio.generated.resources.legal_terms
+import dev.lacruzjs.sobreio.generated.resources.sign_up_legal_notice
 import dev.lacruzjs.sobreio.generated.resources.sign_up_title
 import dev.lacruzjs.sobreio.ui.components.AuthScaffold
 import dev.lacruzjs.sobreio.ui.components.ErrorText
@@ -37,6 +45,7 @@ fun SignUpRoute(
     viewModel: SignUpViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
 
     state.navigateToConfirm?.let { email ->
         LaunchedEffect(email) {
@@ -50,6 +59,7 @@ fun SignUpRoute(
         onEvent = { event ->
             when (event) {
                 SignUpEvent.SignInClicked -> onSignIn()
+                is SignUpEvent.OpenDocument -> uriHandler.openUri(event.url)
                 else -> viewModel.onEvent(event)
             }
         },
@@ -57,6 +67,7 @@ fun SignUpRoute(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SignUpScreen(
     state: SignUpUiState,
@@ -90,6 +101,26 @@ fun SignUpScreen(
             onImeAction = { onEvent(SignUpEvent.SignUpClicked) },
         )
         ErrorText(state.error, modifier = Modifier.fillMaxWidth())
+        val terms = state.terms
+        val privacy = state.privacy
+        if (terms != null && privacy != null) {
+            // Informs before the data is given (GDPR art. 13); the acceptance itself is the gate after sign-in (D-57)
+            val languageTag = Locale.current.toLanguageTag()
+            Text(
+                text = stringResource(Res.string.sign_up_legal_notice),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            FlowRow(modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { onEvent(SignUpEvent.OpenDocument(terms.urlFor(languageTag))) }, enabled = !state.isLoading) {
+                    Text(stringResource(Res.string.legal_terms))
+                }
+                TextButton(onClick = { onEvent(SignUpEvent.OpenDocument(privacy.urlFor(languageTag))) }, enabled = !state.isLoading) {
+                    Text(stringResource(Res.string.legal_privacy))
+                }
+            }
+        }
         PrimaryButton(
             text = stringResource(Res.string.action_create_account),
             onClick = { onEvent(SignUpEvent.SignUpClicked) },
