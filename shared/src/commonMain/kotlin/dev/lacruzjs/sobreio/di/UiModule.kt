@@ -41,7 +41,8 @@ val uiModule = module {
     viewModelOf(::LegalGateViewModel)
     viewModelOf(::SignUpViewModel)
     viewModelOf(::PasswordRecoveryViewModel)
-    viewModelOf(::ProfileViewModel)
+    // Explicit: viewModelOf would try to inject the clock, which keeps its default here
+    viewModel { ProfileViewModel(get(), get(), get(), get()) }
     viewModelOf(::DeleteAccountViewModel)
     viewModelOf(::GroupsViewModel)
     viewModelOf(::SignInViewModel)

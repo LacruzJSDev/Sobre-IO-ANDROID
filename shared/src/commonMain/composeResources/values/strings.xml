@@ -1018,7 +1018,7 @@
     <string name="legal_gate_documents">Read them here</string>
     <string name="legal_terms">Terms of use</string>
     <string name="legal_privacy">Privacy policy</string>
-    <string name="legal_accept_label">I have read and accept the terms of use and the privacy policy</string>
+    <string name="legal_accept_label">I have read and accept them</string>
     <string name="legal_gate_sign_out_note">If you do not accept them, sign out. To delete your account without accepting, write to the contact in the privacy policy.</string>
     <string name="sign_up_legal_notice">To use Sobre-IO you will accept its terms of use and its privacy policy:</string>
     <string name="profile_privacy_section">Privacy and your data</string>

@@ -1017,7 +1017,7 @@
     <string name="legal_gate_documents">Léelos aquí</string>
     <string name="legal_terms">Términos de uso</string>
     <string name="legal_privacy">Política de privacidad</string>
-    <string name="legal_accept_label">He leído y acepto los términos de uso y la política de privacidad</string>
+    <string name="legal_accept_label">Los he leído y los acepto</string>
     <string name="legal_gate_sign_out_note">Si no los aceptas, cierra la sesión. Para borrar tu cuenta sin aceptarlos, escribe al contacto de la política de privacidad.</string>
     <string name="sign_up_legal_notice">Para usar Sobre-IO aceptarás sus términos de uso y su política de privacidad:</string>
     <string name="profile_privacy_section">Privacidad y tus datos</string>
