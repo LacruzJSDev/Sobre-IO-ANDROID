@@ -51,10 +51,53 @@ Desde la terminal:
 
 En GitHub, cada pull request compila la app Android, pasa las pruebas y el lint de forma automática (iOS no se
 compila en la integración continua: necesita un runner de macOS con Xcode); `main` no acepta cambios
-si esa comprobación falla. Las versiones entregadas se publican como *releases* con la APK adjunta.
+si esa comprobación falla. Las versiones entregadas se publican como *releases* con la APK adjunta (ver «Versiones»).
 
 Para instalarla en el móvil de pruebas sin Android Studio basta con copiar la APK y abrirla (hay que permitir
 instalar aplicaciones de origen desconocido).
+
+## Versiones
+
+Cada versión entregada es un tag `vMAYOR.MENOR.PARCHE` en `main` con su GitHub Release y la APK adjunta. Lo que trae
+cada una está en [CHANGELOG.md](CHANGELOG.md), en español y escrito para quien usa la app.
+
+**Número de versión.** Sigue [SemVer](https://semver.org/lang/es/): la MENOR sube cuando hay funciones nuevas
+(`feat`) y el PARCHE cuando solo hay arreglos (`fix`); la MAYOR, solo con un cambio que obligue a reinstalar o a migrar
+datos a mano. Se escribe en un único sitio, `sobreio.version` en `gradle.properties`, y de ahí salen:
+
+| Dónde | Valor | Ejemplo para 1.2.3 |
+| --- | --- | --- |
+| Android `versionName` | la versión | `1.2.3` |
+| Android `versionCode` | mayor·10000 + menor·100 + parche | `10203` |
+| iOS `CFBundleShortVersionString` (`iosApp/project.yml` e `Info.plist`) | la versión | `1.2.3` |
+| iOS `CFBundleVersion` | el mismo `versionCode` | `10203` |
+| Tag de git y Release | `v` + la versión | `v1.2.3` |
+
+Los valores de iOS se escriben a mano en `iosApp/project.yml` (y en el `Info.plist` que genera `xcodegen`); la tarea
+`./gradlew :app:checkIosVersion`, que corre en la CI, falla si no coinciden con `gradle.properties`.
+
+**Cómo se anotan los cambios.** Cada PR `feat` o `fix` que se nota al usar la app añade una línea en la sección
+«Sin publicar» de `CHANGELOG.md`, en *Novedades*, *Mejoras* o *Arreglos*. Un fallo de algo que todavía no se ha publicado
+no es un arreglo y no se anota. La CI (`.github/workflows/changelog.yml`) no deja pasar un PR `feat` o `fix` que no toque
+`CHANGELOG.md`, salvo que lleve la etiqueta `no-changelog`. Los PR `refactor`, `test`, `docs`, `build` y `chore` no
+añaden nada.
+
+**Cómo se publica una versión:**
+
+1. Un PR `build(app): release vX.Y.Z` que cambia `sobreio.version`, los dos valores de iOS en `iosApp/project.yml` e
+   `iosApp/iosApp/Info.plist` (con `xcodegen` si está instalado), y renombra «Sin publicar» a `## [X.Y.Z] · AAAA-MM-DD`
+   dejando una «Sin publicar» vacía encima. Si la versión necesita una versión de la base de datos, se indica en la línea
+   **Base de datos**.
+2. Cuando se fusiona, se pone el tag en ese commit: `git tag vX.Y.Z <commit> && git push origin vX.Y.Z`.
+3. Se genera la APK firmada (`./gradlew :app:assembleRelease`) y se renombra a `sobre-io-X.Y.Z.apk`.
+4. Se crea la Release con las notas del CHANGELOG:
+
+       gh release create vX.Y.Z sobre-io-X.Y.Z.apk --title "Sobre-IO X.Y.Z" --notes "$(tools/release-notes.sh X.Y.Z)"
+
+5. Si el proyecto alojado de Supabase se actualizó para esta entrega, `Sobre-IO-DB` lleva el mismo tag.
+6. iOS no se adjunta: se instala desde Xcode con la configuración *Release*.
+
+Un tag publicado no se mueve ni se borra nunca; si algo sale mal, se publica la versión siguiente.
 
 ## Abrir y ejecutar en iOS
 

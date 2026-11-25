@@ -1,0 +1,45 @@
+# A pull request whose title is feat or fix changes what the user sees, so it must add its line to CHANGELOG.md
+# ("Sin publicar"). The label no-changelog skips the check, for a fix of something not yet released or a change the
+# user does not notice. See "Versiones" in README.md.
+name: Changelog
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: changelog-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changelog:
+    name: changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Feat and fix pull requests update CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+          SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'no-changelog') }}
+        run: |
+          if ! [[ "$TITLE" =~ ^(feat|fix)(\(.+\))?!?: ]]; then
+            echo "Title is not feat or fix: no changelog line needed."
+            exit 0
+          fi
+          if [[ "$SKIP" == "true" ]]; then
+            echo "Label no-changelog: check skipped."
+            exit 0
+          fi
+          if gh api --paginate "repos/$REPO/pulls/$NUMBER/files" --jq '.[].filename' | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md is updated."
+          else
+            echo "::error::A feat or fix pull request adds its line under \"Sin publicar\" in CHANGELOG.md (or gets the no-changelog label)."
+            exit 1
+          fi
