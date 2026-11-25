@@ -82,6 +82,9 @@ no es un arreglo y no se anota. La CI (`.github/workflows/changelog.yml`) no dej
 `CHANGELOG.md`, salvo que lleve la etiqueta `no-changelog`. Los PR `refactor`, `test`, `docs`, `build` y `chore` no
 añaden nada.
 
+Antes de la 1.0.0 se rellena la matriz de pruebas manuales [docs/pruebas-1.0.md](docs/pruebas-1.0.md) con la APK de
+publicación.
+
 **Cómo se publica una versión:**
 
 1. Un PR `build(app): release vX.Y.Z` que cambia `sobreio.version`, los dos valores de iOS en `iosApp/project.yml` e
