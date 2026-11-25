@@ -1,27 +1,36 @@
 package dev.lacruzjs.sobreio.ui.theme
 
 import androidx.compose.ui.graphics.luminance
-import kotlin.test.assertTrue
-import kotlin.test.assertNotNull
 import androidx.compose.ui.graphics.toArgb
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class EntityColorTest {
 
+    /** Every hex any released palette stored; each must still read as some colour. */
+    private val everStored = listOf(
+        "#3B6E8F", "#2F7F7A", "#4F7A5A", "#7A7A3F", "#B08A2E", "#B8673A", "#A4503F", "#8E3B4A", "#8A5A83", "#5F5A99",
+        "#5B6770", "#7A5E46", "#2E4A73", "#3D84C6", "#2F6B4A", "#5A6E3A", "#A36A12", "#9C4A28", "#C0574A", "#A8325F",
+        "#6B3F6E", "#4A52A0", "#40474D", "#7D6B5D", "#9A7A22",
+    )
+
     @Test
-    fun keepsTheTwelveStoredHexesAndHas24Distinct() {
-        val stored = listOf(
-            "#3B6E8F", "#2F7F7A", "#4F7A5A", "#7A7A3F", "#B08A2E", "#B8673A",
-            "#A4503F", "#8E3B4A", "#8A5A83", "#5F5A99", "#5B6770", "#7A5E46",
-        )
-        val hexes = EntityColor.entries.map { it.hex.lowercase() }
-        assertEquals(24, hexes.size)
-        assertEquals(24, hexes.toSet().size)
-        // Every hex ever stored still reads as a colour (Mustard was retuned, its old hex is a legacy one)
-        stored.forEach { assertNotNull(EntityColor.fromHex(it), it) }
-        assertEquals(EntityColor.Mustard, EntityColor.fromHex("#b08a2e"))
+    fun has18DistinctColoursAndEveryStoredHexStillResolves() {
+        assertEquals(18, EntityColor.entries.size)
+        val all = EntityColor.entries.flatMap { listOf(it.hex) + it.legacyHexes }.map { it.lowercase() }
+        assertEquals(all.size, all.toSet().size, "a hex belongs to two colours")
+        everStored.forEach { assertNotNull(EntityColor.fromHex(it), it) }
+    }
+
+    @Test
+    fun anyTwoColoursAreClearlyApartInLightAndDark() {
+        val light = closestPair(EntityColor.entries.map { it.name to it.light })
+        val dark = closestPair(EntityColor.entries.map { it.name to it.dark })
+        assertTrue(light.second >= 12.0, "too close in light: $light")
+        assertTrue(dark.second >= 12.0, "too close in dark: $dark")
     }
 
     @Test
@@ -35,9 +44,10 @@ class EntityColorTest {
     }
 
     @Test
-    fun fromHexIgnoresCase() {
-        assertEquals(EntityColor.Blue, EntityColor.fromHex("#3b6e8f"))
-        assertEquals(EntityColor.Brown, EntityColor.fromHex("#7A5E46"))
+    fun fromHexIgnoresCaseAndReadsLegacyHexes() {
+        assertEquals(EntityColor.Blue, EntityColor.fromHex(EntityColor.Blue.hex.lowercase()))
+        assertEquals(EntityColor.Olive, EntityColor.fromHex("#b08a2e"))
+        assertEquals(EntityColor.Violet, EntityColor.fromHex("#5F5A99"))
     }
 
     @Test

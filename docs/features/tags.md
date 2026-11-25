@@ -16,9 +16,9 @@ The group's tags: create, edit, merge, archive, and their names.
   with Reopen (a clash with a live name shows `AppError.DuplicateName`). "+" and Edit open `TagSheet` (name `FormTextField`
   at most 50, the `TagColorPicker` swatches, Save; a duplicate name shows under the field). Merge opens `MergeSheet` ("Merge X
   with…": an `EntitySelect` of the other live tags and a note that X will be archived), calls `merge_tags` and ends with a plain
-  notice "Tags merged" (`UndoController.notify`, no Undo: it cannot be undone). The tag palette is `ui/theme/TagColor` (20 soft
-  colours in hue order, light hex stored in `tags.color`, a deeper dark variant, names `tag_color_<key>`), separate from `EntityColor`;
-  a new tag starts on `TagColor.Default`.
+  notice "Tags merged" (`UndoController.notify`, no Undo: it cannot be undone). The tag palette is `ui/theme/TagColor` (14 soft
+  colours in hue order, any two clearly apart, light hex stored in `tags.color`, a deeper dark variant, `legacyHexes` for the colours of
+  earlier palettes, names `tag_color_<key>`), separate from `EntityColor`; a new tag starts on `TagColor.Default` (Mint).
 - Tag names: the database stores them trimmed with inner whitespace collapsed and keeps them unique among live tags ignoring
   case and accents. `domain/TagMatching.kt` mirrors that key (`normalizeTagKey`, `normalizeTagName`, unit tested) and drives the
   picker through `tagPickerOptions(tags, query)`: rows whose key contains the text, a `suggestion` (the same tag, or one within one

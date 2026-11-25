@@ -26,52 +26,40 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.tag_color_ice
+import dev.lacruzjs.sobreio.generated.resources.tag_color_olive
+import dev.lacruzjs.sobreio.generated.resources.tag_color_orchid
 import dev.lacruzjs.sobreio.generated.resources.tag_color_apricot
 import dev.lacruzjs.sobreio.generated.resources.tag_color_aqua
-import dev.lacruzjs.sobreio.generated.resources.tag_color_berry
 import dev.lacruzjs.sobreio.generated.resources.tag_color_blush
 import dev.lacruzjs.sobreio.generated.resources.tag_color_butter
-import dev.lacruzjs.sobreio.generated.resources.tag_color_coral
 import dev.lacruzjs.sobreio.generated.resources.tag_color_lavender
 import dev.lacruzjs.sobreio.generated.resources.tag_color_lilac
-import dev.lacruzjs.sobreio.generated.resources.tag_color_mauve
 import dev.lacruzjs.sobreio.generated.resources.tag_color_mint
-import dev.lacruzjs.sobreio.generated.resources.tag_color_peach
-import dev.lacruzjs.sobreio.generated.resources.tag_color_periwinkle
 import dev.lacruzjs.sobreio.generated.resources.tag_color_pistachio
 import dev.lacruzjs.sobreio.generated.resources.tag_color_rose
-import dev.lacruzjs.sobreio.generated.resources.tag_color_sage
-import dev.lacruzjs.sobreio.generated.resources.tag_color_sand
-import dev.lacruzjs.sobreio.generated.resources.tag_color_seafoam
 import dev.lacruzjs.sobreio.generated.resources.tag_color_sky
 import dev.lacruzjs.sobreio.generated.resources.tag_color_stone
-import dev.lacruzjs.sobreio.generated.resources.tag_color_taupe
 import dev.lacruzjs.sobreio.ui.theme.TagColor
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Accessible name of the colour. */
 fun TagColor.labelRes(): StringResource = when (this) {
-    TagColor.Sky -> Res.string.tag_color_sky
-    TagColor.Periwinkle -> Res.string.tag_color_periwinkle
-    TagColor.Aqua -> Res.string.tag_color_aqua
-    TagColor.Mint -> Res.string.tag_color_mint
-    TagColor.Seafoam -> Res.string.tag_color_seafoam
-    TagColor.Sage -> Res.string.tag_color_sage
-    TagColor.Pistachio -> Res.string.tag_color_pistachio
-    TagColor.Butter -> Res.string.tag_color_butter
-    TagColor.Sand -> Res.string.tag_color_sand
-    TagColor.Apricot -> Res.string.tag_color_apricot
-    TagColor.Peach -> Res.string.tag_color_peach
-    TagColor.Coral -> Res.string.tag_color_coral
-    TagColor.Blush -> Res.string.tag_color_blush
     TagColor.Rose -> Res.string.tag_color_rose
-    TagColor.Berry -> Res.string.tag_color_berry
-    TagColor.Mauve -> Res.string.tag_color_mauve
-    TagColor.Lilac -> Res.string.tag_color_lilac
+    TagColor.Blush -> Res.string.tag_color_blush
+    TagColor.Apricot -> Res.string.tag_color_apricot
+    TagColor.Butter -> Res.string.tag_color_butter
+    TagColor.Olive -> Res.string.tag_color_olive
+    TagColor.Pistachio -> Res.string.tag_color_pistachio
+    TagColor.Mint -> Res.string.tag_color_mint
+    TagColor.Aqua -> Res.string.tag_color_aqua
+    TagColor.Ice -> Res.string.tag_color_ice
+    TagColor.Sky -> Res.string.tag_color_sky
     TagColor.Lavender -> Res.string.tag_color_lavender
+    TagColor.Lilac -> Res.string.tag_color_lilac
+    TagColor.Orchid -> Res.string.tag_color_orchid
     TagColor.Stone -> Res.string.tag_color_stone
-    TagColor.Taupe -> Res.string.tag_color_taupe
 }
 
 /** The colour of a tag's dot in the current theme; a tag with no (or an unknown) colour gets a muted grey. */

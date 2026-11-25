@@ -78,8 +78,8 @@ private fun EntityAvatarPreview() {
             ) {
                 EntityAvatar("Casa", null, null)
                 EntityAvatar("Casa", iconFor(IconCategory.Group, "home"), EntityColor.Blue)
-                EntityAvatar("Ahorro", iconFor(IconCategory.Account, "savings"), EntityColor.Mustard)
-                EntityAvatar("Comida", iconFor(IconCategory.Envelope, "groceries"), EntityColor.Terracotta)
+                EntityAvatar("Ahorro", iconFor(IconCategory.Account, "savings"), EntityColor.Olive)
+                EntityAvatar("Comida", iconFor(IconCategory.Envelope, "groceries"), EntityColor.Rust)
                 EntityAvatar("Coche", iconFor(IconCategory.Envelope, "car"), EntityColor.Violet)
                 EntityAvatar("Banco", null, EntityColor.Wine, size = 56.dp)
             }
