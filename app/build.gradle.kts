@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -14,6 +16,18 @@ val appVersionCode: Int = run {
     major * 10000 + minor * 100 + patch
 }
 
+// Release signing comes from local.properties (git-ignored), never from the repository: RELEASE_STORE_FILE (absolute path
+// of the keystore, kept outside the repository), RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD.
+// Without all four, assembleRelease still builds, but the APK is unsigned and Android will not install it.
+val localProperties = Properties().apply {
+    val text = providers.fileContents(rootProject.layout.projectDirectory.file("local.properties")).asText.orNull
+    if (text != null) load(text.reader())
+}
+val releaseSigning: Map<String, String>? = listOf(
+    "RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD",
+).associateWith { localProperties.getProperty(it).orEmpty().trim() }
+    .takeIf { values -> values.values.all { it.isNotEmpty() } }
+
 android {
     namespace = "dev.lacruzjs.sobreio"
     compileSdk {
@@ -28,8 +42,20 @@ android {
         versionName = appVersion
     }
 
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("RELEASE_STORE_FILE"))
+                storePassword = releaseSigning.getValue("RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseSigning != null) signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")

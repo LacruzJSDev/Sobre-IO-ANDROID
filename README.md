@@ -89,7 +89,8 @@ añaden nada.
    dejando una «Sin publicar» vacía encima. Si la versión necesita una versión de la base de datos, se indica en la línea
    **Base de datos**.
 2. Cuando se fusiona, se pone el tag en ese commit: `git tag vX.Y.Z <commit> && git push origin vX.Y.Z`.
-3. Se genera la APK firmada (`./gradlew :app:assembleRelease`) y se renombra a `sobre-io-X.Y.Z.apk`.
+3. Se genera la APK firmada (`./gradlew :app:assembleRelease`, ver «Firmar la APK de publicación»), que queda en
+   `app/build/outputs/apk/release/app-release.apk`, y se renombra a `sobre-io-X.Y.Z.apk`.
 4. Se crea la Release con las notas del CHANGELOG:
 
        gh release create vX.Y.Z sobre-io-X.Y.Z.apk --title "Sobre-IO X.Y.Z" --notes "$(tools/release-notes.sh X.Y.Z)"
@@ -98,6 +99,35 @@ añaden nada.
 6. iOS no se adjunta: se instala desde Xcode con la configuración *Release*.
 
 Un tag publicado no se mueve ni se borra nunca; si algo sale mal, se publica la versión siguiente.
+
+## Firmar la APK de publicación
+
+Android solo instala APKs firmadas. La de depuración usa la clave de depuración de Android Studio; la de publicación usa
+una clave propia, que se crea una vez y no necesita ninguna cuenta (ni Google Play ni de desarrollador):
+
+    mkdir -p ~/keystores
+    keytool -genkeypair -v -keystore ~/keystores/sobre-io-release.jks -alias sobre-io -keyalg RSA -keysize 4096 -validity 10000
+
+El fichero `.jks` y sus contraseñas **nunca** entran en el repositorio. Hay que guardar una copia de seguridad fuera del
+Mac: con otra clave, una versión nueva no se instala encima de la anterior (habría que desinstalar y se perderían la
+sesión y las preferencias del móvil). Los datos de firma van en `local.properties`:
+
+    RELEASE_STORE_FILE=/Users/<usuario>/keystores/sobre-io-release.jks
+    RELEASE_STORE_PASSWORD=<contraseña del almacén>
+    RELEASE_KEY_ALIAS=sobre-io
+    RELEASE_KEY_PASSWORD=<contraseña de la clave, la misma si no se eligió otra>
+
+Con los cuatro, `./gradlew :app:assembleRelease` genera `app/build/outputs/apk/release/app-release.apk` firmada. Si falta
+alguno, la compilación sigue funcionando pero sale `app-release-unsigned.apk`, que Android no instala. Para comprobar la
+firma: `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk` (está en
+`~/Library/Android/sdk/build-tools/<versión>/`).
+
+La versión de publicación pasa por R8 solo en los paquetes `androidx`, `kotlin` y `kotlinx` (`optimization.packageScope`
+en `app/build.gradle.kts`); el código de la app, Supabase, Ktor y Koin quedan como están, por eso no hacen falta reglas
+de R8 propias.
+
+Una APK de publicación no se instala encima de una de depuración (están firmadas con claves distintas): hay que
+desinstalar la otra primero.
 
 ## Abrir y ejecutar en iOS
 
@@ -170,7 +200,8 @@ Además, en el mismo proyecto de Google Cloud tiene que existir un cliente OAuth
 
     keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
 
-Para la APK de publicación hace falta otro cliente Android con la huella de su clave. El emulador necesita una cuenta de
+Para la APK de publicación hace falta otro cliente Android con la huella de su clave (`keytool -list -v -keystore
+~/keystores/sobre-io-release.jks -alias sobre-io`, pide la contraseña). El emulador necesita una cuenta de
 Google iniciada.
 
 En iOS se usa el SDK GoogleSignIn (Swift Package Manager). Hace falta un cliente OAuth de tipo **iOS** con el bundle id

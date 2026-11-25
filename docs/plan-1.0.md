@@ -267,4 +267,5 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 5.2 (detalles más ligeros: rango y saldo de un día en la gráfica ampliada, «Libre de verdad» ampliable, 3 filas en las listas): hecha.
 - Fase 2 (tiempo real, D-55 en la base de datos): hecha; lo de otro miembro aparece en unos 3 s.
 - Fase 6 (orden del código, partes A a G, ver `fase-6-alcance.md`): hecha (#37–#43).
-- Fase 7 (release 1.0): en curso; punto 1, versiones y CHANGELOG.
+- Fase 7 (release 1.0): en curso; hechos el punto 1 (versiones y CHANGELOG, #50), el 2 (versión en Perfil, #51) y el 3
+  (firma de release, la APK de release probada en el emulador).
