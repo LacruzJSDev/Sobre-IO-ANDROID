@@ -200,15 +200,34 @@ y compromisos. Se apoya en el store (fase 1) para que abrir y cerrar sea instant
 
 ## Fase 7 · Release 1.0 (M)
 
-1. **Matriz de pruebas manuales** (móvil, tablet, plegable y simulador de iOS; claro, oscuro y daltonismo; español e inglés)
-   con los flujos clave: alta, crear grupo, invitar, gasto en 4 toques, asignar, compromiso, revisar, importar CSV, aportación
-   entre grupos, borrar cuenta.
-2. **Informe de pruebas** (entregable del curso): tests unitarios (`:shared:testAndroidHostTest`), la matriz manual y los
-   tests de pgTAP de la base de datos.
-3. **Build de release:** firma (keystore fuera del repositorio), R8 y recursos reducidos, `versionName 1.0.0`,
-   `versionCode` y `local.properties` apuntando al Supabase alojado; el plan gratuito incluye Realtime.
-4. **iOS:** compilación de release desde Xcode e icono y nombre revisados.
-5. **README y AGENTS.md** al día, y un tag `v1.0.0`.
+Decidido el 2026-11-25: la versión es la **1.0.0** (no la 0.1 del calendario anterior), las novedades se documentan en
+`CHANGELOG.md` en español y ese mismo texto es el de la GitHub Release; la app no tiene pantalla de novedades. Cómo se
+numeran las versiones y cómo se publica una está en la sección «Versiones» del README.
+
+Cada punto es un PR, en este orden:
+
+1. **Versiones y CHANGELOG** (`docs: versioning and changelog`): la versión en un único sitio (`sobreio.version` en
+   `gradle.properties`, de donde salen `versionName` y `versionCode`) con la comprobación de iOS en la CI
+   (`checkIosVersion`), `CHANGELOG.md` con la 1.0.0 en «Sin publicar», la plantilla de PR, la comprobación de la CI de que
+   un PR `feat` o `fix` toca el CHANGELOG y `tools/release-notes.sh`.
+2. **Versión en Perfil** (`feat(ui)`): «Versión 1.0.0» al pie de Perfil, para saber qué versión tenía quien encuentra un
+   fallo.
+3. **Firma de release** (`build(app)`): `signingConfig` que lee el keystore desde `local.properties` (el keystore queda
+   fuera del repositorio; sin él, el build de release sale sin firmar), reglas de R8 revisadas y la APK de release
+   probada en un dispositivo real.
+4. **Matriz de pruebas manuales** (`docs/pruebas-1.0.md`): móvil, tablet en vertical y en horizontal, plegable abierto y
+   cerrado y simulador de iOS; claro, oscuro y daltonismo; español e inglés. Flujos: alta, crear grupo, invitar, gasto,
+   asignar, compromiso, revisar, importar CSV, aportación entre grupos y borrar cuenta. Cada fallo, un PR `fix` con la
+   etiqueta `no-changelog` (nunca se publicó).
+5. **Informe de pruebas** (entregable del curso, en `curso/`): tests unitarios, tests de pgTAP de la base de datos y la
+   matriz manual.
+6. **Release** (`build(app): release v1.0.0`): versión 1.0.0 (`versionCode` 10000) en Android e iOS, fecha en el
+   CHANGELOG, «Estado» del README al día y esta fase marcada como hecha. Después, el tag `v1.0.0`, la APK firmada en la
+   GitHub Release, el tag `v1.0.0` en `Sobre-IO-DB` y la compilación Release de iOS desde Xcode.
+
+Lo hace el autor, fuera del repositorio, antes del punto 4: comprobar que el Supabase alojado tiene todas las
+migraciones hasta D-56, la Edge Function de borrar cuenta, los correos en español y Realtime; crear el keystore de
+release y el cliente OAuth de Android con su huella SHA-1 para que Google funcione en la APK firmada.
 
 ---
 
@@ -247,3 +266,5 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 5.3 (informes con cualquier filtro o etiqueta: totales, informe por periodo y por sobre, movimientos de una etiqueta; D-54 en la base de datos): hecha. El tiempo real (Fase 2) usará D-55.
 - Fase 5.2 (detalles más ligeros: rango y saldo de un día en la gráfica ampliada, «Libre de verdad» ampliable, 3 filas en las listas): hecha.
 - Fase 2 (tiempo real, D-55 en la base de datos): hecha; lo de otro miembro aparece en unos 3 s.
+- Fase 6 (orden del código, partes A a G, ver `fase-6-alcance.md`): hecha (#37–#43).
+- Fase 7 (release 1.0): en curso; punto 1, versiones y CHANGELOG.

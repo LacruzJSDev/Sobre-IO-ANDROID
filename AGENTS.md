@@ -213,6 +213,8 @@ plus `movementform` (the new / edit movement form).
 ./gradlew :shared:testAndroidHostTest        # unit tests (commonTest, run on the JVM)
 ./gradlew :app:installDebug                  # install on the connected device or emulator
 ./gradlew :app:lintDebug                     # Android lint
+./gradlew :app:checkIosVersion              # iOS version equals sobreio.version (gradle.properties)
+tools/release-notes.sh 1.0.0                 # notes of one version from CHANGELOG.md (or: unreleased)
 ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64   # iOS compile check, no Xcode UI needed
 cd iosApp && xcodegen                        # regenerate iosApp.xcodeproj after editing project.yml
 ```
@@ -233,6 +235,13 @@ run the app again from Xcode to renew it. From the terminal, `xcodebuild -projec
   deleting a branch, `git log origin/<branch>..<branch>` must be empty; after the merge, `git worktree remove` it and bring
   the main checkout up to date when it is on `main` (`git pull --ff-only`), the one thing done there, so the author builds
   the merged code.
+- Versions and release notes (full procedure in the README section "Versiones"): SemVer, written only in `sobreio.version`
+  (`gradle.properties`); `versionCode` is major * 10000 + minor * 100 + patch, and `iosApp/project.yml` plus
+  `iosApp/iosApp/Info.plist` carry the same pair (`./gradlew :app:checkIosVersion`, run by CI). Change the version only in
+  a `build(app): release vX.Y.Z` PR. Every `feat` or `fix` PR the user notices adds one Spanish line, written for the user,
+  under "Sin publicar" in `CHANGELOG.md` (Novedades / Mejoras / Arreglos); a fix of something never released adds none
+  and gets the `no-changelog` label (`.github/workflows/changelog.yml` enforces it). The GitHub Release text is
+  `tools/release-notes.sh X.Y.Z`. Never move or delete a published tag.
 - When you add a dependency, add it to the version catalog and to the "Stack" section above (or `docs/architecture.md`).
 - When you add or change a screen, update its `docs/features/<screen>.md` (a new screen gets a new file, listed in
   "Current state") in the same change; a layer rule goes into this file, a cross-cutting mechanism into `docs/architecture.md`.

@@ -27,8 +27,9 @@ targets:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Sobre-IO
+        # Same version as sobreio.version in gradle.properties; CFBundleVersion is its versionCode (checkIosVersion)
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleVersion: "100"
         CFBundleLocalizations: [en, es]
         CFBundleDevelopmentRegion: en
         UILaunchScreen: {}
