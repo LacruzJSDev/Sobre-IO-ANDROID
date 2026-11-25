@@ -48,5 +48,6 @@ Primera versión completa: todo lo que pedía el plan 1.0.
 - **Pantallas grandes:** tablet y plegable con lista y detalle a la vez y dos columnas con su propio scroll.
 - **Idiomas y accesibilidad:** español e inglés, modo oscuro, colores para daltonismo y una etiqueta en cada icono al
   mantenerlo pulsado; un «ⓘ» explica las cifras clave.
+- **Versión de la app** al pie de Perfil, para saber qué versión está instalada al avisar de un fallo. (#51)
 
 **Base de datos:** `Sobre-IO-DB` con todas las migraciones hasta D-56.

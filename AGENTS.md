@@ -236,9 +236,9 @@ run the app again from Xcode to renew it. From the terminal, `xcodebuild -projec
   the main checkout up to date when it is on `main` (`git pull --ff-only`), the one thing done there, so the author builds
   the merged code.
 - Versions and release notes (full procedure in the README section "Versiones"): SemVer, written only in `sobreio.version`
-  (`gradle.properties`); `versionCode` is major * 10000 + minor * 100 + patch, and `iosApp/project.yml` plus
-  `iosApp/iosApp/Info.plist` carry the same pair (`./gradlew :app:checkIosVersion`, run by CI). Change the version only in
-  a `build(app): release vX.Y.Z` PR. Every `feat` or `fix` PR the user notices adds one Spanish line, written for the user,
+  (`gradle.properties`; shared code reads it as `AppConfig.APP_VERSION`, shown in Profile); `versionCode` is
+  major * 10000 + minor * 100 + patch, and `iosApp/project.yml` plus `iosApp/iosApp/Info.plist` carry the same pair
+  (`./gradlew :app:checkIosVersion`, run by CI). Change the version only in a `build(app): release vX.Y.Z` PR. Every `feat` or `fix` PR the user notices adds one Spanish line, written for the user,
   under "Sin publicar" in `CHANGELOG.md` (Novedades / Mejoras / Arreglos); a fix of something never released adds none
   and gets the `no-changelog` label (`.github/workflows/changelog.yml` enforces it). The GitHub Release text is
   `tools/release-notes.sh X.Y.Z`. Never move or delete a published tag.
