@@ -215,7 +215,7 @@ Cada punto es un PR, en este orden:
 3. **Firma de release** (`build(app)`): `signingConfig` que lee el keystore desde `local.properties` (el keystore queda
    fuera del repositorio; sin él, el build de release sale sin firmar), reglas de R8 revisadas y la APK de release
    probada en un dispositivo real.
-4. **Matriz de pruebas manuales** (`docs/pruebas-1.0.md`): móvil, tablet en vertical y en horizontal, plegable abierto y
+4. **Matriz de pruebas manuales** ([pruebas-1.0.md](pruebas-1.0.md)): móvil, tablet en vertical y en horizontal, plegable abierto y
    cerrado y simulador de iOS; claro, oscuro y daltonismo; español e inglés. Flujos: alta, crear grupo, invitar, gasto,
    asignar, compromiso, revisar, importar CSV, aportación entre grupos y borrar cuenta. Cada fallo, un PR `fix` con la
    etiqueta `no-changelog` (nunca se publicó).
@@ -268,4 +268,5 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 2 (tiempo real, D-55 en la base de datos): hecha; lo de otro miembro aparece en unos 3 s.
 - Fase 6 (orden del código, partes A a G, ver `fase-6-alcance.md`): hecha (#37–#43).
 - Fase 7 (release 1.0): en curso; hechos el punto 1 (versiones y CHANGELOG, #50), el 2 (versión en Perfil, #51) y el 3
-  (firma de release, la APK de release probada en el emulador).
+  (firma de release, la APK de release probada en el emulador); la matriz de pruebas manuales del punto 4 está en
+  [pruebas-1.0.md](pruebas-1.0.md), pendiente de rellenar.
