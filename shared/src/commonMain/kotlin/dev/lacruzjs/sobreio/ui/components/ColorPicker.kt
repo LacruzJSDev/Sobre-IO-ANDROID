@@ -24,29 +24,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import dev.lacruzjs.sobreio.generated.resources.Res
-import dev.lacruzjs.sobreio.generated.resources.color_berry
+import dev.lacruzjs.sobreio.generated.resources.color_bronze
+import dev.lacruzjs.sobreio.generated.resources.color_petrol
 import dev.lacruzjs.sobreio.generated.resources.color_blue
 import dev.lacruzjs.sobreio.generated.resources.color_brown
 import dev.lacruzjs.sobreio.generated.resources.color_coral
 import dev.lacruzjs.sobreio.generated.resources.color_forest
-import dev.lacruzjs.sobreio.generated.resources.color_graphite
 import dev.lacruzjs.sobreio.generated.resources.color_green
-import dev.lacruzjs.sobreio.generated.resources.color_indigo
 import dev.lacruzjs.sobreio.generated.resources.color_mauve
 import dev.lacruzjs.sobreio.generated.resources.color_moss
-import dev.lacruzjs.sobreio.generated.resources.color_mustard
 import dev.lacruzjs.sobreio.generated.resources.color_navy
 import dev.lacruzjs.sobreio.generated.resources.color_none
-import dev.lacruzjs.sobreio.generated.resources.color_ochre
 import dev.lacruzjs.sobreio.generated.resources.color_olive
 import dev.lacruzjs.sobreio.generated.resources.color_orange
 import dev.lacruzjs.sobreio.generated.resources.color_plum
 import dev.lacruzjs.sobreio.generated.resources.color_rust
-import dev.lacruzjs.sobreio.generated.resources.color_sky
 import dev.lacruzjs.sobreio.generated.resources.color_slate
-import dev.lacruzjs.sobreio.generated.resources.color_taupe
 import dev.lacruzjs.sobreio.generated.resources.color_teal
-import dev.lacruzjs.sobreio.generated.resources.color_terracotta
 import dev.lacruzjs.sobreio.generated.resources.color_violet
 import dev.lacruzjs.sobreio.generated.resources.color_wine
 import dev.lacruzjs.sobreio.ui.theme.EntityColor
@@ -56,30 +50,24 @@ import org.jetbrains.compose.resources.stringResource
 
 /** Accessible name of the colour. */
 fun EntityColor.labelRes(): StringResource = when (this) {
-    EntityColor.Navy -> Res.string.color_navy
-    EntityColor.Blue -> Res.string.color_blue
-    EntityColor.Sky -> Res.string.color_sky
-    EntityColor.Teal -> Res.string.color_teal
-    EntityColor.Forest -> Res.string.color_forest
-    EntityColor.Green -> Res.string.color_green
-    EntityColor.Moss -> Res.string.color_moss
-    EntityColor.Olive -> Res.string.color_olive
-    EntityColor.Mustard -> Res.string.color_mustard
-    EntityColor.Ochre -> Res.string.color_ochre
-    EntityColor.Orange -> Res.string.color_orange
-    EntityColor.Rust -> Res.string.color_rust
-    EntityColor.Terracotta -> Res.string.color_terracotta
-    EntityColor.Coral -> Res.string.color_coral
     EntityColor.Wine -> Res.string.color_wine
-    EntityColor.Berry -> Res.string.color_berry
-    EntityColor.Mauve -> Res.string.color_mauve
-    EntityColor.Plum -> Res.string.color_plum
-    EntityColor.Violet -> Res.string.color_violet
-    EntityColor.Indigo -> Res.string.color_indigo
-    EntityColor.Slate -> Res.string.color_slate
-    EntityColor.Graphite -> Res.string.color_graphite
+    EntityColor.Coral -> Res.string.color_coral
+    EntityColor.Rust -> Res.string.color_rust
     EntityColor.Brown -> Res.string.color_brown
-    EntityColor.Taupe -> Res.string.color_taupe
+    EntityColor.Orange -> Res.string.color_orange
+    EntityColor.Bronze -> Res.string.color_bronze
+    EntityColor.Olive -> Res.string.color_olive
+    EntityColor.Moss -> Res.string.color_moss
+    EntityColor.Green -> Res.string.color_green
+    EntityColor.Forest -> Res.string.color_forest
+    EntityColor.Teal -> Res.string.color_teal
+    EntityColor.Petrol -> Res.string.color_petrol
+    EntityColor.Blue -> Res.string.color_blue
+    EntityColor.Navy -> Res.string.color_navy
+    EntityColor.Violet -> Res.string.color_violet
+    EntityColor.Plum -> Res.string.color_plum
+    EntityColor.Mauve -> Res.string.color_mauve
+    EntityColor.Slate -> Res.string.color_slate
 }
 
 /**
