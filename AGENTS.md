@@ -189,6 +189,10 @@ plus `movementform` (the new / edit movement form).
 - Connection settings come from `local.properties` (git-ignored) through the generated `AppConfig`:
   `SUPABASE_URL`, `SUPABASE_URL_IOS` (optional), `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_WEB_CLIENT_ID` (the Google *web* client id, optional; Google sign-in is hidden when blank). Only the publishable (anon) key ever ships in the app;
   the secret / service_role key never appears in this repository.
+- Release signing also comes from `local.properties`: `RELEASE_STORE_FILE` (a keystore outside the repository),
+  `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`; without all four `assembleRelease` builds an
+  unsigned APK. Never commit a keystore or its passwords, and never type them yourself: the author fills them in. R8 runs
+  only on `androidx`, `kotlin` and `kotlinx` (`optimization.packageScope`), so the app needs no keep rules of its own.
 - From the emulator, the local Supabase stack is at `http://10.0.2.2:54321`; it is also the default when
   `SUPABASE_URL` is missing. The key has no default: the client is created lazily by Koin and fails on first use
   without one. Changing `local.properties` needs a rebuild.
