@@ -37,7 +37,9 @@ internal class GoogleSignInRequester(private val webClientId: String) {
                 Result.failure(IllegalStateException("Unexpected credential type: ${credential.type}"))
             }
         } catch (e: GetCredentialCancellationException) {
-            Result.failure(GoogleSignInCancelledException())
+            // Google also reports some failures as cancellations (an unregistered signing key: "Account reauth
+            // failed"); only a real cancel stays silent, see isUserCancellation
+            Result.failure(if (isUserCancellation(e.errorMessage)) GoogleSignInCancelledException() else e)
         } catch (e: CancellationException) {
             throw e
         } catch (e: NoCredentialException) {

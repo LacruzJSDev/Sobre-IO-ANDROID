@@ -97,7 +97,7 @@ Versión probada: ________ · Fecha: ________
 
 | Id | Configuración y flujo | Qué pasa | Arreglo |
 | --- | --- | --- | --- |
-| F-1 | Android, flujo 3 | Si Google rechaza el inicio de sesión (por ejemplo, una APK firmada con una clave que no está dada de alta en Google Cloud: `UNREGISTERED_ON_API_CONSOLE`), la app vuelve a la pantalla de inicio sin decir nada. Debería mostrar un error. Probable causa: el error llega como `GetCredentialCancellationException` y `GoogleSignInRequester` lo trata como una cancelación del usuario, que no muestra nada. Encontrado el 2026-11-25 al probar la APK firmada | Pendiente |
+| F-1 | Android, flujo 3 | Si Google rechaza el inicio de sesión (por ejemplo, una APK firmada con una clave que no está dada de alta en Google Cloud: `UNREGISTERED_ON_API_CONSOLE`), la app vuelve a la pantalla de inicio sin decir nada. Debería mostrar un error. Probable causa: el error llega como `GetCredentialCancellationException` y `GoogleSignInRequester` lo trata como una cancelación del usuario, que no muestra nada. Encontrado el 2026-11-25 al probar la APK firmada | Confirmada la causa («[16] Account reauth failed.» frente a «[16] Cancelled by user.»); ahora muestra el error y cerrar el selector sigue sin mostrar nada. Falta volver a probar la celda |
 
 ## Comprobado ya (2026-11-25)
 
