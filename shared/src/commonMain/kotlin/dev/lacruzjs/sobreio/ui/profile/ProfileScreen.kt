@@ -1,4 +1,6 @@
 package dev.lacruzjs.sobreio.ui.profile
+
+import dev.lacruzjs.sobreio.AppConfig
 import dev.lacruzjs.sobreio.ui.components.ContentWidth
 import dev.lacruzjs.sobreio.ui.components.contentMaxWidth
 
@@ -38,6 +40,7 @@ import dev.lacruzjs.sobreio.generated.resources.profile_name_saved
 import dev.lacruzjs.sobreio.ui.components.DestructiveButton
 import dev.lacruzjs.sobreio.ui.components.ErrorText
 import dev.lacruzjs.sobreio.generated.resources.profile_delete_account
+import dev.lacruzjs.sobreio.generated.resources.profile_app_version
 import dev.lacruzjs.sobreio.generated.resources.profile_accessibility_section
 import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_label
 import dev.lacruzjs.sobreio.generated.resources.profile_color_blind_note
@@ -60,6 +63,7 @@ fun ProfileRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     ProfileScreen(
         state = state,
+        appVersion = AppConfig.APP_VERSION,
         onEvent = { event ->
             when (event) {
                 ProfileEvent.BackClicked -> onBack()
@@ -76,6 +80,8 @@ fun ProfileScreen(
     state: ProfileUiState,
     onEvent: (ProfileEvent) -> Unit,
     modifier: Modifier = Modifier,
+    /** The installed version (sobreio.version), so a reported problem can be tied to a release. */
+    appVersion: String = "",
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.contentMaxWidth(ContentWidth.Form)) {
@@ -141,6 +147,14 @@ fun ProfileScreen(
                     onClick = { onEvent(ProfileEvent.DeleteAccountClicked) },
                     modifier = Modifier.padding(top = 16.dp),
                 )
+                if (appVersion.isNotBlank()) {
+                    Text(
+                        text = stringResource(Res.string.profile_app_version, appVersion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                }
             }
         }
     }
@@ -153,6 +167,7 @@ private fun ProfileScreenPreview() {
         ProfileScreen(
             state = ProfileUiState(user = User("1", "ana@example.com", "Ana"), name = "Ana"),
             onEvent = {},
+            appVersion = "1.0.0",
         )
     }
 }
