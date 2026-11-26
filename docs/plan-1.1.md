@@ -266,4 +266,5 @@ con la migración de `legal_documents`.
   la redirección de Supabase (punto 3) y las variables `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` del repositorio.
   Encontrado al probarla: en el navegador `kotlinx-datetime` solo conoce UTC y «SYSTEM»; se añadió `@js-joda/timezone` y
   `deviceTimeZoneId()`.
-- Sin empezar: la fase 7 (release 1.1).
+- Fase 7 (release 1.1): `v1.1.0` el 2026-11-26, con la APK y el zip de la web adjuntos; `Sobre-IO-DB` lleva el mismo
+  tag. Queda para después Google en la web (fase 6, punto 3).
