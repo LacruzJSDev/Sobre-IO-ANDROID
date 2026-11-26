@@ -219,11 +219,14 @@ Cada punto es un PR, en este orden:
    cerrado y simulador de iOS; claro, oscuro y daltonismo; español e inglés. Flujos: alta, crear grupo, invitar, gasto,
    asignar, compromiso, revisar, importar CSV, aportación entre grupos y borrar cuenta. Cada fallo, un PR `fix` con la
    etiqueta `no-changelog` (nunca se publicó).
-5. **Informe de pruebas** (entregable del curso, en `curso/`): tests unitarios, tests de pgTAP de la base de datos y la
-   matriz manual.
-6. **Release** (`build(app): release v1.0.0`): versión 1.0.0 (`versionCode` 10000) en Android e iOS, fecha en el
-   CHANGELOG, «Estado» del README al día y esta fase marcada como hecha. Después, el tag `v1.0.0`, la APK firmada en la
-   GitHub Release, el tag `v1.0.0` en `Sobre-IO-DB` y la compilación Release de iOS desde Xcode.
+5. **Release** (`build(app): release v1.0.0`), cuando la matriz no tenga celdas vacías ni ❌: versión 1.0.0
+   (`versionCode` 10000) en Android e iOS, fecha en el CHANGELOG, «Estado» del README al día y esta fase marcada como
+   hecha. Después, el tag `v1.0.0`, la APK firmada en la GitHub Release, el tag `v1.0.0` en `Sobre-IO-DB` y la
+   compilación Release de iOS desde Xcode.
+6. **Informe de pruebas** (entregable del curso, en `curso/`), sobre la 1.0.0 ya publicada: tests unitarios, tests de
+   pgTAP de la base de datos y la matriz manual con los fallos encontrados y sus arreglos. No es requisito de la release
+   (decidido el 2026-11-26): hecho después, describe exactamente la versión entregada y no hay que retocarlo con cada
+   arreglo que salga de las pruebas.
 
 Lo hace el autor, fuera del repositorio, antes del punto 4: comprobar que el Supabase alojado tiene todas las
 migraciones hasta D-56, la Edge Function de borrar cuenta, los correos en español y Realtime; crear el keystore de
@@ -269,4 +272,5 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 6 (orden del código, partes A a G, ver `fase-6-alcance.md`): hecha (#37–#43).
 - Fase 7 (release 1.0): en curso; hechos el punto 1 (versiones y CHANGELOG, #50), el 2 (versión en Perfil, #51) y el 3
   (firma de release, la APK de release probada en el emulador); la matriz de pruebas manuales del punto 4 está en
-  [pruebas-1.0.md](pruebas-1.0.md), pendiente de rellenar.
+  [pruebas-1.0.md](pruebas-1.0.md), pendiente de rellenar (su primer fallo, F-1, ya está arreglado en #54). Después,
+  la release y, por último, el informe de pruebas.
