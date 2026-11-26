@@ -16,15 +16,13 @@ está a mano en `app/src/main/res/xml/locales_config.xml`); en iOS se usa el idi
 
 ## Estado
 
-Base técnica y autenticación listas: registro con confirmación del correo mediante un código de 6 dígitos, inicio de
-sesión y recuperación de la contraseña con otro código. Una vez dentro: lista de grupos (crear uno con nombre y moneda,
-o unirse con un código de invitación), pantalla de perfil con cierre de sesión y estructura del grupo con las pestañas
-Grupo, Cuentas, Sobres y Movimientos (la de Grupo, todavía vacía). Al abrir la app se entra directamente en el último grupo usado.
-El inicio de sesión con Google está programado, pero no se puede probar hasta tener
-las credenciales de Google.
-Además: Koin, cliente de Supabase (Auth y PostgREST), navegación con Navigation 3, tema de
-la marca, icono adaptativo, errores propios de la app (`AppError`) traducidos a mensajes en inglés y español y formato
-de importes según el idioma.
+Versión **1.0.0** publicada el 2026-11-26: todo lo que pedía el [plan 1.0](docs/plan-1.0.md). Qué trae cada versión está
+en [CHANGELOG.md](CHANGELOG.md); la APK firmada de cada una, en las *releases* de GitHub.
+
+En resumen: alta con correo y código de 6 dígitos o con Google (Android e iOS); grupos compartidos con invitaciones y
+papeles; las pestañas Grupo, Cuentas, Sobres y Movimientos; compromisos y su revisión; importación de extractos del banco
+en CSV; exportación de un periodo; informes por filtro y etiqueta; tiempo real entre miembros; tablet y plegable con dos
+columnas; español e inglés, modo oscuro y colores para daltonismo.
 
 Paquete e identificador de la aplicación: `dev.lacruzjs.sobreio`.
 
@@ -81,9 +79,6 @@ Los valores de iOS se escriben a mano en `iosApp/project.yml` (y en el `Info.pli
 no es un arreglo y no se anota. La CI (`.github/workflows/changelog.yml`) no deja pasar un PR `feat` o `fix` que no toque
 `CHANGELOG.md`, salvo que lleve la etiqueta `no-changelog`. Los PR `refactor`, `test`, `docs`, `build` y `chore` no
 añaden nada.
-
-Antes de la 1.0.0 se rellena la matriz de pruebas manuales [docs/pruebas-1.0.md](docs/pruebas-1.0.md) con la APK de
-publicación.
 
 **Cómo se publica una versión:**
 
