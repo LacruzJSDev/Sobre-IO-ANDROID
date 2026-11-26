@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sobre-IO</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        html, body { margin: 0; height: 100%; background: #ffffff; }
+        @media (prefers-color-scheme: dark) { html, body { background: #171717; color: #f4f4f4; } }
+        #unsupported { display: none; font-family: system-ui, sans-serif; max-width: 32rem; margin: 20vh auto; padding: 0 1.5rem; }
+    </style>
+</head>
+<body>
+    <div id="unsupported">
+        <h1>Tu navegador no puede abrir Sobre-IO</h1>
+        <p>Usa una versión reciente de Chrome, Edge, Firefox o Safari (18.2 o posterior), o
+            <a href="https://github.com/LacruzJSDev/Sobre-IO-ANDROID/releases/latest">descarga la app para Android</a>.</p>
+        <p lang="en">Your browser cannot open Sobre-IO. Use a recent Chrome, Edge, Firefox or Safari (18.2 or later).</p>
+    </div>
+    <script>
+        // Compose for web needs WebAssembly with garbage collection (WasmGC)
+        const wasmGc = (() => {
+            try {
+                return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]));
+            } catch (e) { return false; }
+        })();
+        if (wasmGc) {
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = 'sobreio.js';
+            document.head.appendChild(script);
+        } else {
+            document.getElementById('unsupported').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -19,6 +19,8 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ### Novedades
 
+- **Sobre-IO en el navegador:** la misma app en la web, en `/app/` de la web de Sobre-IO, en Chrome, Edge, Firefox o
+  Safari recientes; todo salvo entrar con Google, que llegará después (#60).
 - **Términos y privacidad:** al entrar por primera vez, o cuando cambian, la app pide leer y aceptar los términos de uso
   y la política de privacidad; el alta los enlaza y en Perfil se pueden volver a leer, con la fecha en que se aceptaron
   (#57).

@@ -1,0 +1,68 @@
+# When a GitHub Release is published, builds the web app (Kotlin/Wasm) against the hosted Supabase and attaches
+# sobre-io-web-X.Y.Z.zip to it. Sobre-IO-WEB downloads that zip into /app/ the next time it deploys
+# (scripts/fetch-web-app.sh), so after this job: redeploy the website from Cloudflare or push to it.
+#
+# Needs these repository variables (Settings > Secrets and variables > Actions > Variables). They are public values,
+# the same the APK carries, so they are variables and not secrets:
+#   SUPABASE_URL               https://<project>.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY   the publishable (anon) key, never the secret one
+#   GOOGLE_WEB_CLIENT_ID       optional; Google sign-in is not on the web yet
+name: Web app
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build and attach the web app to (for example v1.1.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Connection settings
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Set the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY"
+            exit 1
+          fi
+          {
+            echo "SUPABASE_URL=$SUPABASE_URL"
+            echo "SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
+            echo "GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID"
+          } > local.properties
+
+      - name: Build the web app
+        run: ./gradlew :shared:wasmJsBrowserDistribution --console=plain
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${TAG#v}"
+          cd shared/build/dist/wasmJs/productionExecutable
+          zip -qr "$GITHUB_WORKSPACE/sobre-io-web-$VERSION.zip" . -x '*.map'
+          gh release upload "$TAG" "$GITHUB_WORKSPACE/sobre-io-web-$VERSION.zip" --clobber --repo "$GITHUB_REPOSITORY"

@@ -17,6 +17,9 @@ ktor = "3.5.1"
 koinBom = "4.2.2"
 multiplatformSettings = "1.3.0"
 kotlinxDatetime = "0.8.0"
+# npm package for the web build: the time zone database kotlinx-datetime lacks in the browser; 2.x matches the
+# @js-joda/core 3.x that kotlinx-datetime uses (3.x of this package asks for core 5)
+jsJodaTimezone = "2.3.0"
 credentials = "1.6.0"
 googleid = "1.2.1"
 
@@ -58,6 +61,7 @@ supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgre
 supabase-functions = { group = "io.github.jan-tennert.supabase", name = "functions-kt" }
 supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime-kt" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-js = { group = "io.ktor", name = "ktor-client-js", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
