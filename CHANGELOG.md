@@ -17,6 +17,15 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ## Sin publicar
 
+### Novedades
+
+- **Términos y privacidad:** al entrar por primera vez, o cuando cambian, la app pide leer y aceptar los términos de uso
+  y la política de privacidad; el alta los enlaza y en Perfil se pueden volver a leer, con la fecha en que se aceptaron
+  (#PR).
+- **Descargar mis datos:** desde Perfil, un archivo con tu perfil y todo lo de tus grupos (#PR).
+
+**Base de datos:** `Sobre-IO-DB` con las migraciones hasta D-58.
+
 ## [1.0.0] · 2026-11-26
 
 Primera versión completa: todo lo que pedía el plan 1.0.
