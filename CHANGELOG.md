@@ -17,6 +17,8 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ## Sin publicar
 
+## [1.0.0] · 2026-11-26
+
 Primera versión completa: todo lo que pedía el plan 1.0.
 
 ### Novedades

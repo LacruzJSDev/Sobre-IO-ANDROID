@@ -215,20 +215,16 @@ Cada punto es un PR, en este orden:
 3. **Firma de release** (`build(app)`): `signingConfig` que lee el keystore desde `local.properties` (el keystore queda
    fuera del repositorio; sin él, el build de release sale sin firmar), reglas de R8 revisadas y la APK de release
    probada en un dispositivo real.
-4. **Matriz de pruebas manuales** ([pruebas-1.0.md](pruebas-1.0.md)): móvil, tablet en vertical y en horizontal, plegable abierto y
-   cerrado y simulador de iOS; claro, oscuro y daltonismo; español e inglés. Flujos: alta, crear grupo, invitar, gasto,
-   asignar, compromiso, revisar, importar CSV, aportación entre grupos y borrar cuenta. Cada fallo, un PR `fix` con la
-   etiqueta `no-changelog` (nunca se publicó).
-5. **Release** (`build(app): release v1.0.0`), cuando la matriz no tenga celdas vacías ni ❌: versión 1.0.0
-   (`versionCode` 10000) en Android e iOS, fecha en el CHANGELOG, «Estado» del README al día y esta fase marcada como
-   hecha. Después, el tag `v1.0.0`, la APK firmada en la GitHub Release, el tag `v1.0.0` en `Sobre-IO-DB` y la
-   compilación Release de iOS desde Xcode.
-6. **Informe de pruebas** (entregable del curso, en `curso/`), sobre la 1.0.0 ya publicada: tests unitarios, tests de
-   pgTAP de la base de datos y la matriz manual con los fallos encontrados y sus arreglos. No es requisito de la release
-   (decidido el 2026-11-26): hecho después, describe exactamente la versión entregada y no hay que retocarlo con cada
-   arreglo que salga de las pruebas.
+4. **Release** (`build(app): release v1.0.0`): versión 1.0.0 (`versionCode` 10000) en Android e iOS, fecha en el
+   CHANGELOG, «Estado» del README al día y esta fase marcada como hecha. Después, el tag `v1.0.0`, la APK firmada en la
+   GitHub Release, el tag `v1.0.0` en `Sobre-IO-DB` y la compilación Release de iOS desde Xcode.
 
-Lo hace el autor, fuera del repositorio, antes del punto 4: comprobar que el Supabase alojado tiene todas las
+Las pruebas manuales y el informe de pruebas son entregables del curso, no requisitos de la release ni documentación del
+producto (decidido el 2026-11-26): la matriz está en la carpeta `curso/` del workspace, fuera de este repositorio, y se
+prueba sobre la 1.0.0 publicada. Cada fallo que salga es un PR `fix` con su línea en «Arreglos» y sale en una versión de
+parche (1.0.1, …).
+
+Lo hace el autor, fuera del repositorio, antes de la release: comprobar que el Supabase alojado tiene todas las
 migraciones hasta D-56, la Edge Function de borrar cuenta, los correos en español y Realtime; crear el keystore de
 release y el cliente OAuth de Android con su huella SHA-1 para que Google funcione en la APK firmada.
 
@@ -270,7 +266,6 @@ ir en paralelo en `Sobre-IO-DB` desde el principio.
 - Fase 5.2 (detalles más ligeros: rango y saldo de un día en la gráfica ampliada, «Libre de verdad» ampliable, 3 filas en las listas): hecha.
 - Fase 2 (tiempo real, D-55 en la base de datos): hecha; lo de otro miembro aparece en unos 3 s.
 - Fase 6 (orden del código, partes A a G, ver `fase-6-alcance.md`): hecha (#37–#43).
-- Fase 7 (release 1.0): en curso; hechos el punto 1 (versiones y CHANGELOG, #50), el 2 (versión en Perfil, #51) y el 3
-  (firma de release, la APK de release probada en el emulador); la matriz de pruebas manuales del punto 4 está en
-  [pruebas-1.0.md](pruebas-1.0.md), pendiente de rellenar (su primer fallo, F-1, ya está arreglado en #54). Después,
-  la release y, por último, el informe de pruebas.
+- Fase 7 (release 1.0): hecha. Versiones y CHANGELOG (#50), versión en Perfil (#51), firma de release con la APK
+  probada en el emulador (#52), error visible cuando Google rechaza el inicio de sesión (#54) y la release `v1.0.0` del
+  2026-11-26. Las pruebas manuales y el informe del curso siguen en `curso/`.
