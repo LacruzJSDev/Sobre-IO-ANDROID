@@ -256,7 +256,8 @@ con la migración de `legal_documents`.
 - Fase 1: `Sobre-IO-WEB` en GitHub, publicado por Cloudflare (Worker `sobre-io-web`) con la portada en los dos idiomas.
 - Fase 2: borradores en español e inglés con titular, NIF, localidad, correo de contacto y la región de Supabase. Dejan
   de ser borrador cuando D-57 esté en el proyecto alojado y se publiquen sus filas de `legal_documents`.
-- Fases 3.1 y 4.1 (D-57 y D-58, `Sobre-IO-DB` #18 y #19): fusionadas el 2026-11-25. Sin aplicar todavía al proyecto
-  alojado (`supabase db push` y desplegar la Edge Function `delete-account`).
+- Fases 3.1 y 4.1 (D-57 y D-58, `Sobre-IO-DB` #18 y #19): fusionadas el 2026-11-25 y aplicadas al proyecto alojado
+  el 2026-11-26, junto con D-56, que faltaba allí aunque la 1.0 la esperaba; Edge Function `delete-account` desplegada.
+  El proyecto alojado no guarda el registro de Auth en la base de datos (`Sobre-IO-DB` #20).
 - Fases 3.2, 4.2 y 5 (app): fusionadas en `Sobre-IO-ANDROID` #57 el 2026-11-26, probadas en el emulador contra la base local.
 - Sin empezar: la fase 6 (la app en el navegador) y la fase 7 (release 1.1).
