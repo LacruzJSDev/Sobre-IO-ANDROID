@@ -17,6 +17,10 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ## Sin publicar
 
+## [1.1.0] · 2026-11-26
+
+Términos y privacidad, descargar tus datos y la app en el navegador.
+
 ### Novedades
 
 - **Sobre-IO en el navegador:** la misma app en la web, en `/app/` de la web de Sobre-IO, en Chrome, Edge, Firefox o
