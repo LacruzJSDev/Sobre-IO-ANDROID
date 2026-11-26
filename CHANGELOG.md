@@ -21,8 +21,8 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 - **Términos y privacidad:** al entrar por primera vez, o cuando cambian, la app pide leer y aceptar los términos de uso
   y la política de privacidad; el alta los enlaza y en Perfil se pueden volver a leer, con la fecha en que se aceptaron
-  (#PR).
-- **Descargar mis datos:** desde Perfil, un archivo con tu perfil y todo lo de tus grupos (#PR).
+  (#57).
+- **Descargar mis datos:** desde Perfil, un archivo con tu perfil y todo lo de tus grupos (#57).
 
 **Base de datos:** `Sobre-IO-DB` con las migraciones hasta D-58.
 
