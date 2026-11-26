@@ -64,7 +64,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ExportHost(viewModel: ExportViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val saver = rememberCsvSaver { result -> viewModel.onEvent(ExportEvent.FileHandled(result)) }
+    val saver = rememberTextFileSaver(mimeType = "text/csv") { result -> viewModel.onEvent(ExportEvent.FileHandled(result)) }
     val languageTag = Locale.current.toLanguageTag()
     val header = exportHeader()
     val kindLabels = exportKindLabels()

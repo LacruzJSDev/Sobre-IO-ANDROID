@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.ic_sobreio_mark
+import dev.lacruzjs.sobreio.ui.legal.LegalGate
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -33,7 +34,13 @@ fun NavigationWrapper(
     when (val state = authState) {
         AuthState.Loading -> SessionLoading(modifier)
         AuthState.SignedOut -> AuthNavigation(modifier)
-        is AuthState.SignedIn -> AppNavigation(userId = state.user.id, modifier = modifier)
+        // The terms and privacy policy in force are accepted before the app shows (D-57)
+        is AuthState.SignedIn -> LegalGate(
+            userId = state.user.id,
+            checking = { SessionLoading(modifier) },
+            content = { AppNavigation(userId = state.user.id, modifier = modifier) },
+            modifier = modifier,
+        )
     }
 }
 

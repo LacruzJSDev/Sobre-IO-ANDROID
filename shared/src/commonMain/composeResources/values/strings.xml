@@ -1009,4 +1009,22 @@
     <string name="movements_report_by_envelope">By envelope</string>
     <string name="account_chart_more_hint">Enlarge it to change the range or see the balance on a given day</string>
     <string name="envelope_outlook_more">Tap to look until another day or see the balance on a given day</string>
+
+    <!-- Terms and privacy (D-57) and download my data (D-58) -->
+    <string name="action_continue">Continue</string>
+    <string name="legal_gate_title">Terms and privacy</string>
+    <string name="legal_gate_intro">To use Sobre-IO, read and accept its terms of use and its privacy policy. In short: your data is only used to run the app, and it is never sold or handed over to anyone.</string>
+    <string name="legal_gate_updated">The terms of use or the privacy policy have changed. Read them and accept them to go on.</string>
+    <string name="legal_gate_documents">Read them here</string>
+    <string name="legal_terms">Terms of use</string>
+    <string name="legal_privacy">Privacy policy</string>
+    <string name="legal_accept_label">I have read and accept them</string>
+    <string name="legal_gate_sign_out_note">If you do not accept them, sign out. To delete your account without accepting, write to the contact in the privacy policy.</string>
+    <string name="sign_up_legal_notice">To use Sobre-IO you will accept its terms of use and its privacy policy:</string>
+    <string name="profile_privacy_section">Privacy and your data</string>
+    <string name="profile_legal_accepted_on">Accepted on %1$s</string>
+    <string name="profile_download_data">Download my data</string>
+    <string name="profile_download_data_note">A JSON file with your profile and everything in your groups, to keep or to take elsewhere.</string>
+    <string name="profile_data_file_name">sobre-io-data-%1$s.json</string>
+    <string name="error_fz025_legal_version">There is a newer version of these documents. Read it and accept it to go on.</string>
 </resources>

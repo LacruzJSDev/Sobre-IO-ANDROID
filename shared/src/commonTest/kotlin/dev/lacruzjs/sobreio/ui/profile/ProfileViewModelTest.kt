@@ -5,6 +5,14 @@ import dev.lacruzjs.sobreio.domain.model.AuthState
 import dev.lacruzjs.sobreio.domain.model.User
 import dev.lacruzjs.sobreio.fake.FakeAppPreferencesStore
 import dev.lacruzjs.sobreio.fake.FakeAuthRepository
+import dev.lacruzjs.sobreio.fake.FakeExportRepository
+import dev.lacruzjs.sobreio.fake.FakeLegalRepository
+import dev.lacruzjs.sobreio.ui.export.SaveResult
+import dev.lacruzjs.sobreio.generated.resources.export_saved
+import kotlin.test.assertNull
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.validation_name_too_long
 import dev.lacruzjs.sobreio.generated.resources.validation_required
@@ -20,7 +28,10 @@ class ProfileViewModelTest : MainDispatcherTest() {
     private val auth = FakeAuthRepository(AuthState.SignedIn(user))
     // Lazy: init launches a coroutine, which needs Main replaced first
     private val preferences = FakeAppPreferencesStore()
-    private val viewModel by lazy { ProfileViewModel(auth, preferences) }
+    private val legal = FakeLegalRepository()
+    private val exports = FakeExportRepository()
+    private val clock = object : Clock { override fun now() = Instant.parse("2026-12-03T10:00:00Z") }
+    private val viewModel by lazy { ProfileViewModel(auth, preferences, legal, exports, clock) }
 
     @Test
     fun showsTheSignedInUserAndFillsTheNameField() {
@@ -91,5 +102,56 @@ class ProfileViewModelTest : MainDispatcherTest() {
         viewModel.onEvent(ProfileEvent.ColorBlindSafeChanged(false))
         assertFalse(preferences.colorBlindSafe.value)
         assertFalse(viewModel.state.value.colorBlindSafe)
+    }
+
+    @Test
+    fun showsTheDocumentsInForceAndWhatWasAccepted() {
+        legal.status = Result.success(
+            listOf(
+                FakeLegalRepository.status(FakeLegalRepository.TERMS, FakeLegalRepository.VERSION, needsAcceptance = false),
+                FakeLegalRepository.status(FakeLegalRepository.PRIVACY, FakeLegalRepository.VERSION, needsAcceptance = false),
+            ),
+        )
+        assertEquals(FakeLegalRepository.TERMS, viewModel.state.value.terms?.document)
+        assertEquals(FakeLegalRepository.PRIVACY, viewModel.state.value.privacy?.document)
+    }
+
+    @Test
+    fun aFailedLegalReadLeavesOnlyTheDownload() {
+        legal.status = Result.failure(AppError.Network)
+        assertNull(viewModel.state.value.terms)
+        assertNull(viewModel.state.value.privacy)
+    }
+
+    @Test
+    fun downloadingReadsTheDataAndHandsItToTheRouteNamedByToday() {
+        viewModel.onEvent(ProfileEvent.DownloadDataClicked)
+        val data = viewModel.state.value.pendingData
+        assertEquals(LocalDate(2026, 12, 3), data?.day)
+        assertEquals("""{"format":"sobre-io-export"}""", data?.content)
+        assertFalse(viewModel.state.value.isDownloading)
+        // A second tap while the dialog is open reads nothing again
+        viewModel.onEvent(ProfileEvent.DownloadDataClicked)
+        assertEquals(1, exports.myDataCalls)
+    }
+
+    @Test
+    fun theSaveDialogClosingClearsTheDataAndSaysWhatHappened() {
+        viewModel.onEvent(ProfileEvent.DownloadDataClicked)
+        viewModel.onEvent(ProfileEvent.DataFileHandled(SaveResult.Saved))
+        assertNull(viewModel.state.value.pendingData)
+        assertEquals(Res.string.export_saved, viewModel.state.value.downloadMessage)
+
+        viewModel.onEvent(ProfileEvent.DownloadDataClicked)
+        viewModel.onEvent(ProfileEvent.DataFileHandled(SaveResult.Cancelled))
+        assertNull(viewModel.state.value.downloadMessage)
+    }
+
+    @Test
+    fun aFailedDownloadShowsTheError() {
+        exports.myData = Result.failure(AppError.Network)
+        viewModel.onEvent(ProfileEvent.DownloadDataClicked)
+        assertEquals(AppError.Network, viewModel.state.value.downloadError)
+        assertNull(viewModel.state.value.pendingData)
     }
 }

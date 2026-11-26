@@ -5,6 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lacruzjs.sobreio.data.local.AppPreferencesStore
 import dev.lacruzjs.sobreio.data.repository.AuthRepository
+import dev.lacruzjs.sobreio.data.repository.ExportRepository
+import dev.lacruzjs.sobreio.data.repository.LegalRepository
+import dev.lacruzjs.sobreio.generated.resources.Res
+import dev.lacruzjs.sobreio.generated.resources.export_save_failed
+import dev.lacruzjs.sobreio.generated.resources.export_saved
+import dev.lacruzjs.sobreio.ui.export.SaveResult
+import dev.lacruzjs.sobreio.ui.loading.revalidate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.AuthState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +26,9 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(
     private val auth: AuthRepository,
     private val preferences: AppPreferencesStore,
+    private val legal: LegalRepository,
+    private val export: ExportRepository,
+    private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState())
@@ -25,6 +38,12 @@ class ProfileViewModel(
     private var nameLoaded = false
 
     init {
+        viewModelScope.launch {
+            revalidate(onRefreshing = {}) {
+                // Without the documents (none published, or a failure) the section shows only "Download my data"
+                legal.getStatus().onSuccess { statuses -> _state.update { it.copy(legal = statuses) } }
+            }
+        }
         viewModelScope.launch {
             preferences.colorBlindSafe.collect { enabled -> _state.update { it.copy(colorBlindSafe = enabled) } }
         }
@@ -46,8 +65,34 @@ class ProfileViewModel(
                 _state.update { it.copy(name = event.value, nameError = null, saveError = null, saved = false) }
             ProfileEvent.SaveClicked -> save()
             is ProfileEvent.ColorBlindSafeChanged -> preferences.setColorBlindSafe(event.enabled)
-            // Handled by the Route, which owns the back stack
-            ProfileEvent.BackClicked, ProfileEvent.DeleteAccountClicked -> Unit
+            ProfileEvent.DownloadDataClicked -> downloadData()
+            is ProfileEvent.DataFileHandled -> _state.update {
+                it.copy(
+                    pendingData = null,
+                    downloadMessage = when (event.result) {
+                        SaveResult.Saved -> Res.string.export_saved
+                        SaveResult.Failed -> Res.string.export_save_failed
+                        SaveResult.Cancelled -> null
+                    },
+                )
+            }
+            // Handled by the Route, which owns the back stack and the browser
+            ProfileEvent.BackClicked, ProfileEvent.DeleteAccountClicked, is ProfileEvent.OpenDocument -> Unit
+        }
+    }
+
+    /** Reads everything of the user's (D-58) and hands it to the Route for the save dialog. Never cached: always fresh. */
+    private fun downloadData() {
+        val current = _state.value
+        if (current.isDownloading || current.pendingData != null) return
+        _state.update { it.copy(isDownloading = true, downloadMessage = null, downloadError = null) }
+        viewModelScope.launch {
+            export.exportMyData()
+                .onSuccess { json ->
+                    val day = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                    _state.update { it.copy(isDownloading = false, pendingData = DataFile(day, json)) }
+                }
+                .onFailure { e -> _state.update { it.copy(isDownloading = false, downloadError = e.asAppError()) } }
         }
     }
 

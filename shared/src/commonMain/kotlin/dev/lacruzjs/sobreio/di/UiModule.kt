@@ -29,6 +29,7 @@ import dev.lacruzjs.sobreio.ui.movementform.MovementPrefill
 import dev.lacruzjs.sobreio.ui.movements.MovementsViewModel
 import dev.lacruzjs.sobreio.ui.deleteaccount.DeleteAccountViewModel
 import dev.lacruzjs.sobreio.ui.profile.ProfileViewModel
+import dev.lacruzjs.sobreio.ui.legal.LegalGateViewModel
 import dev.lacruzjs.sobreio.ui.session.SessionViewModel
 import dev.lacruzjs.sobreio.ui.bankimport.BankImportViewModel
 import org.koin.core.module.dsl.viewModel
@@ -37,9 +38,11 @@ import org.koin.dsl.module
 
 val uiModule = module {
     viewModelOf(::SessionViewModel)
+    viewModelOf(::LegalGateViewModel)
     viewModelOf(::SignUpViewModel)
     viewModelOf(::PasswordRecoveryViewModel)
-    viewModelOf(::ProfileViewModel)
+    // Explicit: viewModelOf would try to inject the clock, which keeps its default here
+    viewModel { ProfileViewModel(get(), get(), get(), get()) }
     viewModelOf(::DeleteAccountViewModel)
     viewModelOf(::GroupsViewModel)
     viewModelOf(::SignInViewModel)

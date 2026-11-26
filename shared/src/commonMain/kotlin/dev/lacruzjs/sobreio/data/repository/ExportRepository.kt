@@ -11,4 +11,10 @@ interface ExportRepository {
 
     /** Every live movement and move between envelopes of the period, ordered by date (`export_period`). */
     suspend fun exportPeriod(groupId: String, periodId: String): Result<List<ExportRow>>
+
+    /**
+     * Everything the signed-in user can see of their own, as the JSON text `export_my_data` returns (D-58): their
+     * profile, legal acceptances and every row of their groups. The app saves it as it is; nothing is read from it.
+     */
+    suspend fun exportMyData(): Result<String>
 }

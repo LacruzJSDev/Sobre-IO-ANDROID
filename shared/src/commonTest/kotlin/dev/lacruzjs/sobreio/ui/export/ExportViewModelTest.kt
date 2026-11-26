@@ -28,6 +28,7 @@ class ExportViewModelTest : MainDispatcherTest() {
             exported += periodId
             return Result.success(listOf(row))
         }
+        override suspend fun exportMyData(): Result<String> = Result.success("{}")
     }
 
     private val calendar = FakeCalendarRepository().apply { periods = listOf(current, previous) }

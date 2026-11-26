@@ -25,6 +25,10 @@ class SupabaseExportRepository(client: SupabaseClient) : ExportRepository {
         ).decodeList<ExportRowDto>().map { it.toDomain() }
     }
 
+    override suspend fun exportMyData(): Result<String> = safeCall {
+        postgrest.rpc("export_my_data").data
+    }
+
     @Serializable
     private data class ExportRowDto(
         @SerialName("record_type") val recordType: String,

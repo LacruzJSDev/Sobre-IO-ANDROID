@@ -2,7 +2,8 @@
 
 <!-- Behaviour of the code as it is: keep it true. Change it in the same commit as the code it describes. -->
 
-Email and password with 6-digit codes, and Google sign-in on both platforms.
+Email and password with 6-digit codes, and Google sign-in on both platforms. The sign-up form links the terms and the
+privacy policy; accepting them is the gate after sign-in ([legal](legal.md)).
 
 - Google sign-in on iOS: the SDK is Swift only (Swift Package Manager in `iosApp/project.yml`, Kotlin does not link it).
   `iosApp/GoogleSignInProvider.swift` implements the Kotlin interface `IosGoogleSignInProvider` and `iOSApp.swift` passes

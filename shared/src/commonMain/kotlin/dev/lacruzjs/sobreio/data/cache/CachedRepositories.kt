@@ -10,6 +10,7 @@ import dev.lacruzjs.sobreio.data.repository.EnvelopeRepository
 import dev.lacruzjs.sobreio.data.repository.EnvelopeTransferRepository
 import dev.lacruzjs.sobreio.data.repository.GroupRepository
 import dev.lacruzjs.sobreio.data.repository.GroupSummaryRepository
+import dev.lacruzjs.sobreio.data.repository.LegalRepository
 import dev.lacruzjs.sobreio.data.repository.MemberRepository
 import dev.lacruzjs.sobreio.data.repository.MovementFormRepository
 import dev.lacruzjs.sobreio.data.repository.MovementRepository
@@ -169,4 +170,10 @@ class CachedCalendarRepository(private val remote: CalendarRepository, private v
     override suspend fun getCurrentPeriod(groupId: String) = cache.get("currentPeriod", groupId) { remote.getCurrentPeriod(groupId) }
     override suspend fun getDateContext(groupId: String) = cache.get("dateContext", groupId) { remote.getDateContext(groupId) }
     override suspend fun getPeriods(groupId: String, limit: Int) = cache.get("periods", groupId, limit) { remote.getPeriods(groupId, limit) }
+}
+
+/** The documents and what the user accepted; accepting is a write, so the HTTP client invalidates both (D-57). */
+class CachedLegalRepository(private val remote: LegalRepository, private val cache: QueryCache) : LegalRepository by remote {
+    override suspend fun getDocumentsInForce() = cache.get("legal.inForce") { remote.getDocumentsInForce() }
+    override suspend fun getStatus() = cache.get("legal.status") { remote.getStatus() }
 }
