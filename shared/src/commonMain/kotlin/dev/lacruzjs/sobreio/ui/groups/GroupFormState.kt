@@ -1,8 +1,9 @@
 package dev.lacruzjs.sobreio.ui.groups
 
+import dev.lacruzjs.sobreio.ui.timezone.deviceTimeZoneId
+
 import dev.lacruzjs.sobreio.domain.model.Group
 import dev.lacruzjs.sobreio.ui.validation.validateName
-import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.StringResource
 
 /** Currencies a group can be created in. The choice is final, so the list stays short and fixed. */
@@ -24,7 +25,7 @@ data class GroupFormState(
     val color: String? = null,
     val icon: String? = null,
     val periodStartDay: Int = MIN_PERIOD_START_DAY,
-    val timezone: String = TimeZone.currentSystemDefault().id,
+    val timezone: String = deviceTimeZoneId(),
     val editing: Group? = null,
 ) {
     val isEditing: Boolean get() = editing != null

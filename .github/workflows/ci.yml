@@ -36,8 +36,9 @@ jobs:
       # which is enough to build and run unit tests (they never reach Supabase).
       # The iOS app is not built here: it needs a macOS runner and Xcode. Run the shared tests and the iOS build locally.
       # checkIosVersion: iosApp/project.yml and Info.plist carry the same version as gradle.properties
-      - name: Build, unit tests, lint and version check
-        run: ./gradlew :app:checkIosVersion :app:assembleDebug :shared:testAndroidHostTest :app:lintDebug --console=plain
+      # compileKotlinWasmJs: the web app (plan 1.1, phase 6) must keep compiling with every change to the shared code
+      - name: Build, unit tests, lint, version check and web compile
+        run: ./gradlew :app:checkIosVersion :app:assembleDebug :shared:testAndroidHostTest :app:lintDebug :shared:compileKotlinWasmJs --console=plain
 
       - name: Upload test and lint reports
         if: failure()

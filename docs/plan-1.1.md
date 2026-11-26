@@ -202,8 +202,9 @@ Comprobado el 2026-11-25: todas las librerías del catálogo publican la variant
 adaptive, iconos, Navigation 3, supabase-kt con realtime, Koin, multiplatform-settings, kotlinx-datetime y el motor JS de
 Ktor). El trabajo es el target y las piezas propias de cada plataforma:
 
-1. **Target `wasmJs { browser() }`** en `:shared` y un módulo pequeño `:webApp` (como `:app` y `iosApp`, solo la carcasa:
-   `index.html`, `main.kt` con `ComposeViewport`). Su `publicPath` es `/app/`.
+1. **Target `wasmJs { browser() }`** en `:shared`, que es también el ejecutable web: su carcasa son `Main.kt`
+   (`ComposeViewport`) e `index.html` en `wasmJsMain`. Al hacerlo se vio que un módulo `:webApp` aparte no aportaba nada:
+   la carcasa son dos ficheros. Sirve en `/app/` con rutas relativas.
 2. **Actuals:** `supabaseUrl` (desde `AppConfig`), motor `ktor-client-js`, ajustes con `localStorage` (multiplatform-settings
    ya lo hace) y el idioma del navegador.
 3. **Google:** en la web no hay Credential Manager. Se usa el flujo OAuth con redirección de Supabase
@@ -260,4 +261,9 @@ con la migración de `legal_documents`.
   el 2026-11-26, junto con D-56, que faltaba allí aunque la 1.0 la esperaba; Edge Function `delete-account` desplegada.
   El proyecto alojado no guarda el registro de Auth en la base de datos (`Sobre-IO-DB` #20).
 - Fases 3.2, 4.2 y 5 (app): fusionadas en `Sobre-IO-ANDROID` #57 el 2026-11-26, probadas en el emulador contra la base local.
-- Sin empezar: la fase 6 (la app en el navegador) y la fase 7 (release 1.1).
+- Fase 6 (app en el navegador): hecha salvo Google. Compila y funciona contra la base local (alta, aceptación, grupo,
+  perfil, descarga); la CI compila el target web y `web-release.yml` adjunta el zip a cada Release. Pendiente: Google con
+  la redirección de Supabase (punto 3) y las variables `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` del repositorio.
+  Encontrado al probarla: en el navegador `kotlinx-datetime` solo conoce UTC y «SYSTEM»; se añadió `@js-joda/timezone` y
+  `deviceTimeZoneId()`.
+- Sin empezar: la fase 7 (release 1.1).

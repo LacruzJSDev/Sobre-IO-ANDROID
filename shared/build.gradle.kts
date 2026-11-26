@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -80,6 +81,17 @@ kotlin {
         withHostTest {}
     }
 
+    // The web app (plan 1.1, phase 6): the same Compose UI in the browser, served at /app/ by Sobre-IO-WEB.
+    // `wasmJsBrowserDistribution` writes the static files (index.html, sobreio.js, .wasm) the website deploys.
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        outputModuleName.set("sobreio")
+        browser {
+            commonWebpackConfig { outputFileName = "sobreio.js" }
+        }
+        binaries.executable()
+    }
+
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
             baseName = "Shared"
@@ -135,6 +147,11 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
+            // In the browser kotlinx-datetime only knows UTC and "SYSTEM"; this adds every IANA zone (see Main.kt)
+            implementation(npm("@js-joda/timezone", libs.versions.jsJodaTimezone.get()))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

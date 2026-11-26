@@ -1,6 +1,6 @@
 # Sobre-IO App · Agent guide
 
-Android and iOS client of Sobre-IO, an envelope-budgeting app for households. Phone, tablet and foldable with one adaptive UI.
+Android, iOS and web client of Sobre-IO, an envelope-budgeting app for households. Phone, tablet, foldable and browser with one adaptive UI.
 All business rules live in the Supabase database (repository `Sobre-IO-DB`, its `AGENTS.md` lists the client API);
 this app displays state and calls that API. UI, ViewModels, repositories and models are written once in Kotlin
 Multiplatform and shared by both platforms.
@@ -12,24 +12,26 @@ Human documentation (Spanish): [README.md](README.md).
 | Concern | Choice |
 | --- | --- |
 | Language / UI | Kotlin 2.4 Multiplatform, Compose Multiplatform 1.12 (Material 3 and `material3-adaptive` JetBrains builds) |
-| Targets | Android (minSdk 24, targetSdk 37), `iosArm64`, `iosSimulatorArm64` (iOS 18.5+, the version Compose's bundled ICU data is built for) |
+| Targets | Android (minSdk 24, targetSdk 37), `iosArm64`, `iosSimulatorArm64` (iOS 18.5+, the version Compose's bundled ICU data is built for), `wasmJs` browser (needs WasmGC: Chrome and Edge 119+, Firefox 120+, Safari 18.2+) |
 | Architecture | MVVM with repositories, UI state in `StateFlow`; JetBrains `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose` |
 | Navigation | Navigation 3 (`androidx.navigation3-runtime` 1.2 + JetBrains `navigation3-ui`), keys are `@Serializable` `NavKey`s registered in `NavSavedStateConfiguration`; ViewModels scoped per entry with `lifecycle-viewmodel-navigation3` |
 | Resources | Compose resources (`composeResources`): strings, fonts and icons, generated `Res` object |
 | DI | Koin 4.2 (`koin-core`, `koin-compose-viewmodel`; `koin-android` only on Android), started by the shared `initKoin` |
-| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`, `realtime-kt`) on Ktor (OkHttp on Android, Darwin on iOS) + `kotlinx.serialization` JSON |
+| Backend client | `supabase-kt` 3.8 (`auth-kt`, `postgrest-kt`, `functions-kt`, `realtime-kt`) on Ktor (OkHttp on Android, Darwin on iOS, JS in the browser) + `kotlinx.serialization` JSON |
 | Icons | `org.jetbrains.compose.material:material-icons-extended` 1.7.3 (only the ~130 distinct icons of `IconCatalog` are referenced, so R8 strips the rest) |
-| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user, last account, bank CSV formats per account); `kotlinx-datetime` 0.8 (device time zone) |
-| Files | Android: `androidx.activity:activity-compose` (in `:shared` androidMain) for the system document picker; iOS: `UIDocumentPickerViewController` from Kotlin (no Swift) |
+| Local storage | `com.russhwolf:multiplatform-settings-no-arg` 1.3 (last group per user, last account, bank CSV formats per account); `kotlinx-datetime` 0.8 (device time zone; in the browser it only knows UTC and "SYSTEM", so the web adds the npm package `@js-joda/timezone` 2.3.0, version `jsJodaTimezone` in the catalog) |
+| Files | Android: `androidx.activity:activity-compose` (in `:shared` androidMain) for the system document picker; iOS: `UIDocumentPickerViewController` from Kotlin (no Swift); web: an `<input type="file">` and a download link, through `js()` |
 | Tests | `kotlin.test`, `kotlinx-coroutines-test` (`testing/MainDispatcherTest`), run as Android host tests |
-| Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen |
+| Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml`, AGP 9.4 (`com.android.kotlin.multiplatform.library` for `:shared`), Java 11; iOS project generated with XcodeGen; the web build downloads Node.js, Yarn and Binaryen from the repositories declared in `settings.gradle.kts` (the root `build.gradle.kts` stops the Kotlin plugins adding their own) and locks npm packages in `kotlin-js-store/wasm/yarn.lock` |
 
 No Room, no offline cache, no custom server. The Ktor version must match the one `supabase-kt` is built against.
 
 ## Current state (keep this section true)
 
 - Package and application id: `dev.lacruzjs.sobreio` (shared module namespace `dev.lacruzjs.sobreio.shared`).
-- Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell.
+- Two Gradle modules: `:shared` (all the code) and `:app` (Android application shell). `iosApp/` is the iOS shell. The web
+  app is the `wasmJs` executable of `:shared` itself (`wasmJsMain`: `Main.kt` and `index.html`, its whole shell); the website
+  `Sobre-IO-WEB` serves it at `/app/`.
 - Features: sign-in (email and password with 6-digit codes, Google on Android and iOS); Groups (create, join with a code,
   archive, delete, leave); the group shell with the Group, Accounts, Envelopes and Movements tabs; account, envelope and
   commitment details; commitments, movements, moves between envelopes and the bank import; group settings with members,
@@ -64,6 +66,8 @@ shared/                       Kotlin Multiplatform library (everything shareable
   src/commonMain/composeResources/   values/strings.xml (English), values-es-rES/strings.xml (Spain Spanish), drawable/, font/
   src/androidMain/kotlin/     Android actuals: Credential Manager Google sign-in, supabase URL
   src/iosMain/kotlin/         iOS actuals: MainViewController, setUpKoin, supabase URL, Google sign-in bridge (`IosGoogleSignInProvider` implemented in Swift)
+  src/wasmJsMain/             web actuals and shell: Main.kt (ComposeViewport, time zone database), index.html (WasmGC check), file
+                              picker and download through js(), browser time zone; Google sign-in is null for now
   src/commonTest/kotlin/      Unit tests with fakes
 app/                          Android application only: MainActivity, SobreioApplication, manifest, launcher icons,
                               network security configs, res/xml/locales_config.xml (hand-written language list)
@@ -222,6 +226,8 @@ plus `movementform` (the new / edit movement form) and `legal` (the acceptance g
 ./gradlew :app:checkIosVersion              # iOS version equals sobreio.version (gradle.properties)
 tools/release-notes.sh 1.0.0                 # notes of one version from CHANGELOG.md (or: unreleased)
 ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64   # iOS compile check, no Xcode UI needed
+./gradlew :shared:wasmJsBrowserDistribution  # web app in shared/build/dist/wasmJs/productionExecutable (serve it under /app/)
+./gradlew kotlinWasmUpgradeYarnLock          # after adding or changing an npm package of the web build
 cd iosApp && xcodegen                        # regenerate iosApp.xcodeproj after editing project.yml
 ```
 

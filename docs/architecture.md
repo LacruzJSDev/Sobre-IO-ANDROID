@@ -199,4 +199,22 @@ What every screen relies on. The screens themselves are described in `docs/featu
 
 ## Continuous integration
 
-- CI builds Android only (`:app:assembleDebug :shared:testAndroidHostTest :app:lintDebug`). The iOS app needs Xcode on a Mac.
+- CI builds Android and compiles the web target (`:app:assembleDebug :shared:testAndroidHostTest :app:lintDebug
+  :shared:compileKotlinWasmJs`). The iOS app needs Xcode on a Mac.
+- `web-release.yml`: when a GitHub Release is published, builds the web app against the hosted Supabase (repository
+  variables `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, optional `GOOGLE_WEB_CLIENT_ID`: public values, not secrets) and
+  attaches `sobre-io-web-X.Y.Z.zip` to the Release. `Sobre-IO-WEB` puts it in `/app/` on its next deploy.
+
+## Web
+
+- The `wasmJs` target of `:shared` is the web app: the same `App()` in a `ComposeViewport` over the page body
+  (`wasmJsMain/kotlin/.../Main.kt`), served by `Sobre-IO-WEB` at the single URL `/app/` (no browser history routes in
+  1.1: back is the app's own button). `index.html` loads `sobreio.js` as an ES module only when the browser has WasmGC;
+  otherwise it explains which browsers work and links the APK.
+- Platform pieces (`wasmJsMain`): Supabase URL = `SUPABASE_URL_IOS` (a browser on the Mac reaches the local stack at
+  127.0.0.1, like the simulator); session and preferences in `localStorage` (supabase-kt and multiplatform-settings do it);
+  the bank CSV through a hidden `<input type="file">` read as base64; exports and "Download my data" as a download link (no
+  dialog: `Saved` at once); `deviceTimeZoneId()` from `Intl`, because `TimeZone.currentSystemDefault().id` is "SYSTEM" in
+  the browser; every IANA zone from `@js-joda/timezone`, loaded in `Main.kt`. Google sign-in returns null until the OAuth
+  redirect flow (plan 1.1, phase 6), so the button is hidden.
+- The bundle is two `.wasm` files (Skia and the app, about 19 MB, 6 MB compressed) and about 1.3 MB of JS.
