@@ -66,6 +66,7 @@ shared/                       Kotlin Multiplatform library (everything shareable
   src/commonMain/composeResources/   values/strings.xml (English), values-es-rES/strings.xml (Spain Spanish), drawable/, font/
   src/androidMain/kotlin/     Android actuals: Credential Manager Google sign-in, supabase URL
   src/iosMain/kotlin/         iOS actuals: MainViewController, setUpKoin, supabase URL, Google sign-in bridge (`IosGoogleSignInProvider` implemented in Swift)
+  webpack.config.d/           web build tweaks; skiko-no-tail-call.js works around the Safari 27.2 white page (docs/architecture.md, "Web")
   src/wasmJsMain/             web actuals and shell: Main.kt (ComposeViewport, time zone database), index.html (WasmGC check), file
                               picker and download through js(), browser time zone; Google sign-in is null for now
   src/commonTest/kotlin/      Unit tests with fakes
