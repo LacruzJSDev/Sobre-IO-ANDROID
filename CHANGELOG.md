@@ -21,12 +21,12 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 - **Adelantar movimientos:** en el Grupo, «Próximos movimientos» enseña los cuatro siguientes, y su icono abre la
   pantalla donde se revisan los atrasados y se pueden apuntar u omitir los próximos antes de su día. El icono lleva un
-  círculo con el número de pendientes de revisar.
+  círculo con el número de pendientes de revisar (#62).
 
 ### Arreglos
 
 - **Mirar hasta:** al mirar hasta un día del periodo siguiente, el dinero libre ya descuenta lo que ese periodo pasará a
-  los sobres con objetivo.
+  los sobres con objetivo (#62).
 
 **Base de datos:** necesita la migración `d34_outlook_pending_targets` (Sobre-IO-DB #22).
 
