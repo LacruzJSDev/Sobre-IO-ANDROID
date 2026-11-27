@@ -140,22 +140,19 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun reviewCardIsCalmWithNothingPending() {
+    fun theReviewBadgeIsEmptyWithNothingPending() {
         loaded()
 
-        val state = viewModel.state.value
-        assertEquals(0, state.pendingCount)
-        assertNull(state.oldestPendingDate)
+        assertEquals(0, viewModel.state.value.pendingCount)
     }
 
     @Test
-    fun reviewCardCountsThePendingAndKnowsTheOldestDate() {
+    fun theReviewBadgeCountsThePendingButNotTheReceivingHalfOfAContribution() {
         summary.pending = listOf(due("c1", day = 5), due("c2", CommitmentKind.GroupTransferIn), due("c3", CommitmentKind.Income, day = 8))
         loaded()
 
         val state = viewModel.state.value
         assertEquals(2, state.pendingCount)
-        assertEquals(LocalDate(2026, 11, 5), state.oldestPendingDate)
         assertEquals(listOf(-5_000L, 5_000L), state.pending.map { it.signedCents })
     }
 
@@ -261,21 +258,31 @@ class GroupSummaryViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun upcomingGoesFromTomorrowToThePeriodEnd() {
+    fun nextMovementsAreReadFromTomorrowForThirtyDaysPastThePeriodEnd() {
         summary.upcoming = listOf(due("c9", day = 20))
         loaded()
 
-        assertEquals(LocalDate(2026, 11, 15) to LocalDate(2026, 11, 30), summary.upcomingRange)
+        assertEquals(LocalDate(2026, 11, 15) to LocalDate(2026, 12, 14), summary.upcomingRange)
         assertEquals(listOf("c9"), viewModel.state.value.upcoming.map { it.commitmentId })
     }
 
     @Test
-    fun noUpcomingIsAskedWhenTodayIsTheLastDay() {
+    fun nextMovementsShowTheFirstFourSoonestFirstWithoutTheReceivingHalfOfAContribution() {
+        summary.upcoming = listOf(
+            due("c5", day = 25), due("c1", day = 16), due("c2", CommitmentKind.GroupTransferIn, day = 17),
+            due("c3", day = 18), due("c4", day = 20), due("c6", day = 28),
+        )
+        loaded()
+
+        assertEquals(listOf("c1", "c3", "c4", "c5"), viewModel.state.value.upcoming.map { it.commitmentId })
+    }
+
+    @Test
+    fun onTheLastDayOfThePeriodTheNextMovementsComeFromTheNextOne() {
         calendar.today = LocalDate(2026, 11, 30)
         loaded()
 
-        assertNull(summary.upcomingRange)
-        assertTrue(viewModel.state.value.upcoming.isEmpty())
+        assertEquals(LocalDate(2026, 12, 1) to LocalDate(2026, 12, 30), summary.upcomingRange)
     }
 
     @Test

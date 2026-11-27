@@ -34,8 +34,13 @@ data class GroupReviewUiState(
     /** Reading again from the database with the content on screen: the thin bar under the header. */
     val isRefreshing: Boolean = false,
     val error: AppError? = null,
-    /** Due dates to review, oldest first; the ones the user just confirmed or skipped are already gone. */
+    /** Due dates to review (due today or before), oldest first; the ones the user just confirmed or skipped are already gone. */
     val pending: List<DueOccurrence> = emptyList(),
+    /**
+     * The next due dates, from tomorrow within [dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS], soonest first: they
+     * can be registered (on today) or skipped before they are due, and then never come up for review.
+     */
+    val upcoming: List<DueOccurrence> = emptyList(),
     val accounts: List<Account> = emptyList(),
     val envelopes: List<Envelope> = emptyList(),
     /** The group's today; the latest date a due date can be registered on. */
@@ -45,6 +50,9 @@ data class GroupReviewUiState(
     val actionError: AppError? = null,
     val undoMessage: UndoMessage? = null,
 ) {
+    /** Nothing waits for review and nothing is coming: the screen shows a calm message instead of the lists. */
+    val isEmpty: Boolean get() = pending.isEmpty() && upcoming.isEmpty()
+
     fun accountName(id: String?): String = accounts.firstOrNull { it.id == id }?.name.orEmpty()
 
     /**

@@ -37,7 +37,13 @@ import dev.lacruzjs.sobreio.generated.resources.action_confirm
 import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.action_skip
 import dev.lacruzjs.sobreio.generated.resources.group_review_back
-import dev.lacruzjs.sobreio.generated.resources.group_review_empty
+import dev.lacruzjs.sobreio.generated.resources.group_review_due_on
+import dev.lacruzjs.sobreio.generated.resources.group_review_nothing
+import dev.lacruzjs.sobreio.generated.resources.group_review_section_due
+import dev.lacruzjs.sobreio.generated.resources.group_review_section_next
+import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS
+import dev.lacruzjs.sobreio.ui.components.ListSectionTitle
 import dev.lacruzjs.sobreio.generated.resources.group_review_title
 import dev.lacruzjs.sobreio.generated.resources.group_summary_due_subtitle
 import dev.lacruzjs.sobreio.ui.components.SoftTile
@@ -59,7 +65,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Level 2 of the Group tab: the due dates waiting for review. [onBack] returns to the group, which reads its figures again
+ * Level 2 of the Group tab: the due dates waiting for review and the next ones, which can be registered or skipped early. [onBack] returns to the group, which reads its figures again
  * when it is shown. Reads again each time it is shown.
  */
 @Composable
@@ -116,7 +122,7 @@ fun GroupReviewScreen(
                         state.error != null -> EmptyState(message = stringResource(state.error.messageRes())) {
                             TextButton(onClick = { onEvent(GroupReviewEvent.Refresh) }) { Text(stringResource(Res.string.action_retry)) }
                         }
-                        state.pending.isEmpty() -> EmptyState(message = stringResource(Res.string.group_review_empty)) {
+                        state.isEmpty -> EmptyState(message = stringResource(Res.string.group_review_nothing, NEXT_DUE_WINDOW_DAYS)) {
                             ErrorText(state.actionError)
                             PrimaryButton(
                                 text = stringResource(Res.string.group_review_back),
@@ -145,50 +151,71 @@ private fun ReviewList(state: GroupReviewUiState, onEvent: (GroupReviewEvent) ->
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp))
-        state.pending.forEach { item ->
-            SoftTile {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // No entity colour: a commitment is drawn in ink with the icon of its kind
-                    EntityAvatar(name = item.name, icon = item.kind.icon(), color = null, size = 36.dp)
-                    Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                        Text(text = item.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(
-                            text = stringResource(
-                                Res.string.group_summary_due_subtitle,
-                                state.accountName(item.accountId),
-                                formatDate(item.dueDate, languageTag),
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    MoneyText(
-                        amountCents = item.signedCents,
-                        currencyCode = state.currencyCode,
-                        role = MoneyRole.Flow,
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.End,
-                        maxLines = 1,
-                    )
-                }
-                if (state.canRecord) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        SecondaryButton(
-                            text = stringResource(Res.string.action_skip),
-                            onClick = { onEvent(GroupReviewEvent.SkipClicked(item.key)) },
-                            modifier = Modifier.weight(1f),
-                            compact = true,
-                        )
-                        PrimaryButton(
-                            text = stringResource(Res.string.action_confirm),
-                            onClick = { onEvent(GroupReviewEvent.ConfirmClicked(item.key)) },
-                            modifier = Modifier.weight(1f),
-                            compact = true,
-                        )
-                    }
-                }
+        if (state.pending.isNotEmpty()) {
+            ListSectionTitle(stringResource(Res.string.group_review_section_due))
+            state.pending.forEach { item ->
+                DueRow(
+                    item = item,
+                    subtitle = stringResource(Res.string.group_summary_due_subtitle, state.accountName(item.accountId), formatDate(item.dueDate, languageTag)),
+                    state = state,
+                    onEvent = onEvent,
+                )
+            }
+        }
+        if (state.upcoming.isNotEmpty()) {
+            ListSectionTitle(stringResource(Res.string.group_review_section_next))
+            state.upcoming.forEach { item ->
+                DueRow(
+                    item = item,
+                    subtitle = stringResource(Res.string.group_review_due_on, state.accountName(item.accountId), formatDate(item.dueDate, languageTag)),
+                    state = state,
+                    onEvent = onEvent,
+                )
+            }
+        }
+    }
+}
+
+/** One due date with Skip and Confirm; a next one is confirmed on today, before its day, and then never comes up for review. */
+@Composable
+private fun DueRow(item: DueOccurrence, subtitle: String, state: GroupReviewUiState, onEvent: (GroupReviewEvent) -> Unit) {
+    SoftTile {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // No entity colour: a commitment is drawn in ink with the icon of its kind
+            EntityAvatar(name = item.name, icon = item.kind.icon(), color = null, size = 36.dp)
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(text = item.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            MoneyText(
+                amountCents = item.signedCents,
+                currencyCode = state.currencyCode,
+                role = MoneyRole.Flow,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+            )
+        }
+        if (state.canRecord) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                SecondaryButton(
+                    text = stringResource(Res.string.action_skip),
+                    onClick = { onEvent(GroupReviewEvent.SkipClicked(item.key)) },
+                    modifier = Modifier.weight(1f),
+                    compact = true,
+                )
+                PrimaryButton(
+                    text = stringResource(Res.string.action_confirm),
+                    onClick = { onEvent(GroupReviewEvent.ConfirmClicked(item.key)) },
+                    modifier = Modifier.weight(1f),
+                    compact = true,
+                )
             }
         }
     }

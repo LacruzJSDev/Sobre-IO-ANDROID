@@ -397,6 +397,64 @@ class GroupReviewViewModelTest : MainDispatcherTest() {
     }
 
     @Test
+    fun theNextDueDatesAreReadFromTomorrowForThirtyDays() {
+        summary.upcoming = listOf(due("c9", day = 20), due("c8", day = 16), due("c7", CommitmentKind.GroupTransferIn, day = 18))
+        loaded()
+
+        assertEquals(LocalDate(2026, 11, 15) to LocalDate(2026, 12, 14), summary.upcomingRange)
+        assertEquals(listOf("c8", "c9"), viewModel.state.value.upcoming.map { it.commitmentId })
+        assertFalse(viewModel.state.value.isEmpty)
+    }
+
+    @Test
+    fun nothingPendingAndNothingComingIsEmpty() {
+        loaded()
+
+        assertTrue(viewModel.state.value.isEmpty)
+    }
+
+    @Test
+    fun aNextDueDateIsConfirmedEarlyOnTodayAndLeavesTheList() {
+        summary.upcoming = listOf(due("c9", day = 20, amount = 7_000))
+        loaded()
+
+        viewModel.onEvent(GroupReviewEvent.ConfirmClicked("c9|2026-11-20"))
+        assertEquals(LocalDate(2026, 11, 14), viewModel.state.value.sheet?.date)
+        viewModel.onEvent(GroupReviewEvent.ConfirmSubmitted)
+
+        assertEquals(7_000, summary.confirmedAmount)
+        assertEquals(LocalDate(2026, 11, 14), summary.confirmedDate)
+        assertTrue(viewModel.state.value.upcoming.isEmpty())
+        assertEquals(Res.string.occurrence_recorded, viewModel.state.value.undoMessage?.message)
+    }
+
+    @Test
+    fun aNextDueDateCanBeSkippedEarlyAndUndoBringsItBackToItsList() {
+        summary.pending = listOf(due("c1"))
+        summary.upcoming = listOf(due("c9", day = 20))
+        loaded()
+
+        viewModel.onEvent(GroupReviewEvent.SkipClicked("c9|2026-11-20"))
+        assertTrue(viewModel.state.value.upcoming.isEmpty())
+
+        viewModel.onEvent(GroupReviewEvent.UndoClicked)
+        assertEquals(listOf("c9"), viewModel.state.value.upcoming.map { it.commitmentId })
+        assertEquals(listOf("c1"), viewModel.state.value.pending.map { it.commitmentId })
+    }
+
+    @Test
+    fun anEarlySkipIsWrittenWhenTheSnackbarEnds() {
+        summary.upcoming = listOf(due("c9", day = 20))
+        loaded()
+        viewModel.onEvent(GroupReviewEvent.SkipClicked("c9|2026-11-20"))
+
+        viewModel.onEvent(GroupReviewEvent.UndoExpired)
+
+        assertTrue(summary.calls.contains("skip(c9, 2026-11-20)"))
+        assertTrue(viewModel.state.value.upcoming.isEmpty())
+    }
+
+    @Test
     fun readOnlyGroupCannotConfirmOrSkip() {
         summary.pending = listOf(due("c1"))
         loaded(canRecord = false)

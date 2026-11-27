@@ -12,6 +12,7 @@ import dev.lacruzjs.sobreio.domain.error.AppError
 import dev.lacruzjs.sobreio.domain.error.asAppError
 import dev.lacruzjs.sobreio.domain.model.CoverItem
 import dev.lacruzjs.sobreio.domain.model.DueOccurrence
+import dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS
 import dev.lacruzjs.sobreio.generated.resources.Res
 import dev.lacruzjs.sobreio.generated.resources.occurrence_recorded
 import dev.lacruzjs.sobreio.generated.resources.occurrence_skipped
@@ -29,11 +30,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 
 /**
- * The focused review of a group's due dates: the only place where they are confirmed or skipped (the Group tab only counts
- * them and opens this screen). Every figure comes from the database; the app only joins names.
+ * The focused review of a group's due dates: the only place where they are confirmed or skipped, both the ones already due
+ * and the next ones, which can be registered before their day (the Group tab only lists the next few and opens this screen). Every figure comes from the database; the app only joins names.
  */
 class GroupReviewViewModel(
     private val groupId: String,
@@ -101,12 +104,16 @@ class GroupReviewViewModel(
                     val groupD = async { groups.getGroup(groupId) }
                     val todayD = async { calendar.getToday(groupId) }
                     val pendingD = async { summary.getPending(groupId) }
+                    val upcomingD = async {
+                        todayD.await().map { day -> day.plus(1, DateTimeUnit.DAY) to day.plus(NEXT_DUE_WINDOW_DAYS, DateTimeUnit.DAY) }
+                            .mapCatching { (from, to) -> summary.getUpcoming(groupId, from, to).getOrThrow() }
+                    }
                     val accountsD = async { accounts.getAccounts(groupId) }
                     val envelopesD = async { envelopes.getEnvelopes(groupId) }
-                    Reads(groupD.await(), todayD.await(), pendingD.await(), accountsD.await(), envelopesD.await())
+                    Reads(groupD.await(), todayD.await(), pendingD.await(), upcomingD.await(), accountsD.await(), envelopesD.await())
                 }
                 val failure = reads.group.exceptionOrNull() ?: reads.today.exceptionOrNull() ?: reads.pending.exceptionOrNull()
-                    ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
+                    ?: reads.upcoming.exceptionOrNull() ?: reads.accounts.exceptionOrNull() ?: reads.envelopes.exceptionOrNull()
                 if (failure != null) {
                     _state.update {
                         if (!hasLoaded) it.copy(isLoading = false, error = failure.asAppError())
@@ -125,6 +132,8 @@ class GroupReviewViewModel(
                         canRecord = !group.isArchived && !group.isPendingDeletion,
                         today = day,
                         pending = reads.pending.getOrThrow().filter { o -> o.isReviewable && o.key !in hiddenKeys },
+                        upcoming = reads.upcoming.getOrThrow().filter { o -> o.isReviewable && o.key !in hiddenKeys }
+                            .sortedWith(BY_DATE),
                         accounts = reads.accounts.getOrThrow(),
                         envelopes = reads.envelopes.getOrThrow(),
                         isLoading = false,
@@ -138,7 +147,7 @@ class GroupReviewViewModel(
     private fun openConfirm(key: String) {
         val current = _state.value
         if (!current.canRecord) return
-        val occurrence = current.pending.firstOrNull { it.key == key } ?: return
+        val occurrence = current.find(key) ?: return
         val limit = today ?: occurrence.dueDate
         _state.update {
             it.copy(
@@ -188,7 +197,7 @@ class GroupReviewViewModel(
         viewModelScope.launch {
             summary.confirm(occurrence.commitmentId, occurrence.kind, occurrence.dueDate, cents, draft.date, cover)
                 .onSuccess { fact ->
-                    _state.update { it.copy(sheet = null, pending = it.pending.filterNot { o -> o.key == occurrence.key }, actionError = null) }
+                    _state.update { it.without(occurrence.key).copy(sheet = null, actionError = null) }
                     undo.show(
                         UndoableAction(
                             message = Res.string.occurrence_recorded,
@@ -209,12 +218,16 @@ class GroupReviewViewModel(
     private fun skip(key: String) {
         val current = _state.value
         if (!current.canRecord) return
-        val occurrence = current.pending.firstOrNull { it.key == key } ?: return
+        val occurrence = current.find(key) ?: return
+        val wasPending = current.pending.any { it.key == key }
         hiddenKeys += key
-        _state.update { it.copy(pending = it.pending - occurrence, actionError = null) }
+        _state.update { it.without(key).copy(actionError = null) }
         val restore = {
             hiddenKeys -= key
-            _state.update { s -> s.copy(pending = (s.pending + occurrence).sortedWith(compareBy({ it.dueDate }, { it.name }))) }
+            _state.update { s ->
+                if (wasPending) s.copy(pending = (s.pending + occurrence).sortedWith(BY_DATE))
+                else s.copy(upcoming = (s.upcoming + occurrence).sortedWith(BY_DATE))
+            }
         }
         undo.show(
             UndoableAction(
@@ -232,6 +245,12 @@ class GroupReviewViewModel(
         )
     }
 
+    private fun GroupReviewUiState.find(key: String): DueOccurrence? =
+        pending.firstOrNull { it.key == key } ?: upcoming.firstOrNull { it.key == key }
+
+    private fun GroupReviewUiState.without(key: String): GroupReviewUiState =
+        copy(pending = pending.filterNot { it.key == key }, upcoming = upcoming.filterNot { it.key == key })
+
     private fun updateSheet(change: (ConfirmDraft) -> ConfirmDraft) =
         _state.update { s -> s.copy(sheet = s.sheet?.let(change)) }
 
@@ -240,7 +259,12 @@ class GroupReviewViewModel(
         val group: Result<dev.lacruzjs.sobreio.domain.model.Group>,
         val today: Result<LocalDate>,
         val pending: Result<List<DueOccurrence>>,
+        val upcoming: Result<List<DueOccurrence>>,
         val accounts: Result<List<dev.lacruzjs.sobreio.domain.model.Account>>,
         val envelopes: Result<List<dev.lacruzjs.sobreio.domain.model.Envelope>>,
     )
+
+    private companion object {
+        val BY_DATE = compareBy<DueOccurrence>({ it.dueDate }, { it.name })
+    }
 }

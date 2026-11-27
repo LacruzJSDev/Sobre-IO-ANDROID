@@ -46,7 +46,7 @@ data class GroupSummaryUiState(
     val freeProjection: List<FreePoint> = emptyList(),
     /** Due dates to review, oldest first; the review screen is where they are confirmed or skipped. */
     val pending: List<DueOccurrence> = emptyList(),
-    /** Due dates from tomorrow to the end of the period. */
+    /** The first [MAX_NEXT_MOVEMENTS] due dates from tomorrow on (within [dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS]), soonest first. */
     val upcoming: List<DueOccurrence> = emptyList(),
     val warnings: List<GroupWarning> = emptyList(),
     /** The envelopes that spent most in the period, biggest first, at most [MAX_SPENDING_BARS]. */
@@ -56,11 +56,8 @@ data class GroupSummaryUiState(
     /** Failure of reading again while there is content to show. */
     val actionError: AppError? = null,
 ) {
-    /** What the badge of the Group tab and the review card show. */
+    /** What the badge of the Group tab and of the review icon show. */
     val pendingCount: Int get() = pending.size
-
-    /** The oldest due date waiting for review (the list comes oldest first, but the state does not rely on it). */
-    val oldestPendingDate: LocalDate? get() = pending.minOfOrNull { it.dueDate }
 
     /** Days from today to the end of the period (0 on its last day): a display count; null until both are known. */
     val daysLeft: Int?
@@ -105,5 +102,6 @@ data class GroupSummaryUiState(
 
     companion object {
         const val MAX_SPENDING_BARS = 6
+        const val MAX_NEXT_MOVEMENTS = 4
     }
 }

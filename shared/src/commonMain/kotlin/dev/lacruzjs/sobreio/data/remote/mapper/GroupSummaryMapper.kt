@@ -24,6 +24,7 @@ internal fun GroupOutlookDto.toDomain() = GroupOutlook(
     pendingOutCents = pendingOut,
     pendingIncomeCents = pendingIncome,
     freeProjectedCents = freeProjected,
+    pendingTargetsCents = pendingTargets,
 )
 
 internal fun DueOccurrenceDto.toDomain() = DueOccurrence(

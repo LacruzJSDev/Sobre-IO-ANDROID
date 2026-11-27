@@ -4,6 +4,7 @@ import dev.lacruzjs.sobreio.generated.resources.balance_on_day_choose
 import dev.lacruzjs.sobreio.generated.resources.outlook_until_label
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_free_on
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_note
+import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_targets
 import dev.lacruzjs.sobreio.generated.resources.group_look_ahead_title
 import dev.lacruzjs.sobreio.ui.components.StatRow
 import dev.lacruzjs.sobreio.ui.components.tileShape
@@ -41,10 +42,6 @@ import dev.lacruzjs.sobreio.generated.resources.action_retry
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_commitments
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_contributions
 import dev.lacruzjs.sobreio.generated.resources.group_hero_note_income
-import dev.lacruzjs.sobreio.generated.resources.group_review_count
-import dev.lacruzjs.sobreio.generated.resources.group_review_empty
-import dev.lacruzjs.sobreio.generated.resources.group_review_open
-import dev.lacruzjs.sobreio.generated.resources.group_review_oldest
 import dev.lacruzjs.sobreio.generated.resources.group_summary_free_today
 import dev.lacruzjs.sobreio.ui.components.EmptyState
 import dev.lacruzjs.sobreio.ui.components.ListSkeleton
@@ -58,8 +55,8 @@ import dev.lacruzjs.sobreio.ui.theme.MoneyRole
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Content of the Group tab: the hero card with the free money and its projection, the review card, the warnings, where the
- * period's money went, the money in and out by period and the next due dates. It lives inside the group shell.
+ * Content of the Group tab: the hero card with the free money and its projection, the next movements (whose icon opens the
+ * review), the warnings, where the period's money went and the money in and out by period. It lives inside the group shell.
  */
 @Composable
 fun GroupSummaryPane(
@@ -86,20 +83,19 @@ fun GroupSummaryPane(
 @Composable
 private fun SummaryContent(state: GroupSummaryUiState, outlook: GroupOutlook, onEvent: (GroupSummaryEvent) -> Unit) {
     val languageTag = Locale.current.toLanguageTag()
-    // What needs attention now on the left (the free money, what to review, the warnings); how the period went and
-    // what comes next on the right. Each column scrolls by itself on a wide pane.
+    // What needs attention now on the left (the free money, the next movements with what to review, the warnings); how
+    // the period went on the right. Each column scrolls by itself on a wide pane.
     TwoColumnLayout(
         top = { ErrorText(state.actionError, modifier = Modifier.padding(horizontal = 8.dp)) },
         left = {
             GroupHero(state, outlook, languageTag)
-            ReviewCard(state, languageTag, onEvent)
+            NextMovementsSection(state, languageTag, onEvent)
             if (state.warnings.isNotEmpty()) WarningsCard(state, languageTag, onEvent)
             LookAheadSection(state, languageTag, onEvent)
         },
         right = {
             if (state.spending.isNotEmpty()) SpendingSection(state, onEvent)
             if (state.flows.isNotEmpty()) FlowsSection(state, languageTag)
-            UpcomingSection(state, languageTag)
         },
     )
 }
@@ -131,6 +127,9 @@ private fun LookAheadSection(state: GroupSummaryUiState, languageTag: String, on
                     }
                     if (figures.pendingOutCents > 0) {
                         add(StatRow(stringResource(Res.string.group_hero_note_contributions), -figures.pendingOutCents, MoneyRole.Flow))
+                    }
+                    if (figures.pendingTargetsCents > 0) {
+                        add(StatRow(stringResource(Res.string.group_look_ahead_targets), -figures.pendingTargetsCents, MoneyRole.Flow))
                     }
                     if (figures.pendingIncomeCents > 0) {
                         add(StatRow(stringResource(Res.string.group_hero_note_income), figures.pendingIncomeCents, MoneyRole.Flow))
@@ -164,36 +163,4 @@ internal fun SoftCard(modifier: Modifier = Modifier, content: @Composable () -> 
 @Composable
 internal fun CardTitle(text: String) {
     Text(text = text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-/** Always visible: a calm message when everything is reviewed, the count and one button to the review screen otherwise. */
-@Composable
-private fun ReviewCard(state: GroupSummaryUiState, languageTag: String, onEvent: (GroupSummaryEvent) -> Unit) {
-    SoftCard {
-        if (state.pendingCount == 0) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(imageVector = Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                Text(text = stringResource(Res.string.group_review_empty), style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = stringResource(Res.string.group_review_count, state.pendingCount),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                state.oldestPendingDate?.let { date ->
-                    Text(
-                        text = stringResource(Res.string.group_review_oldest, formatDate(date, languageTag)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            PrimaryButton(
-                text = stringResource(Res.string.group_review_open),
-                onClick = { onEvent(GroupSummaryEvent.ReviewClicked) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
 }

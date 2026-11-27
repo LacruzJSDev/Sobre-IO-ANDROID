@@ -1,4 +1,4 @@
-// The Group tab's right column: where the money went, in and out by period and the next due items.
+// The Group tab's sections: the next movements, where the money went and in and out by period.
 
 package dev.lacruzjs.sobreio.ui.groupsummary
 
@@ -44,11 +44,19 @@ import dev.lacruzjs.sobreio.generated.resources.chart_flows_description
 import dev.lacruzjs.sobreio.generated.resources.chart_flows_period
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_in
 import dev.lacruzjs.sobreio.generated.resources.chart_legend_out
-import dev.lacruzjs.sobreio.generated.resources.detail_section_upcoming
+import dev.lacruzjs.sobreio.generated.resources.group_next_empty
+import dev.lacruzjs.sobreio.generated.resources.group_next_open
+import dev.lacruzjs.sobreio.generated.resources.group_next_open_pending
+import dev.lacruzjs.sobreio.generated.resources.group_next_title
+import dev.lacruzjs.sobreio.generated.resources.ic_list
+import dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS
+import dev.lacruzjs.sobreio.ui.commitments.icon
+import dev.lacruzjs.sobreio.ui.components.EntityAvatar
+import dev.lacruzjs.sobreio.ui.components.IconActionButton
+import org.jetbrains.compose.resources.vectorResource
 import dev.lacruzjs.sobreio.generated.resources.group_summary_flows_title
 import dev.lacruzjs.sobreio.generated.resources.group_summary_spending_all
 import dev.lacruzjs.sobreio.generated.resources.group_summary_spending_title
-import dev.lacruzjs.sobreio.generated.resources.group_summary_upcoming_empty
 import dev.lacruzjs.sobreio.ui.components.SoftTile
 import dev.lacruzjs.sobreio.ui.components.FormSection
 import dev.lacruzjs.sobreio.ui.components.MoneyText
@@ -161,48 +169,63 @@ private fun GroupFlowsChart(state: GroupSummaryUiState, languageTag: String, hei
 }
 
 private const val ZOOM_GROUP_FLOWS = "group-flows"
-/** A row of small cards, one per due date until the end of the period; one muted card when there is none. */
+/**
+ * "Next movements": the first due dates from tomorrow on, read only, soonest first. The icon at the right of the title opens
+ * the review screen, where the ones already due are confirmed or skipped and the next ones can be registered before they are
+ * due; its badge counts the ones waiting for review.
+ */
 @Composable
-internal fun UpcomingSection(state: GroupSummaryUiState, languageTag: String) {
-    FormSection(title = stringResource(Res.string.detail_section_upcoming), segmented = false) {
-        if (state.upcoming.isEmpty()) {
-            SoftTile {
+internal fun NextMovementsSection(state: GroupSummaryUiState, languageTag: String, onEvent: (GroupSummaryEvent) -> Unit) {
+    val reviewLabel = if (state.pendingCount > 0) {
+        stringResource(Res.string.group_next_open_pending, state.pendingCount)
+    } else {
+        stringResource(Res.string.group_next_open)
+    }
+    FormSection(
+        title = stringResource(Res.string.group_next_title),
+        action = {
+            IconActionButton(
+                icon = vectorResource(Res.drawable.ic_list),
+                iconSize = 24.dp,
+                label = reviewLabel,
+                badge = state.pendingCount,
+                onClick = { onEvent(GroupSummaryEvent.ReviewClicked) },
+            )
+        },
+    ) {
+        SoftTile {
+            if (state.upcoming.isEmpty()) {
                 Text(
-                    text = stringResource(Res.string.group_summary_upcoming_empty),
+                    text = stringResource(Res.string.group_next_empty, NEXT_DUE_WINDOW_DAYS),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-        } else {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.upcoming, key = { it.key }) { item -> UpcomingCard(item, state.currencyCode, languageTag) }
+            } else {
+                state.upcoming.forEach { item -> NextMovementRow(item, state.currencyCode, languageTag) }
             }
         }
     }
 }
 
 @Composable
-private fun UpcomingCard(item: DueOccurrence, currencyCode: String, languageTag: String) {
-    Column(
-        modifier = Modifier
-            .width(148.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = formatWeekdayDayMonth(item.dueDate, languageTag),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(text = item.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.height(2.dp))
+private fun NextMovementRow(item: DueOccurrence, currencyCode: String, languageTag: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        // No entity colour: a commitment is drawn in ink with the icon of its kind, as in the review screen
+        EntityAvatar(name = item.name, icon = item.kind.icon(), color = null, size = 32.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = formatWeekdayDayMonth(item.dueDate, languageTag),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         MoneyText(
             amountCents = item.signedCents,
             currencyCode = currencyCode,
             role = MoneyRole.Flow,
             style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.End,
             maxLines = 1,
         )
     }

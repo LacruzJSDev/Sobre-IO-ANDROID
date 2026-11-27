@@ -702,7 +702,6 @@
     <string name="transfer_action">Transfer</string>
     <string name="warning_account_shortfall">%1$s will drop to %2$s on %3$s</string>
     <string name="warning_commitments_shortfall">%1$s missing for this period's commitments</string>
-    <string name="group_summary_upcoming_empty">Nothing until the end of the period</string>
     <string name="tab_group_badge">%1$d to review</string>
     <string name="group_hero_projected_on">Projected on %1$s</string>
     <string name="group_hero_note_commitments">For commitments</string>
@@ -711,11 +710,15 @@
     <string name="group_hero_drops">Will drop to %1$s on %2$s</string>
     <string name="accounts_hero_chart_description">Total balance from %1$s to %2$s: %3$s then, %4$s today</string>
     <string name="group_hero_chart_description">Really free money from %1$s to %2$s: %3$s today, %4$s at the end</string>
-    <string name="group_review_title">To review</string>
-    <string name="group_review_count">%1$d to review</string>
-    <string name="group_review_oldest">Oldest from %1$s</string>
-    <string name="group_review_open">Review</string>
-    <string name="group_review_empty">All caught up: nothing to review</string>
+    <string name="group_review_title">Next movements</string>
+    <string name="group_review_section_due">To review</string>
+    <string name="group_review_section_next">Coming up: you can record them now</string>
+    <string name="group_review_due_on">%1$s · due on %2$s</string>
+    <string name="group_review_nothing">All caught up: nothing to review and nothing due in the next %1$d days</string>
+    <string name="group_next_title">Next movements</string>
+    <string name="group_next_empty">Nothing due in the next %1$d days</string>
+    <string name="group_next_open">Review and record early</string>
+    <string name="group_next_open_pending">Review: %1$d to review</string>
     <string name="group_review_back">Back to the group</string>
     <string name="group_summary_spending_title">Where this period's money went</string>
     <string name="group_summary_spending_all">See all envelopes</string>
@@ -932,6 +935,7 @@
     <string name="outlook_until_period_end">End of the period</string>
     <string name="outlook_until_note">Counts the due dates up to that day, overdue ones included</string>
     <string name="envelope_detail_section_free_until">Really free until %1$s</string>
+    <string name="group_look_ahead_targets">Envelope targets of the next periods</string>
     <string name="group_look_ahead_title">Look ahead</string>
     <string name="group_look_ahead_note">How much will really be free on a day you choose, such as your next pay day</string>
     <string name="group_look_ahead_free_on">Free on %1$s</string>

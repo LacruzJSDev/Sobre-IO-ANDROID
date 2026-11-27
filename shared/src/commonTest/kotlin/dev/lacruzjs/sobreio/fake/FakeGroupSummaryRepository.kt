@@ -54,7 +54,7 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
     var spendingPeriodStart: LocalDate? = null
     var flowPeriods: Int? = null
 
-    /** Due dates confirmed or skipped leave [pending], as the database does. */
+    /** Due dates confirmed or skipped leave [pending] and [upcoming], as the database does. */
     var outlookUntil: GroupOutlook? = null
 
     override suspend fun getOutlookUntil(groupId: String, until: LocalDate): Result<GroupOutlook> {
@@ -115,13 +115,19 @@ class FakeGroupSummaryRepository : GroupSummaryRepository {
         confirmedDate = date
         confirmedCover = cover
         val result = confirmResult ?: Result.success(ConfirmedFact("fact-$commitmentId", kind))
-        if (result.isSuccess) pending = pending.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+        if (result.isSuccess) {
+            pending = pending.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+            upcoming = upcoming.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+        }
         return result
     }
 
     override suspend fun skip(commitmentId: String, dueDate: LocalDate): Result<Unit> {
         calls += "skip($commitmentId, $dueDate)"
-        if (skipResult.isSuccess) pending = pending.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+        if (skipResult.isSuccess) {
+            pending = pending.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+            upcoming = upcoming.filterNot { it.commitmentId == commitmentId && it.dueDate == dueDate }
+        }
         return skipResult
     }
 

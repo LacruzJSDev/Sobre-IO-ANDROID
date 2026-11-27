@@ -17,7 +17,15 @@ data class GroupOutlook(
     val pendingOutCents: Long,
     val pendingIncomeCents: Long,
     val freeProjectedCents: Long,
+    /** What the periods that begin before the chosen day will hand to the envelopes with a target (0 inside the period). */
+    val pendingTargetsCents: Long = 0,
 )
+
+/**
+ * How far ahead the next due dates are read (`upcoming_occurrences` from tomorrow): the Group tab shows the first few and the
+ * review screen lists them all, where they can be registered before they are due.
+ */
+const val NEXT_DUE_WINDOW_DAYS = 30
 
 /** One day of `group_free_projection`: what is really free at the end of [day] (the group's outlook up to that day). */
 data class FreePoint(val day: LocalDate, val freeCents: Long)
