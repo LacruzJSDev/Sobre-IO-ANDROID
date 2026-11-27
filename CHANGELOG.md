@@ -17,6 +17,19 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ## Sin publicar
 
+### Novedades
+
+- **Adelantar movimientos:** en el Grupo, «Próximos movimientos» enseña los cuatro siguientes, y su icono abre la
+  pantalla donde se revisan los atrasados y se pueden apuntar u omitir los próximos antes de su día. El icono lleva un
+  círculo con el número de pendientes de revisar.
+
+### Arreglos
+
+- **Mirar hasta:** al mirar hasta un día del periodo siguiente, el dinero libre ya descuenta lo que ese periodo pasará a
+  los sobres con objetivo.
+
+**Base de datos:** necesita la migración `d34_outlook_pending_targets` (Sobre-IO-DB #22).
+
 ## [1.1.0] · 2026-11-26
 
 Términos y privacidad, descargar tus datos y la app en el navegador.

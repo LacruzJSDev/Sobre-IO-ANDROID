@@ -15,6 +15,7 @@ internal data class GroupOutlookDto(
     @SerialName("pending_out") val pendingOut: Long = 0,
     @SerialName("pending_income") val pendingIncome: Long = 0,
     @SerialName("free_projected") val freeProjected: Long = 0,
+    @SerialName("pending_targets") val pendingTargets: Long = 0,
 )
 
 /** A row of `pending_occurrences` or `upcoming_occurrences`. */

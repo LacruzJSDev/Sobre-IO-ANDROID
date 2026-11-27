@@ -16,6 +16,7 @@ import dev.lacruzjs.sobreio.domain.model.Envelope
 import dev.lacruzjs.sobreio.domain.model.EnvelopeProgress
 import dev.lacruzjs.sobreio.domain.model.GroupOutlook
 import dev.lacruzjs.sobreio.domain.model.GroupWarning
+import dev.lacruzjs.sobreio.domain.model.NEXT_DUE_WINDOW_DAYS
 import dev.lacruzjs.sobreio.domain.model.ProgressState
 import dev.lacruzjs.sobreio.domain.model.TransferHint
 import dev.lacruzjs.sobreio.domain.model.TransferSuggestion
@@ -36,9 +37,9 @@ import kotlinx.datetime.plus
 import kotlin.math.abs
 
 /**
- * The Group tab: the money really free today and at the end of the period with its projection, the count of due dates to
- * review (reviewed in their own screen), the warnings, where the period's money went, the money in and out by period and the
- * next due dates. Every figure comes from the database; the app only joins names, signs due items and picks rows.
+ * The Group tab: the money really free today and at the end of the period with its projection, the next due dates with
+ * the count of the ones to review (both handled in the review screen), the warnings, where the period's money went and the
+ * money in and out by period. Every figure comes from the database; the app only joins names, signs due items and picks rows.
  */
 class GroupSummaryViewModel(
     private val groupId: String,
@@ -128,12 +129,11 @@ class GroupSummaryViewModel(
         val accountList = reads.accounts.getOrThrow()
         val envelopeList = reads.envelopes.getOrThrow()
         // Everything below is secondary: a failure leaves that card out instead of the whole tab
-        val upcomingFrom = day.plus(1, DateTimeUnit.DAY)
-        val upcoming = if (upcomingFrom > outlook.periodEnd) {
-            emptyList()
-        } else {
-            summary.getUpcoming(groupId, upcomingFrom, outlook.periodEnd).getOrDefault(emptyList())
-        }
+        val upcoming = summary.getUpcoming(groupId, day.plus(1, DateTimeUnit.DAY), day.plus(NEXT_DUE_WINDOW_DAYS, DateTimeUnit.DAY))
+            .getOrDefault(emptyList())
+            .filter { o -> o.isReviewable }
+            .sortedWith(compareBy({ o -> o.dueDate }, { o -> o.name.lowercase() }))
+            .take(GroupSummaryUiState.MAX_NEXT_MOVEMENTS)
         val spending = summary.getEnvelopeSpending(groupId, outlook.periodStart).getOrDefault(emptyList())
             .mapNotNull { row -> envelopeList.firstOrNull { it.id == row.envelopeId }?.let { SpendingBar(it, row.spentCents) } }
             .sortedWith(compareByDescending<SpendingBar> { it.spentCents }.thenBy { it.envelope.name.lowercase() })
