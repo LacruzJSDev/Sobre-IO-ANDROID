@@ -25,6 +25,8 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ### Arreglos
 
+- **Safari:** la app en el navegador se quedaba en blanco en Safari 27.2 (Mac, iPhone y iPad) por un fallo de Safari;
+  ahora se ve (#63).
 - **Mirar hasta:** al mirar hasta un día del periodo siguiente, el dinero libre ya descuenta lo que ese periodo pasará a
   los sobres con objetivo (#62).
 

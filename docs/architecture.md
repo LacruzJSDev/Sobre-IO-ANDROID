@@ -217,4 +217,8 @@ What every screen relies on. The screens themselves are described in `docs/featu
   dialog: `Saved` at once); `deviceTimeZoneId()` from `Intl`, because `TimeZone.currentSystemDefault().id` is "SYSTEM" in
   the browser; every IANA zone from `@js-joda/timezone`, loaded in `Main.kt`. Google sign-in returns null until the OAuth
   redirect flow (plan 1.1, phase 6), so the button is hidden.
+- Safari 27.2 (macOS and iOS) painted the web app white: WebKit bug 329421 (Compose CMP-10986), Skia's JS wrappers
+  tail-call into its wasm and the JIT hands them NaN floats. `shared/webpack.config.d/skiko-no-tail-call.js` rewrites
+  each wrapper of `skiko.mjs` so the call sits in a `try` (not a tail call) and fails the build when no wrapper is found
+  or one survives minification. Remove it once Safari ships the WebKit fix (Safari Technology Preview 255 has it).
 - The bundle is two `.wasm` files (Skia and the app, about 19 MB, 6 MB compressed) and about 1.3 MB of JS.
