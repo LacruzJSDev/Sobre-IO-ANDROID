@@ -17,6 +17,10 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 
 ## Sin publicar
 
+## [1.2.0] · 2026-11-27
+
+Adelantar movimientos desde el Grupo, y la app en el navegador ya se ve en Safari.
+
 ### Novedades
 
 - **Adelantar movimientos:** en el Grupo, «Próximos movimientos» enseña los cuatro siguientes, y su icono abre la
