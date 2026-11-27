@@ -20,7 +20,7 @@ Cómo se mantiene (las reglas completas están en la sección «Versiones» del 
 ### Arreglos
 
 - **Safari:** la app en el navegador se quedaba en blanco en Safari 27.2 (Mac, iPhone y iPad) por un fallo de Safari;
-  ahora se ve (#PR).
+  ahora se ve (#63).
 
 ## [1.1.0] · 2026-11-26
 
